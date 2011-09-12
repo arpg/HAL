@@ -11,6 +11,7 @@
 #ifndef _PROPERTY_MAP_
 #define _PROPERTY_MAP_
 
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <map>
