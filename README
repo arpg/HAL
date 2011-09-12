@@ -1,0 +1,9 @@
+
+Robotic Perception Group.
+
+Common device drivers and utilities.
+
+Use
+$ ccmake ../RPG -G"Eclipse CDT4 - Unix Makefiles"
+to build for Eclipse.
+
