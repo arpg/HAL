@@ -4,4 +4,3 @@ target_link_libraries( TestCameraDevice ${RPG_LIBRARIES} )
 # have to add this here for make -j
 add_dependencies( TestCameraDevice CameraDriverRegsitery )
 add_dependencies( TestCameraDevice FileReaderDriver )
-
