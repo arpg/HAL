@@ -10,6 +10,8 @@
 #include <vector>
 #include <RPG/Utils/PropertyMap.h> // so a CameraDevice can have generic "properties"
 
+#include "opencv/cv.h"
+
 class Image
 {
 };
@@ -20,8 +22,8 @@ class CameraDriver
 {
     public:
         // Pure virtual functions driver writers must implement:
-        virtual bool Capture( std::vector<Image>& vImages ) = 0;
-         virtual bool Init() = 0;
+        virtual bool Capture( std::vector<cv::Mat>& vImages ) = 0;
+        virtual bool Init() = 0;
         CameraDriver()
         {
             m_pPropertyMap = NULL;

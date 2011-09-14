@@ -7,7 +7,7 @@
 
 subdir_depends( Test Drivers )
 add_subdirectory( Drivers )
-add_subdirectory( Test )
+#add_subdirectory( Test )
 
 #add_executable( Test Test.cpp )
 #target_link_libraries( Test camlib bb2lib frlib )

@@ -8,11 +8,13 @@
 #ifndef _CAMERA_DEVICE_H_
 #define _CAMERA_DEVICE_H_
 
-#include <RPG/Utils/PropertyMap.h>// so a CameraDevice can have generic "properties"
+#include <RPG/Utils/PropertyMap.h>		// so a CameraDevice can have generic "properties"
 #include <RPG/Devices/Camera/CameraDriverInterface.h>
 #include <RPG/Devices/Camera/Drivers/CameraDriverRegistery.h>
 
 #include "RPG/Devices/Camera/Drivers/DriverList.h"
+
+#include "opencv/cv.h"
 
 // Driver Creation Factory
 extern CameraDriver* CreateDriver( const std::string& sDriverName );
@@ -38,14 +40,13 @@ class CameraDevice : public PropertyMap
             m_pDriver = CreateDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
-                m_pDriver->Init();
-                return true;
+                return m_pDriver->Init();
             }
             return false;
         }
 
         ///////////////////////////////////////////////////////////////
-        bool Capture( std::vector<Image>& vImages )
+        bool Capture( std::vector<cv::Mat>& vImages )
         {
             if( m_pDriver ){
                 return m_pDriver->Capture( vImages );
@@ -60,5 +61,3 @@ class CameraDevice : public PropertyMap
 };
 
 #endif
-
-

@@ -1,4 +1,4 @@
-add_library( CameraDriverRegsitery CameraDriverRegistery.cpp )
+add_library( CameraDriverRegistery CameraDriverRegistery.cpp )
 
 # Build file reader driver
 add_subdirectory( FileReader )
@@ -13,6 +13,6 @@ if( DC1394_2_FOUND )
 endif()
 
 # Build the camera driver registery library
-add_to_rpg_libraries( CameraDriverRegsitery )
+add_to_rpg_libraries( CameraDriverRegistery )
 
 

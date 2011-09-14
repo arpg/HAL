@@ -2,12 +2,13 @@
 #define _FILE_READER_H_
 
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
+
 class FileReaderDriver : public CameraDriver
 {
     public:
         FileReaderDriver();
         virtual ~FileReaderDriver();
-        bool Capture( std::vector<Image>& vImages );
+        bool Capture( std::vector<cv::Mat>& vImages );
         bool Init();
     private:
         // vector of lists of files

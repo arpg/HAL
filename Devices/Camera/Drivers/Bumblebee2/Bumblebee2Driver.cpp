@@ -84,7 +84,7 @@ bool Bumblebee2Driver::Init()
 
     // free the camera lsit
     dc1394_camera_free_list( pCameraList );
-    printf("Using camera with GUID %"PRIx64"\n", m_pCam->guid );
+    printf("Using camera with GUID %ll\n", m_pCam->guid );
 
     // always this
     m_nVideoMode = DC1394_VIDEO_MODE_FORMAT7_3;
@@ -142,4 +142,3 @@ bool Bumblebee2Driver::Init()
 
     return false; 
 }
-
