@@ -11,10 +11,10 @@ std::map<std::string,CameraDriver*(*)()> g_mDriverTable;
 #include "RPG/Devices/Camera/Drivers/FileReader/FileReaderDriver.h"
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
 
-#ifdef USE_BUMBLEBEE_2
+//#ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
-#endif
+//#endif
 
 #endif
 

@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "Bumblebee2Driver.h"
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
+#include "opencv/cv.h"	// for Mat structure
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
@@ -32,7 +33,7 @@ Bumblebee2Driver::~Bumblebee2Driver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool Bumblebee2Driver::Capture( std::vector<Image>& vImages )
+bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
 {
 
     // allocate images if neccessary
@@ -84,7 +85,7 @@ bool Bumblebee2Driver::Init()
 
     // free the camera lsit
     dc1394_camera_free_list( pCameraList );
-    printf("Using camera with GUID %ll\n", m_pCam->guid );
+    printf("Using camera with GUID %d\n", m_pCam->guid );
 
     // always this
     m_nVideoMode = DC1394_VIDEO_MODE_FORMAT7_3;
@@ -98,10 +99,10 @@ bool Bumblebee2Driver::Init()
     // checout dc1394_feature_print_all!! cframerateool function
 
     // get highest framerate
-    dc1394framerates_t vFramerates;
-    e = dc1394_video_get_supported_framerates( m_pCam, m_nVideoMode,&vFramerates);
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not get framrates");
-    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
+//    dc1394framerates_t vFramerates;
+//    e = dc1394_video_get_supported_framerates( m_pCam, m_nVideoMode,&vFramerates);
+//    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not get framrates");
+//    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
 
     e = dc1394_video_set_iso_speed( m_pCam, DC1394_ISO_SPEED_400 );
     DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not set iso speed");
@@ -109,13 +110,13 @@ bool Bumblebee2Driver::Init()
     e = dc1394_video_set_mode( m_pCam, m_nVideoMode );
     DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not set video mode");
 
-    e = dc1394_video_set_framerate( m_pCam, m_nFramerate );
-    DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not set framerate" );
+//    e = dc1394_video_set_framerate( m_pCam, m_nFramerate );
+//    DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not set framerate" );
 
     int nNumDMAChannels = 4;
     e = dc1394_capture_setup( m_pCam, nNumDMAChannels,
             DC1394_CAPTURE_FLAGS_DEFAULT );
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not setup camerr-\nmake sure that the video mode and framerate are\nsupported by your camera");
+    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not setup camera. make sure that the video mode and framerate are supported by your camera.");
 
     e = dc1394_feature_get_all( m_pCam, &m_vFeatures );
     if( e != DC1394_SUCCESS ) {
@@ -135,6 +136,10 @@ bool Bumblebee2Driver::Init()
 
 
     // copy to our buffer, decimate, convert, etc.
+
+
+
+
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
