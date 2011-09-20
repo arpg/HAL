@@ -12,7 +12,7 @@
 #include <RPG/Devices/Camera/CameraDriverInterface.h>
 #include <RPG/Devices/Camera/Drivers/CameraDriverRegistery.h>
 
-#include "RPG/Devices/Camera/Drivers/DriverList.h"
+//#include "RPG/Devices/Camera/Drivers/DriverList.h"
 
 #include "opencv/cv.h"
 

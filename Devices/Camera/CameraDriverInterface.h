@@ -30,7 +30,7 @@ class CameraDriver
         }
 
         // Called by CameraDevice::InitDriver
-        bool SetPropertyMap( PropertyMap* pMap )
+        void SetPropertyMap( PropertyMap* pMap )
         {
             m_pPropertyMap = pMap;
         }

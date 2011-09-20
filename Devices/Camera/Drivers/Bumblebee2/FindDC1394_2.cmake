@@ -50,6 +50,7 @@ IF( NOT DC1394_2_FOUND )
           SET(DC1394_2_LIBRARIES ${DC1394_2_LIBRARY} "usb-1.0")
       ENDIF()
       IF( APPLE )
+    message( STATUS "dear god, I'm here!\n")
           SET(DC1394_2_LIBRARIES ${DC1394_2_LIBRARY} 
                   "-framework\\ IOKit"
                   "-framework\\ CoreFoundation"

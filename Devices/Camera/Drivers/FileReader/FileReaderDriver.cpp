@@ -68,7 +68,7 @@ bool FileReaderDriver::Init()
         for( unsigned int jj = 0; jj < vFiles.size(); jj++ ) {
         	printf( "file[%d] = %s\n", jj, vFiles[jj].c_str() );
         }
-         /* */
+        */
     }
 
     // make sure each channel has the same number of images

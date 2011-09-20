@@ -94,7 +94,7 @@ bool Bumblebee2Driver::Init()
 
     dc1394camera_list_t*  pCameraList = NULL;
     e = dc1394_camera_enumerate( m_pBus, &pCameraList );
-    for( int ii = 0; ii < pCameraList->num; ii++) {
+    for( unsigned int ii = 0; ii < pCameraList->num; ii++) {
         m_pCam = dc1394_camera_new( m_pBus, pCameraList->ids[ii].guid );
         printf("Model %s\n", m_pCam->model );
         if( m_pCam->model == std::string("Bumblebee2")){
