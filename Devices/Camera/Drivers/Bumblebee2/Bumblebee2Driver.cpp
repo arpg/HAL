@@ -42,7 +42,6 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     if( vImages.size() != 2 ){
         vImages.resize( 2 ); 
         // and setup images
-//        vImages[0] = cv::Mat(m_nImageHeight*2, m_nImageWidth, CV_8UC1);
         vImages[0] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
         vImages[1] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
     }
@@ -94,14 +93,22 @@ bool Bumblebee2Driver::Init()
 
     dc1394camera_list_t*  pCameraList = NULL;
     e = dc1394_camera_enumerate( m_pBus, &pCameraList );
-    for( unsigned int ii = 0; ii < pCameraList->num; ii++) {
+
+    if( pCameraList->num == 0 ) {
+        printf( "No cameras found!\n" );
+        exit(-1);
+    }
+
+    for( int ii = 0; ii < pCameraList->num; ii++) {
         m_pCam = dc1394_camera_new( m_pBus, pCameraList->ids[ii].guid );
         printf("Model %s\n", m_pCam->model );
+
+        // the model actually returns more than Bumblebee2
         if( m_pCam->model == std::string("Bumblebee2")){
             // good
         }
         else{
-            // should close cam 
+            // should close cam
         }
     }
 
@@ -173,5 +180,5 @@ bool Bumblebee2Driver::Init()
     e = dc1394_capture_enqueue( m_pCam, pFrame );
 
 
-    return false; 
+    return true; 
 }
