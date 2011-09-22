@@ -151,7 +151,7 @@ bool Bumblebee2Driver::Init()
         dc1394_log_warning("Could not get feature set");
     }
     else {
-        dc1394_feature_print_all( &m_vFeatures, stdout );
+//        dc1394_feature_print_all( &m_vFeatures, stdout );
     }
 
     // initiate transmission
@@ -165,9 +165,12 @@ bool Bumblebee2Driver::Init()
 
 
     // copy to our buffer, decimate, convert, etc.
-    // print image information
+
+    
+    // print capture image information. this is RAW, interlaced and in Format7
     m_nImageWidth = pFrame->size[0];
     m_nImageHeight = pFrame->size[1];
+    /*
     printf("\nIMAGE INFORMATION:\n");
     printf("------------------------\n");
     printf("Image Size: %d x %d\n", m_nImageWidth, m_nImageHeight );
@@ -175,7 +178,8 @@ bool Bumblebee2Driver::Init()
     printf("Stride: %d\n", pFrame->stride );
     printf("Total Bytes: %llu\n", pFrame->total_bytes );
     printf("------------------------\n");
-
+    */
+    
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
 
