@@ -10,7 +10,7 @@
 #include <vector>
 #include <RPG/Utils/PropertyMap.h> // so a CameraDevice can have generic "properties"
 
-#include "opencv/cv.h"
+#include <opencv/cv.h>
 
 class Image
 {

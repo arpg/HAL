@@ -8,7 +8,7 @@
 #include "Bumblebee2Driver.h"
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <dc1394/conversions.h>
-#include "opencv/cv.h"	// for Mat structure
+#include <opencv/cv.h>	// for Mat structure
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
