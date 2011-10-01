@@ -2,6 +2,9 @@
 add_subdirectory( FileReader )
 #add_dependencies( CameraDriverRegsitery FileReaderDriver )
 
+# Build webcam driver
+add_subdirectory( Webcam )
+
 # Build Bumblebee 2 driver (you also need to make sure to edit DriverList.h)
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Bumblebee2 ${CMAKE_MODULE_PATH} )
 find_package( DC1394_2 REQUIRED )

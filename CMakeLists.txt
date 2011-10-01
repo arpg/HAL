@@ -25,7 +25,7 @@ macro( add_to_rpg_libraries libs )
     endforeach()
 endmacro()
 
-macro( add_to_rpg_link_directireis dirs )
+macro( add_to_rpg_link_directories dirs )
     list( APPEND RPG_LINK_DIRECTORIES ${dirs} )
     set( RPG_LINK_DIRECTORIES ${RPG_LINK_DIRECTORIES} CACHE INTERNAL "" FORCE )
 endmacro()

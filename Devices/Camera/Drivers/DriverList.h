@@ -11,6 +11,9 @@ std::map<std::string,CameraDriver*(*)()> g_mDriverTable;
 #include "RPG/Devices/Camera/Drivers/FileReader/FileReaderDriver.h"
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
 
+#include "RPG/Devices/Camera/Drivers/Webcam/WebcamDriver.h"
+CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
+
 //#ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
