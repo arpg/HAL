@@ -7,6 +7,7 @@
 #define _BUMBLEBEE2_H_
 
 #include <dc1394/dc1394.h>
+#include <mvl/camera/camera.h>
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
 class Bumblebee2Driver : public CameraDriver
@@ -24,6 +25,9 @@ class Bumblebee2Driver : public CameraDriver
         dc1394featureset_t       m_vFeatures;
         unsigned int             m_nImageWidth;
         unsigned int             m_nImageHeight;
+        mvl_camera_t*			 m_pLeftCMod;
+        mvl_camera_t*			 m_pRightCMod;
+
 };
 
 #endif

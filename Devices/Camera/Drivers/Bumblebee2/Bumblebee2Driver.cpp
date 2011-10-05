@@ -8,6 +8,8 @@
 #include "Bumblebee2Driver.h"
 #include <dc1394/conversions.h>
 #include <opencv/cv.h>	// for Mat structure
+#include <mvl/image/image.h> // to rectify
+#include <mvl/stereo/stereo.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
@@ -58,8 +60,8 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
 
     // copy to our buffer, split, decimate, convert, etc.
     int a,b,c,d;
-    for( int ii = 0; ii < m_nImageHeight; ii+=2 ) {
-    	for( int jj = 0; jj < m_nImageWidth; jj+=2 ) {
+    for( int ii = 0; ii < (int)m_nImageHeight; ii+=2 ) {
+    	for( int jj = 0; jj < (int)m_nImageWidth; jj+=2 ) {
     		a = buff[ (ii * m_nImageWidth) + jj   ];
     		b = buff[ (ii * m_nImageWidth) + jj + 1 ];
     		c = buff[((ii + 1) * m_nImageWidth) + jj ];
@@ -72,6 +74,26 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     		vImages[1].data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
     	}
     }
+
+    // FIX: the whole rectification process can be speeded up by not doing so many memcopies
+    mvl_image_t *left_img, *left_img_rect, *right_img, *right_img_rect;
+
+	// OpenCV image to MVL image
+    left_img = mvl_image_alloc( vImages[0].cols, vImages[0].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[0].data );
+    right_img = mvl_image_alloc( vImages[1].cols, vImages[1].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[1].data );
+
+	// allocate space to hold rectified images
+    left_img_rect = mvl_image_alloc( vImages[0].cols, vImages[0].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
+    right_img_rect = mvl_image_alloc( vImages[1].cols, vImages[1].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
+
+    // rectify
+    mvl_rectify( m_pLeftCMod, left_img, left_img_rect );
+    mvl_rectify( m_pRightCMod, right_img, right_img_rect );
+
+	// MVL image to OpenCV image
+    memcpy( vImages[0].data, left_img_rect->data, vImages[0].cols*vImages[0].rows );
+    memcpy( vImages[1].data, right_img_rect->data, vImages[1].cols*vImages[1].rows );
+
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
@@ -86,6 +108,16 @@ bool Bumblebee2Driver::Init()
     assert(m_pPropertyMap);
     m_pPropertyMap->PrintPropertyMap();
 
+    // get camera model from files
+    double pose[16];
+	m_pLeftCMod  = mvl_read_camera( m_pPropertyMap->GetProperty( "CamModel-L", "").c_str(), pose );
+	m_pRightCMod = mvl_read_camera( m_pPropertyMap->GetProperty( "CamModel-R", "").c_str(), pose );
+
+	if( m_pLeftCMod == NULL || m_pRightCMod == NULL ) {
+        std::cout << "Error reading camera model!\n" << std::endl;
+        return -1;
+    }
+
     // here we connect to the bb2 and see if it's alive
     m_pBus = dc1394_new();
     dc1394error_t e;
@@ -98,16 +130,16 @@ bool Bumblebee2Driver::Init()
         exit(-1);
     }
 
-    for( int ii = 0; ii < pCameraList->num; ii++) {
+    for( int ii = 0; ii < (int)pCameraList->num; ii++) {
         m_pCam = dc1394_camera_new( m_pBus, pCameraList->ids[ii].guid );
         printf("Model %s\n", m_pCam->model );
 
-        // the model actually returns more than Bumblebee2
+        // the model actually returns more info than Bumblebee2
         if( m_pCam->model == std::string("Bumblebee2")){
             // good
         }
         else{
-            // should close cam
+            // should close cam?
         }
     }
 
@@ -124,7 +156,7 @@ bool Bumblebee2Driver::Init()
 
     // capure an initial image to get the image sizes (SetProperty)
 
-    // get highest framerate
+    // get highest framerate (not supported on BB apparently)
 //    dc1394framerates_t vFramerates;
 //    e = dc1394_video_get_supported_framerates( m_pCam, m_nVideoMode,&vFramerates);
 //    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not get framrates");
@@ -141,7 +173,7 @@ bool Bumblebee2Driver::Init()
 
     int nNumDMAChannels = 4;
     e = dc1394_capture_setup( m_pCam, nNumDMAChannels,
-            DC1394_CAPTURE_FLAGS_DEFAULT );
+    DC1394_CAPTURE_FLAGS_DEFAULT );
     DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not setup camera. make sure that the video mode and framerate are supported by your camera.");
 
     // print camera features
