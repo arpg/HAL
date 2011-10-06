@@ -29,13 +29,13 @@ bool FileReaderDriver::Capture( std::vector<cv::Mat>& vImages )
         vImages.resize( m_nNumChannels ); 
     }
 
-    // FIX: this is kinda lame and insecure, change eventually
+    // TODO: this is kinda lame and insecure, change eventually
     char        imgFile[100];
     // now fetch the next set of images
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 	sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
 	
-	// FIX: this only reads grayscale '0'.. not sure if we need more than that tho
+	// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
 	vImages[ii] = cv::imread( imgFile, 0 );
 //	printf("Read %s.\n", imgFile );
     }
@@ -55,7 +55,6 @@ bool FileReaderDriver::Init()
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         std::string sChannelName  = (format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
-        cout << sChannelName << ":\t'" << sChannelRegex << "'\n";
 
         // Now generate the list of files for each channel
         std::vector< std::string>& vFiles = m_vFileList[ii];

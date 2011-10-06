@@ -75,7 +75,7 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     	}
     }
 
-    // FIX: the whole rectification process can be speeded up by not doing so many memcopies
+    // TODO: the whole rectification process can be speeded up by not doing so many memcopies
     mvl_image_t *left_img, *left_img_rect, *right_img, *right_img_rect;
 
 	// OpenCV image to MVL image
