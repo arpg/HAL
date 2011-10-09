@@ -14,13 +14,13 @@ endmacro()
 macro( add_to_rpg_libraries libs )
     foreach( lib in ${libs} )
         get_target_property( _LIBRARY ${lib} LOCATION )
-#        message( STATUS "looking for ${lib} got ${_LIBRARY}" )
         if( ${_LIBRARY} STREQUAL "_LIBRARY-NOTFOUND" )
-#            message( STATUS "FUCK FUCK FUCK" )
         else()
+#            message( STATUS "looking for ${lib} got ${_LIBRARY}" )
+#            message( STATUS "******* adding '${_LIBRARY}' ") 
             list( INSERT RPG_LIBRARIES 0 ${_LIBRARY} )
-            message( STATUS "******* adding '${lib}' ") 
             set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
+#            message( STATUS "******* result '${RPG_LIBRARIES}' ") 
         endif()
     endforeach()
 endmacro()
@@ -55,6 +55,17 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} CACHE INTERNAL "" FORCE 
 
 add_subdirectory( Devices )
 
+# Code to cleanup apple frameworks to "export" properly.
+# This is needed because spaces in the list of LIBRARIES in the .cmake we are
+# creating here MUST BE ESCAPPED.  Otherwise, when an external project imports
+# the list, CMAKE turns the space into a semicolon, resulting in mistakes
+# like "-lframework;-lIOKit" instead of "-framework IOKit".
+set( _RPG_LIBRARIES "" )
+foreach( lib ${RPG_LIBRARIES})
+    string( REPLACE "framework " "framework\\ " lib ${lib} )
+    list( APPEND _RPG_LIBRARIES ${lib} )
+endforeach()
+set( RPG_LIBRARIES ${_RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 # Create the RPGConfig.cmake file for the build tree.
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/RPGConfig.cmake.in
