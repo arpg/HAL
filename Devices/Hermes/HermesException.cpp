@@ -1,4 +1,4 @@
-#include "hermesexception.h"
+#include "HermesException.h"
 
 HermesException::HermesException(const char *what): m_pWhat(what) {
 }
