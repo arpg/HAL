@@ -14,9 +14,9 @@ if( DC1394_2_FOUND )
     add_definitions( -DUSE_BUMBLEBEE_2 )
 endif()
 
-add_library( CameraDriverRegsitery CameraDriverRegistery.cpp DriverList.h )
+add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 
 # Build the camera driver registery library
-add_to_rpg_libraries( CameraDriverRegsitery )
+add_to_rpg_libraries( CameraDriverRegistery )
 
 

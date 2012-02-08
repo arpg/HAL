@@ -1,5 +1,6 @@
 #include "ZmqEndpoint.h"
 
-ZmqEndpoint::ZmqEndpoint()
+ZmqEndpoint::ZmqEndpoint( ZmqEndpointType eType )
 {
+    m_eSocketType = eType;
 }

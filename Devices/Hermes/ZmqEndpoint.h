@@ -1,6 +1,8 @@
 #ifndef ZMQENDPOINT_H
 #define ZMQENDPOINT_H
 
+#include <zmq.hpp>
+
 enum ZmqEndpointType
 {
     ZMQ_EP_PUBLISH = 0,
@@ -11,7 +13,7 @@ enum ZmqEndpointType
 
 class ZmqEndpoint {
 	public:
-		ZmqEndpoint();
+		ZmqEndpoint( ZmqEndpointType eType );
 
 	private:
 		ZmqEndpointType 	m_eSocketType;
