@@ -32,7 +32,7 @@ class Hermes {
 		EndpointType                                            m_eType;
     		zmq::context_t*                                         m_pContext;
                 std::map < std::string, zmq::socket_t* >                m_mEndpoints;
-                std::map < std::string, google::protobuf::Message* pb > m_vMessages;
+                std::map < std::string, google::protobuf::Message* > m_vMessages;
 };
 
 #endif
