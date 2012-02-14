@@ -14,6 +14,16 @@ if( DC1394_2_FOUND )
     add_definitions( -DUSE_BUMBLEBEE_2 )
 endif()
 
+# Build GwSim driver
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/GwSim ${CMAKE_MODULE_PATH} )
+find_package( OGRE QUIET )
+#message( STATUS "GOT ${OGRE_LIBRARIES}" )
+if( OGRE_FOUND )
+    add_subdirectory( GwSim )
+#    add_definitions( -DUSE_BUMBLEBEE_2 )
+endif()
+
+
 add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 
 # Build the camera driver registery library

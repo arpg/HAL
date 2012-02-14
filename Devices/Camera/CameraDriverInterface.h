@@ -12,10 +12,6 @@
 
 #include <opencv/cv.h>
 
-class Image
-{
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 // Generic camera driver interface
 class CameraDriver
