@@ -11,7 +11,6 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver()
 {
-    m_nCurrentImageIndex = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,5 +77,8 @@ bool FileReaderDriver::Init()
             exit(1);
         }
     }
+    
+    m_nCurrentImageIndex = m_pPropertyMap->GetProperty<int>( "StartFrame", 0 );
+    
     return true;
 }
