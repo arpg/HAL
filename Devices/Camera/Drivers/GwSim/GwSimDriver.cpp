@@ -29,8 +29,11 @@ bool GwSimDriver::Capture( std::vector<cv::Mat>& vImages )
         vImages.resize( m_nNumCams ); 
         // and setup empty images
         for(unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-            vImages[ii] = cv::Mat( m_nViewportHeight, m_nViewportWidth, CV_8UC1 );
+//            vImages[ii] = cv::Mat( m_nViewportHeight, m_nViewportWidth, CV_8UC1 );
+              vImages[ii] = cv::Mat( m_nViewportHeight, m_nViewportWidth, CV_8UC3 );
         }
+        // for depth info
+        vImages[ m_nNumCams ] = cv::Mat( m_nViewportHeight, m_nViewportWidth, CV_8UC1 );
     }
     // get texture
     
