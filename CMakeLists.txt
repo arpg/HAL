@@ -20,10 +20,10 @@ macro( add_to_rpg_libraries libs )
 #        message( STATUS "LOCATION: ${_LIBRARY}" )
         else()
 #            message( STATUS "looking for ${lib} got ${_LIBRARY}" )
-#            message( STATUS "******* adding '${_LIBRARY}' ") 
+#            message( STATUS "******* adding '${_LIBRARY}' ")
             list( INSERT RPG_LIBRARIES 0 ${_LIBRARY} )
             set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
-#            message( STATUS "******* result '${RPG_LIBRARIES}' ") 
+#            message( STATUS "******* result '${RPG_LIBRARIES}' ")
         endif()
     endforeach()
 endmacro()
@@ -57,8 +57,9 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} CACHE INTERNAL "" FORCE 
 
 
 add_subdirectory( Devices )
+add_subdirectory( Robots )
 
-#message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" ) 
+#message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" )
 
 # Code to cleanup apple frameworks to "export" properly.
 # This is needed because spaces in the list of LIBRARIES in the .cmake we are

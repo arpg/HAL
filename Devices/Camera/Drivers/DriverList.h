@@ -19,8 +19,8 @@ CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 //#endif
 
-#include "RPG/Devices/Camera/Drivers/GwSim/GwSimDriver.h"
-CameraDriverRegisteryEntry<GwSimDriver> _GwSimReg( "GwSim" );
+#include "RPG/Devices/Camera/Drivers/SimCam/SimCamDriver.h"
+CameraDriverRegisteryEntry<SimCamDriver> _SimCamReg( "SimCam" );
 
 
 #endif
