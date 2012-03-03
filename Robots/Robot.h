@@ -15,10 +15,13 @@ namespace rpg {
 class Robot {
 public:
 	Robot();
-	Robot(const Robot& orig);
 	virtual ~Robot();
-	void Init( std::string sFile );
+	void Init( const std::string& sFile );
 private:
+	bool _Parse( const std::string& sFile );
+private:
+	std::string									m_sName;
+
 //	SimClient									m_pSimClient;
 	std::map < std::string, CameraDevice* >		m_vCameras;
 	// ... add more things
