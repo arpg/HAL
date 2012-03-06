@@ -1,0 +1,44 @@
+// RPC messages
+message Path {
+    repeated int32 Indices = 1 [packed=true];
+}
+
+message Waypoints {
+    repeated Waypoint Wpoints = 1;
+}
+
+message Waypoint {
+    optional double X = 1;
+    optional double Y = 2;
+    optional double Theta = 3;
+    optional double Velocity = 4;
+    optional double W = 5;
+}
+
+message RetVal {
+    required bool Val = 1;
+}
+
+
+
+
+// Message being published
+message PublishMsg {
+    repeated Entity Name = 1;
+    optional string LocType = 2;
+    optional double Velocity = 3;
+}
+
+message Entity {
+    optional string Name = 1;
+    optional Pose Pose = 2;
+}
+
+message Pose {
+    optional double X = 1;
+    optional double Y = 2;
+    optional double Z = 3;
+    optional double Roll = 4;
+    optional double Pitch = 5;
+    optional double Yaw = 6;
+}
