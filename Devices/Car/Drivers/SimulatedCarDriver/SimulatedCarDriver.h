@@ -6,9 +6,9 @@
 #define SIMULATED_CAR_DRIVER_H
 
 // each car driver can have a generic set of "properties"
-#include "PropertyMap.h"
+#include "RPG/Utils/PropertyMap.h"
 
-#include "CarDriverInterface.h"
+#include "RPG/Devices/Car/Drivers/CarDriverInterface.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Simulated Car Driver

@@ -6,7 +6,7 @@
 #define CAR_DRIVER_INTERFACE_H
 
 // each car driver can have a generic set of "properties"
-#include "PropertyMap.h"
+#include "RPG/Utils/PropertyMap.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic Car Driver Interface
