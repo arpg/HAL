@@ -1,0 +1,2 @@
+/Users/nima/Code/NinjaCars/RPG/dev/corkscrew/mochaccino/CMakeFiles/Mochaccino.dir
+/Users/nima/Code/NinjaCars/RPG/dev/corkscrew/mochaccino/CMakeFiles/cleansrc.dir
