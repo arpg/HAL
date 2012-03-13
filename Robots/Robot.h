@@ -22,7 +22,6 @@ private:
 private:
 	std::string									m_sName;
 
-//	SimClient									m_pSimClient;
 	std::map < std::string, CameraDevice* >		m_vCameras;
 	// ... add more things
 

@@ -22,6 +22,7 @@ Robot::~Robot()
 void Robot::Init( const std::string& sFile )
 {
 	_Parse( sFile );
+
 	/*
 	// open file and parse it
 	// fill devices into the vector arrays
@@ -43,7 +44,9 @@ void Robot::Init( const std::string& sFile )
 		*/
 }
 
-bool Robot::_Parse( const std::string& sFile )
+bool Robot::_Parse( const std::string& sFile,	//< Input:
+					SimClient& pClient			//< Output:
+				  )
 {
 	TiXmlDocument doc( sFile.c_str() );
 	if (!doc.LoadFile()) {
