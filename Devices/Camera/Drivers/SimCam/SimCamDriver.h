@@ -18,12 +18,10 @@ class SimCamDriver : public CameraDriver
         bool Capture( std::vector<cv::Mat>& vImages );
         bool Init();
     private:
-        unsigned int                                m_nNumCams;
-//        std::vector< Eigen::Matrix<double,6,1> >    m_vExtrinsics;
-        unsigned int                                m_nViewportWidth;
-        unsigned int                                m_nViewportHeight;
-        double                                      m_dZNear;
-        double                                      m_dZFar;
+        unsigned int                        m_nNumCams;
+        std::vector< Eigen::Matrix3d >		m_vIntrinsics; // K matrices
+        std::vector< Eigen::Matrix4d >		m_vExtrinsics;
+//		CameraMan*							m_pCamMan;
 
 };
 

@@ -16,12 +16,11 @@ endif()
 
 # Build SimCam driver
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/SimCam ${CMAKE_MODULE_PATH} )
-find_package( OGRE QUIET )
+#find_package( OGRE QUIET )
 #message( STATUS "GOT ${OGRE_LIBRARIES}" )
-if( OGRE_FOUND )
+#if( OGRE_FOUND )
     add_subdirectory( SimCam )
-#    add_definitions( -DUSE_BUMBLEBEE_2 )
-endif()
+#endif()
 
 
 add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )

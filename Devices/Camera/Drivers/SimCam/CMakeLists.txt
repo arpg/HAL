@@ -1,15 +1,14 @@
 # 1) Build the library:
 set( DRIVER_SOURCES SimCamDriver.cpp )
-set( DRIVER_HEADERS SimCamDriver.h TinyOgre.h )
-include_directories( ${OGRE_INCLUDE_DIRS} )
+set( DRIVER_HEADERS SimCamDriver.h )
 add_library( SimCamDriver ${DRIVER_SOURCES} ${DRIVER_HEADERS} )
 
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${OGRE_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_rpg_include_dirs( ${CMAKE_CURRENT_BINARY_DIR} )
 add_to_rpg_libraries( SimCamDriver )
 
-list( APPEND RPG_LIBRARIES ${OGRE_LIBRARIES} )
+list( APPEND RPG_LIBRARIES )
 set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
