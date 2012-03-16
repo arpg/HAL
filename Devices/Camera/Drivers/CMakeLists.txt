@@ -14,6 +14,13 @@ if( DC1394_2_FOUND )
     add_definitions( -DUSE_BUMBLEBEE_2 )
 endif()
 
+# Build Kinect driver if OpenNI is installed
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Kinect ${CMAKE_MODULE_PATH} )
+find_package( OpenNI QUIET )
+if( OPENNI_FOUND )
+    add_subdirectory( Kinect )
+endif()
+
 # Build SimCam driver
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/SimCam ${CMAKE_MODULE_PATH} )
 #find_package( OGRE QUIET )
@@ -27,5 +34,3 @@ add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 
 # Build the camera driver registery library
 add_to_rpg_libraries( CameraDriverRegistery )
-
-

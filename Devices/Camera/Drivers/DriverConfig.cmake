@@ -6,7 +6,7 @@ macro( add_driver DRIVER_DIR )
     include( ${DRIVER_DIR}/DriverConfig.cmake )
     if( ${BUILD_DRIVER} )
         add_subdirectory( ${DRIVER_DIR} )
-        set( USE_${DRIVER_NAME} 
+        set( USE_${DRIVER_NAME}
 "// AUTOMAGICALLY GENERATED:
 #ifdef USE_${DRIVER_NAME}
 #include \"RPG/Devices/Camera/Drivers/${DRIVER_DIR}/${DRIVER_HEADER}\"
@@ -22,5 +22,3 @@ endmacro()
 # Output driver list so we compile known drivers in:
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/DriverList.h.in
                         ${CMAKE_CURRENT_SOURCE_DIR}/test.h IMMEDIATE @ONLY )
-
-
