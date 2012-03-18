@@ -26,59 +26,84 @@ KinectDriver::~KinectDriver()
 //
 bool KinectDriver::Init()
 {
-    assert(m_pPropertyMap);
-    m_pPropertyMap->PrintPropertyMap();
+	XnMapOutputMode MapMode;
+	MapMode.nXRes = XN_VGA_X_RES;
+	MapMode.nYRes = XN_VGA_Y_RES;
+	MapMode.nFPS = 30;
 
-    std::string ConfigFile = m_pPropertyMap->GetProperty( "ConfigFile", "");
-
-    // for now we will init context through a config file specified
-    // by the property map.. in the future this will be removed
-   	XnStatus rc;
-
+	XnStatus rc;
 	EnumerationErrors errors;
-    rc = m_Context.InitFromXmlFile( ConfigFile.c_str(), m_ScriptNode, &errors);
-	if (rc == XN_STATUS_NO_NODE_PRESENT)
-	{
-		XnChar strError[1024];
+	XnChar strError[1024];
+
+	rc = m_Context.Init ();
+
+	if (rc != XN_STATUS_OK) {
 		errors.ToString(strError, 1024);
 		printf("%s\n", strError);
 		return false;
 	}
-	else if (rc != XN_STATUS_OK)
-	{
-		printf("Open failed: %s\n", xnGetStatusString(rc));
+
+	// we need this part if we have multiple kinects connected
+	// we would pass an ID (int) to initialize each one
+	/*
+	NodeInfoList NodeList;
+	rc = m_Context.EnumerateProductionTrees ( XN_NODE_TYPE_DEVICE, NULL, NodeList, 0 );
+	if (rc != XN_STATUS_OK) {
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
 		return false;
 	}
 
-	rc = m_Context.FindExistingNode(XN_NODE_TYPE_DEPTH, m_DepthNode);
-	if (rc != XN_STATUS_OK)
-	{
-		printf("No depth node exists! Check your XML.");
+	NodeInfoList::Iterator it = devicesList.Begin ();
+	for (int i = 0; i < device; ++i)
+		it++;
+
+	NodeInfo NodeInf = *it;
+
+	ProductionNode ProdNode;
+
+	rc = m_Context.CreateProductionTree ( NodeInf, ProdNode );
+	if (rc != XN_STATUS_OK) {
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
 		return false;
 	}
+	*/
 
-	rc = m_Context.FindExistingNode(XN_NODE_TYPE_IMAGE, m_ImageNode);
-	if (rc != XN_STATUS_OK)
-	{
-		printf("No image node exists! Check your XML.");
+	// create depth generator
+	rc = m_DepthNode.Create(m_Context);
+	if (rc != XN_STATUS_OK) {
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
 		return false;
 	}
+	rc = m_DepthNode.SetMapOutputMode(MapMode);
 
-    // read once to get some info on resolution and image format
-	m_DepthNode.GetMetaData(m_DepthMD);
-	m_ImageNode.GetMetaData(m_ImageMD);
-
-	// Hybrid mode isn't supported in this sample
-	if (m_ImageMD.FullXRes() != m_DepthMD.FullXRes() || m_ImageMD.FullYRes() != m_DepthMD.FullYRes())
-	{
-		printf ("The device depth and image resolution must be equal!\n");
-		return false;
+	// create image generator
+	rc = m_ImageNode.Create(m_Context);
+	if (rc != XN_STATUS_OK) {
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
+	} else {
+		rc = m_ImageNode.SetMapOutputMode(MapMode);
 	}
 
-	// RGB is the only image format supported.
-	if (m_ImageMD.PixelFormat() != XN_PIXEL_FORMAT_RGB24)
-	{
-		printf("The device image format must be RGB24\n");
+	// --- GET CAMERA PARAMS ---
+	XnUInt64 depth_focal_length_SXGA_mm;   //in mm
+	m_DepthNode.GetIntProperty ("ZPD", depth_focal_length_SXGA_mm);
+
+	double pixelSize;
+	m_DepthNode.GetRealProperty ( "ZPPS", pixelSize );  // in mm
+
+	float depth_focal_length_SXGA = static_cast<float>(depth_focal_length_SXGA_mm / pixelSize);
+	m_pPropertyMap->SetProperty( "DepthFocalLength", depth_focal_length_SXGA / 2 );
+
+	// --- END GETTING PARAMS ---
+
+	rc = m_Context.StartGeneratingAll();
+	if (rc != XN_STATUS_OK) {
+		errors.ToString(strError, 1024);
+		printf("%s\n", strError);
 		return false;
 	}
 
@@ -86,7 +111,7 @@ bool KinectDriver::Init()
     // perhaps pass through PropertyMap
     m_Context.SetGlobalMirror(true);
 
-    return true;
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,19 +128,16 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 		return false;
 	}
 
-	m_DepthNode.GetMetaData(m_DepthMD);
-	m_ImageNode.GetMetaData(m_ImageMD);
-
-	const XnDepthPixel* pDepth = m_DepthMD.Data();
-	const XnUInt8* pImage = m_ImageMD.Data();
-
-    // prepare return images
+	// prepare return images
     vImages.clear();
     vImages.resize(2);
 
     //----------------------------------------------------------------------------
     // image 0 is RGB image
     vImages[0] = cv::Mat( 480, 640, CV_8UC3 );
+
+	// get RGB image data
+	m_ImageNode.GetMetaData(m_ImageMD);
 
     const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
 
@@ -136,11 +158,18 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 
     //----------------------------------------------------------------------------
     // image 1 is depth image
-    vImages[1] = cv::Mat( 480, 640, CV_8UC3 );
+    vImages[1] = cv::Mat( 480, 640, CV_16UC1 );
 
-    float DepthHist[MAX_DEPTH];
+	// get depth image data
+	m_DepthNode.GetMetaData(m_DepthMD);
+	const XnDepthPixel* pDepth = m_DepthMD.Data();
 
-    // Calculate the accumulative histogram (the yellow display...)
+	// this is used to calculate histogram.. we don't need this
+	// we'll just pass the raw data
+	/*
+	float DepthHist[MAX_DEPTH];
+
+    // Calculate the accumulative histogram
 	xnOSMemSet(DepthHist, 0, MAX_DEPTH*sizeof(float));
 
 	unsigned int nNumberOfPoints = 0;
@@ -166,26 +195,23 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 			DepthHist[nIndex] = (unsigned int)(256 * (1.0f - (DepthHist[nIndex] / nNumberOfPoints)));
 		}
 	}
-
+	*/
 
     const XnDepthPixel* pDepthRow = m_DepthMD.Data();
 
     for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
     {
         const XnDepthPixel* pDepth = pDepthRow;
-
         for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
         {
-            if (*pDepth != 0)
+			vImages[1].at<unsigned short>(y,x) = *pDepth;
+			/*
+			if (*pDepth != 0)
             {
-                int nHistValue = DepthHist[*pDepth];
-                unsigned int idx = x * 3;
-                vImages[1].at<unsigned char>(y,idx) = 0;
-                vImages[1].at<unsigned char>(y,idx+1) = nHistValue;
-                vImages[1].at<unsigned char>(y,idx+2) = nHistValue;
+                vImages[1].at<unsigned char>(y,x) = DepthHist[*pDepth];
             }
+			*/
         }
-
         pDepthRow += m_DepthMD.XRes();
     }
 

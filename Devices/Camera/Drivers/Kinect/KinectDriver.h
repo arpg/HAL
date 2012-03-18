@@ -19,7 +19,6 @@ class KinectDriver : public CameraDriver
         bool Init();
     private:
         xn::Context             m_Context;
-        xn::ScriptNode          m_ScriptNode;
         xn::DepthGenerator      m_DepthNode;
         xn::ImageGenerator      m_ImageNode;
         xn::DepthMetaData       m_DepthMD;

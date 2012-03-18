@@ -83,7 +83,10 @@ bool SimCamDriver::Init()
 	mvl::Print( m_vExtrinsics[1], "Right Sensor Pose" );
 
 	// get client pointer from property map
+	// SimClient* pSimClient;
+	// pSimClient = m_pPropertyMap->GetProperty<SimClient*>( "SimClientPtr", NULL );
 	// add cameraman
+	// pSimClient->AddCameraMan();
 	// store cameraman pointer in member variable
 
     return true;
