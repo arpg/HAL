@@ -55,9 +55,14 @@ bool FileReaderDriver::Init()
         std::string sChannelName  = (format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
 
+        //Split path from regex
+        std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
+        
         // Now generate the list of files for each channel
         std::vector< std::string>& vFiles = m_vFileList[ii];
-        if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
+        
+        if(mvl::FindFiles(sChannelPath,sChannelRegex,vFiles) == false){
+        //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
         	cout << "No files found from regexp!" << endl;
             exit(1);
         }

@@ -69,6 +69,8 @@ set( COMMON_LIBRARIES
         ${Boost_LIBRARIES}
    )
 
+list( APPEND COMMON_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} )
+
 ################################################################
 # Make COMMON libs/headers available to all (overkill, but easy to use)
 include_directories( ${COMMON_INCLUDE_DIRS}  )
