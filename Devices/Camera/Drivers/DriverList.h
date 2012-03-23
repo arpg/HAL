@@ -14,13 +14,15 @@ CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
 #include "RPG/Devices/Camera/Drivers/Webcam/WebcamDriver.h"
 CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
 
-//#ifdef USE_BUMBLEBEE_2
+#ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
-//#endif
+#endif
 
+#ifdef USE_KINECT
 #include "RPG/Devices/Camera/Drivers/Kinect/KinectDriver.h"
 CameraDriverRegisteryEntry<KinectDriver> _KinectReg( "Kinect" );
+#endif
 
 #include "RPG/Devices/Camera/Drivers/SimCam/SimCamDriver.h"
 CameraDriverRegisteryEntry<SimCamDriver> _SimCamReg( "SimCam" );
