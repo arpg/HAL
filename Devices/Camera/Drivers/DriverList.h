@@ -24,9 +24,10 @@ CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 CameraDriverRegisteryEntry<KinectDriver> _KinectReg( "Kinect" );
 #endif
 
-#include "RPG/Devices/Camera/Drivers/SimCam/SimCamDriver.h"
-CameraDriverRegisteryEntry<SimCamDriver> _SimCamReg( "SimCam" );
-
+#ifdef USE_NODECAM
+#include "RPG/Devices/Camera/Drivers/NodeCam/NodeCamDriver.h"
+CameraDriverRegisteryEntry<NodeCamDriver> _NodeCamReg( "NodeCam" );
+#endif
 
 #endif
 

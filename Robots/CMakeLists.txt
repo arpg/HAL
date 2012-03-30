@@ -1,8 +1,6 @@
 # 1) Build the library
-set( XML_HDRS XML/rg_tinyxml.h )
-set( XML_SRCS XML/rg_tinyxml.cpp XML/rg_tinyxmlparser.cpp XML/rg_tinyxmlerror.cpp )
-set( ROBOT_HEADERS Robot.h ${XML_HDRS} )
-set( ROBOT_SOURCES Robot.cpp ${XML_SRCS} )
+set( ROBOT_HEADERS Robot.h )
+set( ROBOT_SOURCES Robot.cpp )
 
 add_library( Robot ${ROBOT_SOURCES} ${ROBOT_HEADERS} )
 

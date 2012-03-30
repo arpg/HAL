@@ -23,20 +23,25 @@ FileReaderDriver::~FileReaderDriver()
 bool FileReaderDriver::Capture( std::vector<cv::Mat>& vImages )
 {
 
-    // allocate images if neccessary
+    // allocate images if necessary
     if( vImages.size() != m_nNumChannels ){
-        vImages.resize( m_nNumChannels ); 
+        vImages.resize( m_nNumChannels );
     }
+
+	// loop over if we finished our files!
+	if( m_nCurrentImageIndex == m_nNumImages ) {
+		m_nCurrentImageIndex = 0;
+	}
 
     // TODO: this is kinda lame and insecure, change eventually
     char        imgFile[100];
     // now fetch the next set of images
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-	sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
-	
-	// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
-	vImages[ii] = cv::imread( imgFile, 0 );
-//	printf("Read %s.\n", imgFile );
+		sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
+
+		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
+		vImages[ii] = cv::imread( imgFile, 0 );
+		//	printf("Read %s.\n", imgFile );
     }
     m_nCurrentImageIndex++;
     return true;
@@ -57,10 +62,10 @@ bool FileReaderDriver::Init()
 
         //Split path from regex
         std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
-        
+
         // Now generate the list of files for each channel
         std::vector< std::string>& vFiles = m_vFileList[ii];
-        
+
         if(mvl::FindFiles(sChannelPath,sChannelRegex,vFiles) == false){
         //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
         	cout << "No files found from regexp!" << endl;
@@ -75,15 +80,15 @@ bool FileReaderDriver::Init()
     }
 
     // make sure each channel has the same number of images
-    unsigned int nImages = m_vFileList[0].size();
+    m_nNumImages = m_vFileList[0].size();
     for( unsigned int ii = 1; ii < m_nNumChannels; ii++ ){
-        if( m_vFileList[ii].size() != nImages ){
+        if( m_vFileList[ii].size() != m_nNumImages ){
             mvl::PrintError( "ERROR: uneven number of files\n" );
             exit(1);
         }
     }
-    
+
     m_nCurrentImageIndex = m_pPropertyMap->GetProperty<int>( "StartFrame", 0 );
-    
+
     return true;
 }

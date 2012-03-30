@@ -22,14 +22,13 @@ if( OPENNI_FOUND )
     add_definitions( -DUSE_KINECT )
 endif()
 
-# Build SimCam driver
-set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/SimCam ${CMAKE_MODULE_PATH} )
-#find_package( OGRE QUIET )
-#message( STATUS "GOT ${OGRE_LIBRARIES}" )
-#if( OGRE_FOUND )
-    add_subdirectory( SimCam )
-#endif()
-
+# Build NodeCam driver
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/NodeCam ${CMAKE_MODULE_PATH} )
+find_package( ZeroMQ QUIET )
+if( ZeroMQ_FOUND )
+    add_subdirectory( NodeCam )
+    add_definitions( -DUSE_NODECAM )
+endif()
 
 add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 

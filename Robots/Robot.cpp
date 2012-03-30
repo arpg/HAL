@@ -7,7 +7,7 @@
 
 #include "Robot.h"
 
-#include "XML/rg_tinyxml.h"
+#include <RPG/Utils/XML/rg_tinyxml.h>
 
 using namespace rpg;
 
@@ -48,7 +48,11 @@ bool Robot::Init( const std::string& sFile )
     // Path Tree is a child of the Root
     pNode = hRoot.FirstChild( "sensors" ).FirstChild( "camera" ).Node();
 
-//	SimClient *pSimClient = NULL;
+	// keep a pointer for simulation (if needed)
+	// the casting is performed inside the cameras themselves
+	// this is kind of ugly, but it is a quick way to "share"
+	// the same SimClient pointer to different cameras/actuators
+	void* pSimClient = NULL;
 
     for( pNode; pNode; pNode=pNode->NextSibling())
     {
@@ -61,10 +65,7 @@ bool Robot::Init( const std::string& sFile )
 		CameraDevice *pCam = new CameraDevice;
 
 		if( sType == "sim" ) {
-//			if(pSimClient == NULL) {
-//				pSimClient = new SimClient();
-//			}
-//			pCam->GetProperty("SimClientPtr",pSimClient);
+			pCam->SetProperty("SimClientPtr", pSimClient);
 		}
 
 		pElem = pNode->FirstChildElement();
@@ -80,6 +81,9 @@ bool Robot::Init( const std::string& sFile )
 			std::cout << "'" << sDev << "' is an invalid input device." << std::endl;
 			exit(0);
 		}
+
+		pSimClient = pCam->GetProperty<void*>("SimClientPtr");
+
 
 		// add new camera to map list
 		m_vCameras[sName] = pCam;

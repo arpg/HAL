@@ -44,7 +44,7 @@ bool KinectDriver::Init()
 	}
 
 	// we need this part if we have multiple kinects connected
-	// we would pass an ID (int) to initialize each one
+	// we would pass an ID (int) to initialize a particular one
 	/*
 	NodeInfoList NodeList;
 	rc = m_Context.EnumerateProductionTrees ( XN_NODE_TYPE_DEVICE, NULL, NodeList, 0 );
@@ -89,14 +89,36 @@ bool KinectDriver::Init()
 	}
 
 	// --- GET CAMERA PARAMS ---
+
+	// focal length in mm
 	XnUInt64 depth_focal_length_SXGA_mm;   //in mm
 	m_DepthNode.GetIntProperty ("ZPD", depth_focal_length_SXGA_mm);
 
+	// pixel size in mm
 	double pixelSize;
 	m_DepthNode.GetRealProperty ( "ZPPS", pixelSize );  // in mm
 
+	// focal length in pixels
 	float depth_focal_length_SXGA = static_cast<float>(depth_focal_length_SXGA_mm / pixelSize);
 	m_pPropertyMap->SetProperty( "DepthFocalLength", depth_focal_length_SXGA / 2 );
+
+	/*
+	max_depth = m_DepthNode.GetDeviceMaxDepth ();
+
+	XnDouble baseline_local;
+	depth.GetRealProperty ("LDDIS", baseline_local);
+
+	XnUInt64 shadow_value_local;
+	depth.GetIntProperty ("ShadowValue", shadow_value_local);
+	shadow_value = (int)shadow_value_local;
+
+	XnUInt64 no_sample_value_local;
+	depth.GetIntProperty ("NoSampleValue", no_sample_value_local);
+	no_sample_value = (int)no_sample_value_local;
+
+	// baseline from cm -> mm
+	baseline = (float)(baseline_local * 10);
+	*/
 
 	// --- END GETTING PARAMS ---
 
@@ -106,10 +128,6 @@ bool KinectDriver::Init()
 		printf("%s\n", strError);
 		return false;
 	}
-
-    // "mirror" the image.. not sure if we should do that?
-    // perhaps pass through PropertyMap
-    m_Context.SetGlobalMirror(true);
 
 	return true;
 }
@@ -162,40 +180,6 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 
 	// get depth image data
 	m_DepthNode.GetMetaData(m_DepthMD);
-	const XnDepthPixel* pDepth = m_DepthMD.Data();
-
-	// this is used to calculate histogram.. we don't need this
-	// we'll just pass the raw data
-	/*
-	float DepthHist[MAX_DEPTH];
-
-    // Calculate the accumulative histogram
-	xnOSMemSet(DepthHist, 0, MAX_DEPTH*sizeof(float));
-
-	unsigned int nNumberOfPoints = 0;
-	for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
-	{
-		for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
-		{
-			if (*pDepth != 0)
-			{
-				DepthHist[*pDepth]++;
-				nNumberOfPoints++;
-			}
-		}
-	}
-	for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
-	{
-		DepthHist[nIndex] += DepthHist[nIndex-1];
-	}
-	if (nNumberOfPoints)
-	{
-		for (int nIndex=1; nIndex<MAX_DEPTH; nIndex++)
-		{
-			DepthHist[nIndex] = (unsigned int)(256 * (1.0f - (DepthHist[nIndex] / nNumberOfPoints)));
-		}
-	}
-	*/
 
     const XnDepthPixel* pDepthRow = m_DepthMD.Data();
 
@@ -205,12 +189,6 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
         for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
         {
 			vImages[1].at<unsigned short>(y,x) = *pDepth;
-			/*
-			if (*pDepth != 0)
-            {
-                vImages[1].at<unsigned char>(y,x) = DepthHist[*pDepth];
-            }
-			*/
         }
         pDepthRow += m_DepthMD.XRes();
     }
