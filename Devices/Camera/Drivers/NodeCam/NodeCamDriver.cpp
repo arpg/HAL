@@ -34,8 +34,13 @@ bool NodeCamDriver::Capture( std::vector<cv::Mat>& vImages )
 	zmq::message_t ZmqMsg;
 
 	// read from ZMQ
-	if( m_pSocket->recv( &ZmqMsg ) == false ) {
-		// nothing to read
+	try {
+		if( m_pSocket->recv( &ZmqMsg ) == false ) {
+			// nothing to read
+			return false;
+		}
+	}
+	catch( zmq::error_t error ) {
 		return false;
 	}
 
