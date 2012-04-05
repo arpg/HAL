@@ -14,6 +14,7 @@ class FileReaderDriver : public CameraDriver
         // vector of lists of files
         std::vector< std::vector< std::string > >  m_vFileList;
         unsigned int                               m_nCurrentImageIndex;
+        unsigned int                               m_nStartFrame;
 		unsigned int                               m_nNumImages;
         unsigned int                               m_nNumChannels;
 };

@@ -30,7 +30,7 @@ bool FileReaderDriver::Capture( std::vector<cv::Mat>& vImages )
 
 	// loop over if we finished our files!
 	if( m_nCurrentImageIndex == m_nNumImages ) {
-		m_nCurrentImageIndex = 0;
+        m_nCurrentImageIndex = m_nStartFrame;
 	}
 
     // TODO: this is kinda lame and insecure, change eventually
@@ -55,6 +55,7 @@ bool FileReaderDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     m_nNumChannels = m_pPropertyMap->GetProperty<int>( "NumChannels", 0 );
+
     m_vFileList.resize( m_nNumChannels );
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         std::string sChannelName  = (format("Channel-%d")%ii).str();
@@ -88,7 +89,8 @@ bool FileReaderDriver::Init()
         }
     }
 
-    m_nCurrentImageIndex = m_pPropertyMap->GetProperty<int>( "StartFrame", 0 );
+    m_nStartFrame = m_pPropertyMap->GetProperty<int>( "StartFrame", 0 );
+    m_nCurrentImageIndex = m_nStartFrame;
 
     return true;
 }
