@@ -40,7 +40,7 @@ bool FireFlyDriver::Capture( std::vector<cv::Mat>& vImages )
 {
 
     // allocate images if necessary
-    if( vImages.size() != 2 ){
+    if( vImages.size() != 1 ){
         vImages.resize( 1 );
         // and setup images
         vImages[0] = cv::Mat(m_nImageHeight, m_nImageWidth, CV_8UC1);

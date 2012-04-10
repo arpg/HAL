@@ -5,6 +5,9 @@ add_subdirectory( FileReader )
 # Build webcam driver
 add_subdirectory( Webcam )
 
+# Build HDMI driver
+add_subdirectory( HDMI )
+
 # Build Bumblebee 2 driver (you also need to make sure to edit DriverList.h)
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Bumblebee2 ${CMAKE_MODULE_PATH} )
 find_package( DC1394_2 QUIET )
