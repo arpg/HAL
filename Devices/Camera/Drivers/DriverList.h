@@ -19,6 +19,11 @@ CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 #endif
 
+#ifdef USE_FIREFLY
+#include "RPG/Devices/Camera/Drivers/FireFly/FireFlyDriver.h"
+CameraDriverRegisteryEntry<FireFlyDriver> _FireFlyReg( "FireFly" );
+#endif
+
 #ifdef USE_KINECT
 #include "RPG/Devices/Camera/Drivers/Kinect/KinectDriver.h"
 CameraDriverRegisteryEntry<KinectDriver> _KinectReg( "Kinect" );

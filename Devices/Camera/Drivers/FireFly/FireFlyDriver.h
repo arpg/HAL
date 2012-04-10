@@ -1,20 +1,20 @@
 /*
-   \file Bumblebee2Driver.h
+   \file FireFlyDriver.h
 
  */
 
-#ifndef _BUMBLEBEE2_H_
-#define _BUMBLEBEE2_H_
+#ifndef _FIREFLY_H_
+#define _FIREFLY_H_
 
 #include <dc1394/dc1394.h>
 #include <mvl/camera/camera.h>
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
-class Bumblebee2Driver : public CameraDriver
+class FireFlyDriver : public CameraDriver
 {
     public:
-        Bumblebee2Driver();
-        virtual ~Bumblebee2Driver();
+        FireFlyDriver();
+        virtual ~FireFlyDriver();
         bool Capture( std::vector<cv::Mat>& vImages );
         bool Init();
 	private:
@@ -27,8 +27,7 @@ class Bumblebee2Driver : public CameraDriver
         dc1394featureset_t       m_vFeatures;
         unsigned int             m_nImageWidth;
         unsigned int             m_nImageHeight;
-        mvl_camera_t*			 m_pLeftCMod;
-        mvl_camera_t*			 m_pRightCMod;
+        mvl_camera_t*			 m_pCamMod;
 
 };
 

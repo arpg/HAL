@@ -14,6 +14,15 @@ if( DC1394_2_FOUND )
     add_definitions( -DUSE_BUMBLEBEE_2 )
 endif()
 
+# Build FireFly driver
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/FireFly ${CMAKE_MODULE_PATH} )
+find_package( DC1394_2 QUIET )
+#message( STATUS "GOT ${DC1394_2_LIBRARIES}" )
+if( DC1394_2_FOUND )
+    add_subdirectory( FireFly )
+    add_definitions( -DUSE_FIREFLY )
+endif()
+
 # Build Kinect driver if OpenNI is installed
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Kinect ${CMAKE_MODULE_PATH} )
 find_package( OpenNI QUIET )

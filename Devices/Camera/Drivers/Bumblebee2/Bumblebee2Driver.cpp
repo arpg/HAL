@@ -13,7 +13,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
-void cleanup_and_exit( dc1394camera_t *pCam )
+void Bumblebee2Driver::_cleanup_and_exit( dc1394camera_t *pCam )
 {
     dc1394_video_set_transmission( pCam, DC1394_OFF );
     dc1394_capture_stop( pCam );
@@ -24,7 +24,7 @@ void cleanup_and_exit( dc1394camera_t *pCam )
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
-Bumblebee2Driver::Bumblebee2Driver() 
+Bumblebee2Driver::Bumblebee2Driver()
 {
 }
 
@@ -41,7 +41,7 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
 
     // allocate images if neccessary
     if( vImages.size() != 2 ){
-        vImages.resize( 2 ); 
+        vImages.resize( 2 );
         // and setup images
         vImages[0] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
         vImages[1] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
@@ -52,7 +52,7 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     dc1394video_frame_t* pFrame;
     dc1394error_t e;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
-    DC1394_ERR_CLN_RTN(e, cleanup_and_exit(m_pCam),"Could not capture a frame");
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam),"Could not capture a frame");
 
     uint8_t buff[m_nImageWidth*m_nImageHeight*2];
     // trying stuff
@@ -112,8 +112,8 @@ bool Bumblebee2Driver::Init()
     double pose[16];
     std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
     std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","");
-    std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","");
-    
+    std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","");
+
 	m_pLeftCMod  = mvl_read_camera(sLeftCModel.c_str(), pose );
 	m_pRightCMod = mvl_read_camera(sRightCModel.c_str(), pose );
 
@@ -156,7 +156,7 @@ bool Bumblebee2Driver::Init()
 
     dc1394color_coding_t coding;
     e = dc1394_get_color_coding_from_video_mode( m_pCam, m_nVideoMode, &coding );
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not get color coding");
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not get color coding");
 
     // capure an initial image to get the image sizes (SetProperty)
 
@@ -167,10 +167,10 @@ bool Bumblebee2Driver::Init()
 //    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
 
     e = dc1394_video_set_iso_speed( m_pCam, DC1394_ISO_SPEED_400 );
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not set iso speed");
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not set iso speed");
 
     e = dc1394_video_set_mode( m_pCam, m_nVideoMode );
-    DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not set video mode");
+    DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam),"Could not set video mode");
 
 //    e = dc1394_video_set_framerate( m_pCam, m_nFramerate );
 //    DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not set framerate" );
@@ -178,7 +178,7 @@ bool Bumblebee2Driver::Init()
     int nNumDMAChannels = 4;
     e = dc1394_capture_setup( m_pCam, nNumDMAChannels,
     DC1394_CAPTURE_FLAGS_DEFAULT );
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not setup camera. make sure that the video mode and framerate are supported by your camera.");
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not setup camera. make sure that the video mode and framerate are supported by your camera.");
 
     // print camera features
     e = dc1394_feature_get_all( m_pCam, &m_vFeatures );
@@ -191,17 +191,17 @@ bool Bumblebee2Driver::Init()
 
     // initiate transmission
     e = dc1394_video_set_transmission( m_pCam, DC1394_ON );
-    DC1394_ERR_CLN_RTN( e, cleanup_and_exit(m_pCam),"Could not start camera iso transmission");
+    DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam),"Could not start camera iso transmission");
 
     //  capture one frame
     dc1394video_frame_t* pFrame;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
-    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not capture a frame");
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not capture a frame");
 
 
     // copy to our buffer, decimate, convert, etc.
 
-    
+
     // print capture image information. this is RAW, interlaced and in Format7
     m_nImageWidth = pFrame->size[0];
     m_nImageHeight = pFrame->size[1];
@@ -214,10 +214,10 @@ bool Bumblebee2Driver::Init()
     printf("Total Bytes: %llu\n", pFrame->total_bytes );
     printf("------------------------\n");
     */
-    
+
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
 
 
-    return true; 
+    return true;
 }
