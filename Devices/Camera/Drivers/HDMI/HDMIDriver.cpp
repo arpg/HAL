@@ -57,7 +57,8 @@ bool HDMIDriver::Init()
 
 	BMDVideoInputFlags			inputFlags = 0;
 	BMDDisplayMode				selectedDisplayMode = bmdModeHD720p60;
-	BMDPixelFormat				pixelFormat = bmdFormat8BitBGRA ;
+	BMDPixelFormat				pixelFormat = bmdFormat8BitYUV;
+
 
     result = m_pDeckLinkInput->EnableVideoInput(selectedDisplayMode, pixelFormat, inputFlags);
     if(result != S_OK)
