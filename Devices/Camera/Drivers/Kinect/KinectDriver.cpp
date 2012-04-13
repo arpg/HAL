@@ -157,6 +157,9 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 	// get RGB image data
 	m_ImageNode.GetMetaData(m_ImageMD);
 
+    long unsigned int TimeStampRGB = m_ImageMD.Timestamp();
+	m_pPropertyMap->SetProperty( "TimestampRGB", TimeStampRGB );
+
     const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
 
     for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
@@ -180,6 +183,8 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 
 	// get depth image data
 	m_DepthNode.GetMetaData(m_DepthMD);
+    long unsigned int TimeStampDepth = m_DepthMD.Timestamp();
+	m_pPropertyMap->SetProperty( "TimestampDepth", TimeStampDepth );
 
     const XnDepthPixel* pDepthRow = m_DepthMD.Data();
 
