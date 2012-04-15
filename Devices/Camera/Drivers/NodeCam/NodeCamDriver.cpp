@@ -10,6 +10,9 @@
 #include <Mvlpp/Mvl.h>
 #include <Mvlpp/Utils.h>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
@@ -48,6 +51,8 @@ bool NodeCamDriver::Capture( std::vector<cv::Mat>& vImages )
 		return false;
 	}
 
+	std::cout << "Message size is: " << ZmqMsg.size() << std::endl;
+
 	// message type is of format:
 	// NumImages|Img1Width|Img1Height|Img1Format|Img1Data|Img2Width|...
 
@@ -75,15 +80,40 @@ bool NodeCamDriver::Capture( std::vector<cv::Mat>& vImages )
 		MsgPtr += sizeof(ImgType);
 
 		// decode image type from OpenCV type
-		unsigned int ImgDepth = ((ImgType & 0x0111) / 2 ) + 1;
+		unsigned int ImgDepth;
+		switch(ImgType & 7) {
+		case 0:
+		case 1:
+			ImgDepth = 1;
+			break;
+		case 2:
+		case 3:
+			ImgDepth = 2;
+			break;
+		case 4:
+		case 5:
+			ImgDepth = 4;
+			break;
+		case 6:
+			ImgDepth = 8;
+			break;
+		}
+
 		unsigned int ImgChannels = (ImgType >> 3) + 1;
 
-		vImages[ii] = cv::Mat( ImgHeight, ImgWidth, ImgType, (void*)MsgPtr );
-		MsgPtr += ImgHeight * ImgWidth * ImgDepth * ImgChannels;
+		vImages[ii] = cv::Mat( ImgHeight, ImgWidth, ImgType );
+
+		unsigned int ImgSize = ImgHeight * ImgWidth * ImgDepth * ImgChannels;
+		memcpy( vImages[ii].data, (void*)MsgPtr, ImgSize );
+
+		MsgPtr += ImgSize;
+
+		std::cout << ii+1 << "/" << NumImgs << " Width: " << ImgWidth << " - Height: " << ImgHeight;
+		std::cout << " - Img Type: " << ImgType;
+		std::cout << " - Depth: " << ImgDepth << " - Channels: " << ImgChannels << " - Total Bytes: ";
+		std::cout << ImgHeight * ImgWidth * ImgDepth * ImgChannels << std::endl;
 	}
 
-
-    // save depth in matrix
 	return true;
 }
 
