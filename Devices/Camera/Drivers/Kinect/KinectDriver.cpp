@@ -89,6 +89,7 @@ bool KinectDriver::Init()
 	}
 
 	// --- GET CAMERA PARAMS ---
+    // Details can be found in XnStreamParams.h
 
 	// focal length in mm
 	XnUInt64 depth_focal_length_SXGA_mm;   //in mm
@@ -102,11 +103,13 @@ bool KinectDriver::Init()
 	float depth_focal_length_SXGA = static_cast<float>(depth_focal_length_SXGA_mm / pixelSize);
 	m_pPropertyMap->SetProperty( "DepthFocalLength", depth_focal_length_SXGA / 2 );
 
+	XnDouble dBaselineRGBDepth;
+	m_DepthNode.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
+	m_pPropertyMap->SetProperty( "RGBDepthBaseline", dBaselineRGBDepth );
+
 	/*
 	max_depth = m_DepthNode.GetDeviceMaxDepth ();
 
-	XnDouble baseline_local;
-	depth.GetRealProperty ("LDDIS", baseline_local);
 
 	XnUInt64 shadow_value_local;
 	depth.GetIntProperty ("ShadowValue", shadow_value_local);
@@ -150,17 +153,24 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
     vImages.clear();
     vImages.resize(2);
 
-    //----------------------------------------------------------------------------
-    // image 0 is RGB image
-    vImages[0] = cv::Mat( 480, 640, CV_8UC3 );
-
+    // Get data pointers from Kinect
 	// get RGB image data
 	m_ImageNode.GetMetaData(m_ImageMD);
+	// get depth image data
+	m_DepthNode.GetMetaData(m_DepthMD);
+
+    const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
+    const XnDepthPixel* pDepthRow = m_DepthMD.Data();
 
     long unsigned int TimeStampRGB = m_ImageMD.Timestamp();
 	m_pPropertyMap->SetProperty( "TimestampRGB", TimeStampRGB );
 
-    const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
+    long unsigned int TimeStampDepth = m_DepthMD.Timestamp();
+	m_pPropertyMap->SetProperty( "TimestampDepth", TimeStampDepth );
+
+    //----------------------------------------------------------------------------
+    // image 0 is RGB image
+    vImages[0] = cv::Mat( 480, 640, CV_8UC3 );
 
     for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
     {
@@ -180,13 +190,6 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
     //----------------------------------------------------------------------------
     // image 1 is depth image
     vImages[1] = cv::Mat( 480, 640, CV_16UC1 );
-
-	// get depth image data
-	m_DepthNode.GetMetaData(m_DepthMD);
-    long unsigned int TimeStampDepth = m_DepthMD.Timestamp();
-	m_pPropertyMap->SetProperty( "TimestampDepth", TimeStampDepth );
-
-    const XnDepthPixel* pDepthRow = m_DepthMD.Data();
 
     for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
     {

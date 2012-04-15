@@ -4,7 +4,7 @@ set( BB2_DRIVER_HEADERS Bumblebee2Driver.h )
 add_library( Bumblebee2Driver ${BB2_DRIVER_SOURCES} ${BB2_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${DC1394_2_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_rpg_include_dirs( ${DC1394_2_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_rpg_libraries( Bumblebee2Driver )
 
 list( APPEND RPG_LIBRARIES ${DC1394_2_LIBRARIES} )

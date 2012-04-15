@@ -4,7 +4,7 @@ set( FILEREADER_DRIVER_HEADERS FileReaderDriver.h )
 add_library( FileReaderDriver ${FILEREADER_DRIVER_SOURCES} ${FILEREADER_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_rpg_libraries( FileReaderDriver )
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 

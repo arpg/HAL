@@ -4,7 +4,7 @@ set( FF_DRIVER_HEADERS FireFlyDriver.h )
 add_library( FireFlyDriver ${FF_DRIVER_SOURCES} ${FF_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${DC1394_2_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_rpg_include_dirs( ${DC1394_2_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_rpg_libraries( FireFlyDriver )
 
 list( APPEND RPG_LIBRARIES ${DC1394_2_LIBRARIES} )
