@@ -1,7 +1,7 @@
 # 1) Build the library
 include_directories( Blackmagic )
-set( HDMI_DRIVER_SOURCES HDMIDriver.cpp Blackmagic/DeckLinkAPIDispatch.cpp )
-set( HDMI_DRIVER_HEADERS HDMIDriver.h )
+set( HDMI_DRIVER_SOURCES HDMIDriver.cpp Blackmagic/DeckLinkAPIDispatch.cpp CaptureDelegate.cpp)
+set( HDMI_DRIVER_HEADERS HDMIDriver.h CaptureDelegate.h)
 add_library( HDMIDriver ${HDMI_DRIVER_SOURCES} ${HDMI_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:

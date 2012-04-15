@@ -19,12 +19,26 @@ HDMIDriver::~HDMIDriver()
 ///////////////////////////////////////////////////////////////////////////////
 bool HDMIDriver::Capture( std::vector<cv::Mat>& vImages )
 {
-
+    // if there are any matrices, delete them 
+    vImages.clear();
+    
+    char *buffer;
+    int length;
+    bool result = m_pDelegate->GetFrame(buffer, length);
+    //check to make sure we had a frame to get
+    if( result == false ) {
+        return false;
+    }
+    
     // allocate images if necessary
     if( vImages.size() != m_nNumImages ){
         vImages.resize( m_nNumImages );
     }
-
+    
+    // now copy the images from the delegate
+    for (int ii = 0; ii < m_nNumImages; ii++) {
+        vImages[ii] = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
+    }
     return true;
 }
 
@@ -59,6 +73,10 @@ bool HDMIDriver::Init()
 	BMDDisplayMode				selectedDisplayMode = bmdModeHD720p60;
 	BMDPixelFormat				pixelFormat = bmdFormat8BitYUV;
 
+    // set up the callback delegate
+    int bufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
+    m_pDelegate = new CaptureDelegate(bufferCount,m_nNumImages,m_nImageWidth,m_nImageHeight);
+    m_pDeckLinkInput->SetCallback( m_pDelegate );
 
     result = m_pDeckLinkInput->EnableVideoInput(selectedDisplayMode, pixelFormat, inputFlags);
     if(result != S_OK)

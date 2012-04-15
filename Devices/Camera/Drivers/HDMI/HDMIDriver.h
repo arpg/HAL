@@ -4,6 +4,7 @@
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
 #include "Blackmagic/DeckLinkAPI.h"
+#include "CaptureDelegate.h"
 
 
 class HDMIDriver : public CameraDriver
@@ -22,6 +23,8 @@ class HDMIDriver : public CameraDriver
 		IDeckLinkInput*					m_pDeckLinkInput;
 		IDeckLinkDisplayModeIterator*	m_pDisplayModeIterator;
 		IDeckLinkIterator*				m_pIterator;
+
+        CaptureDelegate*                m_pDelegate;
 
 };
 
