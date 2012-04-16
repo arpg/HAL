@@ -24,11 +24,9 @@ bool HDMIDriver::Capture( std::vector<cv::Mat>& vImages )
     
     char *buffer;
     int length;
-    bool result = m_pDelegate->GetFrame(buffer, length);
-    //check to make sure we had a frame to get
-    if( result == false ) {
-        return false;
-    }
+    // while there are no frames, block the calls
+    while(m_pDelegate->GetFrame(buffer, length) == false ){ }
+    
     
     // allocate images if necessary
     if( vImages.size() != m_nNumImages ){
@@ -38,6 +36,8 @@ bool HDMIDriver::Capture( std::vector<cv::Mat>& vImages )
     // now copy the images from the delegate
     for (int ii = 0; ii < m_nNumImages; ii++) {
         vImages[ii] = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
+        //advance the pointer forward
+        buffer += m_nImageHeight*m_nImageWidth*4;
     }
     return true;
 }
@@ -52,6 +52,7 @@ bool HDMIDriver::Init()
     m_nNumImages = m_pPropertyMap->GetProperty<int>( "NumImages", 1 );
     m_nImageWidth = m_pPropertyMap->GetProperty<int>( "ImageWidth", 512 );
     m_nImageHeight = m_pPropertyMap->GetProperty<int>( "ImageHeight", 384 );
+    int bufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
 
 	m_pIterator = CreateDeckLinkIteratorInstance();
 
@@ -74,7 +75,7 @@ bool HDMIDriver::Init()
 	BMDPixelFormat				pixelFormat = bmdFormat8BitYUV;
 
     // set up the callback delegate
-    int bufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
+    
     m_pDelegate = new CaptureDelegate(bufferCount,m_nNumImages,m_nImageWidth,m_nImageHeight);
     m_pDeckLinkInput->SetCallback( m_pDelegate );
 
@@ -84,8 +85,13 @@ bool HDMIDriver::Init()
 		fprintf(stderr, "Failed to enable video input. Is another application using the card?\n");
         return false;
     }
-
-
+    
+    
+    // start stream
+    result = m_pDeckLinkInput->StartStreams();
+    if(result != S_OK) {
+        return false;
+    }
 
     return true;
 }
