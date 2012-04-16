@@ -3,14 +3,11 @@
 */
 
 
-#include <vector>
 #ifndef _CAMERA_DRIVER_H_
 #define _CAMERA_DRIVER_H_
 
+#include <RPG/Utils/ImageWrapper.h>
 #include <vector>
-#include <RPG/Utils/PropertyMap.h> // so a CameraDevice can have generic "properties"
-
-#include <opencv/cv.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic camera driver interface
@@ -18,7 +15,7 @@ class CameraDriver
 {
     public:
         // Pure virtual functions driver writers must implement:
-        virtual bool Capture( std::vector<cv::Mat>& vImages ) = 0;
+        virtual bool Capture( std::vector<rpg::ImageWrapper>& vImages ) = 0;
         virtual bool Init() = 0;
         CameraDriver()
         {

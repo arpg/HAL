@@ -4,7 +4,6 @@
 
 #include "NodeCamDriver.h"
 
-#include <opencv/cv.h>	// for Mat structure
 #include <stdio.h>
 
 #include <Mvlpp/Mvl.h>
@@ -27,7 +26,7 @@ NodeCamDriver::~NodeCamDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool NodeCamDriver::Capture( std::vector<cv::Mat>& vImages )
+bool NodeCamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 
     // clear image vector
@@ -101,10 +100,10 @@ bool NodeCamDriver::Capture( std::vector<cv::Mat>& vImages )
 
 		unsigned int ImgChannels = (ImgType >> 3) + 1;
 
-		vImages[ii] = cv::Mat( ImgHeight, ImgWidth, ImgType );
+		vImages[ii].Image = cv::Mat( ImgHeight, ImgWidth, ImgType );
 
 		unsigned int ImgSize = ImgHeight * ImgWidth * ImgDepth * ImgChannels;
-		memcpy( vImages[ii].data, (void*)MsgPtr, ImgSize );
+		memcpy( vImages[ii].Image.data, (void*)MsgPtr, ImgSize );
 
 		MsgPtr += ImgSize;
 

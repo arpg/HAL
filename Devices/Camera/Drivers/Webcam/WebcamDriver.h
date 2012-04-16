@@ -9,10 +9,10 @@ class WebcamDriver : public CameraDriver
     public:
         WebcamDriver();
         virtual ~WebcamDriver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
-	cv::VideoCapture m_pCam;
+        cv::VideoCapture m_pCam;
 };
 
 #endif

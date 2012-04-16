@@ -15,7 +15,7 @@ class Bumblebee2Driver : public CameraDriver
     public:
         Bumblebee2Driver();
         virtual ~Bumblebee2Driver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
 	private:
 		void _cleanup_and_exit( dc1394camera_t *pCam );

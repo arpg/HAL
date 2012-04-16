@@ -12,7 +12,7 @@ class HDMIDriver : public CameraDriver
     public:
         HDMIDriver();
         virtual ~HDMIDriver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
         unsigned int                    m_nNumImages;

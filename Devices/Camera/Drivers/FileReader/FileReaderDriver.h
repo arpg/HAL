@@ -8,7 +8,7 @@ class FileReaderDriver : public CameraDriver
     public:
         FileReaderDriver();
         virtual ~FileReaderDriver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
         // vector of lists of files

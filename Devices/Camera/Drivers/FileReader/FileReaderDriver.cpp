@@ -2,7 +2,6 @@
 #include "FileReaderDriver.h"
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
-#include "opencv/cv.h"	// for Mat structure
 #include "opencv2/highgui/highgui.hpp"	// for imread()
 
 using namespace boost;
@@ -20,7 +19,7 @@ FileReaderDriver::~FileReaderDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool FileReaderDriver::Capture( std::vector<cv::Mat>& vImages )
+bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 
     // allocate images if necessary
@@ -40,7 +39,7 @@ bool FileReaderDriver::Capture( std::vector<cv::Mat>& vImages )
 		sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
 
 		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
-		vImages[ii] = cv::imread( imgFile, 0 );
+		vImages[ii].Image = cv::imread( imgFile, 0 );
 		//	printf("Read %s.\n", imgFile );
     }
     m_nCurrentImageIndex++;

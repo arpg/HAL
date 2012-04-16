@@ -17,25 +17,25 @@ HDMIDriver::~HDMIDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool HDMIDriver::Capture( std::vector<cv::Mat>& vImages )
+bool HDMIDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-    // if there are any matrices, delete them 
+    // if there are any matrices, delete them
     vImages.clear();
-    
+
     char *buffer;
     int length;
     // while there are no frames, block the calls
     while(m_pDelegate->GetFrame(buffer, length) == false ){ }
-    
-    
+
+
     // allocate images if necessary
     if( vImages.size() != m_nNumImages ){
         vImages.resize( m_nNumImages );
     }
-    
+
     // now copy the images from the delegate
     for (int ii = 0; ii < m_nNumImages; ii++) {
-        vImages[ii] = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
+        vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
         //advance the pointer forward
         buffer += m_nImageHeight*m_nImageWidth*4;
     }
@@ -75,7 +75,7 @@ bool HDMIDriver::Init()
 	BMDPixelFormat				pixelFormat = bmdFormat8BitYUV;
 
     // set up the callback delegate
-    
+
     m_pDelegate = new CaptureDelegate(bufferCount,m_nNumImages,m_nImageWidth,m_nImageHeight);
     m_pDeckLinkInput->SetCallback( m_pDelegate );
 
@@ -85,8 +85,8 @@ bool HDMIDriver::Init()
 		fprintf(stderr, "Failed to enable video input. Is another application using the card?\n");
         return false;
     }
-    
-    
+
+
     // start stream
     result = m_pDeckLinkInput->StartStreams();
     if(result != S_OK) {

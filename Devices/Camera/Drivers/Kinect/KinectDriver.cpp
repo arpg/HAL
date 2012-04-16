@@ -4,8 +4,6 @@
 
 #include "KinectDriver.h"
 
-#include <opencv/cv.h>	// for Mat structure
-
 #define MAX_DEPTH 10000
 
 using namespace xn;
@@ -137,7 +135,7 @@ bool KinectDriver::Init()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
+bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 	XnStatus rc = XN_STATUS_OK;
 
@@ -170,7 +168,7 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 
     //----------------------------------------------------------------------------
     // image 0 is RGB image
-    vImages[0] = cv::Mat( 480, 640, CV_8UC3 );
+    vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
 
     for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
     {
@@ -179,9 +177,9 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
         for (unsigned int x = 0; x < m_ImageMD.XRes(); ++x, ++pImage)
         {
             unsigned int idx = x * 3;
-            vImages[0].at<unsigned char>(y,idx) = pImage->nBlue;
-            vImages[0].at<unsigned char>(y,idx+1) = pImage->nGreen;
-            vImages[0].at<unsigned char>(y,idx+2) = pImage->nRed;
+            vImages[0].Image.at<unsigned char>(y,idx) = pImage->nBlue;
+            vImages[0].Image.at<unsigned char>(y,idx+1) = pImage->nGreen;
+            vImages[0].Image.at<unsigned char>(y,idx+2) = pImage->nRed;
         }
 
         pImageRow += m_ImageMD.XRes();
@@ -189,14 +187,14 @@ bool KinectDriver::Capture( std::vector<cv::Mat>& vImages )
 
     //----------------------------------------------------------------------------
     // image 1 is depth image
-    vImages[1] = cv::Mat( 480, 640, CV_16UC1 );
+    vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
 
     for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
     {
         const XnDepthPixel* pDepth = pDepthRow;
         for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
         {
-			vImages[1].at<unsigned short>(y,x) = *pDepth;
+			vImages[1].Image.at<unsigned short>(y,x) = *pDepth;
         }
         pDepthRow += m_DepthMD.XRes();
     }

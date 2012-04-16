@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include "Bumblebee2Driver.h"
 #include <dc1394/conversions.h>
-#include <opencv/cv.h>	// for Mat structure
 #include <mvl/image/image.h> // to rectify
 #include <mvl/stereo/stereo.h>
 
@@ -36,15 +35,15 @@ Bumblebee2Driver::~Bumblebee2Driver()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
+bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 
-    // allocate images if neccessary
+    // allocate images if necessary
     if( vImages.size() != 2 ){
         vImages.resize( 2 );
         // and setup images
-        vImages[0] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
-        vImages[1] = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
+        vImages[0].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
+        vImages[1].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
     }
     // should also check images are the right size, type etc
 
@@ -66,12 +65,12 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     		b = buff[ (ii * m_nImageWidth) + jj + 1 ];
     		c = buff[((ii + 1) * m_nImageWidth) + jj ];
     		d = buff[((ii + 1) * m_nImageWidth) + jj + 1 ];
-    		vImages[0].data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
+    		vImages[0].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
     		a = buff[ ((ii + m_nImageHeight) * m_nImageWidth) + jj   ];
     		b = buff[ ((ii + m_nImageHeight) * m_nImageWidth) + jj + 1 ];
     		c = buff[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj ];
     		d = buff[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj + 1 ];
-    		vImages[1].data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
+    		vImages[1].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
     	}
     }
 
@@ -79,20 +78,20 @@ bool Bumblebee2Driver::Capture( std::vector<cv::Mat>& vImages )
     mvl_image_t *left_img, *left_img_rect, *right_img, *right_img_rect;
 
 	// OpenCV image to MVL image
-    left_img = mvl_image_alloc( vImages[0].cols, vImages[0].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[0].data );
-    right_img = mvl_image_alloc( vImages[1].cols, vImages[1].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[1].data );
+    left_img = mvl_image_alloc( vImages[0].Image.cols, vImages[0].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[0].Image.data );
+    right_img = mvl_image_alloc( vImages[1].Image.cols, vImages[1].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[1].Image.data );
 
 	// allocate space to hold rectified images
-    left_img_rect = mvl_image_alloc( vImages[0].cols, vImages[0].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
-    right_img_rect = mvl_image_alloc( vImages[1].cols, vImages[1].rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
+    left_img_rect = mvl_image_alloc( vImages[0].Image.cols, vImages[0].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
+    right_img_rect = mvl_image_alloc( vImages[1].Image.cols, vImages[1].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
 
     // rectify
     mvl_rectify( m_pLeftCMod, left_img, left_img_rect );
     mvl_rectify( m_pRightCMod, right_img, right_img_rect );
 
 	// MVL image to OpenCV image
-    memcpy( vImages[0].data, left_img_rect->data, vImages[0].cols*vImages[0].rows );
-    memcpy( vImages[1].data, right_img_rect->data, vImages[1].cols*vImages[1].rows );
+    memcpy( vImages[0].Image.data, left_img_rect->data, vImages[0].Image.cols*vImages[0].Image.rows );
+    memcpy( vImages[1].Image.data, right_img_rect->data, vImages[1].Image.cols*vImages[1].Image.rows );
 
 
     // release the frame

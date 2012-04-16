@@ -45,7 +45,7 @@ class CameraDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
-        bool Capture( std::vector<cv::Mat>& vImages )
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages )
         {
             if( m_pDriver ){
                 return m_pDriver->Capture( vImages );

@@ -15,7 +15,7 @@ class FireFlyDriver : public CameraDriver
     public:
         FireFlyDriver();
         virtual ~FireFlyDriver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
 	private:
 		void _cleanup_and_exit( dc1394camera_t *pCam );

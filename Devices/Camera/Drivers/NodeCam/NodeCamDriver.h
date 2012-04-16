@@ -15,7 +15,7 @@ class NodeCamDriver : public CameraDriver
     public:
         NodeCamDriver();
         virtual ~NodeCamDriver();
-        bool Capture( std::vector<cv::Mat>& vImages );
+        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
         zmq::context_t*             m_pContext;     // ZMQ context

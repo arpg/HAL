@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include "FireFlyDriver.h"
 #include <dc1394/conversions.h>
-#include <opencv/cv.h>	// for Mat structure
 #include <mvl/image/image.h> // to rectify
 #include <mvl/stereo/stereo.h>
 
@@ -36,14 +35,14 @@ FireFlyDriver::~FireFlyDriver()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-bool FireFlyDriver::Capture( std::vector<cv::Mat>& vImages )
+bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 
     // allocate images if necessary
     if( vImages.size() != 1 ){
         vImages.resize( 1 );
         // and setup images
-        vImages[0] = cv::Mat(m_nImageHeight, m_nImageWidth, CV_8UC1);
+        vImages[0].Image = cv::Mat(m_nImageHeight, m_nImageWidth, CV_8UC1);
     }
 
     //  capture one frame
@@ -65,7 +64,7 @@ bool FireFlyDriver::Capture( std::vector<cv::Mat>& vImages )
 //    mvl_rectify( m_pCamMod, img, img_rect );
 
 	// MVL image to OpenCV image
-    memcpy( vImages[0].data, pFrame->image, vImages[0].cols*vImages[0].rows );
+    memcpy( vImages[0].Image.data, pFrame->image, vImages[0].Image.cols*vImages[0].Image.rows );
 
 
     // release the frame
