@@ -9,7 +9,6 @@
 #define	CAPTUREDELEGATE_H
 
 #include <pthread.h>
-#include <zmq.hpp>
 #include <queue>
 
 #include "Blackmagic/DeckLinkAPI.h"
@@ -19,7 +18,7 @@ public:
     CaptureDelegate(const int bufferCount, int nNumImages, int nImageWidth, int nImageHeight);
     ~CaptureDelegate();
 
-    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, LPVOID *ppv) {
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID , LPVOID *) {
         return E_NOINTERFACE;
     }
     virtual ULONG STDMETHODCALLTYPE AddRef(void);
@@ -28,13 +27,10 @@ public:
     virtual HRESULT STDMETHODCALLTYPE VideoInputFrameArrived(IDeckLinkVideoInputFrame*, IDeckLinkAudioInputPacket*);
     bool GetFrame(char *&buffer, int &lengthOut);
 
-private:
-    zmq::context_t* m_pContext;
-    zmq::socket_t* m_pSocket;
-
+    private:    
     unsigned int m_nBufferCount;
     unsigned long m_frameCount;
-    int m_maxFrames;
+    unsigned int m_maxFrames;
     BMDTimecodeFormat m_timecodeFormat;
     ULONG m_refCount;
     pthread_mutex_t m_mutex;

@@ -51,19 +51,18 @@ long unsigned int count = 0;
 
 extern pthread_cond_t sleepCond;
 
-CaptureDelegate::CaptureDelegate(const int bufferCount, int nNumImages, int nImageWidth, int nImageHeight) : m_refCount(0), m_frameCount(0), m_maxFrames(-1), m_timecodeFormat(0) {
+CaptureDelegate::CaptureDelegate(const int bufferCount, int nNumImages, int nImageWidth, int nImageHeight) : m_maxFrames(-1), m_timecodeFormat(0) {
+    m_frameCount = 0;
+    m_refCount = 0; 
     m_nImageWidth = nImageWidth;
     m_nImageHeight = nImageHeight;
     m_nNumImages = nNumImages;
     
     m_nBufferCount = bufferCount;
     pthread_mutex_init(&m_mutex, NULL);
-    m_pContext = new zmq::context_t(1);
-    m_pSocket = new zmq::socket_t(*m_pContext, ZMQ_PUB);
-    m_pSocket->bind("tcp://*:6666");
-
+    
     //fill the used and free buffers
-    for (int ii = 0; ii < m_nBufferCount; ii++) {
+    for (unsigned int ii = 0; ii < m_nBufferCount; ii++) {
         m_pFreeBuffers.push(new char[1920 * 1080 * 4]);
     }
 }
@@ -152,7 +151,7 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     timecodeString != NULL ? timecodeString : "No timecode",
                 videoFrame->GetHeight(),
                     videoFrame->GetRowBytes() * videoFrame->GetHeight());
-            /**/
+            */
 
             if (timecodeString) {
                 free((void*) timecodeString);
@@ -203,7 +202,7 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
             fb++;
 
             // YUV scale conversion
-            float fscale = 255.0 / 219.0;
+            //float fscale = 255.0 / 219.0;
 
             for (int nn = 0; nn < m_nNumImages; nn++) {
                 /*
@@ -299,6 +298,6 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
     return S_OK;
 }
 
-HRESULT CaptureDelegate::VideoInputFormatChanged(BMDVideoInputFormatChangedEvents events, IDeckLinkDisplayMode *mode, BMDDetectedVideoInputFormatFlags) {
+HRESULT CaptureDelegate::VideoInputFormatChanged(BMDVideoInputFormatChangedEvents, IDeckLinkDisplayMode *, BMDDetectedVideoInputFormatFlags) {
     return S_OK;
 }
