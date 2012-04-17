@@ -13,5 +13,5 @@ namespace rpg {
 
 }
 
-#endif	/* IMAGEWRAPPER_H */
+#endif	/* _IMAGEWRAPPER_H_ */
 
