@@ -1,5 +1,5 @@
-#ifndef IMAGEWRAPPER_H
-#define	IMAGEWRAPPEr_H
+#ifndef RPG_IMAGEWRAPPER_H
+#define	RPG_IMAGEWRAPPER_H
 
 #include <opencv/cv.h>
 #include <RPG/Utils/PropertyMap.h>
