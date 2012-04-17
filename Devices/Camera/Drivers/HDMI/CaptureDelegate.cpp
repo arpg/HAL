@@ -49,18 +49,16 @@ long unsigned int count = 0;
 
 
 
-extern pthread_cond_t sleepCond;
-
 CaptureDelegate::CaptureDelegate(const int bufferCount, int nNumImages, int nImageWidth, int nImageHeight) : m_maxFrames(-1), m_timecodeFormat(0) {
     m_frameCount = 0;
-    m_refCount = 0; 
+    m_refCount = 0;
     m_nImageWidth = nImageWidth;
     m_nImageHeight = nImageHeight;
     m_nNumImages = nNumImages;
-    
+
     m_nBufferCount = bufferCount;
     pthread_mutex_init(&m_mutex, NULL);
-    
+
     //fill the used and free buffers
     for (unsigned int ii = 0; ii < m_nBufferCount; ii++) {
         m_pFreeBuffers.push(new char[1920 * 1080 * 4]);
@@ -104,23 +102,23 @@ void Clamp(short& T) {
 bool CaptureDelegate::GetFrame(char *&buffer, int &lengthOut)
 {
     pthread_mutex_lock(&m_mutex);
-    
+
     if(m_pUsedBuffers.empty()) {
         pthread_mutex_unlock(&m_mutex);
         lengthOut = 0;
         buffer = NULL;
-        
+
         return false;
     }else {
         char *buffer = m_pUsedBuffers.front();
         m_pUsedBuffers.pop();
         //add this to the free buffers
         m_pFreeBuffers.push(buffer);
-        
+
         lengthOut = m_nNumImages * m_nImageWidth * m_nImageHeight * 4;
         //std::memcpy(buffer,ptr,lengthOut);
        pthread_mutex_unlock(&m_mutex);
-       
+
        return true;
     }
 }
@@ -178,7 +176,7 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
             //zmq::message_t ZmqMsg(4 + (NUM_IMAGES * (12 + IMG_SIZE)));
             char *MsgPtr;
             //if there are no free buffers it means whoever is reading this
-            //is not reading fast enough so we just have to rewrite over the 
+            //is not reading fast enough so we just have to rewrite over the
             //first item
             pthread_mutex_lock(&m_mutex);
             if (m_pFreeBuffers.empty()) {
@@ -269,8 +267,8 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                 }
 
             }
-            
-            
+
+
             //and now we add this to the tail of the used buffers
             //this is in a critical section
             pthread_mutex_lock(&m_mutex);
@@ -291,7 +289,6 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
 
         m_frameCount++;
         if (m_maxFrames > 0 && m_frameCount >= m_maxFrames) {
-            pthread_cond_signal(&sleepCond);
         }
     }
 

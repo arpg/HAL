@@ -37,10 +37,5 @@ CameraDriverRegisteryEntry<KinectDriver> _KinectReg( "Kinect" );
 CameraDriverRegisteryEntry<NodeCamDriver> _NodeCamReg( "NodeCam" );
 #endif
 
-#ifdef USE_HDMI
-#include "RPG/Devices/Camera/Drivers/HDMI/HDMIDriver.h"
-CameraDriverRegisteryEntry<NodeCamDriver> _NodeCamReg( "HDMI" );
-#endif
-
 #endif
 
