@@ -34,7 +34,7 @@ bool HDMIDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     }
 
     // now copy the images from the delegate
-    for (int ii = 0; ii < m_nNumImages; ii++) {
+    for ( size_t ii = 0; ii < m_nNumImages; ii++) {
         vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
         //advance the pointer forward
         buffer += m_nImageHeight*m_nImageWidth*4;

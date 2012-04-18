@@ -25,12 +25,27 @@ class PropertyMap
 {
     public:
         ////////////////////////////////////////////////////////////////////////
+        template<class T>
+        friend void output( T& oStream, const PropertyMap& prop ) {
+            std::map<std::string,std::string>::const_iterator it;
+            for( it = prop.m_mPropertyMap.begin(); it != prop.m_mPropertyMap.end(); it++ ){
+                oStream << it->first << it->second;
+            }            
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+        friend std::ostream& operator<<( std::ostream& oStream, const PropertyMap& prop ) {
+            std::map<std::string,std::string>::const_iterator it;
+            for( it = prop.m_mPropertyMap.begin(); it != prop.m_mPropertyMap.end(); it++ ){
+                oStream << it->first << it->second;
+            }            
+            return oStream;
+        }
+
+        ////////////////////////////////////////////////////////////////////////
         void PrintPropertyMap()
         {
-            std::map<std::string,std::string>::iterator it;
-            for( it = m_mPropertyMap.begin(); it != m_mPropertyMap.end(); it++ ){
-                std::cout << it->first << ":\t'" << it->second << "'\n";
-            }
+            output( std::cout, *this );
         }
 
         ////////////////////////////////////////////////////////////////////////
