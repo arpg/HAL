@@ -66,8 +66,8 @@ bool FileReaderDriver::Init()
         // Now generate the list of files for each channel
         std::vector< std::string>& vFiles = m_vFileList[ii];
 
-        //if(mvl::FindFiles(sChannelPath,sChannelRegex,vFiles) == false){
-        if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
+        if(mvl::FindFiles(sChannelPath, sChannelRegex, vFiles) == false){
+        //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
         	cout << "No files found from regexp!" << endl;
             exit(1);
         }
