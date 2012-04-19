@@ -7,7 +7,8 @@
 
 namespace rpg {
 
-    struct ImageWrapper {
+    class ImageWrapper {
+    public:
         cv::Mat         Image;
         PropertyMap     Map;
 

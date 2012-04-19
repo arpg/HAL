@@ -38,10 +38,10 @@ endmacro()
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH} )
 
 # look for opencv
-#find_package( OpenCV REQUIRED )
-#include_directories( ${OpenCV_INCLUDE_DIRS} )
-#link_libraries( ${OpenCV_LIBS} )
-#link_directories( ${OpenCV_LINK_DIRECTORIES} )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+link_libraries( ${OpenCV_LIBS} )
+link_directories( ${OpenCV_LINK_DIRECTORIES} )
 
 # find MVL
 find_package( MVL REQUIRED )
@@ -52,8 +52,8 @@ link_directories( ${MVL_LIBRARY_DIRS} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 
-set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${COMMON_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
-set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} CACHE INTERNAL "" FORCE )
+set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${COMMON_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
+set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} ${OpenCV_LIBS} CACHE INTERNAL "" FORCE )
 
 
 add_subdirectory( Devices )
