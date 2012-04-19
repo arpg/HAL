@@ -12,6 +12,12 @@
 #include <queue>
 
 #include "Blackmagic/DeckLinkAPI.h"
+struct ImageBufferStruct
+{
+    unsigned char * m_pImageBuffer;
+    unsigned char * m_pControlBuffer;
+};
+
 
 class CaptureDelegate : public IDeckLinkInputCallback {
 public:
@@ -25,7 +31,7 @@ public:
     virtual ULONG STDMETHODCALLTYPE Release(void);
     virtual HRESULT STDMETHODCALLTYPE VideoInputFormatChanged(BMDVideoInputFormatChangedEvents, IDeckLinkDisplayMode*, BMDDetectedVideoInputFormatFlags);
     virtual HRESULT STDMETHODCALLTYPE VideoInputFrameArrived(IDeckLinkVideoInputFrame*, IDeckLinkAudioInputPacket*);
-    bool GetFrame(char *&buffer, int &lengthOut);
+    bool GetFrame(unsigned char *&buffer, int &lengthOut, unsigned char *&controlBuffer, int &controlLengthOut);
 
     private:    
     unsigned int m_nBufferCount;
@@ -35,8 +41,8 @@ public:
     ULONG m_refCount;
     pthread_mutex_t m_mutex;
     //std::vector<char*>          m_pBuffers;
-    std::queue<char*> m_pUsedBuffers;
-    std::queue<char*> m_pFreeBuffers;
+    std::queue<ImageBufferStruct *> m_pUsedBuffers;
+    std::queue<ImageBufferStruct *> m_pFreeBuffers;
     int m_nNumImages;
     int m_nImageHeight;
     int m_nImageWidth;

@@ -14,6 +14,7 @@
 #include <math.h>
 
 
+
 // Aux Time Functions
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////
@@ -44,9 +45,8 @@ inline double TocMS(double dTic) {
     return ( Tic() - dTic)*1000.;
 }
 
-double ttime = 0;
+double ttime = Tic();
 long unsigned int count = 0;
-
 
 
 CaptureDelegate::CaptureDelegate(const int bufferCount, int nNumImages, int nImageWidth, int nImageHeight) : m_maxFrames(-1), m_timecodeFormat(0) {
@@ -61,7 +61,10 @@ CaptureDelegate::CaptureDelegate(const int bufferCount, int nNumImages, int nIma
 
     //fill the used and free buffers
     for (unsigned int ii = 0; ii < m_nBufferCount; ii++) {
-        m_pFreeBuffers.push(new char[1920 * 1080 * 4]);
+        ImageBufferStruct *pStr = new ImageBufferStruct();
+        pStr->m_pControlBuffer = new unsigned char[1280];
+        pStr->m_pImageBuffer = new unsigned char[1920 * 1080 * 4];
+        m_pFreeBuffers.push(pStr);
     }
 }
 
@@ -99,7 +102,7 @@ void Clamp(short& T) {
     }
 }
 
-bool CaptureDelegate::GetFrame(char *&buffer, int &lengthOut)
+bool CaptureDelegate::GetFrame(unsigned char *&buffer, int &lengthOut, unsigned char *&controlBuffer, int &controlLengthOut)
 {
     pthread_mutex_lock(&m_mutex);
 
@@ -110,12 +113,18 @@ bool CaptureDelegate::GetFrame(char *&buffer, int &lengthOut)
 
         return false;
     }else {
-        char *buffer = m_pUsedBuffers.front();
+        //please don't refactor this code. You are very smart, but pop does not 
+        //return the front element.
+        ImageBufferStruct *pStr = m_pUsedBuffers.front();
         m_pUsedBuffers.pop();
+        buffer = pStr->m_pImageBuffer;
+        controlBuffer = pStr->m_pControlBuffer;
+        
         //add this to the free buffers
-        m_pFreeBuffers.push(buffer);
-
-        lengthOut = m_nNumImages * m_nImageWidth * m_nImageHeight * 4;
+        m_pFreeBuffers.push(pStr);
+        //fprintf(stderr,"Popped a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
+        lengthOut = m_nNumImages * m_nImageWidth * m_nImageHeight;
+        controlLengthOut = 160;
         //std::memcpy(buffer,ptr,lengthOut);
        pthread_mutex_unlock(&m_mutex);
 
@@ -134,7 +143,7 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
 
             double t = Tic();
 
-
+               
             const char *timecodeString = NULL;
             if (m_timecodeFormat != 0) {
                 IDeckLinkTimecode *timecode;
@@ -143,38 +152,14 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                 }
             }
 
-            /*
-            fprintf(stderr, "Frame received (#%lu) [%s] - Valid Frame - Height: %li - Size: %li bytes\n",
-                    m_frameCount,
-                    timecodeString != NULL ? timecodeString : "No timecode",
-                videoFrame->GetHeight(),
-                    videoFrame->GetRowBytes() * videoFrame->GetHeight());
-            */
-
             if (timecodeString) {
                 free((void*) timecodeString);
             }
 
-            //if( m_pSocket ) {
-            //if( m_pSocket ) {
-            // this is hardcoded for now
-            //int NUM_IMAGES = 1;
-            //				int IMG_WIDTH = 640;
-            //int IMG_WIDTH = 1280;
-            //				int IMG_HEIGHT = 480;
-            //int IMG_HEIGHT = 720;
-            //int IMG_TYPE = 0; // equal to CV_8UC1
-
-            // calculate image size
-            //int IMG_SIZE = IMG_WIDTH * IMG_HEIGHT * 1 /* # channels */;
-
             // calculate total number of bytes
             unsigned long int NumBytes = m_nImageWidth * m_nImageHeight;
 
-            // images need to be sent in the following format:
-            // NumImages|Img1Width|Img1Height|Img1Format|Img1Data|Img2Width|...
-            //zmq::message_t ZmqMsg(4 + (NUM_IMAGES * (12 + IMG_SIZE)));
-            char *MsgPtr;
+            ImageBufferStruct *MsgPtr;
             //if there are no free buffers it means whoever is reading this
             //is not reading fast enough so we just have to rewrite over the
             //first item
@@ -188,47 +173,31 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
             }
             pthread_mutex_unlock(&m_mutex);
 
-            // push number of images in message
-            //memcpy( MsgPtr, &NUM_IMAGES, sizeof(NUM_IMAGES) );
-            //MsgPtr += sizeof(NUM_IMAGES);
-
             // get frame pointer
             videoFrame->GetBytes(&frameBytes);
             unsigned char* fb = (unsigned char*) frameBytes;
-
-            // increment pointer to start on Y0
             fb++;
-
-            // YUV scale conversion
-            //float fscale = 255.0 / 219.0;
-
+            unsigned char *controlPtr = MsgPtr->m_pControlBuffer;
+            for(int ii = 0; ii < 160; ii++ ) {
+                unsigned char byte = 0;
+                for( int jj = 0; jj < 8; jj++ ) {
+                    printf("%d ",*fb);
+                    if( *fb > 128 ) {
+                        byte |= 1;
+                    }
+                    byte = byte << 1;                    
+                    fb += 2;                    
+                }
+                printf("\n");
+                *controlPtr = byte;
+                controlPtr++;
+            }
+            fb--;
+                
+            unsigned char *framePtr = MsgPtr->m_pImageBuffer;
             for (int nn = 0; nn < m_nNumImages; nn++) {
-                /*
-                                    // push width, height and image type
-                memcpy( MsgPtr, &IMG_WIDTH, sizeof(IMG_WIDTH) );
-                                    MsgPtr += sizeof(IMG_WIDTH);
-                                    memcpy( MsgPtr, &IMG_HEIGHT, sizeof(IMG_HEIGHT) );
-                                    MsgPtr += sizeof(IMG_HEIGHT);
-                                    memcpy( MsgPtr, &IMG_TYPE, sizeof(IMG_TYPE) );
-                                    MsgPtr += sizeof(IMG_TYPE);
-                 */
-                /*
-                //				for(int ii = 0; ii < 256; ii++ ) {
-                                    printf("first: %d -- ", *fb);
-                                    unsigned char low = round((*fb-16.0)*fscale/16.0);
-                                    fb += 2;
-                                    printf("second: %d --", *fb);
-                                    unsigned char high = round((*fb-16)*fscale/16.0);
-                                    high = high << 4;
-                                    unsigned char byte = high|low;
-                                    printf("lo: %d -- hi: %d -- val: %d = %c\n", low, high, byte, byte);
-                                    fb += 2;
-                //				}
-                 */
-                //*MsgPtr = byte; MsgPtr++;
-
                 //now do the conversion and write it to the pointer
-                for (unsigned long int ii = 0; ii < NumBytes; ii += 4) {
+                for (unsigned long int ii = 0; ii < NumBytes; ii += 2) {
                     unsigned char Cb = *fb;
                     fb++;
                     unsigned char Y0 = *fb;
@@ -237,7 +206,7 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     fb++;
                     unsigned char Y1 = *fb;
                     fb++;
-
+/*
                     short R1 = 1.164 * (Y0 - 16) + 1.793 * (Cr - 128);
                     Clamp(R1);
                     short G1 = 1.164 * (Y0 - 16) - 0.534 * (Cr - 128) - 0.213 * (Cb - 128);
@@ -263,32 +232,34 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     MsgPtr++;
                     *MsgPtr = R2;
                     MsgPtr++;
-
+*/
+                    *framePtr = Y0;
+                    framePtr++;
+                    *framePtr = Y1;
+                    framePtr++;
+                    
                 }
 
             }
+            
+            
 
 
             //and now we add this to the tail of the used buffers
             //this is in a critical section
             pthread_mutex_lock(&m_mutex);
             m_pUsedBuffers.push(MsgPtr);
+            //fprintf(stderr,"Pushed a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
             pthread_mutex_unlock(&m_mutex);
+                
 
-
-
-
-            ttime += Toc(t);
+            
             count++;
-
-            if (count > 300) {
-                fprintf(stderr, "Frame rate is %.2f\n", count / ttime);
+            /*
+            if (count > 500) {
+                fprintf(stderr, "Frame rate is %.2f\n", count / Toc(ttime));
                 exit(0);
-            }
-        }
-
-        m_frameCount++;
-        if (m_maxFrames > 0 && m_frameCount >= m_maxFrames) {
+            }*/
         }
     }
 

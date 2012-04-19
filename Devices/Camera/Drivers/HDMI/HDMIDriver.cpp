@@ -22,22 +22,29 @@ bool HDMIDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     // if there are any matrices, delete them
     vImages.clear();
 
-    char *buffer;
-    int length;
+    unsigned char *buffer, *controlBuffer;
+    int length, controlLength;
     // while there are no frames, block the calls
-    while(m_pDelegate->GetFrame(buffer, length) == false ){ }
+    while(m_pDelegate->GetFrame(buffer, length,controlBuffer,controlLength) == false ){ }
 
 
     // allocate images if necessary
     if( vImages.size() != m_nNumImages ){
         vImages.resize( m_nNumImages );
     }
+    
+    unsigned int timestamp;
+    memcpy( &timestamp, controlBuffer, 4 );
+    printf("Timestamp: %d\n",timestamp);
+    //m_pPropertyMap->SetProperty("Timestamp0", timestamp);
+    //memcpy( &timestamp, controlBuffer+8, 8 );
+    //m_pPropertyMap->SetProperty("Timestamp1", timestamp);
 
     // now copy the images from the delegate
     for ( size_t ii = 0; ii < m_nNumImages; ii++) {
-        vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC3, buffer);
+        vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC1, buffer);
         //advance the pointer forward
-        buffer += m_nImageHeight*m_nImageWidth*4;
+        buffer += m_nImageHeight*m_nImageWidth;
     }
     return true;
 }
@@ -50,8 +57,8 @@ bool HDMIDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     m_nNumImages = m_pPropertyMap->GetProperty<int>( "NumImages", 1 );
-    m_nImageWidth = m_pPropertyMap->GetProperty<int>( "ImageWidth", 512 );
-    m_nImageHeight = m_pPropertyMap->GetProperty<int>( "ImageHeight", 384 );
+    m_nImageWidth = m_pPropertyMap->GetProperty<int>( "ImageWidth", 640 );
+    m_nImageHeight = m_pPropertyMap->GetProperty<int>( "ImageHeight", 480 );
     int bufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
 
 	m_pIterator = CreateDeckLinkIteratorInstance();
