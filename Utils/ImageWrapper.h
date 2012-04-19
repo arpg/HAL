@@ -12,6 +12,15 @@ namespace rpg {
         cv::Mat         Image;
         PropertyMap     Map;
 
+        /// Check if the image has any data
+        bool empty() { return Image.data == NULL; }
+
+        int width() { return Image.cols; }
+        int height() { return Image.rows; }
+        int widthStep() { return static_cast<int>( Image.step ); }
+
+        struct ImageWrapper clone() { struct ImageWrapper ret = *this; this->Image = ret.Image.clone(); return *this; }
+
         /// Write an image to sImageName and the property map to sExtraInfoName.
         /// No checks are made for overwriting.
         inline bool write( const std::string& sImageName, const std::string& sExtraInfoName );

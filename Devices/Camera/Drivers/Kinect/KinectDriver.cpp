@@ -169,6 +169,7 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     //----------------------------------------------------------------------------
     // image 0 is RGB image
     vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
+    vImages[0].Map.SetProperty( "CameraTime", TimeStampRGB );
 
     for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
     {
@@ -188,6 +189,7 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     //----------------------------------------------------------------------------
     // image 1 is depth image
     vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
+    vImages[1].Map.SetProperty( "CameraTime", TimeStampDepth );
 
     for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
     {
