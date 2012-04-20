@@ -33,7 +33,7 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 	}
 
     // TODO: this is kinda lame and insecure, change eventually
-    char        imgFile[100];
+    char imgFile[100];
     // now fetch the next set of images
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
