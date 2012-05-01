@@ -33,9 +33,9 @@ bool HDMIDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumImages );
     }
     
-    unsigned int timestamp;
-    memcpy( &timestamp, controlBuffer, 4 );
-    printf("Timestamp: %d\n",timestamp);
+    //unsigned int timestamp;
+    //memcpy( &timestamp, controlBuffer, 4 );
+    //printf("Timestamp: %d\n",timestamp);
     //m_pPropertyMap->SetProperty("Timestamp0", timestamp);
     //memcpy( &timestamp, controlBuffer+8, 8 );
     //m_pPropertyMap->SetProperty("Timestamp1", timestamp);

@@ -93,11 +93,10 @@ ULONG CaptureDelegate::Release(void) {
     return (ULONG) m_refCount;
 }
 
-void Clamp(short& T) {
+inline void Clamp(short& T) {
     if (T > 255) {
         T = 255;
-    }
-    if (T < 0) {
+    }else if (T < 0) {
         T = 0;
     }
 }
@@ -156,6 +155,15 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                 free((void*) timecodeString);
             }
 
+            /*
+            fprintf(stderr, "Frame received (#%lu) [%s] - Valid Frame - Height: %li - Size: %li bytes\n",
+                    m_frameCount,
+                    timecodeString != NULL ? timecodeString : "No timecode",
+                videoFrame->GetHeight(),
+                    videoFrame->GetRowBytes() * videoFrame->GetHeight());
+            /**/
+            
+            
             // calculate total number of bytes
             unsigned long int NumBytes = m_nImageWidth * m_nImageHeight;
 
@@ -175,29 +183,34 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
 
             // get frame pointer
             videoFrame->GetBytes(&frameBytes);
+            
             unsigned char* fb = (unsigned char*) frameBytes;
+            
+            /*
             fb++;
             unsigned char *controlPtr = MsgPtr->m_pControlBuffer;
             for(int ii = 0; ii < 160; ii++ ) {
                 unsigned char byte = 0;
                 for( int jj = 0; jj < 8; jj++ ) {
-                    printf("%d ",*fb);
+                    //printf("%d ",*fb);
                     if( *fb > 128 ) {
                         byte |= 1;
                     }
                     byte = byte << 1;                    
                     fb += 2;                    
                 }
-                printf("\n");
+                //printf("\n");
                 *controlPtr = byte;
                 controlPtr++;
             }
             fb--;
+            
+            */
                 
             unsigned char *framePtr = MsgPtr->m_pImageBuffer;
             for (int nn = 0; nn < m_nNumImages; nn++) {
                 //now do the conversion and write it to the pointer
-                for (unsigned long int ii = 0; ii < NumBytes; ii += 2) {
+                for (unsigned long int ii = 0; ii < NumBytes; ii += 6) {
                     unsigned char Cb = *fb;
                     fb++;
                     unsigned char Y0 = *fb;
@@ -206,38 +219,38 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     fb++;
                     unsigned char Y1 = *fb;
                     fb++;
-/*
-                    short R1 = 1.164 * (Y0 - 16) + 1.793 * (Cr - 128);
-                    Clamp(R1);
-                    short G1 = 1.164 * (Y0 - 16) - 0.534 * (Cr - 128) - 0.213 * (Cb - 128);
-                    Clamp(G1);
-                    short B1 = 1.164 * (Y0 - 16) + 2.115 * (Cb - 128);
-                    Clamp(B1);
-                    short R2 = 1.164 * (Y1 - 16) + 1.793 * (Cr - 128);
-                    Clamp(R2);
-                    short G2 = 1.164 * (Y1 - 16) - 0.534 * (Cr - 128) - 0.213 * (Cb - 128);
-                    Clamp(G2);
-                    short B2 = 1.164 * (Y1 - 16) + 2.115 * (Cb - 128);
-                    Clamp(B2);
 
-                    *MsgPtr = B1;
-                    MsgPtr++;
-                    *MsgPtr = G1;
-                    MsgPtr++;
-                    *MsgPtr = R1;
-                    MsgPtr++;
-                    *MsgPtr = B2;
-                    MsgPtr++;
-                    *MsgPtr = G2;
-                    MsgPtr++;
-                    *MsgPtr = R2;
-                    MsgPtr++;
-*/
+                    short R1 = 1.164 * (Y0 - 16) + 1.793 * (Cr - 128);
+                    //Clamp(R1);
+                    short G1 = 1.164 * (Y0 - 16) - 0.534 * (Cr - 128) - 0.213 * (Cb - 128);
+                    //Clamp(G1);
+                    short B1 = 1.164 * (Y0 - 16) + 2.115 * (Cb - 128);
+                    //Clamp(B1);
+                    short R2 = 1.164 * (Y1 - 16) + 1.793 * (Cr - 128);
+                    //Clamp(R2);
+                    short G2 = 1.164 * (Y1 - 16) - 0.534 * (Cr - 128) - 0.213 * (Cb - 128);
+                    //Clamp(G2);
+                    short B2 = 1.164 * (Y1 - 16) + 2.115 * (Cb - 128);
+                    //Clamp(B2);
+
+                    *framePtr = R1;
+                    framePtr++;
+                    *framePtr = G1;
+                    framePtr++;
+                    *framePtr = B1;
+                    framePtr++;
+                    *framePtr = R2;
+                    framePtr++;
+                    *framePtr = G2;
+                    framePtr++;
+                    *framePtr = B2;
+                    framePtr++;
+/*
                     *framePtr = Y0;
                     framePtr++;
                     *framePtr = Y1;
-                    framePtr++;
-                    
+                    framePtr++; 
+                    */
                 }
 
             }

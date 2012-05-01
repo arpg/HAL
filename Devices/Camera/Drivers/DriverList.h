@@ -17,6 +17,10 @@ CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
 #include "RPG/Devices/Camera/Drivers/HDMI/HDMIDriver.h"
 CameraDriverRegisteryEntry<HDMIDriver> _HDMIReg( "HDMI" );
 
+#include "RPG/Devices/Camera/Drivers/Dvi2Pci/Dvi2PciDriver.h"
+CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
+
+
 #ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
