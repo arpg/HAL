@@ -10,13 +10,13 @@ namespace rpg {
     ////////////////////////////////////////////////////////////////////////////
     inline ImageWrapper imread( const std::string& sImageFileName, 
                                 const std::string& sExtraInfoFileName,
-                                int nFlags = 1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
+                                int nFlags = -1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
                                 );
 
     ////////////////////////////////////////////////////////////////////////////
     inline ImageWrapper imread( const std::string& sImageFileName, 
                                 bool bReadExtraInfo = true,
-                                int nFlags = 1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
+                                int nFlags = -1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
                                 );
 
     ////////////////////////////////////////////////////////////////////////////
