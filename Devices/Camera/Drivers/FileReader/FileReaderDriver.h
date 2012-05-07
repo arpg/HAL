@@ -3,6 +3,7 @@
 
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
+
 class FileReaderDriver : public CameraDriver
 {
     public:
@@ -10,13 +11,23 @@ class FileReaderDriver : public CameraDriver
         virtual ~FileReaderDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
+        
+    private:
+        void _ThreadCaptureFunc();
+        void _Read( std::vector<rpg::ImageWrapper>& vImages );
+        
     private:
         // vector of lists of files
-        std::vector< std::vector< std::string > >  m_vFileList;
-        unsigned int                               m_nCurrentImageIndex;
-        unsigned int                               m_nStartFrame;
-		unsigned int                               m_nNumImages;
-        unsigned int                               m_nNumChannels;
+        std::vector< std::vector<rpg::ImageWrapper> >    m_vImageBuffer;     
+        std::vector< std::vector< std::string > >        m_vFileList;
+        unsigned int                                     m_nCurrentImageIndex;
+        unsigned int                                     m_nStartFrame;
+		unsigned int                                     m_nNumImages;
+        unsigned int                                     m_nNumChannels;
+        unsigned int                                     m_nBufferSize;
+        volatile unsigned int                            m_nNextRead;
+        volatile unsigned int                            m_nNextCapture;
+        std::vector< bool >                              m_vBufferFree;    
 };
 
 #endif

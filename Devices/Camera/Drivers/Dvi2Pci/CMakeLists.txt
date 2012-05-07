@@ -75,7 +75,12 @@ add_library( slava SDK/slib/src/s_base32.c
                     SDK/slib/src/unix/u_trace.c )
 
 
-file( COPY SDK/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+if(APPLE)
+	file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+else()
+	file( COPY SDK/libfrmgrab/linux/x86_64/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+endif(APPLE)
+
 add_custom_target( frmgrab )
 set_property( TARGET frmgrab PROPERTY LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libfrmgrab.a )
 add_to_rpg_libraries( frmgrab )
