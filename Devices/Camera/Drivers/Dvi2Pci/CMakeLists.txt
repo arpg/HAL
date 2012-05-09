@@ -74,6 +74,7 @@ add_library( slava SDK/slib/src/s_base32.c
                     SDK/slib/src/unix/u_thread.c
                     SDK/slib/src/unix/u_trace.c )
 
+add_to_rpg_libraries( slava )
 
 if(APPLE)
 	file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
@@ -90,7 +91,6 @@ add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR}/includes )
 add_to_rpg_libraries( Dvi2PciDriver )
 add_to_rpg_libraries( v2u )
-add_to_rpg_libraries( slava )
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
