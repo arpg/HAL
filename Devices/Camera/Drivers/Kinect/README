@@ -1,0 +1,9 @@
+To use this driver:
+- Install OpenNI.
+- Install avi2-SensorKinect module.
+
+If runtime fails, verify if the default Kinect module for Kernel 3.0+ in Ubuntu -- "gspca_kinect" -- is loaded. If so, remove it otherwise it would create conflict with OpenNI.
+
+rmmod gspca_kinect
+
+Then blacklist it by adding "blacklist gscpa_kinect" in /etc/modprobe.d/blacklist.conf
