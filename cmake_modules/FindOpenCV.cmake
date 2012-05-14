@@ -1,160 +1,255 @@
-###########################################################
-#                  Find OpenCV Library
-# See http://sourceforge.net/projects/opencvlibrary/
-#----------------------------------------------------------
+# To find OpenCV 2 library visit http://opencv.willowgarage.com/wiki/
 #
-## 1: Setup:
-# The following variables are optionally searched for defaults
-#  OpenCV_DIR:            Base directory of OpenCv tree to use.
+# The follwoing variables are optionally searched for defaults
+#  OpenCV2_ROOT_DIR:                   Base directory of OpenCV 2 tree to use.
 #
-## 2: Variable
 # The following are set after configuration is done: 
+#  OpenCV2_FOUND
+#  OpenCV2_INCLUDE_DIRS
+#  OpenCV2_LIBRARIES
+#
+# $Id: $
 #  
-#  OpenCV_FOUND
-#  OpenCV_LIBS
-#  OpenCV_INCLUDE_DIR
-#  OpenCV_VERSION (OpenCV_VERSION_MAJOR, OpenCV_VERSION_MINOR, OpenCV_VERSION_PATCH)
+# Balazs [2011-01-18]:
+# - Created from scratch for the reorganized OpenCV 2 structure introduced at version 2.2
+# Jbohren [2011-06-10]:
+# - Added OpenCV_ROOT_DIR for UNIX platforms & additional opencv include dir
 #
-#
-# Deprecated variable are used to maintain backward compatibility with
-# the script of Jan Woetzel (2006/09): www.mip.informatik.uni-kiel.de/~jw
-#  OpenCV_INCLUDE_DIRS
-#  OpenCV_LIBRARIES
-#  OpenCV_LINK_DIRECTORIES
-# 
-## 3: Version
-#
-# 2010/04/07 Benoit Rat, Correct a bug when OpenCVConfig.cmake is not found.
-# 2010/03/24 Benoit Rat, Add compatibility for when OpenCVConfig.cmake is not found.
-# 2010/03/22 Benoit Rat, Creation of the script.
-#
-#
-# tested with:
-# - OpenCV 2.1:  MinGW, MSVC2008
-# - OpenCV 2.0:  MinGW, MSVC2008, GCC4
-#
-#
-## 4: Licence:
-#
-# LGPL 2.1 : GNU Lesser General Public License Usage
-# Alternatively, this file may be used under the terms of the GNU Lesser
+# This file should be removed when CMake will provide an equivalent
 
-# General Public License version 2.1 as published by the Free Software
-# Foundation and appearing in the file LICENSE.LGPL included in the
-# packaging of this file.  Please review the following information to
-# ensure the GNU Lesser General Public License version 2.1 requirements
-# will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-# 
-#----------------------------------------------------------
+#MESSAGE(STATUS "Looking for OpenCV2...")
+
+# typical root dirs of installations, exactly one of them is used
+IF(WIN32)
+    SET(OpenCV2_POSSIBLE_ROOT_DIRS
+        "$ENV{OpenCV_ROOT_DIR}"
+        "$ENV{SystemDrive}/OpenCV2.3"                     # Windows: OpenCV 2.3 default installation dir (expected future revision)
+        "$ENV{SystemDrive}/OpenCV2.2"                     # Windows: OpenCV 2.2 default installation dir
+        "$ENV{SystemDrive}/Program Files/OpenCV2.3"       # 32 bit ProgramFiles dir on Win32;  64 bit ProgramFiles dir on Win64 (expected future revision)
+        "$ENV{SystemDrive}/Program Files/OpenCV2.2"       # 32 bit ProgramFiles dir on Win32;  64 bit ProgramFiles dir on Win64
+        "$ENV{SystemDrive}/Program Files (x86)/OpenCV2.3" # 32 bit ProgramFiles dir on Win64 (expected future revision)
+        "$ENV{SystemDrive}/Program Files (x86)/OpenCV2.2" # 32 bit ProgramFiles dir on Win64
+        )
+ELSE(WIN32)
+    SET(OpenCV2_POSSIBLE_ROOT_DIRS
+        "$ENV{ROS_ROOT}/../vision_opencv/opencv2/opencv"
+	"$ENV{OpenCV_ROOT_DIR}"                         # *NIX: custom install location (like ROS)
+        /usr/local                                      # Linux: default dir by CMake
+        /usr                                            # Linux
+        /opt/local                                      # OS X: default MacPorts location
+	)
+    MESSAGE(STATUS ${OpenCV2_POSSIBLE_ROOT_DIRS})
+ENDIF(WIN32)
 
 
-find_path(OpenCV_DIR "OpenCVConfig.cmake" DOC "Root directory of OpenCV")
+# select exactly ONE OpenCV 2 base directory
+# to avoid mixing different version headers and libs
+FIND_PATH(OpenCV2_ROOT_DIR
+          NAMES include/opencv2/opencv.hpp
+          PATHS ${OpenCV2_POSSIBLE_ROOT_DIRS}
+          )
 
-##====================================================
-## Find OpenCV libraries
-##----------------------------------------------------
-if(EXISTS "${OpenCV_DIR}")
-
-        #When its possible to use the Config script use it.
-        if(EXISTS "${OpenCV_DIR}/OpenCVConfig.cmake")
-
-                ## Include the standard CMake script
-                include("${OpenCV_DIR}/OpenCVConfig.cmake")
-
-                ## Search for a specific version
-                set(CVLIB_SUFFIX "${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}")
-
-        #Otherwise it try to guess it.
-        else(EXISTS "${OpenCV_DIR}/OpenCVConfig.cmake")
-
-                set(OPENCV_LIB_COMPONENTS cxcore cv ml highgui cvaux)
-                find_path(OpenCV_INCLUDE_DIR "cv.h" PATHS "${OpenCV_DIR}" PATH_SUFFIXES "include" "include/opencv" DOC "")
-                if(EXISTS  ${OpenCV_INCLUDE_DIR})
-                    include_directories(${OpenCV_INCLUDE_DIR})
-                endif(EXISTS  ${OpenCV_INCLUDE_DIR})
-
-                #Find OpenCV version by looking at cvver.h
-                file(STRINGS ${OpenCV_INCLUDE_DIR}/cvver.h OpenCV_VERSIONS_TMP REGEX "^#define CV_[A-Z]+_VERSION[ \t]+[0-9]+$")
-                string(REGEX REPLACE ".*#define CV_MAJOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MAJOR ${OpenCV_VERSIONS_TMP})
-                string(REGEX REPLACE ".*#define CV_MINOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_MINOR ${OpenCV_VERSIONS_TMP})
-                string(REGEX REPLACE ".*#define CV_SUBMINOR_VERSION[ \t]+([0-9]+).*" "\\1" OpenCV_VERSION_PATCH ${OpenCV_VERSIONS_TMP})
-                set(OpenCV_VERSION ${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.${OpenCV_VERSION_PATCH} CACHE STRING "" FORCE)
-                set(CVLIB_SUFFIX "${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}")
-                
-        endif(EXISTS "${OpenCV_DIR}/OpenCVConfig.cmake")
-
-        
-        
-
-        ## Initiate the variable before the loop
-        set(OpenCV_LIBS "")
-        set(OpenCV_FOUND_TMP true)
-
-        ## Loop over each components
-        foreach(__CVLIB ${OPENCV_LIB_COMPONENTS})
-
-                find_library(OpenCV_${__CVLIB}_LIBRARY_DEBUG NAMES "${__CVLIB}${CVLIB_SUFFIX}d" "lib${__CVLIB}${CVLIB_SUFFIX}d" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
-                find_library(OpenCV_${__CVLIB}_LIBRARY_RELEASE NAMES "${__CVLIB}${CVLIB_SUFFIX}" "lib${__CVLIB}${CVLIB_SUFFIX}" PATHS "${OpenCV_DIR}/lib" NO_DEFAULT_PATH)
-                
-                #Remove the cache value
-                set(OpenCV_${__CVLIB}_LIBRARY "" CACHE STRING "" FORCE)
-        
-                #both debug/release
-                if(OpenCV_${__CVLIB}_LIBRARY_DEBUG AND OpenCV_${__CVLIB}_LIBRARY_RELEASE)
-                        set(OpenCV_${__CVLIB}_LIBRARY debug ${OpenCV_${__CVLIB}_LIBRARY_DEBUG} optimized ${OpenCV_${__CVLIB}_LIBRARY_RELEASE}  CACHE STRING "" FORCE)
-                #only debug
-                elseif(OpenCV_${__CVLIB}_LIBRARY_DEBUG)
-                        set(OpenCV_${__CVLIB}_LIBRARY ${OpenCV_${__CVLIB}_LIBRARY_DEBUG}  CACHE STRING "" FORCE)
-                #only release
-                elseif(OpenCV_${__CVLIB}_LIBRARY_RELEASE)
-                        set(OpenCV_${__CVLIB}_LIBRARY ${OpenCV_${__CVLIB}_LIBRARY_RELEASE}  CACHE STRING "" FORCE)
-                #no library found
-                else()
-                        set(OpenCV_FOUND_TMP false)
-                endif()
-                
-                #Add to the general list
-                if(OpenCV_${__CVLIB}_LIBRARY)
-                        set(OpenCV_LIBS ${OpenCV_LIBS} ${OpenCV_${__CVLIB}_LIBRARY})
-                endif(OpenCV_${__CVLIB}_LIBRARY)
-                
-        endforeach(__CVLIB)
+FIND_PATH(OpenCV2_CORE_INCLUDE_DIR
+          NAMES core_c.h core.hpp wimage.hpp eigen.hpp internal.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/core")
+FIND_PATH(OpenCV2_IMGPROC_INCLUDE_DIR
+          NAMES imgproc_c.h imgproc.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/imgproc")
+FIND_PATH(OpenCV2_FEATURES2D_INCLUDE_DIR
+          NAMES features2d.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/features2d")
+FIND_PATH(OpenCV2_FLANN_INCLUDE_DIR
+          NAMES flann.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/flann")
+FIND_PATH(OpenCV2_CALIB3D_INCLUDE_DIR
+          NAMES calib3d.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/calib3d")
+FIND_PATH(OpenCV2_OBJDETECT_INCLUDE_DIR
+          NAMES objdetect.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/objdetect")
+FIND_PATH(OpenCV2_LEGACY_INCLUDE_DIR
+          NAMES compat.hpp legacy.hpp blobtrack.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/legacy")
+FIND_PATH(OpenCV2_CONTRIB_INCLUDE_DIR
+          NAMES contrib.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/contrib")
+FIND_PATH(OpenCV2_HIGHGUI_INCLUDE_DIR
+          NAMES   highgui_c.h highgui.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/highgui")
+FIND_PATH(OpenCV2_ML_INCLUDE_DIR
+          NAMES ml.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/ml")
+FIND_PATH(OpenCV2_VIDEO_INCLUDE_DIR
+          NAMES tracking.hpp background_segm.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/video")
+FIND_PATH(OpenCV2_GPU_INCLUDE_DIR
+          NAMES gpu.hpp
+          PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/gpu")
 
 
-        set(OpenCV_FOUND ${OpenCV_FOUND_TMP} CACHE BOOL "" FORCE)
+# absolute path to all libraries 
+SET(OPENCV2_LIBRARY_SEARCH_PATHS "${OpenCV2_ROOT_DIR}/lib")
+
+IF(WIN32)
+    SET(OPENCV2_LIBRARY_SEARCH_PATHS
+        ${OPENCV2_LIBRARY_SEARCH_PATHS}
+        "${OpenCV2_ROOT_DIR}/lib/Release"
+        "${OpenCV2_ROOT_DIR}/lib/Debug"
+        )
+    FIND_LIBRARY(OpenCV2_CORE_LIBRARY
+                 NAMES opencv_core230 opencv_core220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_IMGPROC_LIBRARY
+                 NAMES opencv_imgproc230 opencv_imgproc220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_FEATURES2D_LIBRARY
+                 NAMES opencv_features2d230 opencv_features2d220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_FLANN_LIBRARY
+                 NAMES opencv_flann230 opencv_flann220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_CALIB3D_LIBRARY
+                 NAMES opencv_calib3d230 opencv_calib3d220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_OBJDETECT_LIBRARY
+                 NAMES opencv_objdetect230 opencv_objdetect220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_LEGACY_LIBRARY
+                 NAMES opencv_legacy230 opencv_legacy220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_CONTRIB_LIBRARY
+                 NAMES opencv_contrib230 opencv_contrib220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_HIGHGUI_LIBRARY
+                 NAMES opencv_highgui230 opencv_highgui220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_ML_LIBRARY
+                 NAMES opencv_ml230 opencv_ml220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_VIDEO_LIBRARY
+                 NAMES opencv_video230 opencv_video220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_GPU_LIBRARY
+                 NAMES opencv_gpu230 opencv_gpu220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_FFMPEG_LIBRARY
+                 NAMES opencv_ffmpeg230 opencv_ffmpeg220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_TS_LIBRARY
+                 NAMES opencv_ts230 opencv_ts220
+                 PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+ELSE(WIN32)
+    FIND_LIBRARY(OpenCV2_CORE_LIBRARY       NAMES opencv_core       PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_IMGPROC_LIBRARY    NAMES opencv_imgproc    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_FEATURES2D_LIBRARY NAMES opencv_features2d PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_FLANN_LIBRARY      NAMES opencv_flann      PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_CALIB3D_LIBRARY    NAMES opencv_calib3d    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_OBJDETECT_LIBRARY  NAMES opencv_objdetect  PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_LEGACY_LIBRARY     NAMES opencv_legacy     PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_CONTRIB_LIBRARY    NAMES opencv_contrib    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_HIGHGUI_LIBRARY    NAMES opencv_highgui    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_ML_LIBRARY         NAMES opencv_ml         PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_VIDEO_LIBRARY      NAMES opencv_video      PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+    FIND_LIBRARY(OpenCV2_GPU_LIBRARY        NAMES opencv_gpu        PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+ENDIF(WIN32)
+
+SET(OpenCV2_INCLUDE_DIRS
+    ${OpenCV2_ROOT_DIR}/include
+    ${OpenCV2_ROOT_DIR}/include/opencv2
+    ${OpenCV2_CORE_INCLUDE_DIR}
+    ${OpenCV2_IMGPROC_INCLUDE_DIR}
+    ${OpenCV2_FEATURES2D_INCLUDE_DIR}
+    ${OpenCV2_FLANN_INCLUDE_DIR}
+    ${OpenCV2_CALIB3D_INCLUDE_DIR}
+    ${OpenCV2_OBJDETECT_INCLUDE_DIR}
+    ${OpenCV2_LEGACY_INCLUDE_DIR}
+    ${OpenCV2_CONTRIB_INCLUDE_DIR}
+    ${OpenCV2_HIGHGUI_INCLUDE_DIR}
+    ${OpenCV2_ML_INCLUDE_DIR}
+    ${OpenCV2_VIDEO_INCLUDE_DIR}
+    ${OpenCV2_GPU_INCLUDE_DIR}
+    )
+
+SET(OpenCV2_LIBRARIES
+    ${OpenCV2_CORE_LIBRARY}
+    ${OpenCV2_IMGPROC_LIBRARY}
+    ${OpenCV2_FEATURES2D_LIBRARY}
+    ${OpenCV2_FLANN_LIBRARY}
+    ${OpenCV2_CALIB3D_LIBRARY}
+    ${OpenCV2_OBJDETECT_LIBRARY}
+    ${OpenCV2_LEGACY_LIBRARY}
+    ${OpenCV2_CONTRIB_LIBRARY}
+    ${OpenCV2_HIGHGUI_LIBRARY}
+    ${OpenCV2_ML_LIBRARY}
+    ${OpenCV2_VIDEO_LIBRARY}
+    ${OpenCV2_GPU_LIBRARY}
+    )
+IF(WIN32)
+    SET(OpenCV2_INCLUDE_DIRS
+        ${OpenCV2_ROOT_DIR}/include
+        ${OpenCV2_INCLUDE_DIRS}
+        )
+    SET(OpenCV2_LIBRARIES
+        ${OpenCV2_LIBRARIES}
+        ${OpenCV2_FFMPEG_LIBRARY}
+        ${OpenCV2_TS_LIBRARY}
+        )
+ENDIF(WIN32)
+
+SET(OpenCV2_FOUND ON)
+FOREACH(NAME ${OpenCV2_INCLUDE_DIRS})
+    IF(NOT EXISTS ${NAME})
+        SET(OpenCV2_FOUND OFF)
+    ENDIF(NOT EXISTS ${NAME})
+ENDFOREACH(NAME)
+FOREACH(NAME ${OpenCV2_LIBRARIES})
+    IF(NOT EXISTS ${NAME})
+        SET(OpenCV2_FOUND OFF)
+    ENDIF(NOT EXISTS ${NAME})
+ENDFOREACH(NAME)
+
+MARK_AS_ADVANCED(FORCE
+                 OpenCV2_ROOT_DIR
+                 OpenCV2_CORE_INCLUDE_DIR
+                 OpenCV2_IMGPROC_INCLUDE_DIR
+                 OpenCV2_FEATURES2D_INCLUDE_DIR
+                 OpenCV2_FLANN_INCLUDE_DIR
+                 OpenCV2_CALIB3D_INCLUDE_DIR
+                 OpenCV2_OBJDETECT_INCLUDE_DIR
+                 OpenCV2_LEGACY_INCLUDE_DIR
+                 OpenCV2_CONTRIB_INCLUDE_DIR
+                 OpenCV2_HIGHGUI_INCLUDE_DIR
+                 OpenCV2_ML_INCLUDE_DIR
+                 OpenCV2_VIDEO_INCLUDE_DIR
+                 OpenCV2_GPU_INCLUDE_DIR
+                 OpenCV2_CORE_LIBRARY
+                 OpenCV2_IMGPROC_LIBRARY
+                 OpenCV2_FEATURES2D_LIBRARY
+                 OpenCV2_FLANN_LIBRARY
+                 OpenCV2_CALIB3D_LIBRARY
+                 OpenCV2_OBJDETECT_LIBRARY
+                 OpenCV2_LEGACY_LIBRARY
+                 OpenCV2_CONTRIB_LIBRARY
+                 OpenCV2_HIGHGUI_LIBRARY
+                 OpenCV2_ML_LIBRARY
+                 OpenCV2_VIDEO_LIBRARY
+                 OpenCV2_GPU_LIBRARY
+                 )
+IF(WIN32)
+    MARK_AS_ADVANCED(FORCE
+                     OpenCV2_FFMPEG_LIBRARY
+                     OpenCV2_TS_LIBRARY
+                     )
+ENDIF(WIN32)
+
+# display help message
+IF(NOT OpenCV2_FOUND)
+    # make FIND_PACKAGE friendly
+    IF(OpenCV2_FIND_REQUIRED)
+        MESSAGE(FATAL_ERROR "OpenCV 2 not found. Please specify it's location with the OpenCV2_ROOT_DIR env. variable.")
+    ELSE(OpenCV2_FIND_REQUIRED)
+        MESSAGE(STATUS "OpenCV 2 not found.")
+    ENDIF(OpenCV2_FIND_REQUIRED)
+ENDIF(NOT OpenCV2_FOUND)
 
 
-else(EXISTS "${OpenCV_DIR}")
-        set(ERR_MSG "Please specify OpenCV directory using OpenCV_DIR env. variable")
-endif(EXISTS "${OpenCV_DIR}")
-##====================================================
-
-
-##====================================================
-## Print message
-##----------------------------------------------------
-if(NOT OpenCV_FOUND)
-  # make FIND_PACKAGE friendly
-  if(NOT OpenCV_FIND_QUIETLY)
-        if(OpenCV_FIND_REQUIRED)
-          message(FATAL_ERROR "OpenCV required but some headers or libs not found. ${ERR_MSG}")
-        else(OpenCV_FIND_REQUIRED)
-          message(STATUS "WARNING: OpenCV was not found. ${ERR_MSG}")
-        endif(OpenCV_FIND_REQUIRED)
-  endif(NOT OpenCV_FIND_QUIETLY)
-endif(NOT OpenCV_FOUND)
-##====================================================
-
-
-##====================================================
-## Backward compatibility
-##----------------------------------------------------
-if(OpenCV_FOUND)
-option(OpenCV_BACKWARD_COMPA "Add some variable to make this script compatible with the other version of FindOpenCV.cmake" false)
-if(OpenCV_BACKWARD_COMPA)
-        find_path(OpenCV_INCLUDE_DIRS "cv.h" PATHS "${OpenCV_DIR}" PATH_SUFFIXES "include" "include/opencv" DOC "Include directory") 
-        find_path(OpenCV_INCLUDE_DIR "cv.h" PATHS "${OpenCV_DIR}" PATH_SUFFIXES "include" "include/opencv" DOC "Include directory")
-        set(OpenCV_LIBRARIES "${OpenCV_LIBS}" CACHE STRING "" FORCE)
-endif(OpenCV_BACKWARD_COMPA)
-endif(OpenCV_FOUND)
-##====================================================
