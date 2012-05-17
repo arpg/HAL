@@ -45,6 +45,14 @@ if( ZeroMQ_FOUND )
     add_definitions( -DUSE_NODECAM )
 endif()
 
+# Build AlliedVision driver (you also need to make sure to edit DriverList.h)
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/AlliedVision ${CMAKE_MODULE_PATH} )
+find_package( PVAPI QUIET )
+if( PVAPI_FOUND )
+    add_subdirectory( AlliedVision )
+    add_definitions( -DUSE_ALLIEDVISION )
+endif()
+
 add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 
 # Build the camera driver registery library

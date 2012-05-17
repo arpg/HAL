@@ -26,6 +26,11 @@ CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 #endif
 
+#ifdef USE_ALLIEDVISION
+#include "RPG/Devices/Camera/Drivers/AlliedVision/AlliedVisionDriver.h"
+CameraDriverRegisteryEntry<AlliedVisionDriver> _AlliedVisionReg( "AlliedVision" );
+#endif
+
 #ifdef USE_FIREFLY
 #include "RPG/Devices/Camera/Drivers/FireFly/FireFlyDriver.h"
 CameraDriverRegisteryEntry<FireFlyDriver> _FireFlyReg( "FireFly" );
