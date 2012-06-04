@@ -57,7 +57,7 @@ bool FileReaderDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 10 );
+    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 20 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_nCurrentImageIndex = m_nStartFrame;
 
@@ -135,7 +135,10 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
     char imgFile[100];
     
     // now fetch the next set of images
+	//cout << "Reading image pair" << endl;
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
+		//cout  << m_vFileList[ii][m_nCurrentImageIndex] << endl;
+		
 		sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
         
 		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
