@@ -180,7 +180,7 @@ bool MicroStrainDriver::Init()
 //    data_stream_format_descriptors[0] = MIP_AHRS_DATA_ACCEL_SCALED;
 //    data_stream_format_descriptors[1] = MIP_AHRS_DATA_GYRO_SCALED;
 //    data_stream_format_descriptors[2] = MIP_AHRS_DATA_MAG_SCALED;
-    data_stream_format_decimation[0]  = 0x0A;
+    data_stream_format_decimation[0]  = 0x01;
 //    data_stream_format_decimation[1]  = 0x0A;
 //    data_stream_format_decimation[2]  = 0x0A;
     u8 data_stream_format_num_entries = 1;

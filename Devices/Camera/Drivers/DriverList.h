@@ -6,7 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global map of driver name to driver creation function pointers:
-std::map<std::string,CameraDriver*(*)()> g_mDriverTable;
+std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
 #include "RPG/Devices/Camera/Drivers/FileReader/FileReaderDriver.h"
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );

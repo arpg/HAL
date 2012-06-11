@@ -25,7 +25,7 @@
 
 CameraDriver* CreateDriver( const std::string& sDriverName );
 
-extern std::map<std::string,CameraDriver*(*)()> g_mDriverTable;
+extern std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
 class CameraDriver;
 
@@ -49,7 +49,7 @@ class CameraDriverRegisteryEntry
 //            std::cout << "Registered '" << sDriverName << "' driver.\n";
 //            printf("g_mDriverTable lives at %p\n", &g_mDriverTable );
 
-            g_mDriverTable[sDriverName] 
+            g_mCameraDriverTable[sDriverName]
                 = (CameraDriver* (*)())DriverCreationFunction;
 //            std::cout << "Known:\n";
 //            std::map<std::string,CameraDriver*(*)()>::iterator it;

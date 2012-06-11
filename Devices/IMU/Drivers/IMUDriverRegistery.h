@@ -25,7 +25,7 @@
 
 IMUDriver* CreateDriver( const std::string& sDriverName );
 
-extern std::map<std::string,IMUDriver*(*)()> g_mDriverTable;
+extern std::map<std::string,IMUDriver*(*)()> g_mIMUDriverTable;
 
 class IMUDriver;
 
@@ -49,7 +49,7 @@ class IMUDriverRegisteryEntry
 //            std::cout << "Registered '" << sDriverName << "' driver.\n";
 //            printf("g_mDriverTable lives at %p\n", &g_mDriverTable );
 
-            g_mDriverTable[sDriverName] 
+            g_mIMUDriverTable[sDriverName]
                 = (IMUDriver* (*)())DriverCreationFunction;
 //            std::cout << "Known:\n";
 //            std::map<std::string,IMUDriver*(*)()>::iterator it;
