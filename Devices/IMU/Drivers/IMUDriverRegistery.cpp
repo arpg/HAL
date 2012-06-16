@@ -3,7 +3,7 @@
 
 #include "RPG/Devices/IMU/Drivers/DriverList.h"
 
-IMUDriver* CreateDriver( const std::string& sDriverName )
+IMUDriver* CreateIMUDriver( const std::string& sDriverName )
 {
 //    printf("NOW g_mDriverTable lives at %p\n", &g_mDriverTable );
     std::map<std::string,IMUDriver*(*)()>::iterator it;

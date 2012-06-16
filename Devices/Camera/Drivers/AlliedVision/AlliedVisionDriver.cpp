@@ -5,15 +5,19 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <algorithm>
 #include "AlliedVisionDriver.h"
 #include <mvl/image/image.h> // to rectify
 #include <mvl/stereo/stereo.h>
 
 const int NUM_BUFFER_FRAMES = 15;
 const int MAX_RETRIES = 10;
+const int MAX_CAMERA_LIST_SIZE = 20;
 const int RETRY_WAIT_MS = 200;
-const std::string PROPERTY_WIDTH  = "ImageWidth";
-const std::string PROPERTY_HEIGHT = "ImageHeight";
+const std::string PROPERTY_CAM_UUID  = "CamUUID";
+const std::string PROPERTY_NUM_CAMS  = "NumChannels";
+const std::string PROPERTY_WIDTH     = "ImageWidth";
+const std::string PROPERTY_HEIGHT    = "ImageHeight";
 
 // TODO: Set these properly!
 #define _LINUX 1
@@ -60,21 +64,50 @@ struct AlliedVisionCamera
     tPvUint32   m_height;
 };
 
-AlliedVisionCamera* GetCamera()
+AlliedVisionCamera* GetCameraById(unsigned long uuid)
 {
-    tPvUint32 connected;
-    tPvCameraInfoEx list;
+    tPvErr err = ePvErrUnplugged;
 
-    tPvUint32 numCameras = 0;
+    tPvCameraInfoEx camInfo;
+    camInfo.UniqueId = 0;
 
-    for(unsigned retries = MAX_RETRIES; retries > 0; retries-- ) {
+    for(unsigned retries = MAX_RETRIES; err != ePvErrSuccess && retries > 0; retries-- ) {
         Sleep(RETRY_WAIT_MS);
-        numCameras = PvCameraListEx(&list,1,&connected, sizeof(tPvCameraInfoEx));
-        if(numCameras > 0 && connected ) break;
+        err = PvCameraInfoEx(uuid, &camInfo, sizeof(tPvCameraInfoEx) );
     }
 
-    if(numCameras == 1) {
-        return new AlliedVisionCamera(list.UniqueId);
+    if( err == ePvErrSuccess ) {
+        return new AlliedVisionCamera(uuid);
+    }else{
+        std::cerr << "Camera with UUID " << uuid << " not found." << std::endl;
+    }
+
+    return 0;
+}
+
+AlliedVisionCamera* AlliedVisionDriver::GetFirstCamera()
+{
+    tPvUint32 numCameras = 0;
+    tPvCameraInfoEx list[MAX_CAMERA_LIST_SIZE];
+
+    // Find Connected cameras
+    for(unsigned retries = MAX_RETRIES; retries > 0; retries-- ) {
+        Sleep(RETRY_WAIT_MS);
+        numCameras = PvCameraListEx(list,MAX_CAMERA_LIST_SIZE,0, sizeof(tPvCameraInfoEx));
+        if(numCameras > 0) break;
+    }
+
+    for(int i=0; i<numCameras; ++i ) {
+        bool alreadyLoaded = false;
+        for(std::vector<AlliedVisionCamera*>::iterator ic = m_cam.begin(); ic != m_cam.end(); ic++) {
+            if( (*ic)->m_uid == list[i].UniqueId ) {
+                alreadyLoaded = true;
+                break;
+            }
+        }
+        if(!alreadyLoaded) {
+            return new AlliedVisionCamera(list[i].UniqueId);
+        }
     }
 
     return 0;
@@ -92,27 +125,12 @@ AlliedVisionDriver::~AlliedVisionDriver()
     Deinit();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Allocate resources, start camera
-bool AlliedVisionDriver::Init()
+bool AlliedVisionDriver::InitCamera(AlliedVisionCamera* cam, unsigned int width, unsigned int height)
 {
-//    assert(m_pPropertyMap);
-//    m_pPropertyMap->PrintPropertyMap();
-
-    if(PvInitialize() != ePvErrSuccess) {
-        std::cerr << "Failed to initialize PvAPI" << std::endl;
-    }
-
-    m_cam = GetCamera();
-    if( !m_cam ) {
-        std::cerr << "No cameras available" << std::endl;
-        return false;
-    }
-
     tPvErr errCode;
 
     // Open Camera
-    if ((errCode = PvCameraOpen(m_cam->m_uid,ePvAccessMaster,&(m_cam->m_handle))) != ePvErrSuccess) {
+    if ((errCode = PvCameraOpen(cam->m_uid,ePvAccessMaster,&(cam->m_handle))) != ePvErrSuccess) {
         if (errCode == ePvErrAccessDenied) {
             std::cerr << "PvCameraOpen returned ePvErrAccessDenied:\nCamera already open as Master, or camera wasn't properly closed and still waiting to HeartbeatTimeout." << std::endl;
         }else {
@@ -122,35 +140,37 @@ bool AlliedVisionDriver::Init()
     }
 
     // Read default size
-    if( PvAttrUint32Get(m_cam->m_handle,"Width",&m_cam->m_width) != ePvErrSuccess ||
-        PvAttrUint32Get(m_cam->m_handle,"Height",&m_cam->m_height) != ePvErrSuccess ) {
+    if( PvAttrUint32Get(cam->m_handle,"Width",&cam->m_width) != ePvErrSuccess ||
+        PvAttrUint32Get(cam->m_handle,"Height",&cam->m_height) != ePvErrSuccess ) {
         std::cerr << "Unable to read image width or height" << std::endl;
         return false;
     }
 
     // Override size with user settings if supplied
-    m_cam->m_width  = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_WIDTH, m_cam->m_width);
-    m_cam->m_height = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_HEIGHT, m_cam->m_height);
+    if( width > 0 && height > 0 ) {
+        cam->m_width  = width;
+        cam->m_height = height;
+    }
 
     // Write desired image size
-    if( PvAttrUint32Set(m_cam->m_handle,"Width", m_cam->m_width) != ePvErrSuccess ||
-        PvAttrUint32Set(m_cam->m_handle,"Height", m_cam->m_height) != ePvErrSuccess ) {
+    if( PvAttrUint32Set(cam->m_handle,"Width", cam->m_width) != ePvErrSuccess ||
+        PvAttrUint32Set(cam->m_handle,"Height", cam->m_height) != ePvErrSuccess ) {
         std::cerr << "Unable to set image width and height" << std::endl;
         return false;
     }
 
     // Calculate frame buffer size
-    if((errCode = PvAttrUint32Get(m_cam->m_handle,"TotalBytesPerFrame",&m_cam->m_frameSizeBytes)) != ePvErrSuccess) {
+    if((errCode = PvAttrUint32Get(cam->m_handle,"TotalBytesPerFrame",&cam->m_frameSizeBytes)) != ePvErrSuccess) {
         printf("CameraSetup: Get TotalBytesPerFrame err: %u\n", errCode);
         return false;
     }
 
     // Allocate the frame buffers
     for(int i=0;i<NUM_BUFFER_FRAMES;i++) {
-        m_cam->m_frames[i].ImageBuffer = new char[m_cam->m_frameSizeBytes];
+        cam->m_frames[i].ImageBuffer = new char[cam->m_frameSizeBytes];
 
-        if(m_cam->m_frames[i].ImageBuffer) {
-            m_cam->m_frames[i].ImageBufferSize = m_cam->m_frameSizeBytes;
+        if(cam->m_frames[i].ImageBuffer) {
+            cam->m_frames[i].ImageBufferSize = cam->m_frameSizeBytes;
         } else {
             printf("CameraSetup: Failed to allocate buffers.\n");
             return false;
@@ -158,20 +178,31 @@ bool AlliedVisionDriver::Init()
     }
 
     // Increase packet size
-    if((errCode = PvCaptureAdjustPacketSize(m_cam->m_handle,8228)) != ePvErrSuccess) {
+    if((errCode = PvCaptureAdjustPacketSize(cam->m_handle,8228)) != ePvErrSuccess) {
         printf("CameraStart: PvCaptureAdjustPacketSize err: %u\n", errCode);
         return false;
     }
 
+    std::cout << "Successfully initialised AlliedVision Camera with UUID: " << cam->m_uid << std::endl;
+
+    return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Allocate resources, start camera
+bool AlliedVisionDriver::StartCamera(AlliedVisionCamera* cam)
+{
+    tPvErr errCode;
+
     // Start driver capture stream
-    if((errCode = PvCaptureStart(m_cam->m_handle)) != ePvErrSuccess) {
+    if((errCode = PvCaptureStart(cam->m_handle)) != ePvErrSuccess) {
         printf("CameraStart: PvCaptureStart err: %u\n", errCode);
         return false;
     }
 
     // Add buffer frames to capture queue
     for(int i=0;i<NUM_BUFFER_FRAMES;i++) {
-        if((errCode = PvCaptureQueueFrame(m_cam->m_handle,&(m_cam->m_frames[i]), NULL /*FrameDoneCB*/)) != ePvErrSuccess)
+        if((errCode = PvCaptureQueueFrame(cam->m_handle,&(cam->m_frames[i]), NULL /*FrameDoneCB*/)) != ePvErrSuccess)
         {
             printf("CameraStart: PvCaptureQueueFrame err: %u\n", errCode);
             Deinit();
@@ -180,9 +211,9 @@ bool AlliedVisionDriver::Init()
     }
 
     // Set the camera in freerun trigger, continuous mode, and start camera receiving triggers
-    if((PvAttrEnumSet(m_cam->m_handle,"FrameStartTriggerMode","Freerun") != ePvErrSuccess) ||
-        (PvAttrEnumSet(m_cam->m_handle,"AcquisitionMode","Continuous") != ePvErrSuccess) ||
-        (PvCommandRun(m_cam->m_handle,"AcquisitionStart") != ePvErrSuccess))
+    if((PvAttrEnumSet(cam->m_handle,"FrameStartTriggerMode","Freerun") != ePvErrSuccess) ||
+        (PvAttrEnumSet(cam->m_handle,"AcquisitionMode","Continuous") != ePvErrSuccess) ||
+        (PvCommandRun(cam->m_handle,"AcquisitionStart") != ePvErrSuccess))
     {
         printf("CameraStart: failed to set camera attributes\n");
         Deinit();
@@ -193,63 +224,124 @@ bool AlliedVisionDriver::Init()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Allocate resources for all cameras
+bool AlliedVisionDriver::Init()
+{
+    if(PvInitialize() != ePvErrSuccess) {
+        std::cerr << "Failed to initialize PvAPI" << std::endl;
+    }
+
+    m_numCams = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_NUM_CAMS, 1);
+    unsigned int userWidth = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_WIDTH, 0);
+    unsigned int userHeight = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_HEIGHT, 0);
+
+    for(unsigned int i=0; i <m_numCams; ++i ) {
+        std::stringstream ss;
+        ss << PROPERTY_CAM_UUID;
+        ss << i;
+        const std::string guid_property = ss.str();
+        AlliedVisionCamera* cam = 0;
+        unsigned long camUuid = m_pPropertyMap->GetProperty<tPvUint32>(guid_property, 0);
+        cam = (camUuid == 0) ? GetFirstCamera() : GetCameraById(camUuid);
+        if(cam == 0) {
+            return false;
+        }
+        m_cam.push_back(cam);
+    }
+
+    bool success = true;
+    for(unsigned int i=0; i <m_numCams; ++i ) {
+        success &= InitCamera(m_cam[i], userWidth, userHeight);
+    }
+
+    for(unsigned int i=0; i <m_numCams; ++i ) {
+        success &= StartCamera(m_cam[i]);
+    }
+
+    return success;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Stop Camera, free resources
 void AlliedVisionDriver::Deinit()
+{
+    for(unsigned int i=0; i < m_numCams; ++i ) {
+        DeinitCamera(m_cam[i]);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Stop Camera, free resources
+void AlliedVisionDriver::DeinitCamera(AlliedVisionCamera* cam)
 {
     tPvErr errCode;
 
     // Stop camera receiving triggers
-    if ((errCode = PvCommandRun(m_cam->m_handle,"AcquisitionStop")) != ePvErrSuccess) {
+    if ((errCode = PvCommandRun(cam->m_handle,"AcquisitionStop")) != ePvErrSuccess) {
         printf("AcquisitionStop command err: %u\n", errCode);
     }
 
     // PvCaptureQueueClear aborts any actively written frame with Frame.Status = ePvErrDataMissing
     // Further queued frames returned with Frame.Status = ePvErrCancelled
-    if ((errCode = PvCaptureQueueClear(m_cam->m_handle)) != ePvErrSuccess) {
+    if ((errCode = PvCaptureQueueClear(cam->m_handle)) != ePvErrSuccess) {
         printf("PvCaptureQueueClear err: %u\n", errCode);
     }
 
     // Stop driver stream
-    if ((errCode = PvCaptureEnd(m_cam->m_handle)) != ePvErrSuccess) {
+    if ((errCode = PvCaptureEnd(cam->m_handle)) != ePvErrSuccess) {
         printf("PvCaptureEnd err: %u\n", errCode);
     }
 
     // Close Camera
-    if((errCode = PvCameraClose(m_cam->m_handle)) != ePvErrSuccess) {
+    if((errCode = PvCameraClose(cam->m_handle)) != ePvErrSuccess) {
         printf("CameraUnSetup: PvCameraClose err: %u\n", errCode);
     }
 
-    delete m_cam;
+    delete cam;
 
     PvUnInitialize();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool AlliedVisionDriver::Capture(AlliedVisionCamera* cam, rpg::ImageWrapper& img )
+{
+    // Wait for next image in sequence
+    if( PvCaptureWaitForFrameDone(cam->m_handle, &(cam->m_frames[cam->m_nextFrame]), PVINFINITE) != ePvErrSuccess )
+    {
+        std::cerr << "Unable to grab frame " << std::endl;
+        return false;
+    }
+
+    if( cam->m_frames[cam->m_nextFrame].Status == ePvErrSuccess ) {
+        memcpy(img.Image.data, cam->m_frames[cam->m_nextFrame].ImageBuffer, cam->m_frameSizeBytes );
+    }else{
+        std::cerr << "Bad frame status" << std::endl;
+    }
+
+    // Enqueue frame
+    PvCaptureQueueFrame(cam->m_handle, &(cam->m_frames[cam->m_nextFrame]), NULL);
+
+    // Compute next frame in sequence
+    cam->m_nextFrame = (cam->m_nextFrame+1) % NUM_BUFFER_FRAMES;
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 bool AlliedVisionDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
     // allocate images if necessary
-    if( vImages.size() != 1 ){
-        vImages.resize( 1 );
-        // and setup images
-        vImages[0].Image = cv::Mat(m_cam->m_height, m_cam->m_width, CV_8UC1);
-//        vImages[1].Image = cv::Mat(m_cam->m_height, m_cam->m_width, CV_8UC1);
+    if( vImages.size() != m_numCams ){
+        vImages.resize( m_numCams );
+        for(unsigned i=0; i< m_numCams; ++i ) {
+            vImages[i].Image = cv::Mat(m_cam[i]->m_height, m_cam[i]->m_width, CV_8UC1);
+        }
     }
     // should also check images are the right size, type etc
 
-    // Wait for next image in sequence
-    PvCaptureWaitForFrameDone(m_cam->m_handle, &(m_cam->m_frames[m_cam->m_nextFrame]), PVINFINITE);
-
-    if( m_cam->m_frames[m_cam->m_nextFrame].Status == ePvErrSuccess ) {
-        // Copy image
-        memcpy(vImages[0].Image.data, m_cam->m_frames[m_cam->m_nextFrame].ImageBuffer, m_cam->m_frameSizeBytes );
-//        memcpy(vImages[1].Image.data, m_cam->m_frames[m_cam->m_nextFrame].ImageBuffer, m_cam->m_frameSizeBytes );
+    bool success = true;
+    for(unsigned i=0; i< m_numCams; ++i ) {
+        success &= Capture(m_cam[i], vImages[i]);
     }
 
-    // Enqueue frame
-    PvCaptureQueueFrame(m_cam->m_handle, &(m_cam->m_frames[m_cam->m_nextFrame]), NULL);
-
-    // Compute next frame in sequence
-    m_cam->m_nextFrame = (m_cam->m_nextFrame+1) % NUM_BUFFER_FRAMES;
-
-    return true;
+    return success;
 }

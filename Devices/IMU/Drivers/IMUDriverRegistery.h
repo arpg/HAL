@@ -23,7 +23,7 @@
 #define _IMU_DRIVER_REGISTERY_H_
 
 
-IMUDriver* CreateDriver( const std::string& sDriverName );
+IMUDriver* CreateIMUDriver( const std::string& sDriverName );
 
 extern std::map<std::string,IMUDriver*(*)()> g_mIMUDriverTable;
 

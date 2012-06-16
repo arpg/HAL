@@ -3,11 +3,8 @@
 
 #include "RPG/Devices/Camera/Drivers/DriverList.h"
 
-CameraDriver* CreateDriver( const std::string& sDriverName )
+CameraDriver* CreateCameraDriver( const std::string& sDriverName )
 {
-	std::cerr << "SlamThread: CreateDriver " << std::endl;
-
-//    printf("NOW g_mDriverTable lives at %p\n", &g_mDriverTable );
     std::map<std::string,CameraDriver*(*)()>::iterator it;
     it = g_mCameraDriverTable.find( sDriverName );
     if( it != g_mCameraDriverTable.end() ){

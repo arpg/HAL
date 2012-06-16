@@ -13,7 +13,7 @@
 #include <RPG/Devices/IMU/Drivers/IMUDriverRegistery.h>
 
 // Driver Creation Factory
-extern IMUDriver* CreateDriver( const std::string& sDriverName );
+extern IMUDriver* CreateIMUDriver( const std::string& sDriverName );
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU device
@@ -44,7 +44,7 @@ class IMUDevice : public PropertyMap
         ///////////////////////////////////////////////////////////////
         bool InitDriver( const std::string& sDriver )
         {
-            m_pDriver = CreateDriver( sDriver );
+            m_pDriver = CreateIMUDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
                 return m_pDriver->Init();

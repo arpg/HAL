@@ -16,7 +16,7 @@
 
 
 // Driver Creation Factory
-extern CameraDriver* CreateDriver( const std::string& sDriverName );
+extern CameraDriver* CreateCameraDriver( const std::string& sDriverName );
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic camera device
@@ -25,18 +25,27 @@ class CameraDevice : public PropertyMap
     public:
         ///////////////////////////////////////////////////////////////
         CameraDevice()
+            : m_pDriver(0)
         {
-        };
+        }
 
         ///////////////////////////////////////////////////////////////
         ~CameraDevice()
         {
-        };
+            if(m_pDriver) {
+                delete m_pDriver;
+            }
+        }
 
         ///////////////////////////////////////////////////////////////
         bool InitDriver( const std::string& sDriver )
         {
-            m_pDriver = CreateDriver( sDriver );
+            if(m_pDriver) {
+                delete m_pDriver;
+                m_pDriver = 0;
+            }
+
+            m_pDriver = CreateCameraDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
                 return m_pDriver->Init();

@@ -23,7 +23,7 @@
 #define _CAMERA_DRIVER_REGISTERY_H_
 
 
-CameraDriver* CreateDriver( const std::string& sDriverName );
+CameraDriver* CreateCameraDriver( const std::string& sDriverName );
 
 extern std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
