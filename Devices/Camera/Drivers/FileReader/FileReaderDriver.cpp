@@ -58,7 +58,7 @@ bool FileReaderDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 20 );
+    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 100 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_nCurrentImageIndex = m_nStartFrame;
 	
