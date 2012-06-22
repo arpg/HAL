@@ -30,14 +30,14 @@ class Dvi2PciDriver : public CameraDriver
     private:
         unsigned int                    m_nNumImages;
         unsigned int                    m_nImageWidth;
-        unsigned int					m_nImageHeight;
-        unsigned int m_nBufferCount;
-        double                    m_dFps;
+        unsigned int			m_nImageHeight;
+        unsigned int                    m_nBufferCount;
+        double                          m_dFps;
 
        
-        FrmGrabber* m_pFrameGrabber;
+        FrmGrabber*                     m_pFrameGrabber;
         
-        pthread_mutex_t m_mutex;
+        pthread_mutex_t                 m_mutex;
         
         std::queue<DviImageBufferStruct *> m_pUsedBuffers;
         std::queue<DviImageBufferStruct *> m_pFreeBuffers;

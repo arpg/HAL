@@ -43,9 +43,7 @@ bool Dvi2PciDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
             length = 0;
             controlLength = 0;
             buffer = NULL;
-        }else {
-            //please don't refactor this code. You are very smart, but pop does not 
-            //return the front element.
+        } else {
             DviImageBufferStruct *pStr = m_pUsedBuffers.front();
             m_pUsedBuffers.pop();
             buffer = pStr->m_pImageBuffer;
@@ -69,20 +67,19 @@ bool Dvi2PciDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumImages );
     }
     
-    
-    
     g_count++;
     
     if(g_count % 2 == 0) {
         //buffer += m_nImageHeight*m_nImageWidth;
     }
-
+    
     // now copy the images from the delegate
     for ( size_t ii = 0; ii < m_nNumImages; ii++) {
+        
         vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC1, buffer);
         //advance the pointer forward
         //buffer += 1280*720*3/2;
-        buffer += 640*480;
+        buffer += m_nImageWidth*m_nImageHeight;
     }
     return true;
 }
@@ -108,8 +105,8 @@ void Dvi2PciDriver::DumpVgaModeFlags(V2U_UINT32 flags, V2U_UINT32 mask)
         {VIDEOMODE_TYPE_VSYNCPOSITIVE, "VSYNCPOSITIVE", NULL}
     };
 
-    int k, flags_printed = 0;
-    for (k=0; k<V2U_COUNT(vgamode_flags); k++) {
+    int flags_printed = 0;
+    for (unsigned int k=0; k<V2U_COUNT(vgamode_flags); k++) {
         if (vgamode_flags[k].flag & mask) {
             const char* name = (flags & vgamode_flags[k].flag) ?
                 vgamode_flags[k].on : vgamode_flags[k].off;
@@ -234,12 +231,10 @@ bool Dvi2PciDriver::CaptureFunc()
     m_dFps = m_pPropertyMap->GetProperty<double>( "FPS", 60 );
     m_nBufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
     
-    pthread_mutex_init(&m_mutex, NULL);
-
     //fill the used and free buffers
     for (unsigned int ii = 0; ii < m_nBufferCount; ii++) {
         DviImageBufferStruct *pStr = new DviImageBufferStruct();
-        pStr->m_pControlBuffer = new unsigned char[1280];
+//        pStr->m_pControlBuffer = new unsigned char[1280];
         pStr->m_pImageBuffer = new unsigned char[1920 * 1080 * 4];
         m_pFreeBuffers.push(pStr);
     }
@@ -258,7 +253,7 @@ bool Dvi2PciDriver::CaptureFunc()
     
     const char* pn = FrmGrab_GetProductName(m_pFrameGrabber);
     V2U_UINT32 caps = FrmGrab_GetCaps(m_pFrameGrabber);
-    
+
     V2U_VideoMode vm;
     /* Detect video mode */
     if (FrmGrab_DetectVideoMode(m_pFrameGrabber,&vm) == false ){
@@ -284,37 +279,45 @@ bool Dvi2PciDriver::CaptureFunc()
     FrmGrab_Start(m_pFrameGrabber);
     
     V2U_GrabFrame2* frame = NULL;
+    V2URect CropCfg;
+    CropCfg.height = vm.height;
+    CropCfg.width = vm.width;
+    CropCfg.x = 0;
+    CropCfg.y = 0;
     
     printf("Capture started...\n");
     while(1)
     {
-        frame = FrmGrab_Frame(m_pFrameGrabber, V2U_GRABFRAME_FORMAT_BGR24, NULL);
+        frame = FrmGrab_Frame(m_pFrameGrabber, V2U_GRABFRAME_FORMAT_BGR24, &CropCfg);
         if (!frame || frame->imagelen <= 0)  {
-            printf("VGA2USB capture error. Stopping recording.\n");
-            break;
+            printf("VGA2USB capture error. Skipping frame...\n");
+            continue;
+            //printf("VGA2USB capture error. Stopping recording.\n");
+            //break;
         }
-        printf("Frame captured. Total %d bytes.\n", frame->pixbuflen);
+        //printf("Frame captured. Total %d bytes.\n", frame->imagelen);
         
-        DviImageBufferStruct *MsgPtr;
+        DviImageBufferStruct *BuffPtr;
         //if there are no free buffers it means whoever is reading this
         //is not reading fast enough so we just have to rewrite over the
         //first item
         pthread_mutex_lock(&m_mutex);
         if (m_pFreeBuffers.empty()) {
-            MsgPtr = m_pUsedBuffers.front();
+            std::cout << "Ooops.. using non-empty buffer!" << std::endl;
+            BuffPtr = m_pUsedBuffers.front();
         } else {
             //otherwise take one of the free buffers
-            MsgPtr = m_pFreeBuffers.front();
+            BuffPtr = m_pFreeBuffers.front();
             m_pFreeBuffers.pop();
         }
         pthread_mutex_unlock(&m_mutex);
         
-        memcpy(MsgPtr->m_pImageBuffer,frame->pixbuf, frame->imagelen);
+        memcpy(BuffPtr->m_pImageBuffer, frame->pixbuf, frame->imagelen);
         
         //and now we add this to the tail of the used buffers
         //this is in a critical section
         pthread_mutex_lock(&m_mutex);
-        m_pUsedBuffers.push(MsgPtr);
+        m_pUsedBuffers.push(BuffPtr);
         //fprintf(stderr,"Pushed a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
         pthread_mutex_unlock(&m_mutex);
             
@@ -333,11 +336,7 @@ bool Dvi2PciDriver::CaptureFunc()
 ///////////////////////////////////////////////////////////////////////////////
 bool Dvi2PciDriver::Init()
 {
-    
-    
-    
+    pthread_mutex_init(&m_mutex, NULL);
     boost::thread captureThread(CaptureFuncHandler,this);
-
-
     return true;
 }
