@@ -18,6 +18,8 @@ const std::string PROPERTY_CAM_UUID  = "CamUUID";
 const std::string PROPERTY_NUM_CAMS  = "NumChannels";
 const std::string PROPERTY_WIDTH     = "ImageWidth";
 const std::string PROPERTY_HEIGHT    = "ImageHeight";
+const std::string PROPERTY_BINX      = "ImageBinningX";
+const std::string PROPERTY_BINY      = "ImageBinningY";
 
 // TODO: Set these properly!
 #define _LINUX 1
@@ -97,7 +99,7 @@ AlliedVisionCamera* AlliedVisionDriver::GetFirstCamera()
         if(numCameras > 0) break;
     }
 
-    for(int i=0; i<numCameras; ++i ) {
+    for(unsigned i=0; i<numCameras; ++i ) {
         bool alreadyLoaded = false;
         for(std::vector<AlliedVisionCamera*>::iterator ic = m_cam.begin(); ic != m_cam.end(); ic++) {
             if( (*ic)->m_uid == list[i].UniqueId ) {
@@ -125,7 +127,7 @@ AlliedVisionDriver::~AlliedVisionDriver()
     Deinit();
 }
 
-bool AlliedVisionDriver::InitCamera(AlliedVisionCamera* cam, unsigned int width, unsigned int height)
+bool AlliedVisionDriver::InitCamera(AlliedVisionCamera* cam, unsigned int width, unsigned int height, unsigned int binningX, unsigned int binningY)
 {
     tPvErr errCode;
 
@@ -139,23 +141,28 @@ bool AlliedVisionDriver::InitCamera(AlliedVisionCamera* cam, unsigned int width,
         return false;
     }
 
-    // Read default size
+    // Write binning attribute
+    if(binningX > 0 && binningY > 0 ) {
+        if( PvAttrUint32Set(cam->m_handle,"BinningX", binningX) != ePvErrSuccess ||
+            PvAttrUint32Set(cam->m_handle,"BinningY", binningY) != ePvErrSuccess ) {
+            std::cerr << "Unable to set image binning in X and Y" << std::endl;
+            return false;
+        }
+    }
+
+    // Attempt to set user specified size
+    if( width > 0 && height > 0 ) {
+        if( PvAttrUint32Set(cam->m_handle,"Width", width) != ePvErrSuccess ||
+            PvAttrUint32Set(cam->m_handle,"Height", height) != ePvErrSuccess ) {
+            std::cerr << "Unable to set image width and height" << std::endl;
+//            return false;
+        }
+    }
+
+    // Read Set size
     if( PvAttrUint32Get(cam->m_handle,"Width",&cam->m_width) != ePvErrSuccess ||
         PvAttrUint32Get(cam->m_handle,"Height",&cam->m_height) != ePvErrSuccess ) {
         std::cerr << "Unable to read image width or height" << std::endl;
-        return false;
-    }
-
-    // Override size with user settings if supplied
-    if( width > 0 && height > 0 ) {
-        cam->m_width  = width;
-        cam->m_height = height;
-    }
-
-    // Write desired image size
-    if( PvAttrUint32Set(cam->m_handle,"Width", cam->m_width) != ePvErrSuccess ||
-        PvAttrUint32Set(cam->m_handle,"Height", cam->m_height) != ePvErrSuccess ) {
-        std::cerr << "Unable to set image width and height" << std::endl;
         return false;
     }
 
@@ -231,9 +238,13 @@ bool AlliedVisionDriver::Init()
         std::cerr << "Failed to initialize PvAPI" << std::endl;
     }
 
+    Sleep(RETRY_WAIT_MS);
+
     m_numCams = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_NUM_CAMS, 1);
     unsigned int userWidth = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_WIDTH, 0);
     unsigned int userHeight = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_HEIGHT, 0);
+    unsigned int userBinX = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_BINX, 0);
+    unsigned int userBinY = m_pPropertyMap->GetProperty<tPvUint32>(PROPERTY_BINY, 0);
 
     for(unsigned int i=0; i <m_numCams; ++i ) {
         std::stringstream ss;
@@ -251,7 +262,7 @@ bool AlliedVisionDriver::Init()
 
     bool success = true;
     for(unsigned int i=0; i <m_numCams; ++i ) {
-        success &= InitCamera(m_cam[i], userWidth, userHeight);
+        success &= InitCamera(m_cam[i], userWidth, userHeight, userBinX, userBinY);
     }
 
     for(unsigned int i=0; i <m_numCams; ++i ) {

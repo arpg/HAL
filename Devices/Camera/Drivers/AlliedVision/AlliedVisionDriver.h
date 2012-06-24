@@ -21,15 +21,17 @@ class AlliedVisionDriver : public CameraDriver
         bool Capture(AlliedVisionCamera* cam, rpg::ImageWrapper& img );
 
         bool Init();
+
+    private:
         void Deinit();
 
-        bool InitCamera(AlliedVisionCamera* cam, unsigned int width, unsigned int height);
+        bool InitCamera(AlliedVisionCamera* cam, unsigned int width, unsigned int height, unsigned int binningX, unsigned int binningY);
         void DeinitCamera(AlliedVisionCamera* cam);
 
         bool StartCamera(AlliedVisionCamera* cam);
 
         AlliedVisionCamera* GetFirstCamera();
-    private:
+
         size_t m_numCams;
         std::vector<AlliedVisionCamera*> m_cam;
 };
