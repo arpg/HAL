@@ -28,10 +28,15 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumChannels );
     }
 
-	while(m_vBufferFree[m_nNextCapture])
+	double dPctgFilled =  m_dBufferFilled/m_nBufferSize; 
+	
+	//while(m_vBufferFree[m_nNextCapture])
+	while(m_vBufferFree[m_nNextCapture] || dPctgFilled < 0.5)
 	{
 		// cycle until next frame is available
+		dPctgFilled =  m_dBufferFilled/m_nBufferSize; 
 	}
+	
 	
 	// allocate images if necessary
 	if( vImages.size() != m_nNumChannels )
@@ -44,6 +49,7 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 	m_vBufferFree[m_nNextCapture] = true;
 	m_nNextCapture				  = (m_nNextCapture+1) % m_nBufferSize;
 	
+	m_dBufferFilled -= 1.0;
 	
     return true;
 }
@@ -58,7 +64,7 @@ bool FileReaderDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 100 );
+    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 30 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_nCurrentImageIndex = m_nStartFrame;
 	
@@ -98,7 +104,8 @@ bool FileReaderDriver::Init()
 	//std::cerr << "SlamThread: Done checking equal num images"  << std::endl;
 
 	//std::cerr << "SlamThread: Filling buffer: "  << m_nBufferSize << std::endl;
-
+	m_dBufferFilled =  0;
+	
 	// fill image buffer
     m_vImageBuffer.resize(m_nBufferSize);
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {
@@ -109,9 +116,9 @@ bool FileReaderDriver::Init()
 		//std::cerr << "SlamThread: push back "  << std::endl;
 
     }
-
-	m_nNextCapture =  0;
-	m_nNextRead	   =  0;
+ 
+	m_nNextCapture  =  0;
+	m_nNextRead	    =  0;
 	//std::cerr << "SlamThread: Start capture thread"  << std::endl;
 
 	
@@ -130,6 +137,7 @@ void FileReaderDriver::_ThreadCaptureFunc()
 			_Read(m_vImageBuffer[m_nNextRead]);
 			m_vBufferFree[m_nNextRead] = false;
 			m_nNextRead				   = (m_nNextRead+1) % m_nBufferSize; 
+			
 		}
     }
 }
@@ -154,6 +162,8 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
     
     // now fetch the next set of images
 	//cout << "Reading image pair" << endl;
+	double dTimeRead;
+	
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		//cout  << m_vFileList[ii][m_nCurrentImageIndex] << endl;
 		
@@ -162,8 +172,9 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
 		//std::cerr << "		+ reading: "  << imgFile << std::endl;
 
 		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
+		//dTimeRead = mvl::Tic();
 		vImages[ii].Image = cv::imread( imgFile, 0);
-		
+		//cout << "Read time: " << mvl::TocMS(dTimeRead) << endl;
 		//std::cerr << " [done] "  << std::endl;
 
     }
@@ -171,5 +182,6 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
     //return true;
 	//std::cerr <<  "		imgIdx: "   << m_nCurrentImageIndex << std::endl;
 
+	m_dBufferFilled += 1.0;
 }
 

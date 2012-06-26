@@ -18,6 +18,8 @@ class FileReaderDriver : public CameraDriver
         
     private:
         // vector of lists of files
+        volatile double                                  m_dBufferFilled;
+        
         std::vector< std::vector<rpg::ImageWrapper> >    m_vImageBuffer;     
         std::vector< std::vector< std::string > >        m_vFileList;
         unsigned int                                     m_nCurrentImageIndex;
