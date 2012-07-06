@@ -17,6 +17,11 @@ class CameraDriver
         // Pure virtual functions driver writers must implement:
         virtual bool Capture( std::vector<rpg::ImageWrapper>& vImages ) = 0;
         virtual bool Init() = 0;
+		
+		virtual ~CameraDriver()
+		{
+			
+		}
         CameraDriver()
         {
             m_pPropertyMap = NULL;

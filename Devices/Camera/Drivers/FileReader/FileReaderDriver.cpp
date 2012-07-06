@@ -2,10 +2,10 @@
 #include "FileReaderDriver.h"
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
-#include <boost/thread.hpp>
-#include "opencv2/highgui/highgui.hpp"	// for imread()
+#include "opencv2/highgui/highgui.hpp"
+#include "RPG/Devices/Camera/Drivers/Dvi2Pci/SDK/includes/s_fio.h"	// for imread()
 
-using namespace boost;
+//using namespace boost;
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -16,7 +16,9 @@ FileReaderDriver::FileReaderDriver()
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
 {
-
+	std::cout << "CALLING DESTRUCTOR..." << std::endl;
+	m_CaptureThread->interrupt();
+	m_CaptureThread->join();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +76,7 @@ bool FileReaderDriver::Init()
     
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		//std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
-        std::string sChannelName  = (format("Channel-%d")%ii).str();
+        std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
 
         // Get data path 
@@ -122,22 +124,29 @@ bool FileReaderDriver::Init()
 	//std::cerr << "SlamThread: Start capture thread"  << std::endl;
 
 	
-    boost::thread captureThread(boost::bind(&FileReaderDriver::_ThreadCaptureFunc,this));
+//    boost::thread captureThread(boost::bind(&FileReaderDriver::_ThreadCaptureFunc,this)); 
+//    boost::thread captureThread( _ThreadCaptureFunc, this );
+    m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
     
     return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void FileReaderDriver::_ThreadCaptureFunc()
+void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 {
     while(1){
         
-		if(m_vBufferFree[m_nNextRead])
-		{
-			_Read(m_vImageBuffer[m_nNextRead]);
-			m_vBufferFree[m_nNextRead] = false;
-			m_nNextRead				   = (m_nNextRead+1) % m_nBufferSize; 
-			
+		try {
+			boost::this_thread::interruption_point();
+			if(pFR->m_vBufferFree[pFR->m_nNextRead])
+			{   
+				pFR->_Read(pFR->m_vImageBuffer[pFR->m_nNextRead]);
+				pFR->m_vBufferFree[pFR->m_nNextRead] = false;
+				pFR->m_nNextRead = (pFR->m_nNextRead+1) % pFR->m_nBufferSize; 
+			}
+		} catch( boost::thread_interrupted& interruption ) {
+			std::cout << "!!!!!! THREAD INTERRUPTED !!!!!!" << std::endl;
+			break;
 		}
     }
 }
@@ -162,7 +171,7 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
     
     // now fetch the next set of images
 	//cout << "Reading image pair" << endl;
-	double dTimeRead;
+	//double dTimeRead;
 	
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		//cout  << m_vFileList[ii][m_nCurrentImageIndex] << endl;

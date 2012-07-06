@@ -1,6 +1,8 @@
 #ifndef _FILE_READER_H_
 #define _FILE_READER_H_
 
+#include <boost/thread.hpp>
+
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
 
@@ -13,23 +15,25 @@ class FileReaderDriver : public CameraDriver
         bool Init();
         
     private:
-        void _ThreadCaptureFunc();
+        static void _ThreadCaptureFunc( FileReaderDriver* pFR );
         void _Read( std::vector<rpg::ImageWrapper>& vImages );
         
     private:
-        // vector of lists of files
-        volatile double                                  m_dBufferFilled;
+		boost::thread*									m_CaptureThread;
         
-        std::vector< std::vector<rpg::ImageWrapper> >    m_vImageBuffer;     
-        std::vector< std::vector< std::string > >        m_vFileList;
-        unsigned int                                     m_nCurrentImageIndex;
-        unsigned int                                     m_nStartFrame;
-		unsigned int                                     m_nNumImages;
-        unsigned int                                     m_nNumChannels;
-        unsigned int                                     m_nBufferSize;
-        volatile unsigned int                            m_nNextRead;
-        volatile unsigned int                            m_nNextCapture;
-        std::vector< bool >                              m_vBufferFree;    
+		// vector of lists of files
+        volatile double                                 m_dBufferFilled;
+        
+        std::vector< std::vector<rpg::ImageWrapper> >   m_vImageBuffer;     
+        std::vector< std::vector< std::string > >		m_vFileList;
+        unsigned int                                    m_nCurrentImageIndex;
+        unsigned int                                    m_nStartFrame;
+		unsigned int                                    m_nNumImages;
+        unsigned int                                    m_nNumChannels;
+        unsigned int                                    m_nBufferSize;
+        volatile unsigned int                           m_nNextRead;
+        volatile unsigned int                           m_nNextCapture;
+        std::vector< bool >                             m_vBufferFree;    
 };
 
 #endif
