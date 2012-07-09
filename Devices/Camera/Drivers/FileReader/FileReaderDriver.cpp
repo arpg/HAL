@@ -16,7 +16,6 @@ FileReaderDriver::FileReaderDriver()
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
 {
-	std::cout << "CALLING DESTRUCTOR..." << std::endl;
 	m_CaptureThread->interrupt();
 	m_CaptureThread->join();
 }
@@ -150,7 +149,6 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 				pFR->m_nNextRead = (pFR->m_nNextRead+1) % pFR->m_nBufferSize; 
 			}
 		} catch( boost::thread_interrupted& interruption ) {
-			std::cout << "!!!!!! THREAD INTERRUPTED !!!!!!" << std::endl;
 			break;
 		}
     }
