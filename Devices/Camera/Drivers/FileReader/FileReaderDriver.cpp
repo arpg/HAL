@@ -63,7 +63,7 @@ bool FileReaderDriver::Init()
 	//std::cerr << "SlamThread: FileReader Init " << std::endl;
 
     assert(m_pPropertyMap);
-    m_pPropertyMap->PrintPropertyMap();
+//    m_pPropertyMap->PrintPropertyMap();
 
     m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
     m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 30 );
@@ -71,6 +71,11 @@ bool FileReaderDriver::Init()
     m_nCurrentImageIndex = m_nStartFrame;
 	
 	//std::cerr << "start frame: " << m_nCurrentImageIndex << std::endl;
+
+    if(m_nNumChannels < 1) {
+        mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
+        exit(1);
+    }
 
     m_vFileList.resize( m_nNumChannels );
     
@@ -87,7 +92,7 @@ bool FileReaderDriver::Init()
 
         if(mvl::FindFiles(sChannelPath, sChannelRegex, vFiles) == false){
         //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
-            mvl::PrintError( "ERROR: Not files found from regexp\n" );
+            mvl::PrintError( "ERROR: No files found from regexp\n" );
             exit(1);
         }
     }
@@ -135,7 +140,7 @@ bool FileReaderDriver::Init()
 void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 {
     while(1){
-        
+        // TODO: This is a busy-wait! We should use a signal here, otherwise we use entire core.
 		try {
 			boost::this_thread::interruption_point();
 			if(pFR->m_vBufferFree[pFR->m_nNextRead])

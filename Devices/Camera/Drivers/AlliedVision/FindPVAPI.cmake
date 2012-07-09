@@ -7,13 +7,21 @@
 FIND_PATH(
   PVAPI_INCLUDE_DIR
   NAMES PvApi.h
-  PATHS "${CMAKE_SOURCE_DIR}/../../../AVT GigE SDK/inc-pc" /usr/include/PvAPI /usr/local/include/PvAPI
+  PATHS
+    "${CMAKE_SOURCE_DIR}/../AVT GigE SDK/inc-pc"
+    "${CMAKE_SOURCE_DIR}/../../../AVT GigE SDK/inc-pc"
+    /usr/include/PvAPI
+    /usr/local/include/PvAPI
 )
 
 FIND_LIBRARY(
   PVAPI_LIBRARIES
   NAMES PvAPI
-  PATHS "${CMAKE_SOURCE_DIR}/../../../AVT GigE SDK/bin-pc/x64" /usr/lib /usr/local/lib
+  PATHS
+    "${CMAKE_SOURCE_DIR}/../AVT GigE SDK/lib-pc/x64/4.2"
+    "${CMAKE_SOURCE_DIR}/../../../AVT GigE SDK/lib-pc/x64/4.2"
+    /usr/lib
+    /usr/local/lib
 ) 
 
 IF (PVAPI_INCLUDE_DIR AND PVAPI_LIBRARIES)

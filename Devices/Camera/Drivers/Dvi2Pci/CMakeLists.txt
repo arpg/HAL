@@ -78,6 +78,8 @@ add_to_rpg_libraries( slava )
 
 if(APPLE)
 	file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+        list( INSERT RPG_LIBRARIES 0 "-framework Carbon" )
+        #add_to_rpg_libraries( "-framework Carbon" )
 else()
 	file( COPY SDK/libfrmgrab/linux/x86_64/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 endif(APPLE)
