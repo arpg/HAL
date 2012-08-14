@@ -8,13 +8,13 @@
 namespace rpg {
     class ImageWrapper;
     ////////////////////////////////////////////////////////////////////////////
-    inline ImageWrapper imread( const std::string& sImageFileName, 
+    inline ImageWrapper imread( const std::string& sImageFileName,
                                 const std::string& sExtraInfoFileName,
                                 int nFlags = -1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
                                 );
 
     ////////////////////////////////////////////////////////////////////////////
-    inline ImageWrapper imread( const std::string& sImageFileName, 
+    inline ImageWrapper imread( const std::string& sImageFileName,
                                 bool bReadExtraInfo = true,
                                 int nFlags = -1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
                                 );
@@ -38,7 +38,7 @@ namespace rpg {
         /// No checks are made for overwriting.
         inline bool write( const std::string& sImageName, const std::string& sExtraInfoName );
 
-        /// If bWriteExtraInfo is set to true, this call will automatically deduce the 
+        /// If bWriteExtraInfo is set to true, this call will automatically deduce the
         /// sExtraInfoName from the sImageName by replacing the
         /// extension by ".txt" (if not extension is found, ".txt" will be
         /// appended). No checks are made for overwriting.
@@ -46,19 +46,19 @@ namespace rpg {
 
         /// Read an image from sImageName and the property map from sExtraInfoName.
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
-        inline void read( const std::string& sImageFileName, 
+        inline void read( const std::string& sImageFileName,
                           const std::string& sExtraInfoFileName,
                           int nFlags = 1 ) {
             *this = imread( sImageFileName, sExtraInfoFileName, nFlags );
         }
 
         /// Read an image from sImageName and the property map from sExtraInfoName.
-        /// If bReadExtraInfo is set to true, this call will automatically deduce the 
+        /// If bReadExtraInfo is set to true, this call will automatically deduce the
         /// sExtraInfoName from the sImageName by replacing the
         /// extension by ".txt" (if not extension is found, ".txt" will be
         /// appended).
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
-        inline void read( const std::string& sImageFileName, 
+        inline void read( const std::string& sImageFileName,
                           bool bReadExtraInfo = true,
                           int nFlags = 1 //<Input: same flag convention as in OpenCV (>0 colour, 0 greyscale, <0 as is)
                           ) {
@@ -92,7 +92,7 @@ namespace rpg {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-inline rpg::ImageWrapper rpg::imread( const std::string& sImageFileName, 
+inline rpg::ImageWrapper rpg::imread( const std::string& sImageFileName,
                                       const std::string& sExtraInfoFileName,
                                       int nFlags
                                       ) {
@@ -110,7 +110,7 @@ inline rpg::ImageWrapper rpg::imread( const std::string& sImageFileName,
             for( cv::FileNodeIterator it = fnode.begin(); it != fnode.end(); it++ ) {
                 //std::cout << (*it).name() << std::endl;
                 //std::cout << (std::string)oFile[ (*it).name() ] << std::endl;
-                retImage.Map.SetProperty( (*it).name(), 
+                retImage.Map.SetProperty( (*it).name(),
                                           (std::string)oFile[ (*it).name() ] );
             }
         }
