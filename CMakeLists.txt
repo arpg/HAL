@@ -41,7 +41,6 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV2_INCLUDE_DIRS} )
 link_libraries( ${OpenCV2_LIBRARIES} )
-link_directories( ${OpenCV2_LINK_DIRECTORIES} )
 
 # find MVL
 find_package( MVL REQUIRED )

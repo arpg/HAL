@@ -110,8 +110,8 @@ bool Bumblebee2Driver::Init()
     // get camera model from files
     double pose[16];
     std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
-    std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","");
-    std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","");
+    std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","lcmod.xml");
+    std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","rcmod.xml");
 
 	m_pLeftCMod  = mvl_read_camera(sLeftCModel.c_str(), pose );
 	m_pRightCMod = mvl_read_camera(sRightCModel.c_str(), pose );

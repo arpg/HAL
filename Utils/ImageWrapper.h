@@ -32,7 +32,7 @@ namespace rpg {
         int height() { return Image.rows; }
         int widthStep() { return static_cast<int>( Image.step ); }
 
-        struct ImageWrapper clone() { struct ImageWrapper ret = *this; this->Image = ret.Image.clone(); return *this; }
+        class ImageWrapper clone() { struct ImageWrapper ret = *this; this->Image = ret.Image.clone(); return *this; }
 
         /// Write an image to sImageName and the property map to sExtraInfoName.
         /// No checks are made for overwriting.
