@@ -91,7 +91,6 @@ bool FileReaderDriver::Init()
 
         if(mvl::FindFiles(sChannelPath, sChannelRegex, vFiles) == false){
         //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
-			std::cout << "'" << sChannelRegex << "'" << std::endl;
             mvl::PrintError( "ERROR: No files found from regexp\n" );
             exit(1);
         }
