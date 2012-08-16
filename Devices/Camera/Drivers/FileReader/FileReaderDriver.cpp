@@ -226,7 +226,7 @@ cv::Mat FileReaderDriver::_OpenPDM( const std::string& FileName )
 		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
 		nImgSize = nImgSize * nImgWidth * nImgHeight;
 		DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
-		File.seekg(File.tellg()+1, ios::beg);
+        File.seekg(File.tellg()+(ifstream::pos_type)1, ios::beg);
 		File.read( (char*)DepthImg.data, nImgSize );
 		File.close();
 	}
