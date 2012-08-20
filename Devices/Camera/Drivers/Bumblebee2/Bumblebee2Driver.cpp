@@ -47,9 +47,27 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     }
     // should also check images are the right size, type etc
 
+	// obtain meta data from image
+    dc1394error_t e;
+	float feature;
+	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_SHUTTER, &feature );
+	if( e == DC1394_SUCCESS ) {
+		vImages[0].Map.SetProperty("Shutter", feature );
+	}
+
+	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAIN, &feature );
+	if( e == DC1394_SUCCESS ) {
+		vImages[0].Map.SetProperty("Gain", feature );
+	}
+
+	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAMMA, &feature );
+	if( e == DC1394_SUCCESS ) {
+		vImages[0].Map.SetProperty("Gamma", feature );
+	}
+
+
     //  capture one frame
     dc1394video_frame_t* pFrame;
-    dc1394error_t e;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam),"Could not capture a frame");
 
