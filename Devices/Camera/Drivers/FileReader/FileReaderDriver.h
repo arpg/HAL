@@ -21,21 +21,21 @@ class FileReaderDriver : public CameraDriver
 		cv::Mat _OpenPDM( const std::string& FileName );
 
     private:
-		boost::thread*							m_CaptureThread;
+		boost::thread*									m_CaptureThread;
 
 		// vector of lists of files
-        volatile double                         m_dBufferFilled;
+        volatile double                                 m_dBufferFilled;
 
-        vector< vector<rpg::ImageWrapper> >     m_vImageBuffer;     
-        vector< vector< string > >              m_vFileList;
-        unsigned int                            m_nCurrentImageIndex;
-        unsigned int                            m_nStartFrame;
-		unsigned int                            m_nNumImages;
-        unsigned int                            m_nNumChannels;
-        unsigned int                            m_nBufferSize;
-        volatile unsigned int                   m_nNextRead;
-        volatile unsigned int                   m_nNextCapture;
-        vector<bool>                            m_vBufferFree;    
+        std::vector< std::vector<rpg::ImageWrapper> >   m_vImageBuffer;
+        std::vector< std::vector< std::string > >		m_vFileList;
+        unsigned int                                    m_nCurrentImageIndex;
+        unsigned int                                    m_nStartFrame;
+		unsigned int                                    m_nNumImages;
+        unsigned int                                    m_nNumChannels;
+        unsigned int                                    m_nBufferSize;
+        volatile unsigned int                           m_nNextRead;
+        volatile unsigned int                           m_nNextCapture;
+        std::vector< bool >                             m_vBufferFree;
 };
 
 #endif

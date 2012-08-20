@@ -83,7 +83,6 @@ bool FileReaderDriver::Init()
 	// Get data path 
      std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
 
-	
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		//std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
         std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
@@ -119,7 +118,6 @@ bool FileReaderDriver::Init()
             exit(1);
         }
     }
-    
 	m_dBufferFilled =  0;
 
 	// fill image buffer
@@ -131,7 +129,6 @@ bool FileReaderDriver::Init()
 
 	m_nNextCapture  =  0;
 	m_nNextRead	    =  0;
-	
 //    boost::thread captureThread(boost::bind(&FileReaderDriver::_ThreadCaptureFunc,this)); 
 //    boost::thread captureThread( _ThreadCaptureFunc, this );
     m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
