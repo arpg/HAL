@@ -122,6 +122,7 @@ bool FileReaderDriver::Init()
 
 	// fill image buffer
     m_vImageBuffer.resize(m_nBufferSize);
+    m_vBufferFree.resize(m_nBufferSize);
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {
         _Read(m_vImageBuffer[ii]);
 		m_vBufferFree[ii] = false;
