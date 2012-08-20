@@ -12,9 +12,6 @@
 #include <RPG/Devices/Camera/CameraDriverInterface.h>
 #include <RPG/Devices/Camera/Drivers/CameraDriverRegistery.h>
 
-#include <opencv/cv.h>
-
-
 // Driver Creation Factory
 extern CameraDriver* CreateCameraDriver( const std::string& sDriverName );
 

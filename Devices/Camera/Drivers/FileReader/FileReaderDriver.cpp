@@ -9,10 +9,7 @@
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
-FileReaderDriver::FileReaderDriver()
-{
-	m_pBufferFree = NULL;
-}
+FileReaderDriver::FileReaderDriver(){}
 
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
@@ -30,29 +27,29 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumChannels );
     }
 
-	double dPctgFilled =  m_dBufferFilled/m_nBufferSize; 
-	
+	double dPctgFilled =  m_dBufferFilled/m_nBufferSize;
+
 	//while(m_vBufferFree[m_nNextCapture])
-	while(m_pBufferFree[m_nNextCapture] || dPctgFilled < 0.5)
+	while(m_vBufferFree[m_nNextCapture] || dPctgFilled < 0.5)
 	{
 		// cycle until next frame is available
-		dPctgFilled =  m_dBufferFilled/m_nBufferSize; 
+		dPctgFilled =  m_dBufferFilled/m_nBufferSize;
 	}
-	
-	
+
+
 	// allocate images if necessary
 	if( vImages.size() != m_nNumChannels )
 		vImages.resize( m_nNumChannels );
-		
+
 	// now fetch the next set of images from buffer
-	for( unsigned int ii = 0; ii < m_nNumChannels; ii++ )	
+	for( unsigned int ii = 0; ii < m_nNumChannels; ii++ )
 		vImages[ii].Image = m_vImageBuffer[m_nNextCapture][ii].Image.clone();
-		
-	m_pBufferFree[m_nNextCapture] = true;
+
+	m_vBufferFree[m_nNextCapture] = true;
 	m_nNextCapture				  = (m_nNextCapture+1) % m_nBufferSize;
-	
+
 	m_dBufferFilled -= 1.0;
-	
+
     return true;
 }
 
@@ -61,7 +58,6 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 bool FileReaderDriver::Init()
 {
 	// clear variables if previously initialized
-	if(m_pBufferFree) delete m_pBufferFree;
 	 m_vImageBuffer.clear();
 	 m_vFileList.clear();
 	
@@ -73,7 +69,8 @@ bool FileReaderDriver::Init()
     m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 25 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_nCurrentImageIndex = m_nStartFrame;
-	m_pBufferFree		 = new bool[m_nBufferSize];
+
+	//std::cerr << "start frame: " << m_nCurrentImageIndex << std::endl;
 
 	
     if(m_nNumChannels < 1) {
@@ -111,7 +108,7 @@ bool FileReaderDriver::Init()
             exit(1);
         }
     }
-    
+
 	//std::cerr << "SlamThread: Done reading filenames "  << std::endl;
 
     // make sure each channel has the same number of images
@@ -124,21 +121,21 @@ bool FileReaderDriver::Init()
     }
     
 	m_dBufferFilled =  0;
-	
+
 	// fill image buffer
     m_vImageBuffer.resize(m_nBufferSize);
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {
         _Read(m_vImageBuffer[ii]);
-		m_pBufferFree[ii] = false;
+		m_vBufferFree[ii] = false;
     }
- 
+
 	m_nNextCapture  =  0;
 	m_nNextRead	    =  0;
 	
 //    boost::thread captureThread(boost::bind(&FileReaderDriver::_ThreadCaptureFunc,this)); 
 //    boost::thread captureThread( _ThreadCaptureFunc, this );
     m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
-    
+
     return true;
 }
 
@@ -149,11 +146,11 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
         // TODO: This is a busy-wait! We should use a signal here, otherwise we use entire core.
 		try {
 			boost::this_thread::interruption_point();
-			if(pFR->m_pBufferFree[pFR->m_nNextRead])
-			{   
+			if(pFR->m_vBufferFree[pFR->m_nNextRead])
+			{
 				pFR->_Read(pFR->m_vImageBuffer[pFR->m_nNextRead]);
-				pFR->m_pBufferFree[pFR->m_nNextRead] = false;
-				pFR->m_nNextRead = (pFR->m_nNextRead+1) % pFR->m_nBufferSize; 
+				pFR->m_vBufferFree[pFR->m_nNextRead] = false;
+				pFR->m_nNextRead = (pFR->m_nNextRead+1) % pFR->m_nBufferSize;
 			}
 		} catch( boost::thread_interrupted& interruption ) {
 			break;
@@ -170,29 +167,36 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
     if( vImages.size() != m_nNumChannels ){
         vImages.resize( m_nNumChannels );
     }
-    
+
 	// loop over if we finished our files!
 	if( m_nCurrentImageIndex == m_nNumImages ) {
         m_nCurrentImageIndex = m_nStartFrame;
 	}
-    
-    // TODO: this is kinda lame and insecure, change eventually
-    char imgFile[400];
-    
+
     // now fetch the next set of images
 	//cout << "Reading image pair" << endl;
 	//double dTimeRead;
-	
+
+	std::string sFileName;
+
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
 		//cout  << m_vFileList[ii][m_nCurrentImageIndex] << endl;
-		
-		sprintf( imgFile, "%s", m_vFileList[ii][m_nCurrentImageIndex].c_str() );
-        
+
+		sFileName = m_vFileList[ii][m_nCurrentImageIndex];
+
 		//std::cerr << "		+ reading: "  << imgFile << std::endl;
 
 		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
 		//dTimeRead = mvl::Tic();
-		vImages[ii].Image = cv::imread( imgFile, 0);
+
+		std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
+		// check if it is our own "portable depth map" format
+		if( sExtension == "pdm" ) {
+			vImages[ii].Image = _OpenPDM( sFileName );
+		} else {
+			// otherwise let OpenCV open it
+			vImages[ii].Image = cv::imread( sFileName, 0);
+		}
 		//cout << "Read time: " << mvl::TocMS(dTimeRead) << endl;
 		//std::cerr << " [done] "  << std::endl;
 
@@ -204,3 +208,31 @@ void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
 	m_dBufferFilled += 1.0;
 }
 
+cv::Mat FileReaderDriver::_OpenPDM( const std::string& FileName )
+{
+	// magic number P7, portable depthmap, binary
+	ifstream File( FileName.c_str() );
+
+	unsigned int nImgWidth;
+	unsigned int nImgHeight;
+	long unsigned int nImgSize;
+
+	cv::Mat DepthImg;
+
+	if( File.is_open() ) {
+		string sType;
+		File >> sType;
+		File >> nImgWidth;
+		File >> nImgHeight;
+		File >> nImgSize;
+		nImgSize++;
+
+		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
+		nImgSize = nImgSize * nImgWidth * nImgHeight;
+		DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
+        File.seekg(File.tellg()+(ifstream::pos_type)1, ios::beg);
+		File.read( (char*)DepthImg.data, nImgSize );
+		File.close();
+	}
+	return DepthImg;
+}
