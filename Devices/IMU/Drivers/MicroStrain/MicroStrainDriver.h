@@ -19,11 +19,25 @@ class MicroStrainDriver : public IMUDriver
     private:
         static void ImuCallback(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type);
         void _ThreadCaptureFunc();
+        bool _ActivateAHRS();
+        bool _ActivateGPS();
 
         bool mShouldRun;
         mip_interface mDeviceInterface;
         boost::thread mDeviceThread;
         IMUDriverDataCallback mCallback;
+        
+        // properties
+        bool m_bGetGPS;
+        bool m_bGetAHRS;
+        bool m_bGetEulerAHRS;
+        bool m_bGetQuaternionAHRS;
+        bool m_bGetAccelerometerAHRS;
+        bool m_bGetGyroAHRS;
+        bool m_bGetMagnetometerAHRS;
+        int  m_nHzGPS;
+        int  m_nHzAHRS;
+        
 };
 
 #endif
