@@ -50,12 +50,17 @@ std::string DeviceById(int id)
 {
     //search /dev/serial for microstrain devices
     const char *command = "find /dev/serial -print | grep -i microstrain";
-    FILE* instream=popen(command, "r");
 
+	// HARD CODED ... Bad bad programmer 
+	FILE* instream = popen("find /dev/cu.usbmodem1 -print","r");
+	
+	/*
+	FILE* instream=popen(command, "r");
     if(!instream) {
         std::cerr << "Unable to open pipe '" << command << "'" << std::endl;
         return 0;
     }
+	 */
 
     int devfound;
     char devname[255];
