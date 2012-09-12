@@ -20,10 +20,14 @@ CameraDriverRegisteryEntry<HDMIDriver> _HDMIReg( "HDMI" );
 #include "RPG/Devices/Camera/Drivers/Dvi2Pci/Dvi2PciDriver.h"
 CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
 
-
 #ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
+#endif
+
+#ifdef USE_FLYCAP
+#include "RPG/Devices/Camera/Drivers/Flycap/FlycapDriver.h"
+CameraDriverRegisteryEntry<FlycapDriver> _FlycapReg( "Flycap" );
 #endif
 
 #ifdef USE_ALLIEDVISION
