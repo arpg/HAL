@@ -27,9 +27,10 @@ enum IMUDataType
 };
 
 struct IMUData {
+    double             timestamp;
     IMUDataType        type;
     Eigen::Vector6d    llh;         // (latitude,longitude,height)
-    Eigen::Quaterniond rotation;    
+    Eigen::Quaterniond rotation;
     Eigen::Vector3f    euler;       // (roll,pitch,yaw)
     Eigen::Vector3f    accel;
     Eigen::Vector3f    gyro;
