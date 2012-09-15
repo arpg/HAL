@@ -14,8 +14,8 @@ FileReaderDriver::FileReaderDriver(){}
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
 {
-	m_CaptureThread->interrupt();
-	m_CaptureThread->join();
+    m_CaptureThread->interrupt();
+    m_CaptureThread->join();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -23,34 +23,34 @@ FileReaderDriver::~FileReaderDriver()
 bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
 
-	boost::mutex::scoped_lock lock(m_Mutex);
-	
-	// Wait until the buffer has data to read
-	while(m_qImageBuffer.size() == 0){
-		m_cBufferEmpty.wait(lock);
-	}
+    boost::mutex::scoped_lock lock(m_Mutex);
 
-	//*************************************************** 
-	// consume from buffer
-	//***************************************************
+    // Wait until the buffer has data to read
+    while(m_qImageBuffer.size() == 0){
+        m_cBufferEmpty.wait(lock);
+    }
 
-	// allocate images if necessary
-	if( vImages.size() != m_nNumChannels )
-		vImages.resize( m_nNumChannels );
+    //***************************************************
+    // consume from buffer
+    //***************************************************
 
-	// now fetch the next set of images from buffer
-	for( unsigned int ii = 0; ii < m_nNumChannels; ii++ )
-		vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
+    // allocate images if necessary
+    if( vImages.size() != m_nNumChannels )
+        vImages.resize( m_nNumChannels );
 
-	
-	// remove image from queue
-	m_qImageBuffer.pop();
-	
-	//***************************************************
-	
-	// send notification that the buffer has space
-	m_cBufferFull.notify_one();
-	
+    // now fetch the next set of images from buffer
+    for( unsigned int ii = 0; ii < m_nNumChannels; ii++ )
+        vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
+
+
+    // remove image from queue
+    m_qImageBuffer.pop();
+
+    //***************************************************
+
+    // send notification that the buffer has space
+    m_cBufferFull.notify_one();
+
     return true;
 }
 
@@ -58,10 +58,10 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 ///////////////////////////////////////////////////////////////////////////////
 bool FileReaderDriver::Init()
 {
-	// clear variables if previously initialized
-	 //m_qImageBuffer.clear();
-	 m_vFileList.clear();
-	
+    // clear variables if previously initialized
+     //m_qImageBuffer.clear();
+     m_vFileList.clear();
+
 
     assert(m_pPropertyMap);
 //    m_pPropertyMap->PrintPropertyMap();
@@ -69,34 +69,35 @@ bool FileReaderDriver::Init()
     m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
     m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
+    m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
     m_nCurrentImageIndex = m_nStartFrame;
 
-	
+
     if(m_nNumChannels < 1) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
         exit(1);
     }
 
     m_vFileList.resize( m_nNumChannels );
-    
-	// Get data path 
+
+    // Get data path
      std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-		//std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
+        //std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
         std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
 
-		// check if regular expression has a subdirectory
-		size_t pos = sChannelRegex.find("/");
-		std::string sSubDirectory;
-		
-		if(pos != string::npos)
-		{
-			sSubDirectory = sChannelRegex.substr(0,pos);
-			sChannelRegex = sChannelRegex.substr(pos+1);
-		}
-		
+        // check if regular expression has a subdirectory
+        size_t pos = sChannelRegex.find("/");
+        std::string sSubDirectory;
+
+        if(pos != string::npos)
+        {
+            sSubDirectory = sChannelRegex.substr(0,pos);
+            sChannelRegex = sChannelRegex.substr(pos+1);
+        }
+
         // Now generate the list of files for each channel
         std::vector< std::string>& vFiles = m_vFileList[ii];
 
@@ -115,7 +116,7 @@ bool FileReaderDriver::Init()
             exit(1);
         }
     }
-	
+
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {	_Read(); }
 
 
@@ -129,14 +130,14 @@ bool FileReaderDriver::Init()
 void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 {
     while(1){
-		try {
-			boost::this_thread::interruption_point();
-			
-			pFR->_Read();
-			
-		} catch( boost::thread_interrupted& interruption ) {
-			break;
-		}
+        try {
+            boost::this_thread::interruption_point();
+
+            pFR->_Read();
+
+        } catch( boost::thread_interrupted& interruption ) {
+            break;
+        }
     }
 }
 
@@ -144,78 +145,78 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 //void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
 void FileReaderDriver::_Read()
 {
-	
-	
-	boost::mutex::scoped_lock lock(m_Mutex);
-	
-	// Wait until there is space in the buffer
-	while(! (m_qImageBuffer.size() < m_nBufferSize) ){
-		m_cBufferFull.wait(lock);
-	}
-	
-	//************************************************************************* 
-	// produce to buffer
-	//*************************************************************************
-	
-	// loop over if we finished our files!
-	if( m_nCurrentImageIndex == m_nNumImages ) {
+
+
+    boost::mutex::scoped_lock lock(m_Mutex);
+
+    // Wait until there is space in the buffer
+    while(! (m_qImageBuffer.size() < m_nBufferSize) ){
+        m_cBufferFull.wait(lock);
+    }
+
+    //*************************************************************************
+    // produce to buffer
+    //*************************************************************************
+
+    // loop over if we finished our files!
+    if( m_nCurrentImageIndex == m_nNumImages && m_bLoop == true ) {
         m_nCurrentImageIndex = m_nStartFrame;
-	}
+    }
 
     // now fetch the next set of images
-	std::string sFileName;
-	std::vector<rpg::ImageWrapper> vImages;
-	vImages.resize(m_nNumChannels);
-	
+    std::string sFileName;
+    std::vector<rpg::ImageWrapper> vImages;
+    vImages.resize(m_nNumChannels);
+
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-		sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-		// TODO: this only reads grayscale '0'.. not sure if we need more than that tho
-		std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
-		// check if it is our own "portable depth map" format
-		if( sExtension == "pdm" ) {
-			vImages[ii].Image = _OpenPDM( sFileName );
-		} else {
-			// otherwise let OpenCV open it
-			vImages[ii].Image = cv::imread( sFileName, 0);
-		}
+        sFileName = m_vFileList[ii][m_nCurrentImageIndex];
+        // TODO: this only reads grayscale '0'.. not sure if we need more than that tho
+        std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
+        // check if it is our own "portable depth map" format
+        if( sExtension == "pdm" ) {
+            vImages[ii].Image = _OpenPDM( sFileName );
+        } else {
+            // otherwise let OpenCV open it
+            vImages[ii].Image = cv::imread( sFileName, 0);
+        }
     }
-	
+
     m_nCurrentImageIndex++;
 
-	// add images at the back of the queue
-	m_qImageBuffer.push(vImages);
-	
-	//*************************************************************************
-	
-	// send notification that the buffer is not empty
-	m_cBufferEmpty.notify_one();
+    // add images at the back of the queue
+    m_qImageBuffer.push(vImages);
+
+    //*************************************************************************
+
+    // send notification that the buffer is not empty
+    m_cBufferEmpty.notify_one();
 }
 
 cv::Mat FileReaderDriver::_OpenPDM( const std::string& FileName )
 {
-	// magic number P7, portable depthmap, binary
-	ifstream File( FileName.c_str() );
+    // magic number P7, portable depthmap, binary
+    ifstream File( FileName.c_str() );
 
-	unsigned int nImgWidth;
-	unsigned int nImgHeight;
-	long unsigned int nImgSize;
+    unsigned int nImgWidth;
+    unsigned int nImgHeight;
+    long unsigned int nImgSize;
 
-	cv::Mat DepthImg;
+    cv::Mat DepthImg;
 
-	if( File.is_open() ) {
-		string sType;
-		File >> sType;
-		File >> nImgWidth;
-		File >> nImgHeight;
-		File >> nImgSize;
+    if( File.is_open() ) {
+        string sType;
+        File >> sType;
+        File >> nImgWidth;
+        File >> nImgHeight;
+        File >> nImgSize;
 //		nImgSize++;
 
 //		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
         nImgSize = 4 * nImgWidth * nImgHeight;
-		DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
+        DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
         File.seekg(File.tellg()+(ifstream::pos_type)1, ios::beg);
-		File.read( (char*)DepthImg.data, nImgSize );
-		File.close();
-	}
-	return DepthImg;
+        File.read( (char*)DepthImg.data, nImgSize );
+        File.close();
+    }
+    return DepthImg;
 }
