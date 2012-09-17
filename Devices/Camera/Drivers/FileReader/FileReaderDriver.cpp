@@ -22,6 +22,9 @@ FileReaderDriver::~FileReaderDriver()
 // Consumer
 bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
+    if( m_nCurrentImageIndex >= m_nNumImages && m_qImageBuffer.size() == 0 && !m_bLoop) {
+        return false;
+    }
 
     boost::mutex::scoped_lock lock(m_Mutex);
 
@@ -133,7 +136,9 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
         try {
             boost::this_thread::interruption_point();
 
-            pFR->_Read();
+            if(!pFR->_Read()) {
+                break;
+            }
 
         } catch( boost::thread_interrupted& interruption ) {
             break;
@@ -143,10 +148,8 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 
 ///////////////////////////////////////////////////////////////////////////////
 //void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
-void FileReaderDriver::_Read()
+bool FileReaderDriver::_Read()
 {
-
-
     boost::mutex::scoped_lock lock(m_Mutex);
 
     // Wait until there is space in the buffer
@@ -159,8 +162,12 @@ void FileReaderDriver::_Read()
     //*************************************************************************
 
     // loop over if we finished our files!
-    if( m_nCurrentImageIndex == m_nNumImages && m_bLoop == true ) {
-        m_nCurrentImageIndex = m_nStartFrame;
+    if( m_nCurrentImageIndex == m_nNumImages ) {
+        if(m_bLoop == true) {
+            m_nCurrentImageIndex = m_nStartFrame;
+        }else{
+            return false;
+        }
     }
 
     // now fetch the next set of images
@@ -190,6 +197,8 @@ void FileReaderDriver::_Read()
 
     // send notification that the buffer is not empty
     m_cBufferEmpty.notify_one();
+
+    return true;
 }
 
 cv::Mat FileReaderDriver::_OpenPDM( const std::string& FileName )

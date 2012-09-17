@@ -21,7 +21,7 @@ class FileReaderDriver : public CameraDriver
     private:
         static void _ThreadCaptureFunc( FileReaderDriver* pFR );
         //void _Read( std::vector<rpg::ImageWrapper>& vImages );
-        void _Read();
+        bool _Read();
         cv::Mat _OpenPDM( const std::string& FileName );
 
     private:
