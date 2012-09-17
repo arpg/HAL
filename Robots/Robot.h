@@ -21,7 +21,6 @@ private:
 //	bool _Parse( const std::string& sFile );
 private:
 	std::string					m_sName;
-
 	std::map < std::string, CameraDevice* >		m_vCameras;
 	// ... add more things
 
