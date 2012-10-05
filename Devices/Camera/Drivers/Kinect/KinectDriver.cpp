@@ -86,6 +86,17 @@ bool KinectDriver::Init()
 		rc = m_ImageNode.SetMapOutputMode(MapMode);
 	}
 
+//    if(m_ImageNode.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT))
+//    {
+//        //Warp RGB to match depth
+//        AlternativeViewPointCapability avpx = m_ImageNode.GetAlternativeViewPointCap();
+//        rc = avpx.SetViewPoint(m_DepthNode);
+//        if (rc != XN_STATUS_OK) {
+//            errors.ToString(strError, 1024);
+//            printf("%s\n", strError);
+//        }
+//    }
+
 	// --- GET CAMERA PARAMS ---
     // Details can be found in XnStreamParams.h
 
@@ -148,58 +159,30 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 	}
 
 	// prepare return images
-    vImages.clear();
-    vImages.resize(2);
+    if(vImages.size() != 2)
+    {
+        vImages.resize(2);
+        vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
+        vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
+    }
 
-    // Get data pointers from Kinect
-	// get RGB image data
+    // Get RGB and depthmap data pointers from Kinect
 	m_ImageNode.GetMetaData(m_ImageMD);
-	// get depth image data
 	m_DepthNode.GetMetaData(m_DepthMD);
 
-    const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
-    const XnDepthPixel* pDepthRow = m_DepthMD.Data();
-
-    long unsigned int TimeStampRGB = m_ImageMD.Timestamp();
-	m_pPropertyMap->SetProperty( "TimestampRGB", TimeStampRGB );
-
-    long unsigned int TimeStampDepth = m_DepthMD.Timestamp();
-	m_pPropertyMap->SetProperty( "TimestampDepth", TimeStampDepth );
+    // Set timestamps in camera property map
+    m_pPropertyMap->SetProperty( "TimestampRGB", m_ImageMD.Timestamp() );
+    m_pPropertyMap->SetProperty( "TimestampDepth", m_DepthMD.Timestamp() );
 
     //----------------------------------------------------------------------------
     // image 0 is RGB image
-    vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
-    vImages[0].Map.SetProperty( "CameraTime", TimeStampRGB );
-
-    for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
-    {
-        const XnRGB24Pixel* pImage = pImageRow;
-
-        for (unsigned int x = 0; x < m_ImageMD.XRes(); ++x, ++pImage)
-        {
-            unsigned int idx = x * 3;
-            vImages[0].Image.at<unsigned char>(y,idx) = pImage->nBlue;
-            vImages[0].Image.at<unsigned char>(y,idx+1) = pImage->nGreen;
-            vImages[0].Image.at<unsigned char>(y,idx+2) = pImage->nRed;
-        }
-
-        pImageRow += m_ImageMD.XRes();
-    }
+    vImages[0].Map.SetProperty( "CameraTime", m_ImageMD.Timestamp() );
+    memcpy(vImages[0].Image.data, m_ImageMD.RGB24Data(), m_ImageMD.DataSize() );
 
     //----------------------------------------------------------------------------
     // image 1 is depth image
-    vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
-    vImages[1].Map.SetProperty( "CameraTime", TimeStampDepth );
-
-    for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
-    {
-        const XnDepthPixel* pDepth = pDepthRow;
-        for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
-        {
-			vImages[1].Image.at<unsigned short>(y,x) = *pDepth;
-        }
-        pDepthRow += m_DepthMD.XRes();
-    }
+    vImages[1].Map.SetProperty( "CameraTime", m_DepthMD.Timestamp() );
+    memcpy(vImages[1].Image.data, m_DepthMD.Data(), m_DepthMD.DataSize() );
 
     return true;
 }
