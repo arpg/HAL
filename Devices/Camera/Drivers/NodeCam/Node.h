@@ -395,9 +395,6 @@ namespace rpg
                     // nothing to read
                     return false;
                 }
-                std::cerr << std::endl;
-                std::cout << "Got message size " << ZmqMsg.size() << std::endl;
-                std::cout << "Ptr is " << ZmqMsg.data() << std::endl;
                 if( !Msg.ParseFromArray( ZmqMsg.data(), ZmqMsg.size() ) ) {
                     return false;
                 }

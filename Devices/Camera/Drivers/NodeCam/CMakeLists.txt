@@ -1,7 +1,5 @@
 PROTOBUF_GENERATE_CPP( PROTO_HDRS PROTO_SRCS Message.proto )
 
-
-
 # include dirs
 include_directories( ${ZeroMQ_INCLUDE_DIRS} )
 include_directories( ${PROTOBUF_INCLUDE_DIRS} )

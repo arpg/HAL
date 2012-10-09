@@ -21,23 +21,24 @@ NodeCamDriver::~NodeCamDriver()
 ///////////////////////////////////////////////////////////////////////////////
 bool NodeCamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-    // clear image vector
-    vImages.clear();
-
     msg::NodeCam Msg;
 
     // block until we get an image
     while( m_Node.Read( "NodeCam", Msg ) == false ) {}
 
-//    vImages.resize( Msg.image_size() );
+    vImages.resize( Msg.image_size() );
 
     for( unsigned int ii = 0; ii < vImages.size(); ii++ ) {
-//        const msg::Image& Img = Msg.image(ii);
-//        const unsigned int ImgHeight = Img.image_height();
-//        const unsigned int ImgWidth = Img.image_width();
-//        vImages[ii].Image = cv::Mat( ImgHeight, ImgWidth, Img.image_type() );
-//        const unsigned int ImgSize = ImgWidth * ImgHeight * CV_MAT_DEPTH( Img.image_type() ) * CV_MAT_CN( Img.image_type() );
-//        memcpy( vImages[ii].Image.data, Img.image().c_str(), ImgSize );
+        const msg::Image& Img = Msg.image(ii);
+        const unsigned int ImgHeight = Img.image_height();
+        const unsigned int ImgWidth = Img.image_width();
+        vImages[ii].Image = cv::Mat( ImgHeight, ImgWidth, Img.image_type() );
+        memcpy( vImages[ii].Image.data, Img.image().c_str(), Img.image_size() );
+
+        for( int jj = 0; jj < Img.property_name_size(); jj++ ) {
+            vImages[ii].Map.SetProperty( Img.property_name(jj), Img.property_val(jj) );
+        }
+
     }
 
     return true;

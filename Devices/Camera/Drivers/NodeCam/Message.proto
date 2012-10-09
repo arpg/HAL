@@ -6,12 +6,12 @@ message Image
     required int32      image_type      = 2;
     required int32      image_height    = 3;
     required int32      image_width     = 4;
-    repeated string     property_name   = 5;
-    repeated string     property_val    = 6;
+    required int32      image_size      = 5;
+    repeated string     property_name   = 6;
+    repeated string     property_val    = 7;
 }
 
 message NodeCam
 {
-    required string     node_name   = 1;
-    repeated Image      image       = 2;
+    repeated Image      image       = 1;
 }
