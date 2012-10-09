@@ -8,7 +8,7 @@
 
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
-#include <zmq.hpp>
+#include "Node.h"
 
 class NodeCamDriver : public CameraDriver
 {
@@ -18,9 +18,8 @@ class NodeCamDriver : public CameraDriver
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
-        zmq::context_t*             m_pContext;     // ZMQ context
-        zmq::socket_t*              m_pSocket;		// ZMQ socket
-		std::string					m_sHost;		// Host we are connecting to
+        unsigned int        m_nNumNodes;
+        rpg::Node           m_Node;
 };
 
 #endif

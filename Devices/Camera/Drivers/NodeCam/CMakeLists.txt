@@ -1,14 +1,20 @@
-# 1) Build the library:
-set( DRIVER_SOURCES NodeCamDriver.cpp )
-set( DRIVER_HEADERS NodeCamDriver.h )
-add_library( NodeCamDriver ${DRIVER_SOURCES} ${DRIVER_HEADERS} )
+PROTOBUF_GENERATE_CPP( PROTO_HDRS PROTO_SRCS Message.proto )
 
 
-# 2a) include dirs
+
+# include dirs
 include_directories( ${ZeroMQ_INCLUDE_DIRS} )
 include_directories( ${PROTOBUF_INCLUDE_DIRS} )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-# 2b) Tell RPG about this library:
+
+# Build the library:
+set( DRIVER_SOURCES NodeCamDriver.cpp )
+set( DRIVER_HEADERS NodeCamDriver.h )
+add_library( NodeCamDriver ${PROTO_HDRS} ${DRIVER_HEADERS} ${PROTO_SRCS} ${DRIVER_SOURCES} )
+
+# Tell RPG about this library:
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_to_rpg_libraries( NodeCamDriver )
 
 list( APPEND RPG_LIBRARIES ${ZeroMQ_LIBRARIES} ${PROTOBUF_LIBRARIES} )
