@@ -1,6 +1,12 @@
 # 1) Build the library:
 set( KINECT_DRIVER_SOURCES KinectDriver.cpp )
 set( KINECT_DRIVER_HEADERS KinectDriver.h )
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    # Ignore warnings generated from third party includes
+    set_source_files_properties( KinectDriver.cpp PROPERTIES COMPILE_FLAGS " -Wno-unknown-pragmas -Wno-reorder" )
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
 add_library( KinectDriver ${KINECT_DRIVER_SOURCES} ${KINECT_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:

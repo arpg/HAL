@@ -56,7 +56,7 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} ${OpenCV2_LIBRARIES} CAC
 
 
 add_subdirectory( Devices )
-add_subdirectory( Robots )
+#add_subdirectory( Robots )
 add_subdirectory( Utils )
 
 #message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" )

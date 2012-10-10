@@ -112,13 +112,13 @@ bool CaptureDelegate::GetFrame(unsigned char *&buffer, int &lengthOut, unsigned 
 
         return false;
     }else {
-        //please don't refactor this code. You are very smart, but pop does not 
+        //please don't refactor this code. You are very smart, but pop does not
         //return the front element.
         ImageBufferStruct *pStr = m_pUsedBuffers.front();
         m_pUsedBuffers.pop();
         buffer = pStr->m_pImageBuffer;
         controlBuffer = pStr->m_pControlBuffer;
-        
+
         //add this to the free buffers
         m_pFreeBuffers.push(pStr);
         //fprintf(stderr,"Popped a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
@@ -140,9 +140,9 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
             fprintf(stderr, "Frame received (#%lu) - No input signal detected\n", m_frameCount);
         } else {
 
-            double t = Tic();
+            //double t = Tic();
 
-               
+
             const char *timecodeString = NULL;
             if (m_timecodeFormat != 0) {
                 IDeckLinkTimecode *timecode;
@@ -161,9 +161,9 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     timecodeString != NULL ? timecodeString : "No timecode",
                 videoFrame->GetHeight(),
                     videoFrame->GetRowBytes() * videoFrame->GetHeight());
-            /**/
-            
-            
+            */
+
+
             // calculate total number of bytes
             unsigned long int NumBytes = m_nImageWidth * m_nImageHeight;
 
@@ -183,9 +183,9 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
 
             // get frame pointer
             videoFrame->GetBytes(&frameBytes);
-            
+
             unsigned char* fb = (unsigned char*) frameBytes;
-            
+
             /*
             fb++;
             unsigned char *controlPtr = MsgPtr->m_pControlBuffer;
@@ -196,17 +196,17 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     if( *fb > 128 ) {
                         byte |= 1;
                     }
-                    byte = byte << 1;                    
-                    fb += 2;                    
+                    byte = byte << 1;
+                    fb += 2;
                 }
                 //printf("\n");
                 *controlPtr = byte;
                 controlPtr++;
             }
             fb--;
-            
+
             */
-                
+
             unsigned char *framePtr = MsgPtr->m_pImageBuffer;
             for (int nn = 0; nn < m_nNumImages; nn++) {
                 //now do the conversion and write it to the pointer
@@ -249,13 +249,13 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
                     *framePtr = Y0;
                     framePtr++;
                     *framePtr = Y1;
-                    framePtr++; 
+                    framePtr++;
                     */
                 }
 
             }
-            
-            
+
+
 
 
             //and now we add this to the tail of the used buffers
@@ -264,9 +264,9 @@ HRESULT CaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoF
             m_pUsedBuffers.push(MsgPtr);
             //fprintf(stderr,"Pushed a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
             pthread_mutex_unlock(&m_mutex);
-                
 
-            
+
+
             count++;
             /*
             if (count > 500) {
