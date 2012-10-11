@@ -4,6 +4,8 @@
 
 #include "KinectDriver.h"
 
+#include <boost/lexical_cast.hpp>
+
 #define MAX_DEPTH 10000
 
 using namespace xn;
@@ -88,8 +90,8 @@ bool KinectDriver::Init()
             depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
 
             const int camn = m_DepthGenerators.size();
-            m_pPropertyMap->SetProperty( (std::string)("Depth" + camn) + "FocalLength", depth_focal_length_SXGA / 2 );
-            m_pPropertyMap->SetProperty( (std::string)("Depth" + camn) + "Baseline", dBaselineRGBDepth );
+            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
+            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
 
             m_DepthGenerators.push_back(depthGen);
         }
