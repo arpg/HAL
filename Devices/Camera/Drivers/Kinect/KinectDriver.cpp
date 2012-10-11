@@ -20,12 +20,24 @@ KinectDriver::~KinectDriver()
 {
 }
 
+#define CHECK_XN_RETURN(rc) { \
+    if (rc != XN_STATUS_OK) { \
+        XnChar strError[1024]; \
+        EnumerationErrors errors; \
+        errors.ToString(strError, 1024); \
+        printf("%s\n", strError); \
+        return false; \
+    } \
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 bool KinectDriver::Init()
 {
-    m_bGetRGB   = m_pPropertyMap->GetProperty( "GetRGB", true );
-    m_bGetDepth = m_pPropertyMap->GetProperty( "GetDepth", true );
+    std::cout << "KinectDriver::Init" << std::endl;
+    bool bGetImage = m_pPropertyMap->GetProperty( "GetRGB", true );
+    bool bGetDepth = m_pPropertyMap->GetProperty( "GetDepth", true );
+    bool bGetIR    = m_pPropertyMap->GetProperty( "GetIr", false );
 
     XnMapOutputMode MapMode;
     MapMode.nXRes = XN_VGA_X_RES;
@@ -33,87 +45,101 @@ bool KinectDriver::Init()
     MapMode.nFPS = 30;
 
     XnStatus rc;
-    EnumerationErrors errors;
-    XnChar strError[1024];
 
     rc = m_Context.Init ();
+    CHECK_XN_RETURN(rc);
 
-    if (rc != XN_STATUS_OK) {
-        errors.ToString(strError, 1024);
-        printf("%s\n", strError);
-        return false;
-    }
+    if( bGetDepth ) {
+        // Enumerate Depth Generating nodes
+        NodeInfoList DepthNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_DEPTH, NULL, DepthNodeList, 0 );
+        CHECK_XN_RETURN(rc);
 
-    // we need this part if we have multiple kinects connected
-    // we would pass an ID (int) to initialize a particular one
-    /*
-    NodeInfoList NodeList;
-    rc = m_Context.EnumerateProductionTrees ( XN_NODE_TYPE_DEVICE, NULL, NodeList, 0 );
-    if (rc != XN_STATUS_OK) {
-        errors.ToString(strError, 1024);
-        printf("%s\n", strError);
-        return false;
-    }
+        for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
 
-    NodeInfoList::Iterator it = devicesList.Begin ();
-    for (int i = 0; i < device; ++i)
-        it++;
+            xn::DepthGenerator depthGen;
 
-    NodeInfo NodeInf = *it;
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
 
-    ProductionNode ProdNode;
+            rc = node.GetInstance(depthGen);
+            CHECK_XN_RETURN(rc);
 
-    rc = m_Context.CreateProductionTree ( NodeInf, ProdNode );
-    if (rc != XN_STATUS_OK) {
-        errors.ToString(strError, 1024);
-        printf("%s\n", strError);
-        return false;
-    }
-    */
+            rc = depthGen.SetMapOutputMode(MapMode);
+            CHECK_XN_RETURN(rc);
 
-    m_nNumImgs = 0;
+            // --- GET CAMERA PARAMS ---
+            // Details can be found in XnStreamParams.h
 
-    // create depth generator
-    if( m_bGetDepth ) {
-        rc = m_DepthNode.Create(m_Context);
-        if (rc != XN_STATUS_OK) {
-            errors.ToString(strError, 1024);
-            printf("%s\n", strError);
-            return false;
+            // focal length in mm
+            XnUInt64 depth_focal_length_SXGA_mm;   //in mm
+            depthGen.GetIntProperty("ZPD", depth_focal_length_SXGA_mm);
+
+            // pixel size in mm
+            XnDouble pixelSize;
+            depthGen.GetRealProperty( "ZPPS", pixelSize );  // in mm
+
+            // focal length in pixels
+            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
+
+            XnDouble dBaselineRGBDepth;
+            depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
+
+            const int camn = m_DepthGenerators.size();
+            m_pPropertyMap->SetProperty( (std::string)("Depth" + camn) + "FocalLength", depth_focal_length_SXGA / 2 );
+            m_pPropertyMap->SetProperty( (std::string)("Depth" + camn) + "Baseline", dBaselineRGBDepth );
+
+            m_DepthGenerators.push_back(depthGen);
         }
-        rc = m_DepthNode.SetMapOutputMode(MapMode);
-
-        // --- GET CAMERA PARAMS ---
-        // Details can be found in XnStreamParams.h
-
-        // focal length in mm
-        XnUInt64 depth_focal_length_SXGA_mm;   //in mm
-        m_DepthNode.GetIntProperty ("ZPD", depth_focal_length_SXGA_mm);
-
-        // pixel size in mm
-        double pixelSize;
-        m_DepthNode.GetRealProperty ( "ZPPS", pixelSize );  // in mm
-
-        // focal length in pixels
-        float depth_focal_length_SXGA = static_cast<float>(depth_focal_length_SXGA_mm / pixelSize);
-        m_pPropertyMap->SetProperty( "DepthFocalLength", depth_focal_length_SXGA / 2 );
-
-        XnDouble dBaselineRGBDepth;
-        m_DepthNode.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
-        m_pPropertyMap->SetProperty( "RGBDepthBaseline", dBaselineRGBDepth );
-
-        m_nNumImgs++;
     }
 
-    // create image generator
-    if( m_bGetRGB ) {
-        rc = m_ImageNode.Create(m_Context);
-        if (rc != XN_STATUS_OK) {
-            errors.ToString(strError, 1024);
-            printf("%s\n", strError);
-        } else {
-            rc = m_ImageNode.SetMapOutputMode(MapMode);
-            m_nNumImgs++;
+    if( bGetImage ) {
+        // Enumerate Image Generating nodes
+        NodeInfoList ImageNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IMAGE, NULL, ImageNodeList, 0 );
+        CHECK_XN_RETURN(rc);
+
+        for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
+
+            xn::ImageGenerator imageGen;
+
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
+
+            rc = node.GetInstance(imageGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = imageGen.SetMapOutputMode(MapMode);
+
+            m_ImageGenerators.push_back(imageGen);
+        }
+    }
+
+    if( bGetIR ) {
+        // Enumerate IR Generating nodes
+        NodeInfoList IRNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IR, NULL, IRNodeList, 0 );
+        CHECK_XN_RETURN(rc);
+
+        for(NodeInfoList::Iterator it = IRNodeList.Begin(); it != IRNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
+
+            xn::IRGenerator irGen;
+
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
+
+            rc = node.GetInstance(irGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = irGen.SetMapOutputMode(MapMode);
+
+            m_IRGenerators.push_back(irGen);
         }
     }
 
@@ -150,14 +176,12 @@ bool KinectDriver::Init()
     // --- END GETTING PARAMS ---
 
     rc = m_Context.StartGeneratingAll();
-    if (rc != XN_STATUS_OK) {
-        errors.ToString(strError, 1024);
-        printf("%s\n", strError);
-        return false;
-    }
+    CHECK_XN_RETURN(rc);
 
     return true;
 }
+
+#undef CHECK_XN_RETURN
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -174,43 +198,41 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     }
 
     // prepare return images
-    if( vImages.size() != m_nNumImgs )
+    const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
+    if( vImages.size() != nNumImgs )
     {
-        vImages.resize( m_nNumImgs );
+        vImages.resize( nNumImgs );
 
-        if( m_bGetRGB ) {
-            vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
+        int n = 0;
+        for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( 480, 640, CV_8UC3 );
         }
-
-        if( m_bGetDepth ) {
-            if( m_bGetRGB == false ) {
-                vImages[0].Image = cv::Mat( 480, 640, CV_16UC1 );
-            } else {
-                vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
-            }
+        for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( 480, 640, CV_16UC1 );
+        }
+        for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( 480, 640, CV_16UC1 );
         }
     }
 
-    // Get RGB and depthmap data pointers from Kinect
-    if( m_bGetRGB ) {
-        m_ImageNode.GetMetaData(m_ImageMD);
-
-        // image 0 is RGB image
-        vImages[0].Map.SetProperty( "CameraTime", m_ImageMD.Timestamp() );
-        memcpy(vImages[0].Image.data, m_ImageMD.RGB24Data(), m_ImageMD.DataSize() );
+    int n = 0;
+    for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
+        xn::ImageMetaData metaData;
+        m_ImageGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
     }
-
-    if( m_bGetDepth ) {
-        m_DepthNode.GetMetaData(m_DepthMD);
-
-        // image 0 or 1 is depth image
-        if( m_bGetRGB == false ) {
-            vImages[0].Map.SetProperty( "CameraTime", m_DepthMD.Timestamp() );
-            memcpy(vImages[0].Image.data, m_DepthMD.Data(), m_DepthMD.DataSize() );
-        } else {
-            vImages[1].Map.SetProperty( "CameraTime", m_DepthMD.Timestamp() );
-            memcpy(vImages[1].Image.data, m_DepthMD.Data(), m_DepthMD.DataSize() );
-        }
+    for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
+        xn::DepthMetaData metaData;
+        m_DepthGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
+    }
+    for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
+        xn::IRMetaData metaData;
+        m_IRGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
 
     return true;
