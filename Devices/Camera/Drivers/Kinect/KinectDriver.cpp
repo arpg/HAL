@@ -36,7 +36,6 @@ KinectDriver::~KinectDriver()
 //
 bool KinectDriver::Init()
 {
-    std::cout << "KinectDriver::Init" << std::endl;
     bool bGetImage = m_pPropertyMap->GetProperty( "GetRGB", true );
     bool bGetDepth = m_pPropertyMap->GetProperty( "GetDepth", true );
     bool bGetIR    = m_pPropertyMap->GetProperty( "GetIr", false );

@@ -72,7 +72,11 @@ namespace rpg {
         if( !bSuccess) { return bSuccess; }
         cv::FileStorage oFile( sExtraInfoName.c_str(), cv::FileStorage::WRITE );
         if( !oFile.isOpened() ) { return false; }
-        output( oFile, Map );
+
+        std::map<std::string,std::string>& ppMap = Map.GetPropertyMap();
+        for( std::map<std::string,std::string>::iterator it = ppMap.begin(); it != ppMap.end(); it++ ) {
+            oFile << it->first << it->second;
+        }
         return bSuccess;
     }
 
