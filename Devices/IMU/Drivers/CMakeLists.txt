@@ -1,5 +1,9 @@
 # Build MicroStrain IMU driver
-add_subdirectory( MicroStrain )
+set( Build_MicroStrain true CACHE BOOL force )
+if( Build_MicroStrain )
+    add_subdirectory( MicroStrain )
+    add_definitions( -DUSE_MICROSTRAIN )
+endif()
 
 add_library( IMUDriverRegistery IMUDriverRegistery.cpp DriverList.h )
 

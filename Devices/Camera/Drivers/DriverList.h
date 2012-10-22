@@ -8,17 +8,25 @@
 // Global map of driver name to driver creation function pointers:
 std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
+#ifdef USE_FILEREADER
 #include "RPG/Devices/Camera/Drivers/FileReader/FileReaderDriver.h"
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
+#endif
 
+#ifdef USE_WEBCAM
 #include "RPG/Devices/Camera/Drivers/Webcam/WebcamDriver.h"
 CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
+#endif
 
+#ifdef USE_HDMI
 #include "RPG/Devices/Camera/Drivers/HDMI/HDMIDriver.h"
 CameraDriverRegisteryEntry<HDMIDriver> _HDMIReg( "HDMI" );
+#endif
 
+#ifdef USE_DVI2PCI
 #include "RPG/Devices/Camera/Drivers/Dvi2Pci/Dvi2PciDriver.h"
 CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
+#endif
 
 #ifdef USE_BUMBLEBEE_2
 #include "RPG/Devices/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"

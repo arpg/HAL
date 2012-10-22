@@ -36,14 +36,35 @@ KinectDriver::~KinectDriver()
 //
 bool KinectDriver::Init()
 {
-    bool bGetImage = m_pPropertyMap->GetProperty( "GetRGB", true );
-    bool bGetDepth = m_pPropertyMap->GetProperty( "GetDepth", true );
-    bool bGetIR    = m_pPropertyMap->GetProperty( "GetIr", false );
+    bool            bGetImage   = m_pPropertyMap->GetProperty( "GetRGB", true );
+    bool            bGetDepth   = m_pPropertyMap->GetProperty( "GetDepth", true );
+    bool            bGetIR      = m_pPropertyMap->GetProperty( "GetIr", false );
+    std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
+    unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
 
     XnMapOutputMode MapMode;
-    MapMode.nXRes = XN_VGA_X_RES;
-    MapMode.nYRes = XN_VGA_Y_RES;
-    MapMode.nFPS = 30;
+    MapMode.nFPS = nFPS;
+
+    if( sRes == "VGA" ) {
+        m_nImgHeight = XN_VGA_Y_RES;
+        m_nImgWidth = XN_VGA_X_RES;
+        MapMode.nXRes = XN_VGA_X_RES;
+        MapMode.nYRes = XN_VGA_Y_RES;
+    }
+
+    if( sRes == "QVGA" ) {
+        m_nImgHeight = XN_QVGA_Y_RES;
+        m_nImgWidth = XN_QVGA_X_RES;
+        MapMode.nXRes = XN_QVGA_X_RES;
+        MapMode.nYRes = XN_QVGA_Y_RES;
+    }
+
+    if( sRes == "QQVGA" ) {
+        m_nImgHeight = XN_QQVGA_Y_RES;
+        m_nImgWidth = XN_QQVGA_X_RES;
+        MapMode.nXRes = XN_QQVGA_X_RES;
+        MapMode.nYRes = XN_QQVGA_Y_RES;
+    }
 
     XnStatus rc;
 
@@ -206,13 +227,13 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
         int n = 0;
         for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( 480, 640, CV_8UC3 );
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_8UC3 );
         }
         for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( 480, 640, CV_16UC1 );
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
         }
         for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( 480, 640, CV_16UC1 );
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
         }
     }
 

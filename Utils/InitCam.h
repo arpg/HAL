@@ -44,13 +44,15 @@ void InitCam(
     }
 
 
-    // get all params
-    std::string sDeviceDriver     = clArgs.follow( "Bumblebee2", 1, "-idev" );
-    std::string sLeftCameraModel  = clArgs.follow( "lcmod.xml", 1, "-lcmod" );
-    std::string sRightCameraModel = clArgs.follow( "rcmod.xml", 1, "-rcmod" );
-    std::string sLeftFileRegex    = clArgs.follow( "left.*pgm", 1, "-lfile" );
-    std::string sRightFileRegex   = clArgs.follow( "right.*pgm", 1, "-rfile" );
-    std::string sSourceDir        = clArgs.follow( ".", 1, "-sdir"  );
+    // get general params
+    std::string     sDeviceDriver       = clArgs.follow( "Bumblebee2", 1, "-idev" );
+    std::string     sLeftCameraModel    = clArgs.follow( "lcmod.xml", 1, "-lcmod" );
+    std::string     sRightCameraModel   = clArgs.follow( "rcmod.xml", 1, "-rcmod" );
+    std::string     sLeftFileRegex      = clArgs.follow( "left.*pgm", 1, "-lfile" );
+    std::string     sRightFileRegex     = clArgs.follow( "right.*pgm", 1, "-rfile" );
+    std::string     sSourceDir          = clArgs.follow( ".", 1, "-sdir"  );
+    unsigned int    nFPS                = clArgs.follow( 30, 1, "-fps"  );
+    std::string     sResolution         = clArgs.follow( "VGA", 1, "-res"  ); // follow format of XGA, SVGA, VGA, QVGA, QQVGA, etc.
 
     //----------------------------------------------- BUMBLEBEE
     if( sDeviceDriver == "Bumblebee2" ) {
@@ -92,6 +94,21 @@ void InitCam(
         Cam.SetProperty( "GetRGB", bGetRGB );
         Cam.SetProperty( "GetDepth", bGetDepth );
         Cam.SetProperty( "GetIr", bGetIr );
+        Cam.SetProperty( "FPS", nFPS );
+        Cam.SetProperty( "Resolution", sResolution );
+    }
+
+    //----------------------------------------------- NODECAM
+    if( sDeviceDriver == "NodeCam" ) {
+        int numNodes = 0;
+
+        while(true) {
+            std::string arg = boost::lexical_cast<std::string>(numNodes);
+            if(!cl.search( ("-n"+arg).c_str() ) ) break;
+            Cam.SetProperty("Node-" + arg, cl.follow("", ("-n"+arg).c_str() ) );
+            numNodes++;
+        }
+        Cam.SetProperty("NumNodes", numNodes);
     }
 
 
