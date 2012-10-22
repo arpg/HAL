@@ -132,10 +132,31 @@ bool FlycapDriver::Init()
 
     Property P_Exposure;
     P_Exposure.type = AUTO_EXPOSURE;
-    P_Exposure.onOff = true;
+    P_Exposure.onOff = false;
     P_Exposure.autoManualMode = false;
     P_Exposure.absControl = true;
     P_Exposure.absValue = -3.5;
+
+    Property P_Gain;
+    P_Gain.type = GAIN;
+    P_Gain.onOff = true;
+    P_Gain.autoManualMode = false;
+    P_Gain.absControl = true;
+    P_Gain.absValue = 3;
+
+    Property P_Brightness;
+    P_Brightness.type = BRIGHTNESS;
+    P_Brightness.onOff = true;
+    P_Brightness.autoManualMode = false;
+    P_Brightness.absControl = false;
+    P_Brightness.absValue = 50;
+
+    Property P_Sharpness;
+    P_Sharpness.type = SHARPNESS;
+    P_Sharpness.onOff = true;
+    P_Sharpness.autoManualMode = false;
+    P_Sharpness.absControl = false;
+    P_Sharpness.absValue = 0;
 
     PGRGuid         GUID;
 
@@ -153,6 +174,12 @@ bool FlycapDriver::Init()
     error = m_Cam1.SetProperty( &P_Shutter );
     CheckError(error);
     error = m_Cam1.SetProperty( &P_Exposure );
+    CheckError(error);
+    error = m_Cam1.SetProperty( &P_Gain );
+    CheckError(error);
+    error = m_Cam1.SetProperty( &P_Brightness );
+    CheckError(error);
+    error = m_Cam1.SetProperty( &P_Sharpness );
     CheckError(error);
 
     // prepare trigger
@@ -197,6 +224,12 @@ bool FlycapDriver::Init()
     error = m_Cam2.SetProperty( &P_Shutter );
     CheckError(error);
     error = m_Cam2.SetProperty( &P_Exposure );
+    CheckError(error);
+    error = m_Cam2.SetProperty( &P_Gain );
+    CheckError(error);
+    error = m_Cam2.SetProperty( &P_Brightness );
+    CheckError(error);
+    error = m_Cam2.SetProperty( &P_Sharpness );
     CheckError(error);
 
     // set GPIO3 direction to in
