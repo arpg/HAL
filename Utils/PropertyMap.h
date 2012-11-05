@@ -29,7 +29,8 @@ class PropertyMap
         friend void output( T& oStream, const PropertyMap& prop ) {
             std::map<std::string,std::string>::const_iterator it;
             for( it = prop.m_mPropertyMap.begin(); it != prop.m_mPropertyMap.end(); it++ ){
-                oStream << it->first << " : " << it->second << "\n";
+                //oStream << it->first << " : " << it->second << "\n";
+                oStream << it->first << it->second;
             }
         }
 
