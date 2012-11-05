@@ -24,58 +24,60 @@ Dvi2PciDriver::~Dvi2PciDriver()
 ///////////////////////////////////////////////////////////////////////////////
 bool Dvi2PciDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-    
+
     // if there are any matrices, delete them
     vImages.clear();
 
-    unsigned char *buffer, *controlBuffer;
-    int length, controlLength;
-    
-    
-    
+    unsigned char *buffer;
+    //unsigned char *controlBuffer;
+    //int length;
+    //int controlLength;
+
+
+
     bool gotImage = false;
-        
+
     //block while we don't have an image
     while(gotImage == false)
     {
         pthread_mutex_lock(&m_mutex);
-        if(m_pUsedBuffers.empty()) {           
-            length = 0;
-            controlLength = 0;
+        if(m_pUsedBuffers.empty()) {
+            //length = 0;
+            //controlLength = 0;
             buffer = NULL;
         } else {
             DviImageBufferStruct *pStr = m_pUsedBuffers.front();
             m_pUsedBuffers.pop();
             buffer = pStr->m_pImageBuffer;
-            controlBuffer = pStr->m_pControlBuffer;
+            //controlBuffer = pStr->m_pControlBuffer;
 
             //add this to the free buffers
             m_pFreeBuffers.push(pStr);
             //fprintf(stderr,"Popped a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
-            length = m_nNumImages * m_nImageWidth * m_nImageHeight;
-            controlLength = 160;
+            //length = m_nNumImages * m_nImageWidth * m_nImageHeight;
+            //controlLength = 160;
             //std::memcpy(buffer,ptr,lengthOut);
-            
+
 
             gotImage = true;
         }
         pthread_mutex_unlock(&m_mutex);
     }
-    
+
     // allocate images if necessary
     if( vImages.size() != m_nNumImages ){
         vImages.resize( m_nNumImages );
     }
-    
+
     g_count++;
-    
+
     if(g_count % 2 == 0) {
         //buffer += m_nImageHeight*m_nImageWidth;
     }
-    
+
     // now copy the images from the delegate
     for ( size_t ii = 0; ii < m_nNumImages; ii++) {
-        
+
         vImages[ii].Image = cv::Mat(m_nImageHeight,m_nImageWidth, CV_8UC1, buffer);
         //advance the pointer forward
         //buffer += 1280*720*3/2;
@@ -131,7 +133,7 @@ int Dvi2PciDriver::DetectVideoMode(FrmGrabber* fg, V2U_VideoMode* vm, V2U_BOOL d
     if (FrmGrab_DetectVideoMode(fg, vm)) {
         if (vm->width || vm->height) {
             printf("detected %dx%d (%d.%d Hz)\n",
-                        vm->width, vm->height, 
+                        vm->width, vm->height,
                         (vm->vfreq+50)/1000,((vm->vfreq+50)%1000)/100);
 
             /* Print video mode details */
@@ -206,7 +208,7 @@ FrmGrabber* Dvi2PciDriver::OpenGrabber(const char* sn, const char* addr)
             printf("No Epiphan frame grabber found\n");
         }
     }
-    
+
     if(fg != NULL) {
         printf("Found capture card with serial number %s\n", FrmGrab_GetSN(fg));
     }
@@ -214,7 +216,7 @@ FrmGrabber* Dvi2PciDriver::OpenGrabber(const char* sn, const char* addr)
     return fg;
 }
 
-    
+
 void Dvi2PciDriver::CaptureFuncHandler(Dvi2PciDriver *pUserData)
 {
     pUserData->CaptureFunc();
@@ -230,7 +232,7 @@ bool Dvi2PciDriver::CaptureFunc()
     m_nImageHeight = m_pPropertyMap->GetProperty<int>( "ImageHeight", 480 );
     m_dFps = m_pPropertyMap->GetProperty<double>( "FPS", 60 );
     m_nBufferCount = m_pPropertyMap->GetProperty<int>("BufferCount",5);
-    
+
     //fill the used and free buffers
     for (unsigned int ii = 0; ii < m_nBufferCount; ii++) {
         DviImageBufferStruct *pStr = new DviImageBufferStruct();
@@ -243,16 +245,16 @@ bool Dvi2PciDriver::CaptureFunc()
     FrmGrabNet_Init();
 
     m_pFrameGrabber = OpenGrabber(NULL, NULL);
-    
+
     if (m_pFrameGrabber == NULL) {
         printf("Failed to open FrameGrabber\n");
         FrmGrab_Close(m_pFrameGrabber);
         FrmGrabNet_Deinit();
         return false;
     }
-    
-    const char* pn = FrmGrab_GetProductName(m_pFrameGrabber);
-    V2U_UINT32 caps = FrmGrab_GetCaps(m_pFrameGrabber);
+
+    //const char* pn = FrmGrab_GetProductName(m_pFrameGrabber);
+    //V2U_UINT32 caps = FrmGrab_GetCaps(m_pFrameGrabber);
 
     V2U_VideoMode vm;
     /* Detect video mode */
@@ -262,29 +264,29 @@ bool Dvi2PciDriver::CaptureFunc()
         FrmGrabNet_Deinit();
         return false;
     }
-    
+
     if( vm.width == 0 || vm.height == 0) {
         printf("No signal detected (video dimensions are 0)\n");
         FrmGrab_Close(m_pFrameGrabber);
         FrmGrabNet_Deinit();
         return false;
     }
-    
-    
-    int result = DetectVideoMode(m_pFrameGrabber, &vm, true);
-    
+
+
+    //int result = DetectVideoMode(m_pFrameGrabber, &vm, true);
+
     printf("Starting capture thread...\n");
     /* Set up streaming (onle necessary for network grabbers) */
     FrmGrab_SetMaxFps(m_pFrameGrabber, 60.0);
     FrmGrab_Start(m_pFrameGrabber);
-    
+
     V2U_GrabFrame2* frame = NULL;
     V2URect CropCfg;
     CropCfg.height = vm.height;
     CropCfg.width = vm.width;
     CropCfg.x = 0;
     CropCfg.y = 0;
-    
+
     printf("Capture started...\n");
     while(1)
     {
@@ -296,7 +298,7 @@ bool Dvi2PciDriver::CaptureFunc()
             //break;
         }
         //printf("Frame captured. Total %d bytes.\n", frame->imagelen);
-        
+
         DviImageBufferStruct *BuffPtr;
         //if there are no free buffers it means whoever is reading this
         //is not reading fast enough so we just have to rewrite over the
@@ -311,21 +313,21 @@ bool Dvi2PciDriver::CaptureFunc()
             m_pFreeBuffers.pop();
         }
         pthread_mutex_unlock(&m_mutex);
-        
+
         memcpy(BuffPtr->m_pImageBuffer, frame->pixbuf, frame->imagelen);
-        
+
         //and now we add this to the tail of the used buffers
         //this is in a critical section
         pthread_mutex_lock(&m_mutex);
         m_pUsedBuffers.push(BuffPtr);
         //fprintf(stderr,"Pushed a frame. Currently %d used buffers and %d free buffers.\n",m_pUsedBuffers.size(),m_pFreeBuffers.size());
         pthread_mutex_unlock(&m_mutex);
-            
+
         /* Release the frame */
         FrmGrab_Release(m_pFrameGrabber, frame);
         frame = NULL;
     }
-    
+
     FrmGrab_Close(m_pFrameGrabber);
 
     /* Deinitialize frmgrab library */

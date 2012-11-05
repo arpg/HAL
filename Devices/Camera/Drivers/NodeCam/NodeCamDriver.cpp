@@ -4,14 +4,7 @@
 
 #include "NodeCamDriver.h"
 
-#include <stdio.h>
-
-#include <Mvlpp/Mvl.h>
-#include <Mvlpp/Utils.h>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
+#include "Message.pb.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
@@ -28,92 +21,27 @@ NodeCamDriver::~NodeCamDriver()
 ///////////////////////////////////////////////////////////////////////////////
 bool NodeCamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
+    msg::NodeCam Msg;
 
-    // clear image vector
-	vImages.clear();
+    // block until we get an image
+    while( m_Node.Read( "NodeCam", Msg ) == false ) {}
 
-	// allocate ZeroMQ message
-	zmq::message_t ZmqMsg;
+    vImages.resize( Msg.image_size() );
 
-	// read from ZMQ
-	try {
-		if( m_pSocket->recv( &ZmqMsg ) == false ) {
-			// nothing to read
-			return false;
-		}
-	}
-	catch( zmq::error_t error ) {
-		return false;
-	}
+    for( unsigned int ii = 0; ii < vImages.size(); ii++ ) {
+        const msg::Image& Img = Msg.image(ii);
+        const unsigned int ImgHeight = Img.image_height();
+        const unsigned int ImgWidth = Img.image_width();
+        vImages[ii].Image = cv::Mat( ImgHeight, ImgWidth, Img.image_type() );
+        memcpy( vImages[ii].Image.data, Img.image().c_str(), Img.image_size() );
 
-	if ( ZmqMsg.size() == 0 ) {
-		return false;
-	}
+        for( int jj = 0; jj < Img.property_name_size(); jj++ ) {
+            vImages[ii].Map.SetProperty( Img.property_name(jj), Img.property_val(jj) );
+        }
 
-	std::cout << "Message size is: " << ZmqMsg.size() << std::endl;
+    }
 
-	// message type is of format:
-	// NumImages|Img1Width|Img1Height|Img1Format|Img1Data|Img2Width|...
-
-	// pointer to message data
-	char* MsgPtr = (char*)ZmqMsg.data();
-
-	// get number of cameras
-	int NumImgs;
-	std::memcpy( &NumImgs, MsgPtr, sizeof(NumImgs) );
-	MsgPtr += sizeof(NumImgs);
-
-	// resize output vector
-	vImages.resize(NumImgs);
-
-	for( int ii = 0; ii < NumImgs; ii++ ) {
-
-		int ImgWidth;
-		std::memcpy( &ImgWidth, MsgPtr, sizeof(ImgWidth) );
-		MsgPtr += sizeof(ImgWidth);
-		int ImgHeight;
-		std::memcpy( &ImgHeight, MsgPtr, sizeof(ImgHeight) );
-		MsgPtr += sizeof(ImgHeight);
-		int ImgType;
-		std::memcpy( &ImgType, MsgPtr, sizeof(ImgType) );
-		MsgPtr += sizeof(ImgType);
-
-		// decode image type from OpenCV type
-		unsigned int ImgDepth;
-		switch(ImgType & 7) {
-		case 0:
-		case 1:
-			ImgDepth = 1;
-			break;
-		case 2:
-		case 3:
-			ImgDepth = 2;
-			break;
-		case 4:
-		case 5:
-			ImgDepth = 4;
-			break;
-		case 6:
-			ImgDepth = 8;
-			break;
-		}
-
-		unsigned int ImgChannels = (ImgType >> 3) + 1;
-
-		vImages[ii].Image = cv::Mat( ImgHeight, ImgWidth, ImgType );
-
-		unsigned int ImgSize = ImgHeight * ImgWidth * ImgDepth * ImgChannels;
-		memcpy( vImages[ii].Image.data, (void*)MsgPtr, ImgSize );
-
-		MsgPtr += ImgSize;
-
-		std::cout << ii+1 << "/" << NumImgs << " Width: " << ImgWidth << " - Height: " << ImgHeight;
-		std::cout << " - Img Type: " << ImgType;
-		std::cout << " - Depth: " << ImgDepth << " - Channels: " << ImgChannels << " - Total Bytes: ";
-		std::cout << ImgHeight * ImgWidth * ImgDepth * ImgChannels << std::endl;
-	}
-
-	return true;
+    return true;
 }
 
 
@@ -124,22 +52,22 @@ bool NodeCamDriver::Init()
     m_pPropertyMap->PrintPropertyMap();
 
     // read property map
-	m_sHost = m_pPropertyMap->GetProperty( "Host", "localhost:5556" );
+    m_nNumNodes       = m_pPropertyMap->GetProperty<unsigned int>( "NumNodes", 0 );
 
-	// init ZMQ context
-	m_pContext = new zmq::context_t(1);
+    if( m_nNumNodes < 1 ) {
+        std::cerr << "ERROR: No nodes specified. Set property NumNodes." << std::endl;
+        exit(1);
+    }
 
-	// create SUB socket
-	m_pSocket = new zmq::socket_t( *m_pContext, ZMQ_SUB );
+    // subscribe to remote hose
+    for( unsigned int ii = 0; ii < m_nNumNodes; ii++ ) {
+        std::string sNodeID = (boost::format("Node-%d")%ii).str();
+        std::string sNodeURL = m_pPropertyMap->GetProperty( sNodeID, "");
 
-	// lets connect using the socket
-	try {
-		m_pSocket->setsockopt( ZMQ_SUBSCRIBE, NULL, 0 );
-		m_pSocket->connect( ("tcp://" + m_sHost).c_str() );
-	} catch( zmq::error_t error ) {
-		// oops, an error occurred lets rollback
-		delete m_pSocket;
-		return false;
-	}
-	return true;
+        if( m_Node.Subscribe( "NodeCam", sNodeURL ) == false ) {
+            std::cerr << "Error subscribing to node '" << sNodeURL << "'." << std::endl;
+        }
+    }
+
+    return true;
 }

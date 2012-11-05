@@ -5,14 +5,16 @@ set( DVI2PCI_DRIVER_SOURCES Dvi2PciDriver.cpp )
 add_library( Dvi2PciDriver ${DVI2PCI_DRIVER_HEADERS} ${DVI2PCI_DRIVER_SOURCES} )
 
 # copy auxilary library to build directory
-add_library( v2u SDK/v2u_lib/src/v2u_bmp.c
+set( V2U_FILES SDK/v2u_lib/src/v2u_bmp.c
                 SDK/v2u_lib/src/v2u_jpeg.c
                 SDK/v2u_lib/src/v2u_pal.c
                 SDK/v2u_lib/src/v2u_png.c
                 SDK/v2u_lib/src/v2u_sys.c
                 SDK/v2u_lib/src/v2u_util.c )
 
-add_library( slava SDK/slib/src/s_base32.c
+add_library( v2u ${V2U_FILES} )
+
+set( SLAVA_FILES SDK/slib/src/s_base32.c
                     SDK/slib/src/s_base64.c
                     SDK/slib/src/s_bitset.c
                     SDK/slib/src/s_buf.c
@@ -74,14 +76,21 @@ add_library( slava SDK/slib/src/s_base32.c
                     SDK/slib/src/unix/u_thread.c
                     SDK/slib/src/unix/u_trace.c )
 
+# Ignore warnings generated from third party includes
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set_source_files_properties( ${SLAVA_FILES} ${V2U_FILES} PROPERTIES COMPILE_FLAGS " -w " )
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
+add_library( slava ${SLAVA_FILES} )
+
 add_to_rpg_libraries( slava )
 
 if(APPLE)
-	file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+        file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
         list( INSERT RPG_LIBRARIES 0 "-framework Carbon" )
         #add_to_rpg_libraries( "-framework Carbon" )
 else()
-	file( COPY SDK/libfrmgrab/linux/x86_64/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
+        file( COPY SDK/libfrmgrab/linux/x86_64/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 endif(APPLE)
 
 add_custom_target( frmgrab )

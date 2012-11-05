@@ -18,11 +18,12 @@ class KinectDriver : public CameraDriver
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Init();
     private:
+        unsigned int            m_nImgHeight;
+        unsigned int            m_nImgWidth;
         xn::Context             m_Context;
-        xn::DepthGenerator      m_DepthNode;
-        xn::ImageGenerator      m_ImageNode;
-        xn::DepthMetaData       m_DepthMD;
-        xn::ImageMetaData       m_ImageMD;
+        std::vector<xn::DepthGenerator> m_DepthGenerators;
+        std::vector<xn::ImageGenerator> m_ImageGenerators;
+        std::vector<xn::IRGenerator>    m_IRGenerators;
 };
 
 #endif

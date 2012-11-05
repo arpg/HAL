@@ -21,13 +21,13 @@ class FileReaderDriver : public CameraDriver
     private:
         static void _ThreadCaptureFunc( FileReaderDriver* pFR );
         //void _Read( std::vector<rpg::ImageWrapper>& vImages );
-        void _Read();
-		cv::Mat _OpenPDM( const std::string& FileName );
+        bool _Read();
+        cv::Mat _OpenPDM( const std::string& FileName );
 
     private:
-		boost::thread*									m_CaptureThread;
+        boost::thread*									m_CaptureThread;
 
-		// vector of lists of files        
+        // vector of lists of files
         boost::mutex                                    m_Mutex;
         boost::condition_variable                       m_cBufferEmpty;
         boost::condition_variable                       m_cBufferFull;
@@ -36,10 +36,11 @@ class FileReaderDriver : public CameraDriver
         std::vector< std::vector< std::string > >		m_vFileList;
         unsigned int                                    m_nCurrentImageIndex;
         unsigned int                                    m_nStartFrame;
-		unsigned int                                    m_nNumImages;
+        bool                                            m_bLoop;
+        unsigned int                                    m_nNumImages;
         unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nBufferSize;
-        
+
         //std::vector< bool >                             m_vBufferFree;
 };
 

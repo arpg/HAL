@@ -8,8 +8,10 @@
 // Global map of driver name to driver creation function pointers:
 std::map<std::string,IMUDriver*(*)()> g_mIMUDriverTable;
 
+#ifdef USE_MICROSTRAIN
 #include "RPG/Devices/IMU/Drivers/MicroStrain/MicroStrainDriver.h"
 IMUDriverRegisteryEntry<MicroStrainDriver> _MicroStrainReg( "MicroStrain" );
+#endif
 
 #endif
 

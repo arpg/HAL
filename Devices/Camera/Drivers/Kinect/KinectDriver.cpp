@@ -4,6 +4,8 @@
 
 #include "KinectDriver.h"
 
+#include <boost/lexical_cast.hpp>
+
 #define MAX_DEPTH 10000
 
 using namespace xn;
@@ -20,185 +22,239 @@ KinectDriver::~KinectDriver()
 {
 }
 
+#define CHECK_XN_RETURN(rc) { \
+    if (rc != XN_STATUS_OK) { \
+        XnChar strError[1024]; \
+        EnumerationErrors errors; \
+        errors.ToString(strError, 1024); \
+        printf("%s\n", strError); \
+        return false; \
+    } \
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 bool KinectDriver::Init()
 {
-	XnMapOutputMode MapMode;
-	MapMode.nXRes = XN_VGA_X_RES;
-	MapMode.nYRes = XN_VGA_Y_RES;
-	MapMode.nFPS = 30;
+    bool            bGetImage   = m_pPropertyMap->GetProperty( "GetRGB", true );
+    bool            bGetDepth   = m_pPropertyMap->GetProperty( "GetDepth", true );
+    bool            bGetIR      = m_pPropertyMap->GetProperty( "GetIr", false );
+    std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
+    unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
 
-	XnStatus rc;
-	EnumerationErrors errors;
-	XnChar strError[1024];
+    XnMapOutputMode MapMode;
+    MapMode.nFPS = nFPS;
 
-	rc = m_Context.Init ();
+    if( sRes == "VGA" ) {
+        m_nImgHeight = XN_VGA_Y_RES;
+        m_nImgWidth = XN_VGA_X_RES;
+        MapMode.nXRes = XN_VGA_X_RES;
+        MapMode.nYRes = XN_VGA_Y_RES;
+    }
 
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-		return false;
-	}
+    if( sRes == "QVGA" ) {
+        m_nImgHeight = XN_QVGA_Y_RES;
+        m_nImgWidth = XN_QVGA_X_RES;
+        MapMode.nXRes = XN_QVGA_X_RES;
+        MapMode.nYRes = XN_QVGA_Y_RES;
+    }
 
-	// we need this part if we have multiple kinects connected
-	// we would pass an ID (int) to initialize a particular one
-	/*
-	NodeInfoList NodeList;
-	rc = m_Context.EnumerateProductionTrees ( XN_NODE_TYPE_DEVICE, NULL, NodeList, 0 );
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-		return false;
-	}
+    if( sRes == "QQVGA" ) {
+        m_nImgHeight = XN_QQVGA_Y_RES;
+        m_nImgWidth = XN_QQVGA_X_RES;
+        MapMode.nXRes = XN_QQVGA_X_RES;
+        MapMode.nYRes = XN_QQVGA_Y_RES;
+    }
 
-	NodeInfoList::Iterator it = devicesList.Begin ();
-	for (int i = 0; i < device; ++i)
-		it++;
+    XnStatus rc;
 
-	NodeInfo NodeInf = *it;
+    rc = m_Context.Init ();
+    CHECK_XN_RETURN(rc);
 
-	ProductionNode ProdNode;
+    if( bGetDepth ) {
+        // Enumerate Depth Generating nodes
+        NodeInfoList DepthNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_DEPTH, NULL, DepthNodeList, 0 );
+        CHECK_XN_RETURN(rc);
 
-	rc = m_Context.CreateProductionTree ( NodeInf, ProdNode );
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-		return false;
-	}
-	*/
+        for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
 
-	// create depth generator
-	rc = m_DepthNode.Create(m_Context);
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-		return false;
-	}
-	rc = m_DepthNode.SetMapOutputMode(MapMode);
+            xn::DepthGenerator depthGen;
 
-	// create image generator
-	rc = m_ImageNode.Create(m_Context);
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-	} else {
-		rc = m_ImageNode.SetMapOutputMode(MapMode);
-	}
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
 
-	// --- GET CAMERA PARAMS ---
+            rc = node.GetInstance(depthGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = depthGen.SetMapOutputMode(MapMode);
+            CHECK_XN_RETURN(rc);
+
+            // --- GET CAMERA PARAMS ---
+            // Details can be found in XnStreamParams.h
+
+            // focal length in mm
+            XnUInt64 depth_focal_length_SXGA_mm;   //in mm
+            depthGen.GetIntProperty("ZPD", depth_focal_length_SXGA_mm);
+
+            // pixel size in mm
+            XnDouble pixelSize;
+            depthGen.GetRealProperty( "ZPPS", pixelSize );  // in mm
+
+            // focal length in pixels
+            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
+
+            XnDouble dBaselineRGBDepth;
+            depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
+
+            const int camn = m_DepthGenerators.size();
+            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
+            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
+
+            m_DepthGenerators.push_back(depthGen);
+        }
+    }
+
+    if( bGetImage ) {
+        // Enumerate Image Generating nodes
+        NodeInfoList ImageNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IMAGE, NULL, ImageNodeList, 0 );
+        CHECK_XN_RETURN(rc);
+
+        for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
+
+            xn::ImageGenerator imageGen;
+
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
+
+            rc = node.GetInstance(imageGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = imageGen.SetMapOutputMode(MapMode);
+
+            m_ImageGenerators.push_back(imageGen);
+        }
+    }
+
+    if( bGetIR ) {
+        // Enumerate IR Generating nodes
+        NodeInfoList IRNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IR, NULL, IRNodeList, 0 );
+        CHECK_XN_RETURN(rc);
+
+        for(NodeInfoList::Iterator it = IRNodeList.Begin(); it != IRNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
+
+            xn::IRGenerator irGen;
+
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
+
+            rc = node.GetInstance(irGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = irGen.SetMapOutputMode(MapMode);
+
+            m_IRGenerators.push_back(irGen);
+        }
+    }
+
+//    if(m_ImageNode.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT))
+//    {
+//        //Warp RGB to match depth
+//        AlternativeViewPointCapability avpx = m_ImageNode.GetAlternativeViewPointCap();
+//        rc = avpx.SetViewPoint(m_DepthNode);
+//        if (rc != XN_STATUS_OK) {
+//            errors.ToString(strError, 1024);
+//            printf("%s\n", strError);
+//        }
+//    }
+
+    // --- GET CAMERA PARAMS ---
     // Details can be found in XnStreamParams.h
 
-	// focal length in mm
-	XnUInt64 depth_focal_length_SXGA_mm;   //in mm
-	m_DepthNode.GetIntProperty ("ZPD", depth_focal_length_SXGA_mm);
-
-	// pixel size in mm
-	double pixelSize;
-	m_DepthNode.GetRealProperty ( "ZPPS", pixelSize );  // in mm
-
-	// focal length in pixels
-	float depth_focal_length_SXGA = static_cast<float>(depth_focal_length_SXGA_mm / pixelSize);
-	m_pPropertyMap->SetProperty( "DepthFocalLength", depth_focal_length_SXGA / 2 );
-
-	XnDouble dBaselineRGBDepth;
-	m_DepthNode.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
-	m_pPropertyMap->SetProperty( "RGBDepthBaseline", dBaselineRGBDepth );
-
-	/*
-	max_depth = m_DepthNode.GetDeviceMaxDepth ();
+    /*
+    max_depth = m_DepthNode.GetDeviceMaxDepth ();
 
 
-	XnUInt64 shadow_value_local;
-	depth.GetIntProperty ("ShadowValue", shadow_value_local);
-	shadow_value = (int)shadow_value_local;
+    XnUInt64 shadow_value_local;
+    depth.GetIntProperty ("ShadowValue", shadow_value_local);
+    shadow_value = (int)shadow_value_local;
 
-	XnUInt64 no_sample_value_local;
-	depth.GetIntProperty ("NoSampleValue", no_sample_value_local);
-	no_sample_value = (int)no_sample_value_local;
+    XnUInt64 no_sample_value_local;
+    depth.GetIntProperty ("NoSampleValue", no_sample_value_local);
+    no_sample_value = (int)no_sample_value_local;
 
-	// baseline from cm -> mm
-	baseline = (float)(baseline_local * 10);
-	*/
+    // baseline from cm -> mm
+    baseline = (float)(baseline_local * 10);
+    */
 
-	// --- END GETTING PARAMS ---
+    // --- END GETTING PARAMS ---
 
-	rc = m_Context.StartGeneratingAll();
-	if (rc != XN_STATUS_OK) {
-		errors.ToString(strError, 1024);
-		printf("%s\n", strError);
-		return false;
-	}
+    rc = m_Context.StartGeneratingAll();
+    CHECK_XN_RETURN(rc);
 
-	return true;
+    return true;
 }
+
+#undef CHECK_XN_RETURN
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-	XnStatus rc = XN_STATUS_OK;
+    XnStatus rc = XN_STATUS_OK;
 
-	// Read a new frame
-	rc = m_Context.WaitAnyUpdateAll();
-	if (rc != XN_STATUS_OK)
-	{
-		printf("Read failed: %s\n", xnGetStatusString(rc));
-		return false;
-	}
-
-	// prepare return images
-    vImages.clear();
-    vImages.resize(2);
-
-    // Get data pointers from Kinect
-	// get RGB image data
-	m_ImageNode.GetMetaData(m_ImageMD);
-	// get depth image data
-	m_DepthNode.GetMetaData(m_DepthMD);
-
-    const XnRGB24Pixel* pImageRow = m_ImageMD.RGB24Data();
-    const XnDepthPixel* pDepthRow = m_DepthMD.Data();
-
-    long unsigned int TimeStampRGB = m_ImageMD.Timestamp();
-	m_pPropertyMap->SetProperty( "TimestampRGB", TimeStampRGB );
-
-    long unsigned int TimeStampDepth = m_DepthMD.Timestamp();
-	m_pPropertyMap->SetProperty( "TimestampDepth", TimeStampDepth );
-
-    //----------------------------------------------------------------------------
-    // image 0 is RGB image
-    vImages[0].Image = cv::Mat( 480, 640, CV_8UC3 );
-    vImages[0].Map.SetProperty( "CameraTime", TimeStampRGB );
-
-    for (unsigned int y = 0; y < m_ImageMD.YRes(); ++y)
+    // Read a new frame
+    rc = m_Context.WaitAndUpdateAll();
+    if (rc != XN_STATUS_OK)
     {
-        const XnRGB24Pixel* pImage = pImageRow;
-
-        for (unsigned int x = 0; x < m_ImageMD.XRes(); ++x, ++pImage)
-        {
-            unsigned int idx = x * 3;
-            vImages[0].Image.at<unsigned char>(y,idx) = pImage->nBlue;
-            vImages[0].Image.at<unsigned char>(y,idx+1) = pImage->nGreen;
-            vImages[0].Image.at<unsigned char>(y,idx+2) = pImage->nRed;
-        }
-
-        pImageRow += m_ImageMD.XRes();
+        printf("Read failed: %s\n", xnGetStatusString(rc));
+        return false;
     }
 
-    //----------------------------------------------------------------------------
-    // image 1 is depth image
-    vImages[1].Image = cv::Mat( 480, 640, CV_16UC1 );
-    vImages[1].Map.SetProperty( "CameraTime", TimeStampDepth );
-
-    for (unsigned int y = 0; y < m_DepthMD.YRes(); ++y)
+    // prepare return images
+    const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
+    if( vImages.size() != nNumImgs )
     {
-        const XnDepthPixel* pDepth = pDepthRow;
-        for (unsigned int x = 0; x < m_DepthMD.XRes(); ++x, ++pDepth)
-        {
-			vImages[1].Image.at<unsigned short>(y,x) = *pDepth;
+        vImages.resize( nNumImgs );
+
+        int n = 0;
+        for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_8UC3 );
         }
-        pDepthRow += m_DepthMD.XRes();
+        for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
+        }
+        for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
+        }
+    }
+
+    int n = 0;
+    for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
+        xn::ImageMetaData metaData;
+        m_ImageGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+    }
+    for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
+        xn::DepthMetaData metaData;
+        m_DepthGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
+    }
+    for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
+        xn::IRMetaData metaData;
+        m_IRGenerators[i].GetMetaData(metaData);
+        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
 
     return true;

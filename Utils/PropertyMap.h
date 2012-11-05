@@ -31,7 +31,7 @@ class PropertyMap
             for( it = prop.m_mPropertyMap.begin(); it != prop.m_mPropertyMap.end(); it++ ){
                 //oStream << it->first << " : " << it->second << "\n";
                 oStream << it->first << it->second;
-            }            
+            }
         }
 
         ////////////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ class PropertyMap
             std::map<std::string,std::string>::const_iterator it;
             for( it = prop.m_mPropertyMap.begin(); it != prop.m_mPropertyMap.end(); it++ ){
                 oStream << it->first << it->second;
-            }            
+            }
             return oStream;
         }
 
@@ -58,7 +58,7 @@ class PropertyMap
             std::map<std::string,std::string>::iterator it;
             it = m_mPropertyMap.find( sPropertyName );
             if( it == m_mPropertyMap.end() ){
-                return sDefaultValue; 
+                return sDefaultValue;
             }
             return it->second;
         }
@@ -72,7 +72,7 @@ class PropertyMap
             std::map<std::string,std::string>::iterator it;
             it = m_mPropertyMap.find( sPropertyName );
             if( it == m_mPropertyMap.end() ){
-                return tDefaultValue; 
+                return tDefaultValue;
             }
             T t;
             StrToVal( t, it->second );
@@ -88,6 +88,12 @@ class PropertyMap
             {
                 m_mPropertyMap[ sPropertyName ] = ValToStr( tDesiredValue );
             }
+
+         ////////////////////////////////////////////////////////////////////////
+         std::map<std::string,std::string>& GetPropertyMap()
+         {
+            return          m_mPropertyMap;
+         }
 
     private:
 
@@ -109,7 +115,7 @@ class PropertyMap
             }
 
         ////////////////////////////////////////////////////////////////////////
-        // Specialization for double for maximum precision 
+        // Specialization for double for maximum precision
         std::string ValToStr( const double& val )
         {
             std::ostringstream oss;
