@@ -11,6 +11,8 @@
 #include <RPG/Utils/GetPot>
 #include <RPG/Devices/Camera/CameraDevice.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace rpg {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +25,12 @@ const char USAGE[] =
 "   FileReader:      -lfile <regular expression for left image channel>\n"
 "                    -rfile <regular expression for right image channel>\n"
 "                    -sf    <start frame [default 0]>\n"
+"                    -loop  If the driver should restart once images are consumed.\n"
+"\n"
+"   Kinect:          -no-rgb         Do not capture RGB image.\n"
+"                    -no-depth       Do not capture depth image.\n"
+"                    -align-depth    Align depth map to RGB image.\n"
+"                    -with-ir        Capture IR image.\n"
 "\n"
 "General Options:    -lcmod <left camera model xml file>\n"
 "                    -rcmod <right camera model xml file>\n"
@@ -45,7 +53,7 @@ void InitCam(
 
 
     // get general params
-    std::string     sDeviceDriver       = clArgs.follow( "Bumblebee2", 1, "-idev" );
+    std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
     std::string     sLeftCameraModel    = clArgs.follow( "lcmod.xml", 1, "-lcmod" );
     std::string     sRightCameraModel   = clArgs.follow( "rcmod.xml", 1, "-rcmod" );
     std::string     sLeftFileRegex      = clArgs.follow( "left.*pgm", 1, "-lfile" );
@@ -68,6 +76,9 @@ void InitCam(
 
     //----------------------------------------------- FILEREADER
     if( sDeviceDriver == "FileReader" ) {
+        Cam.SetProperty( "StartFrame",    clArgs.follow( 0, 1, "-sf" ));
+        Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
+
         if( sLeftCameraModel.empty() || sRightCameraModel.empty() ) {
             std::cerr << "One or more camera model files is missing!\n" << std::endl;
             std::cerr << USAGE;
@@ -90,10 +101,12 @@ void InitCam(
         bool        bGetDepth         = !clArgs.search( "-no-depth" );
         bool        bGetRGB           = !clArgs.search( "-no-rgb" );
         bool        bGetIr            = clArgs.search( "-with-ir" );
+        bool        bAlignDepth       = clArgs.search( "-align-depth" );
 
         Cam.SetProperty( "GetRGB", bGetRGB );
         Cam.SetProperty( "GetDepth", bGetDepth );
         Cam.SetProperty( "GetIr", bGetIr );
+        Cam.SetProperty( "AlignDepth", bAlignDepth );
         Cam.SetProperty( "FPS", nFPS );
         Cam.SetProperty( "Resolution", sResolution );
     }
@@ -104,8 +117,8 @@ void InitCam(
 
         while(true) {
             std::string arg = boost::lexical_cast<std::string>(numNodes);
-            if(!cl.search( ("-n"+arg).c_str() ) ) break;
-            Cam.SetProperty("Node-" + arg, cl.follow("", ("-n"+arg).c_str() ) );
+            if(!clArgs.search( ("-n"+arg).c_str() ) ) break;
+            Cam.SetProperty("Node-" + arg, clArgs.follow("", ("-n"+arg).c_str() ) );
             numNodes++;
         }
         Cam.SetProperty("NumNodes", numNodes);

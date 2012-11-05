@@ -41,6 +41,7 @@ bool KinectDriver::Init()
     bool            bGetIR      = m_pPropertyMap->GetProperty( "GetIr", false );
     std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
     unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
+    bool            bAlignDepth = m_pPropertyMap->GetProperty( "AlignDepth", false );
 
     XnMapOutputMode MapMode;
     MapMode.nFPS = nFPS;
@@ -71,12 +72,38 @@ bool KinectDriver::Init()
     rc = m_Context.Init ();
     CHECK_XN_RETURN(rc);
 
+    if( bGetImage ) {
+        // Enumerate Image Generating nodes
+        NodeInfoList ImageNodeList;
+        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IMAGE, NULL, ImageNodeList, 0 );
+        CHECK_XN_RETURN(rc);
+
+        for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
+            // create depth generator
+            const NodeInfo& node = *it;
+
+            xn::ImageGenerator imageGen;
+
+            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            CHECK_XN_RETURN(rc);
+
+            rc = node.GetInstance(imageGen);
+            CHECK_XN_RETURN(rc);
+
+            rc = imageGen.SetMapOutputMode(MapMode);
+
+            m_ImageGenerators.push_back(imageGen);
+        }
+    }
+
+
     if( bGetDepth ) {
         // Enumerate Depth Generating nodes
         NodeInfoList DepthNodeList;
         rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_DEPTH, NULL, DepthNodeList, 0 );
         CHECK_XN_RETURN(rc);
 
+        unsigned int count = 0;
         for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
             // create depth generator
             const NodeInfo& node = *it;
@@ -91,6 +118,17 @@ bool KinectDriver::Init()
 
             rc = depthGen.SetMapOutputMode(MapMode);
             CHECK_XN_RETURN(rc);
+
+            // --- ALIGN DEPTH TO RGB IF REQUESTED ---
+            if( bAlignDepth ) {
+                if( depthGen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) ) {
+                    AlternativeViewPointCapability avpx = depthGen.GetAlternativeViewPointCap();
+                    rc = avpx.SetViewPoint( m_ImageGenerators[count]  );
+                    CHECK_XN_RETURN(rc);
+                }
+                count++;
+            }
+
 
             // --- GET CAMERA PARAMS ---
             // Details can be found in XnStreamParams.h
@@ -117,29 +155,6 @@ bool KinectDriver::Init()
         }
     }
 
-    if( bGetImage ) {
-        // Enumerate Image Generating nodes
-        NodeInfoList ImageNodeList;
-        rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_IMAGE, NULL, ImageNodeList, 0 );
-        CHECK_XN_RETURN(rc);
-
-        for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
-            // create depth generator
-            const NodeInfo& node = *it;
-
-            xn::ImageGenerator imageGen;
-
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
-            CHECK_XN_RETURN(rc);
-
-            rc = node.GetInstance(imageGen);
-            CHECK_XN_RETURN(rc);
-
-            rc = imageGen.SetMapOutputMode(MapMode);
-
-            m_ImageGenerators.push_back(imageGen);
-        }
-    }
 
     if( bGetIR ) {
         // Enumerate IR Generating nodes

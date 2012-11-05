@@ -177,14 +177,13 @@ bool FileReaderDriver::_Read()
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        // TODO: this only reads grayscale '0'.. not sure if we need more than that tho
         std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
         // check if it is our own "portable depth map" format
         if( sExtension == "pdm" ) {
             vImages[ii].Image = _OpenPDM( sFileName );
         } else {
             // otherwise let OpenCV open it
-            vImages[ii].Image = cv::imread( sFileName, 0);
+            vImages[ii].Image = cv::imread( sFileName, -1 );
         }
     }
 
