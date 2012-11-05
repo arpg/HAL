@@ -8,6 +8,7 @@
 #ifndef INIT_CAM_H
 #define INIT_CAM_H
 
+#include <sstream>
 #include <RPG/Utils/GetPot>
 #include <RPG/Devices/Camera/CameraDevice.h>
 
@@ -101,12 +102,15 @@ void InitCam(
     //----------------------------------------------- NODECAM
     if( sDeviceDriver == "NodeCam" ) {
         int numNodes = 0;
-
+        std::stringstream ss;
         while(true) {
-            std::string arg = boost::lexical_cast<std::string>(numNodes);
-            if(!cl.search( ("-n"+arg).c_str() ) ) break;
-            Cam.SetProperty("Node-" + arg, cl.follow("", ("-n"+arg).c_str() ) );
+	    ss << numNodes;
+	    std::string arg = ss.str();
+            //std::string arg = boost::lexical_cast<std::string>(numNodes);
+            if(!clArgs.search( ("-n"+arg).c_str() ) ) break;
+            Cam.SetProperty("Node-" + arg, clArgs.follow("", ("-n"+arg).c_str() ) );
             numNodes++;
+	    ss.str("");
         }
         Cam.SetProperty("NumNodes", numNodes);
     }
