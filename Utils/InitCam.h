@@ -117,10 +117,9 @@ void InitCam(
         int numNodes = 0;
         std::stringstream ss;
         while(true) {
-            std::string arg = boost::lexical_cast<std::string>(numNodes);
+            //std::string arg = boost::lexical_cast<std::string>(numNodes);
 	    ss << numNodes;
 	    std::string arg = ss.str();
-            //std::string arg = boost::lexical_cast<std::string>(numNodes);
             if(!clArgs.search( ("-n"+arg).c_str() ) ) break;
             Cam.SetProperty("Node-" + arg, clArgs.follow("", ("-n"+arg).c_str() ) );
             numNodes++;
