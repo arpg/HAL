@@ -167,12 +167,11 @@ u16 mip_interface_close(mip_interface *device_interface)
 //!
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_interface_update(mip_interface *device_interface)
+u16 mip_interface_update(mip_interface *device_interface, bool read_max_packet_size)
 {
  u32 num_bytes, bytes_read, bytes_written;
  u8  local_buffer[MIP_INTERFACE_INPUT_RING_BUFFER_SIZE];
- u32 port_bytes;
- 
+
  //The parser must be initialized
  if(device_interface->state != MIP_INTERFACE_INITIALIZED)
   return MIP_INTERFACE_ERROR;
@@ -183,12 +182,13 @@ u16 mip_interface_update(mip_interface *device_interface)
  if(ring_buffer_remaining_entries(&device_interface->input_buffer) < num_bytes)
   num_bytes = ring_buffer_remaining_entries(&device_interface->input_buffer);
  
- port_bytes = mip_sdk_port_read_count(device_interface->port_handle);
- 
- if(num_bytes > port_bytes)
-  num_bytes = port_bytes;
- 
- 
+ if(!read_max_packet_size) {
+  u32 port_bytes = mip_sdk_port_read_count(device_interface->port_handle);
+  if(num_bytes > port_bytes) {
+      num_bytes = port_bytes;
+  }
+ }
+
  //Read up to max ring buffer size from the port
  mip_sdk_port_read(device_interface->port_handle, local_buffer, num_bytes, &bytes_read, MIP_INTERFACE_PORT_READ_TIMEOUT_MS);
 

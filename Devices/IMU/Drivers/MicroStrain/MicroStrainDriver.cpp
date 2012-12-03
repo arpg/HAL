@@ -14,11 +14,6 @@ using namespace Eigen;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
 
-////AHRS
-//mip_ahrs_scaled_gyro  curr_ahrs_gyro;
-//mip_ahrs_scaled_accel curr_ahrs_accel;
-//mip_ahrs_scaled_mag   curr_ahrs_mag;
-
 #define _LINUX
 
 #if defined(_LINUX) || defined(_QNX) || defined(_OSX)
@@ -33,7 +28,7 @@ void Sleep(unsigned int time)
 }
 #endif
 
-double Tic()
+inline double Tic()
 {
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -51,6 +46,22 @@ MicroStrainDriver::~MicroStrainDriver()
 {
     mShouldRun = false;
     mDeviceThread.join();
+
+    if(m_bGetAHRS) {
+        // Take out of continuous ahrs mode
+        u8 ahrs_enable = 0;
+        while(mip_3dm_cmd_continuous_data_stream(
+            &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
+            MIP_3DM_AHRS_DATASTREAM, &ahrs_enable) != MIP_INTERFACE_OK) { }
+    }
+
+    if(m_bGetGPS) {
+        // Take out of continuous GPS mode
+        u8 gps_enable = 0;
+        while(mip_3dm_cmd_continuous_data_stream(
+             &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
+              MIP_3DM_GPS_DATASTREAM, &gps_enable) != MIP_INTERFACE_OK) { }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,6 +69,8 @@ MicroStrainDriver::~MicroStrainDriver()
 ///////////////////////////////////////////////////////////////////////////////
 void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_size*/, u8 callback_type)
 {
+    const double dTimestamp = Tic();
+
     MicroStrainDriver* self = static_cast<MicroStrainDriver*>(user_ptr);
 
     mip_field_header *field_header;
@@ -69,31 +82,36 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
     {
         case MIP_INTERFACE_CALLBACK_VALID_PACKET:
         {
-            double dTimestamp = Tic();
+            IMUData imuData;
+            GPSData gpsData;
 
+            // Read each field in packet.
+            // For little-endian targets, byteswap the data field
             while(mip_get_next_field(packet, &field_header, &field_data, &field_offset) == MIP_OK)
             {
                 switch(field_header->descriptor)
                 {
+                    case MIP_AHRS_DATA_TIME_STAMP_PPS:
+                    {
+                        mip_ahrs_1pps_timestamp curr_ahrs_pps_timestamp;
+                        memcpy(&curr_ahrs_pps_timestamp, field_data, sizeof(mip_ahrs_1pps_timestamp));
+                        mip_ahrs_1pps_timestamp_byteswap(&curr_ahrs_pps_timestamp);
+
+                        imuData.data_present |= (int)IMU_AHRS_TIMESTAMP_PPS;
+                        imuData.timestamp_pps = curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds;
+                    }break;
+
                     // Scaled Accelerometer
                     case MIP_AHRS_DATA_ACCEL_SCALED:
                     {
                         mip_ahrs_scaled_accel curr_ahrs_accel;
                         memcpy(&curr_ahrs_accel, field_data, sizeof(mip_ahrs_scaled_accel));
-
-                        //For little-endian targets, byteswap the data field
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
-                        IMUData imuData;
-                        imuData.type = IMU_AHRS_ACCEL;
-                        imuData.timestamp = dTimestamp;
+                        imuData.data_present |= IMU_AHRS_ACCEL;
                         imuData.accel << curr_ahrs_accel.scaled_accel[0],
                                          curr_ahrs_accel.scaled_accel[1],
                                          curr_ahrs_accel.scaled_accel[2];
-
-                        if(!self->mCallback.empty()){
-                            self->mCallback(imuData);
-                        }
                     }break;
 
                     // Scaled Gyro
@@ -101,43 +119,25 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                     {
                         mip_ahrs_scaled_gyro curr_ahrs_gyro;
                         memcpy(&curr_ahrs_gyro, field_data, sizeof(mip_ahrs_scaled_gyro));
-
-                        //For little-endian targets, byteswap the data field
                         mip_ahrs_scaled_gyro_byteswap(&curr_ahrs_gyro);
 
-                        IMUData imuData;
-                        imuData.type = IMU_AHRS_GYRO;
-                        imuData.timestamp = dTimestamp;
+                        imuData.data_present |= IMU_AHRS_GYRO;
                         imuData.gyro << curr_ahrs_gyro.scaled_gyro[0],
                                         curr_ahrs_gyro.scaled_gyro[1],
                                         curr_ahrs_gyro.scaled_gyro[2];
-
-                        if(!self->mCallback.empty()){
-                            self->mCallback(imuData);
-                        }
                     }break;
 
                      // Scaled Magnetometer
                     case MIP_AHRS_DATA_MAG_SCALED:
                     {
                         mip_ahrs_scaled_mag curr_ahrs_mag;
-
                         memcpy(&curr_ahrs_mag, field_data, sizeof(mip_ahrs_scaled_mag));
-
-                        //For little-endian targets, byteswap the data field
                         mip_ahrs_scaled_mag_byteswap(&curr_ahrs_mag);
 
-                        IMUData imuData;
-                        imuData.type = IMU_AHRS_MAG;
-                        imuData.timestamp = dTimestamp;
+                        imuData.data_present |= IMU_AHRS_MAG;
                         imuData.mag << curr_ahrs_mag.scaled_mag[0],
                                         curr_ahrs_mag.scaled_mag[1],
                                         curr_ahrs_mag.scaled_mag[2];
-
-                        if(!self->mCallback.empty()){
-                            self->mCallback(imuData);
-                        }
-
                     }break;
 
                     case MIP_AHRS_DATA_QUATERNION:
@@ -146,16 +146,8 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                         memcpy(&curr_ahrs_quat, field_data, sizeof(mip_ahrs_quaternion));
                         mip_ahrs_quaternion_byteswap(&curr_ahrs_quat);
 
-                        IMUData imuData;
-                        imuData.type = IMU_AHRS_QUATERNION;
-                        imuData.timestamp = dTimestamp;
+                        imuData.data_present |= IMU_AHRS_QUATERNION;
                         imuData.rotation = Eigen::Quaterniond(curr_ahrs_quat.q[0],curr_ahrs_quat.q[1],curr_ahrs_quat.q[2],curr_ahrs_quat.q[3]);
-
-                        if(!self->mCallback.empty()) {
-                            self->mCallback(imuData);
-                        }
-
-
                     }break;
 
                     case MIP_AHRS_DATA_EULER_ANGLES:
@@ -164,44 +156,38 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                         memcpy(&curr_ahrs_euler_angles, field_data, sizeof(mip_ahrs_euler_angles));
                         mip_ahrs_euler_angles_byteswap(&curr_ahrs_euler_angles);
 
-                        IMUData imuData;
-                        imuData.type = IMU_AHRS_EULER;
-                        imuData.timestamp = dTimestamp;
+                        imuData.data_present |= IMU_AHRS_EULER;
                         imuData.euler << curr_ahrs_euler_angles.roll,
                                          curr_ahrs_euler_angles.pitch,
                                          curr_ahrs_euler_angles.yaw;
-
-                        if(!self->mCallback.empty()){
-                            self->mCallback(imuData);
-                        }
-
                     }break;
 
                     case MIP_GPS_DATA_LLH_POS:
                     {
                         mip_gps_llh_pos curr_gps_llh_pos;
                         memcpy(&curr_gps_llh_pos, field_data, sizeof(mip_gps_llh_pos));
-
                         mip_gps_llh_pos_byteswap(&curr_gps_llh_pos);
-                        IMUData imuData;
-                        imuData.type = IMU_GPS_LLH;
-                        imuData.timestamp = dTimestamp;
-                        imuData.llh << curr_gps_llh_pos.latitude,
+
+                        gpsData.data_present |= IMU_GPS_LLH;
+                        gpsData.llh << curr_gps_llh_pos.latitude,
                                        curr_gps_llh_pos.longitude,
                                        curr_gps_llh_pos.ellipsoid_height,
                                        curr_gps_llh_pos.msl_height,
                                        curr_gps_llh_pos.horizontal_accuracy,
                                        curr_gps_llh_pos.vertical_accuracy;
-
-                        if(!self->mCallback.empty()){
-                            self->mCallback(imuData);
-                        }
-
                     }break;
-
 
                     default: break;
                 }
+            }
+
+            if(imuData.data_present && !self->mIMUCallback.empty()){
+                imuData.timestamp_system = dTimestamp;
+                self->mIMUCallback(imuData);
+            }
+            if(gpsData.data_present && !self->mGPSCallback.empty()){
+                gpsData.timestamp_system = dTimestamp;
+                self->mGPSCallback(gpsData);
             }
         }break;
 
@@ -228,12 +214,12 @@ bool MicroStrainDriver::Init()
     //*****************************************************************
     // Get driver properties
     //*****************************************************************
-    m_bGetGPS  = m_pPropertyMap->GetProperty<bool>( "GetGPS", true );
-    m_bGetAHRS = m_pPropertyMap->GetProperty<bool>( "GetAHRS", true );
+    m_bGetGPS  = m_pPropertyMap->GetProperty<bool>( "GetGPS", false );
+    m_bGetAHRS = m_pPropertyMap->GetProperty<bool>( "GetAHRS", false );
     m_nHzGPS   = m_pPropertyMap->GetProperty<int>( "HzGPS",   1 );
     m_nHzAHRS  = m_pPropertyMap->GetProperty<int>( "HzAHRS", 100 );
 
-    m_bGetEulerAHRS			= m_pPropertyMap->GetProperty<bool>( "GetEuler", true );
+    m_bGetEulerAHRS			= m_pPropertyMap->GetProperty<bool>( "GetEuler", false );
     m_bGetQuaternionAHRS	= m_pPropertyMap->GetProperty<bool>( "GetQuaternion", false );
     m_bGetAccelerometerAHRS = m_pPropertyMap->GetProperty<bool>( "GetAccelerometer", false );
     m_bGetGyroAHRS	        = m_pPropertyMap->GetProperty<bool>( "GetGyro", false );
@@ -241,11 +227,11 @@ bool MicroStrainDriver::Init()
     //*****************************************************************
 
     assert(m_pPropertyMap);
-    std::cout << "************************************************" << std::endl;
-    std::cout << "Init MicroStrainDriver" << std::endl;
-    std::cout << "************************************************" << std::endl;
-    m_pPropertyMap->PrintPropertyMap();
-    std::cout << "************************************************" << std::endl;
+//    std::cout << "************************************************" << std::endl;
+//    std::cout << "Init MicroStrainDriver" << std::endl;
+//    std::cout << "************************************************" << std::endl;
+//    m_pPropertyMap->PrintPropertyMap();
+//    std::cout << "************************************************" << std::endl;
 
     // Device communication parameters
     const u32 device_id = 0;
@@ -255,7 +241,7 @@ bool MicroStrainDriver::Init()
     // Start up device
     if(mip_interface_init(device_id, baudrate, &mDeviceInterface,
                           DEFAULT_PACKET_TIMEOUT_MS) != MIP_INTERFACE_OK) {
-        return -1;
+        return false;
     }
 
     // Listen to commands only (no data output)
@@ -291,17 +277,22 @@ bool MicroStrainDriver::Init()
 
 void MicroStrainDriver::RegisterDataCallback(IMUDriverDataCallback callback)
 {
-    mCallback = callback;
+    mIMUCallback = callback;
 }
+
+void MicroStrainDriver::RegisterDataCallback(GPSDriverDataCallback callback)
+{
+    mGPSCallback = callback;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 void MicroStrainDriver::_ThreadCaptureFunc()
 {
     while(mShouldRun){
-        mip_interface_update(&mDeviceInterface);
-        Sleep(1);
+        mip_interface_update(&mDeviceInterface,true);
+//        Sleep(1);
     }
-    cout << "_ThreadCaptureFunc exiting" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -323,6 +314,18 @@ bool MicroStrainDriver::_ActivateAHRS()
     int idx		   = 0;
     int decimation = 1000/m_nHzAHRS;
 
+    if(m_bGetTimeStampPpsAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_TIME_STAMP_PPS;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if(m_bGetTimeStampGpsCorrelationAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_TIME_STAMP_GPS;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
     if(m_bGetEulerAHRS){
         ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_EULER_ANGLES;
         ahrs_data_stream_format_decimation[idx]  = decimation;

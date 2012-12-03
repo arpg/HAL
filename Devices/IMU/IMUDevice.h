@@ -22,12 +22,14 @@ class IMUDevice : public PropertyMap
     public:
         ///////////////////////////////////////////////////////////////
         IMUDevice()
+            : m_pDriver(0)
         {
         }
 
         ///////////////////////////////////////////////////////////////
         ~IMUDevice()
         {
+            DeinitDriver();
         }
 
         ///////////////////////////////////////////////////////////////
@@ -41,14 +43,25 @@ class IMUDevice : public PropertyMap
             return;
         }
 
+        void DeinitDriver()
+        {
+            if(m_pDriver) {
+                delete m_pDriver;
+                m_pDriver = 0;
+            }
+        }
+
         ///////////////////////////////////////////////////////////////
         bool InitDriver( const std::string& sDriver )
         {
+            DeinitDriver();
+
             m_pDriver = CreateIMUDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
                 return m_pDriver->Init();
             }
+
             return false;
         }
 

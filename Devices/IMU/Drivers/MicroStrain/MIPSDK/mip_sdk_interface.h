@@ -127,7 +127,7 @@ u16 mip_interface_close(mip_interface *device_interface);
 u16 mip_interface_add_descriptor_set_callback(mip_interface *device_interface, u8 data_set, void *user_ptr, void (*packet_callback)(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type));
 u16 mip_interface_delete_descriptor_set_callback(mip_interface *device_interface, u8 data_set);
 
-u16 mip_interface_update(mip_interface *device_interface);
+u16 mip_interface_update(mip_interface *device_interface, bool read_max_packet_size = false);
 
 u16 mip_interface_send_command(mip_interface *device_interface, u8 command_set, u8 command_descriptor, u8 *command_data, 
                                u16 command_data_size, u8 wait_for_response, u32 timeout_ms);
