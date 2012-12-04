@@ -31,8 +31,10 @@ Bumblebee2Driver::Bumblebee2Driver()
 //  Releases the cameras and exits
 Bumblebee2Driver::~Bumblebee2Driver()
 {
+    dc1394_video_set_transmission( m_pCam, DC1394_OFF );
+    dc1394_capture_stop( m_pCam );
+    dc1394_camera_free( m_pCam );
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
