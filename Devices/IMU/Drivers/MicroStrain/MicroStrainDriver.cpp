@@ -224,6 +224,7 @@ bool MicroStrainDriver::Init()
     m_bGetAccelerometerAHRS = m_pPropertyMap->GetProperty<bool>( "GetAccelerometer", false );
     m_bGetGyroAHRS	        = m_pPropertyMap->GetProperty<bool>( "GetGyro", false );
     m_bGetMagnetometerAHRS  = m_pPropertyMap->GetProperty<bool>( "GetMagnetometer", false );
+    m_bGetTimeStampPpsAHRS  = m_pPropertyMap->GetProperty<bool>( "GetDeviceTimestamp", false);
     //*****************************************************************
 
     assert(m_pPropertyMap);

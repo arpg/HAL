@@ -33,7 +33,18 @@ class IMUDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
-        void RegisterDataCallback(IMUDriverDataCallback callback)
+        void RegisterIMUDataCallback(IMUDriverDataCallback callback)
+        {
+            if( m_pDriver ){
+                m_pDriver->RegisterDataCallback( callback );
+            }else{
+                std::cerr << "ERROR: no driver initialized!\n";
+            }
+            return;
+        }
+
+        ///////////////////////////////////////////////////////////////
+        void RegisterGPSDataCallback(GPSDriverDataCallback callback)
         {
             if( m_pDriver ){
                 m_pDriver->RegisterDataCallback( callback );
