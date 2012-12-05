@@ -119,8 +119,8 @@ class PropertyMap
         std::string ValToStr( const double& val )
         {
             std::ostringstream oss;
-            oss.precision( std::numeric_limits<double>::digits10 );
-            oss << val;
+            oss.precision( std::numeric_limits<double>::digits10 + 1 );
+            oss << std::fixed << std::scientific << val;
             return oss.str();
         }
 
@@ -129,8 +129,8 @@ class PropertyMap
         std::string ValToStr( const float& val )
         {
             std::ostringstream oss;
-            oss.precision( std::numeric_limits<float>::digits10 );
-            oss << val;
+            oss.precision( std::numeric_limits<float>::digits10 + 1 );
+            oss << std::fixed << std::scientific << val;
             return oss.str();
         }
 

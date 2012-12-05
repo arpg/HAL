@@ -13,6 +13,7 @@ using namespace std;
 using namespace Eigen;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
+const double GRAVITY_MAGNITUDE = 9.80665;
 
 #define _LINUX
 
@@ -109,9 +110,9 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
                         imuData.data_present |= IMU_AHRS_ACCEL;
-                        imuData.accel << curr_ahrs_accel.scaled_accel[0],
-                                         curr_ahrs_accel.scaled_accel[1],
-                                         curr_ahrs_accel.scaled_accel[2];
+                        imuData.accel << curr_ahrs_accel.scaled_accel[0] * GRAVITY_MAGNITUDE,
+                                         curr_ahrs_accel.scaled_accel[1] * GRAVITY_MAGNITUDE,
+                                         curr_ahrs_accel.scaled_accel[2] * GRAVITY_MAGNITUDE;
                     }break;
 
                     // Scaled Gyro
