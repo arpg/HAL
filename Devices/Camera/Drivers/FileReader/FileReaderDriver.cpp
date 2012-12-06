@@ -74,7 +74,8 @@ bool FileReaderDriver::Init()
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
     m_nCurrentImageIndex = m_nStartFrame;
-
+    m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
+            ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
 
     if(m_nNumChannels < 1) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
@@ -183,7 +184,7 @@ bool FileReaderDriver::_Read()
             vImages[ii].Image = _OpenPDM( sFileName );
         } else {
             // otherwise let OpenCV open it
-            vImages[ii].Image = cv::imread( sFileName, -1 );
+            vImages[ii].Image = cv::imread( sFileName, m_iCvImageReadFlags );
         }
     }
 
