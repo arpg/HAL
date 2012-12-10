@@ -40,6 +40,7 @@ class FileReaderDriver : public CameraDriver
         unsigned int                                    m_nNumImages;
         unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nBufferSize;
+        int                                             m_iCvImageReadFlags;
 
         //std::vector< bool >                             m_vBufferFree;
 };
