@@ -20,11 +20,11 @@ void Bumblebee2Driver::_cleanup_and_exit( dc1394camera_t *pCam )
     exit(-1);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
 Bumblebee2Driver::Bumblebee2Driver()
 {
+	m_pBuffer = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,12 +34,14 @@ Bumblebee2Driver::~Bumblebee2Driver()
     dc1394_video_set_transmission( m_pCam, DC1394_OFF );
     dc1394_capture_stop( m_pCam );
     dc1394_camera_free( m_pCam );
+	
+	if(m_pBuffer) delete m_pBuffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-
+	
     // allocate images if necessary
     if( vImages.size() != 2 ){
         vImages.resize( 2 );
@@ -47,6 +49,8 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages[0].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
         vImages[1].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
     }
+	
+	
     // should also check images are the right size, type etc
 
 	// obtain meta data from image
@@ -67,33 +71,36 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 		vImages[0].Map.SetProperty("Gamma", feature );
 	}
 
-
+	
     //  capture one frame
     dc1394video_frame_t* pFrame;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam),"Could not capture a frame");
 
-    uint8_t buff[m_nImageWidth*m_nImageHeight*2];
-    // trying stuff
-    dc1394_deinterlace_stereo( pFrame->image, buff, m_nImageWidth, m_nImageHeight*2 );
-
+	
+    //uint8_t buff[m_nImageWidth*m_nImageHeight*2];
+	//unsigned char *buff = new unsigned char[m_nImageWidth*m_nImageHeight*2];
+	// trying stuff
+		
+    dc1394_deinterlace_stereo( pFrame->image, m_pBuffer, m_nImageWidth, m_nImageHeight*2 );
+	
     // copy to our buffer, split, decimate, convert, etc.
     int a,b,c,d;
     for( int ii = 0; ii < (int)m_nImageHeight; ii+=2 ) {
     	for( int jj = 0; jj < (int)m_nImageWidth; jj+=2 ) {
-    		a = buff[ (ii * m_nImageWidth) + jj   ];
-    		b = buff[ (ii * m_nImageWidth) + jj + 1 ];
-    		c = buff[((ii + 1) * m_nImageWidth) + jj ];
-    		d = buff[((ii + 1) * m_nImageWidth) + jj + 1 ];
+    		a = m_pBuffer[ (ii * m_nImageWidth) + jj   ];
+    		b = m_pBuffer[ (ii * m_nImageWidth) + jj + 1 ];
+    		c = m_pBuffer[((ii + 1) * m_nImageWidth) + jj ];
+    		d = m_pBuffer[((ii + 1) * m_nImageWidth) + jj + 1 ];
     		vImages[0].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
-    		a = buff[ ((ii + m_nImageHeight) * m_nImageWidth) + jj   ];
-    		b = buff[ ((ii + m_nImageHeight) * m_nImageWidth) + jj + 1 ];
-    		c = buff[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj ];
-    		d = buff[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj + 1 ];
+    		a = m_pBuffer[ ((ii + m_nImageHeight) * m_nImageWidth) + jj   ];
+    		b = m_pBuffer[ ((ii + m_nImageHeight) * m_nImageWidth) + jj + 1 ];
+    		c = m_pBuffer[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj ];
+    		d = m_pBuffer[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj + 1 ];
     		vImages[1].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
     	}
     }
-
+	
     // TODO: the whole rectification process can be speeded up by not doing so many memcopies
     mvl_image_t *left_img, *left_img_rect, *right_img, *right_img_rect;
 
@@ -112,7 +119,6 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 	// MVL image to OpenCV image
     memcpy( vImages[0].Image.data, left_img_rect->data, vImages[0].Image.cols*vImages[0].Image.rows );
     memcpy( vImages[1].Image.data, right_img_rect->data, vImages[1].Image.cols*vImages[1].Image.rows );
-
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
@@ -145,8 +151,8 @@ bool Bumblebee2Driver::Init()
     m_pBus = dc1394_new();
     dc1394error_t e;
 
-    dc1394camera_list_t*  pCameraList = NULL;
-    e = dc1394_camera_enumerate( m_pBus, &pCameraList );
+		dc1394camera_list_t*  pCameraList = NULL;
+		e = dc1394_camera_enumerate( m_pBus, &pCameraList );
 
     if( pCameraList->num == 0 ) {
         printf( "No cameras found!\n" );
@@ -217,14 +223,16 @@ bool Bumblebee2Driver::Init()
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not capture a frame");
 
-
     // copy to our buffer, decimate, convert, etc.
-
 
     // print capture image information. this is RAW, interlaced and in Format7
     m_nImageWidth = pFrame->size[0];
     m_nImageHeight = pFrame->size[1];
-    /*
+    
+	// alloc memory for deinterlacing buffer
+	m_pBuffer = new unsigned char[pFrame->total_bytes];
+	
+	/*
     printf("\nIMAGE INFORMATION:\n");
     printf("------------------------\n");
     printf("Image Size: %d x %d\n", m_nImageWidth, m_nImageHeight );
@@ -236,7 +244,6 @@ bool Bumblebee2Driver::Init()
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
-
 
     return true;
 }

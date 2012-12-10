@@ -93,6 +93,8 @@ void InitCam(
         Cam.SetProperty("DataSourceDir", sSourceDir );
         Cam.SetProperty("Channel-0",     sLeftFileRegex );
         Cam.SetProperty("Channel-1",     sRightFileRegex );
+        Cam.SetProperty("CamModel-L",    sLeftCameraModel );
+        Cam.SetProperty("CamModel-R",    sRightCameraModel );
         Cam.SetProperty("NumChannels",   2 );
 
     }

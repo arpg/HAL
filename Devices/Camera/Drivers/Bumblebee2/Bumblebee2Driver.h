@@ -8,6 +8,8 @@
 
 #include <dc1394/dc1394.h>
 #include <mvl/camera/camera.h>
+#include <boost/thread.hpp>     
+#include <boost/thread/mutex.hpp>
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
 class Bumblebee2Driver : public CameraDriver
@@ -22,6 +24,7 @@ class Bumblebee2Driver : public CameraDriver
     private:
         dc1394camera_t*          m_pCam;
         dc1394_t*                m_pBus;
+        unsigned char*           m_pBuffer;
         dc1394video_mode_t       m_nVideoMode;
         dc1394framerate_t        m_nFramerate;
         dc1394featureset_t       m_vFeatures;
@@ -29,7 +32,7 @@ class Bumblebee2Driver : public CameraDriver
         unsigned int             m_nImageHeight;
         mvl_camera_t*			 m_pLeftCMod;
         mvl_camera_t*			 m_pRightCMod;
-
+        
 };
 
 #endif
