@@ -76,10 +76,10 @@ void InitCam(
     }
 
     //----------------------------------------------- FILEREADER
-    if( sDeviceDriver == "FileReader" ) {
+    if( sDeviceDriver == "FileReader") {
         Cam.SetProperty( "StartFrame",    clArgs.follow( 0, 1, "-sf" ));
         Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
-
+        
         if( sLeftCameraModel.empty() || sRightCameraModel.empty() ) {
             std::cerr << "One or more camera model files is missing!\n" << std::endl;
             std::cerr << USAGE;
@@ -96,7 +96,16 @@ void InitCam(
         Cam.SetProperty("CamModel-L",    sLeftCameraModel );
         Cam.SetProperty("CamModel-R",    sRightCameraModel );
         Cam.SetProperty("NumChannels",   2 );
-
+    }
+    
+    //----------------------------------------------- TOYOTAREADER
+    if( sDeviceDriver == "ToyotaReader") {
+        Cam.SetProperty( "StartFrame",    clArgs.follow( 0, 1, "-sf" ));
+        Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
+        Cam.SetProperty("DataSourceDir", sSourceDir );
+        Cam.SetProperty("Channel-0",     sLeftFileRegex );
+        Cam.SetProperty("Channel-1",     sRightFileRegex );
+        Cam.SetProperty("NumChannels",   2 );
     }
 
     //----------------------------------------------- KINECT

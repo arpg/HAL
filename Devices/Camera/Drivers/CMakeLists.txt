@@ -5,6 +5,12 @@ if( Build_FileReader )
     add_definitions( -DUSE_FILEREADER )
 endif()
 
+set( Build_ToyotaReader true CACHE BOOL force )
+if( Build_ToyotaReader )
+    add_subdirectory( ToyotaReader )
+    add_definitions( -DUSE_TOYOTAREADER )
+endif()
+
 # Build webcam driver
 set( Build_Webcam true CACHE BOOL force )
 if( Build_Webcam )

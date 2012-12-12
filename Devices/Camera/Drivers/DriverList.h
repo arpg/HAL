@@ -13,6 +13,11 @@ std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
 #endif
 
+#ifdef USE_TOYOTAREADER
+#include "RPG/Devices/Camera/Drivers/ToyotaReader/ToyotaReaderDriver.h"
+CameraDriverRegisteryEntry<ToyotaReaderDriver> _ToyotaReaderReg( "ToyotaReader" );
+#endif
+
 #ifdef USE_WEBCAM
 #include "RPG/Devices/Camera/Drivers/Webcam/WebcamDriver.h"
 CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
