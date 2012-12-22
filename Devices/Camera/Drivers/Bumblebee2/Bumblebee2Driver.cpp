@@ -45,70 +45,65 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     // allocate images if necessary
     if( vImages.size() != 2 ){
         vImages.resize( 2 );
+    }
+
+    // should also check images are the right size, type etc
+    if(vImages[0].Image.rows != (int)m_uImageHeight/2  || vImages[0].Image.cols != (int)m_uImageWidth/2 ) {
         // and setup images
-        vImages[0].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
-        vImages[1].Image = cv::Mat(m_nImageHeight/2, m_nImageWidth/2, CV_8UC1);
+        vImages[0].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, CV_8UC1);
+        vImages[1].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, CV_8UC1);
     }
 	
-	
-    // should also check images are the right size, type etc
-
-	// obtain meta data from image
+    // obtain meta data from image
     dc1394error_t e;
-	float feature;
-	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_SHUTTER, &feature );
-	if( e == DC1394_SUCCESS ) {
-		vImages[0].Map.SetProperty("Shutter", feature );
-	}
+    float feature;
+    e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_SHUTTER, &feature );
+    if( e == DC1394_SUCCESS ) {
+        vImages[0].Map.SetProperty("Shutter", feature );
+    }
 
-	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAIN, &feature );
-	if( e == DC1394_SUCCESS ) {
-		vImages[0].Map.SetProperty("Gain", feature );
-	}
+    e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAIN, &feature );
+    if( e == DC1394_SUCCESS ) {
+        vImages[0].Map.SetProperty("Gain", feature );
+    }
 
-	e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAMMA, &feature );
-	if( e == DC1394_SUCCESS ) {
-		vImages[0].Map.SetProperty("Gamma", feature );
-	}
+    e = dc1394_feature_get_absolute_value( m_pCam, DC1394_FEATURE_GAMMA, &feature );
+    if( e == DC1394_SUCCESS ) {
+        vImages[0].Map.SetProperty("Gamma", feature );
+    }
 
-	
     //  capture one frame
     dc1394video_frame_t* pFrame;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam),"Could not capture a frame");
 
-	
-    //uint8_t buff[m_nImageWidth*m_nImageHeight*2];
-	//unsigned char *buff = new unsigned char[m_nImageWidth*m_nImageHeight*2];
-	// trying stuff
-		
-    dc1394_deinterlace_stereo( pFrame->image, m_pBuffer, m_nImageWidth, m_nImageHeight*2 );
-	
+    dc1394_deinterlace_stereo( pFrame->image, m_pBuffer, m_uImageWidth, m_uImageHeight*2 );
+
     // copy to our buffer, split, decimate, convert, etc.
     int a,b,c,d;
-    for( int ii = 0; ii < (int)m_nImageHeight; ii+=2 ) {
-    	for( int jj = 0; jj < (int)m_nImageWidth; jj+=2 ) {
-    		a = m_pBuffer[ (ii * m_nImageWidth) + jj   ];
-    		b = m_pBuffer[ (ii * m_nImageWidth) + jj + 1 ];
-    		c = m_pBuffer[((ii + 1) * m_nImageWidth) + jj ];
-    		d = m_pBuffer[((ii + 1) * m_nImageWidth) + jj + 1 ];
-    		vImages[0].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
-    		a = m_pBuffer[ ((ii + m_nImageHeight) * m_nImageWidth) + jj   ];
-    		b = m_pBuffer[ ((ii + m_nImageHeight) * m_nImageWidth) + jj + 1 ];
-    		c = m_pBuffer[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj ];
-    		d = m_pBuffer[(((ii + m_nImageHeight) + 1) * m_nImageWidth) + jj + 1 ];
-    		vImages[1].Image.data[ ((ii/2)*(m_nImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
-    	}
+    for( int ii = 0; ii < (int)m_uImageHeight; ii+=2 ) {
+        for( int jj = 0; jj < (int)m_uImageWidth; jj+=2 ) {
+            a = m_pBuffer[ (ii * m_uImageWidth) + jj   ];
+            b = m_pBuffer[ (ii * m_uImageWidth) + jj + 1 ];
+            c = m_pBuffer[((ii + 1) * m_uImageWidth) + jj ];
+            d = m_pBuffer[((ii + 1) * m_uImageWidth) + jj + 1 ];                
+            vImages[0].Image.data[ ((ii/2)*(m_uImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
+            a = m_pBuffer[ ((ii + m_uImageHeight) * m_uImageWidth) + jj   ];
+            b = m_pBuffer[ ((ii + m_uImageHeight) * m_uImageWidth) + jj + 1 ];
+            c = m_pBuffer[(((ii + m_uImageHeight) + 1) * m_uImageWidth) + jj ];
+            d = m_pBuffer[(((ii + m_uImageHeight) + 1) * m_uImageWidth) + jj + 1 ];
+            vImages[1].Image.data[ ((ii/2)*(m_uImageWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
+        }
     }
-	
+
     // TODO: the whole rectification process can be speeded up by not doing so many memcopies
     mvl_image_t *left_img, *left_img_rect, *right_img, *right_img_rect;
 
-	// OpenCV image to MVL image
+    // OpenCV image to MVL image
     left_img = mvl_image_alloc( vImages[0].Image.cols, vImages[0].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[0].Image.data );
     right_img = mvl_image_alloc( vImages[1].Image.cols, vImages[1].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[1].Image.data );
 
-	// allocate space to hold rectified images
+    // allocate space to hold rectified images
     left_img_rect = mvl_image_alloc( vImages[0].Image.cols, vImages[0].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
     right_img_rect = mvl_image_alloc( vImages[1].Image.cols, vImages[1].Image.rows, GL_UNSIGNED_BYTE, GL_LUMINANCE,NULL );
 
@@ -116,7 +111,7 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     mvl_rectify( m_pLeftCMod, left_img, left_img_rect );
     mvl_rectify( m_pRightCMod, right_img, right_img_rect );
 
-	// MVL image to OpenCV image
+    // MVL image to OpenCV image
     memcpy( vImages[0].Image.data, left_img_rect->data, vImages[0].Image.cols*vImages[0].Image.rows );
     memcpy( vImages[1].Image.data, right_img_rect->data, vImages[1].Image.cols*vImages[1].Image.rows );
 
@@ -226,16 +221,16 @@ bool Bumblebee2Driver::Init()
     // copy to our buffer, decimate, convert, etc.
 
     // print capture image information. this is RAW, interlaced and in Format7
-    m_nImageWidth = pFrame->size[0];
-    m_nImageHeight = pFrame->size[1];
+    m_uImageWidth = pFrame->size[0];
+    m_uImageHeight = pFrame->size[1];
     
-	// alloc memory for deinterlacing buffer
-	m_pBuffer = new unsigned char[pFrame->total_bytes];
+    // alloc memory for deinterlacing buffer
+    m_pBuffer = new unsigned char[pFrame->total_bytes];
 	
-	/*
+    /*
     printf("\nIMAGE INFORMATION:\n");
     printf("------------------------\n");
-    printf("Image Size: %d x %d\n", m_nImageWidth, m_nImageHeight );
+    printf("Image Size: %d x %d\n", m_uImageWidth, m_uImageHeight );
     printf("Data Depth: %d\n", pFrame->data_depth );
     printf("Stride: %d\n", pFrame->stride );
     printf("Total Bytes: %llu\n", pFrame->total_bytes );

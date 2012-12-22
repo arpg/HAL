@@ -23,15 +23,15 @@ class Bumblebee2Driver : public CameraDriver
 		void _cleanup_and_exit( dc1394camera_t *pCam );
     private:
         dc1394camera_t*          m_pCam;
-        dc1394_t*                m_pBus;
-        unsigned char*           m_pBuffer;
-        dc1394video_mode_t       m_nVideoMode;
+        dc1394_t*                    m_pBus;
+        unsigned char*             m_pBuffer;
+        dc1394video_mode_t     m_nVideoMode;
         dc1394framerate_t        m_nFramerate;
         dc1394featureset_t       m_vFeatures;
-        unsigned int             m_nImageWidth;
-        unsigned int             m_nImageHeight;
-        mvl_camera_t*			 m_pLeftCMod;
-        mvl_camera_t*			 m_pRightCMod;
+        unsigned int                 m_uImageWidth;
+        unsigned int                 m_uImageHeight;
+        mvl_camera_t*		  m_pLeftCMod;
+        mvl_camera_t*		   m_pRightCMod;
         
 };
 
