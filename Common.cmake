@@ -14,19 +14,19 @@
 
 
 ################## AVOID BUILDING IN-SOURCE ####################
-# Custom command to cleanup cmake polution when user accidently attempts an
-# insoruce build.
-ADD_CUSTOM_TARGET( cleansrc )
-ADD_CUSTOM_COMMAND(
-        TARGET  cleansrc
-        COMMAND rm -rf `find . -name CMakeFiles -or -name Makefile -or -name cmake_install.cmake -or -name CMakeCache.txt`
-        )
-# Force good behavior: user shall not try an insource build.
-if( ${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR} )
-    MESSAGE( WARNING "\nERROR: You must build outside of the source tree.\n"
-                         "       Recommend running 'make cleansrc' to clean the source tree.\n" )
-endif()
-
+## Custom command to cleanup cmake polution when user accidently attempts an
+## insoruce build.
+#ADD_CUSTOM_TARGET( cleansrc )
+#ADD_CUSTOM_COMMAND(
+#        TARGET  cleansrc
+#        COMMAND rm -rf `find . -name CMakeFiles -or -name Makefile -or -name cmake_install.cmake -or -name CMakeCache.txt`
+#        )
+## Force good behavior: user shall not try an insource build.
+#if( ${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR} )
+#    MESSAGE( WARNING "\nERROR: You must build outside of the source tree.\n"
+#                         "       Recommend running 'make cleansrc' to clean the source tree.\n" )
+#endif()
+#
 
 
 ################### SET BUILD TYPE OPTIONS ######################
