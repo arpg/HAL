@@ -38,7 +38,7 @@ endmacro()
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH} )
 
 # look for opencv
-find_package( OpenCV REQUIRED )
+find_package( OpenCV2 REQUIRED )
 include_directories( ${OpenCV2_INCLUDE_DIRS} )
 link_libraries( ${OpenCV2_LIBRARIES} )
 
