@@ -36,9 +36,11 @@ namespace rpg {
         "General Options:    -lcmod <left camera model xml file>\n"
         "                    -rcmod <right camera model xml file>\n"
         "                    -sdir  <source directory for images and camera model files [default '.']>\n"
+        "                    -res   <resolution: FHD, HD, QVGA, etc. [default 'VGA']>\n"
+        "                    -fps   <frames per second [default '30']>\n"
         "\n"
         "Example:\n"
-        "./  -idev FileReader  -lcmod lcmod.xml  -rcmod rcmod.xml  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n\n";
+        "./Exec  -idev FileReader  -lcmod lcmod.xml  -rcmod rcmod.xml  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n\n";
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +63,7 @@ namespace rpg {
         std::string     sRightFileRegex     = clArgs.follow( "right.*pgm", 1, "-rfile" );
         std::string     sSourceDir          = clArgs.follow( ".", 1, "-sdir"  );
         unsigned int    nFPS                = clArgs.follow( 30, 1, "-fps"  );
-        std::string     sResolution         = clArgs.follow( "VGA", 1, "-res"  ); // follow format of XGA, SVGA, VGA, QVGA, QQVGA, etc.
+        std::string     sResolution         = clArgs.follow( "VGA", 1, "-res"  ); // follow format of FHD, HD, XGA, SVGA, VGA, QVGA, QQVGA, etc.
 
         //----------------------------------------------- BUMBLEBEE
         if( sDeviceDriver == "Bumblebee2" ) {
@@ -120,6 +122,11 @@ namespace rpg {
             Cam.SetProperty( "GetIr", bGetIr );
             Cam.SetProperty( "AlignDepth", bAlignDepth );
             Cam.SetProperty( "FPS", nFPS );
+            Cam.SetProperty( "Resolution", sResolution );
+        }
+
+        //----------------------------------------------- DVI2PCI
+        if( sDeviceDriver == "Dvi2Pci" ) {
             Cam.SetProperty( "Resolution", sResolution );
         }
 
