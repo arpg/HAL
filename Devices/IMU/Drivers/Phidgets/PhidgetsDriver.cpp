@@ -58,7 +58,7 @@ void PhidgetsDriver::_AttachHandler(CPhidgetHandle spatial)
 {
     //Set the data rate for the spatial events
     int minRate;
-    CPhidgetSpatial_getDataRateMin((CPhidgetSpatialHandle)spatial,&minRate);
+    CPhidgetSpatial_getDataRateMax((CPhidgetSpatialHandle)spatial,&minRate);
     CPhidgetSpatial_setDataRate((CPhidgetSpatialHandle)spatial, minRate);
 
 //    int serialNo;
@@ -84,6 +84,7 @@ void PhidgetsDriver::_ErrorHandler(CPhidgetHandle spatial, int ErrorCode, const 
 void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
 {
     int i;
+    /*
     printf("Number of Data Packets in this event: %d\n", count);
     for(i = 0; i < count; i++)
     {
@@ -95,6 +96,7 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidget
     }
 
     printf("---------------------------------------------\n");
+    */
 
     for(i = 0; i < count; i++){
         IMUData imuData;
@@ -102,12 +104,12 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidget
         imuData.gyro = Eigen::Vector3f(data[i]->angularRate[0], data[i]->angularRate[1], data[i]->angularRate[2]);
         imuData.mag = Eigen::Vector3f(data[i]->magneticField[0], data[i]->magneticField[1], data[i]->magneticField[2]);
         imuData.timestamp_system = Tic();
+        imuData.data_present =     IMU_AHRS_TIMESTAMP_PPS | IMU_AHRS_ACCEL | IMU_AHRS_GYRO | IMU_AHRS_MAG;
         imuData.timestamp_pps =  data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6;
         if(m_ImuCallback.empty() == false){
             m_ImuCallback(imuData);
         }
     }
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -14,6 +14,29 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void SetImageMetaDataFromCamera2(rpg::ImageWrapper& img, dc1394camera_t* pCam)
+{
+    // obtain meta data from image
+    dc1394error_t e;
+    float feature;
+    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_SHUTTER, &feature );
+    if( e == DC1394_SUCCESS ) {
+        img.Map.SetProperty("Shutter", feature );
+    }
+
+    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAIN, &feature );
+    if( e == DC1394_SUCCESS ) {
+        img.Map.SetProperty("Gain", feature );
+    }
+
+    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
+    if( e == DC1394_SUCCESS ) {
+        img.Map.SetProperty("Gamma", feature );
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
 inline void FireFlyDriver::_cleanup_and_exit( dc1394camera_t *pCam )
 {
@@ -65,15 +88,12 @@ bool FireFlyDriver::Init()
     for( int ii = 0; ii < (int)pCameraList->num; ii++) {
         pCam = dc1394_camera_new( m_pBus, pCameraList->ids[ii].guid );
 
-        // the model
-        if( pCam->model == std::string("FireFly") ) {
-            if( m_nNumCams == 5) {
-                std::cerr << "warning: Maximum of 5 cameras can be initialized." << std::endl;
-                break;
-            }
-            m_pCam[ m_nNumCams ] = pCam;
-            m_nNumCams++;
+        if( m_nNumCams == 5) {
+            std::cerr << "warning: Maximum of 5 cameras can be initialized." << std::endl;
+            break;
         }
+        m_pCam[ m_nNumCams ] = pCam;
+        m_nNumCams++;
     }
 
     // free the camera list
@@ -100,9 +120,10 @@ bool FireFlyDriver::Init()
 
     // get highest framerate
     dc1394framerates_t vFramerates;
-    e = dc1394_video_get_supported_framerates( m_pCam[0], m_nVideoMode, &vFramerates);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get framerates");
-    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
+//    e = dc1394_video_get_supported_framerates( m_pCam[0], m_nVideoMode, &vFramerates);
+//    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get framerates");
+//    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
+    m_nFramerate = DC1394_FRAMERATE_30;
 
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_video_set_framerate( m_pCam[ii], m_nFramerate );
@@ -110,6 +131,8 @@ bool FireFlyDriver::Init()
     }
 
     int nNumDMAChannels = m_pPropertyMap->GetProperty( "DMA", 4 );
+
+    std::cout << "NumCams: " << m_nNumCams << std::endl;
 
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_setup( m_pCam[ii], nNumDMAChannels, DC1394_CAPTURE_FLAGS_DEFAULT );
@@ -163,6 +186,7 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
+        SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );
         e = dc1394_capture_enqueue( m_pCam[ii], pFrame );
     }
 
