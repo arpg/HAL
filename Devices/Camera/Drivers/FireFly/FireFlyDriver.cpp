@@ -79,8 +79,8 @@ bool FireFlyDriver::Init()
     // free the camera list
     dc1394_camera_free_list( pCameraList );
 
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
-        printf("Using camera with GUID %lu\n", m_pCam[ii]->guid );
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
+        printf("Using camera with GUID %llu\n", m_pCam[ii]->guid );
     }
 
     // always this
@@ -90,7 +90,7 @@ bool FireFlyDriver::Init()
     e = dc1394_get_color_coding_from_video_mode( m_pCam[0], m_nVideoMode, &coding );
     DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get color coding");
 
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_video_set_iso_speed( m_pCam[ii], DC1394_ISO_SPEED_400 );
         DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[ii]),"Could not set iso speed");
 
@@ -104,20 +104,20 @@ bool FireFlyDriver::Init()
     DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get framerates");
     m_nFramerate = vFramerates.framerates[vFramerates.num-1];
 
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_video_set_framerate( m_pCam[ii], m_nFramerate );
         DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]),"Could not set framerate" );
     }
 
     int nNumDMAChannels = m_pPropertyMap->GetProperty( "DMA", 4 );
 
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_setup( m_pCam[ii], nNumDMAChannels, DC1394_CAPTURE_FLAGS_DEFAULT );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera." );
     }
 
     // initiate transmission
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_video_set_transmission( m_pCam[ii], DC1394_ON );
         DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]),"Could not start camera iso transmission");
     }
@@ -150,7 +150,7 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     if( vImages.size() != m_nNumCams ){
         vImages.resize( m_nNumCams );
         // and setup images
-        for( int ii = 0; ii < m_nNumCams; ii++ ) {
+        for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
             vImages[ii].Image = cv::Mat(m_nImageHeight, m_nImageWidth, CV_8UC1);
         }
     }
@@ -159,7 +159,7 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     dc1394video_frame_t* pFrame;
     dc1394error_t e;
 
-    for( int ii = 0; ii < m_nNumCams; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
