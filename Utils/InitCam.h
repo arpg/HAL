@@ -64,6 +64,7 @@ namespace rpg {
         std::string     sSourceDir          = clArgs.follow( ".", 1, "-sdir"  );
         unsigned int    nFPS                = clArgs.follow( 30, 1, "-fps"  );
         std::string     sResolution         = clArgs.follow( "VGA", 1, "-res"  ); // follow format of FHD, HD, XGA, SVGA, VGA, QVGA, QQVGA, etc.
+        bool            bForceGreyscale     = clArgs.follow( true, 1, "-forcegreyscale");
 
         //----------------------------------------------- BUMBLEBEE
         if( sDeviceDriver == "Bumblebee2" ) {
@@ -75,6 +76,8 @@ namespace rpg {
             Cam.SetProperty("DataSourceDir", sSourceDir);
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );
+            Cam.SetProperty("Rectify",       clArgs.follow(true, 1, "-rectify" ) );
         }
 
         //----------------------------------------------- FILEREADER
