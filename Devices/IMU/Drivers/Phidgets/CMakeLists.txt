@@ -5,6 +5,8 @@ set( PHIDGETS_DRIVER_HEADERS PhidgetsDriver.h )
 add_library( PhidgetsDriver ${PHIDGETS_DRIVER_SOURCES} ${PHIDGETS_DRIVER_HEADERS} )
 target_link_libraries( PhidgetsDriver ${PHIDGETS_LIBRARIES} )
 
+list( APPEND RPG_LIBRARIES ${PHIDGETS_LIBRARIES} )
+set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 # 2) Tell RPG about this library:
 add_to_rpg_include_dirs( ${PHIDGETS_INCLUDE_DIR} )

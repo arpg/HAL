@@ -17,6 +17,7 @@ public:
     ~PhidgetsDriver();
     bool Init();
     void RegisterDataCallback(IMUDriverDataCallback callback);
+    void RegisterDataCallback(GPSDriverDataCallback /*callback*/) { }
     void _AttachHandler(CPhidgetHandle spatial);
     void _DetachHandler(CPhidgetHandle spatial);
     void _ErrorHandler(CPhidgetHandle spatial, int ErrorCode, const char *unknown);
