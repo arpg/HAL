@@ -60,6 +60,12 @@ FireFlyDriver::~FireFlyDriver()
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//  Less-than function for ordering dx1394 cameras on the bus.
+//  This allows cameras to be returned in a consistent order.
+bool dc1394CameraCompare(dc1394camera_t* c1, dc1394camera_t* c2) {
+    return c1->guid < c2->guid;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 bool FireFlyDriver::Init()
@@ -95,6 +101,10 @@ bool FireFlyDriver::Init()
         m_pCam[ m_nNumCams ] = pCam;
         m_nNumCams++;
     }
+    
+    // Sort cameras into canonical order (so they are consistent each time
+    // they are loaded).
+    std::sort(m_pCam, m_pCam + m_nNumCams, dc1394CameraCompare);
 
     // free the camera list
     dc1394_camera_free_list( pCameraList );
@@ -119,7 +129,7 @@ bool FireFlyDriver::Init()
     }
 
     // get highest framerate
-    dc1394framerates_t vFramerates;
+//    dc1394framerates_t vFramerates;
 //    e = dc1394_video_get_supported_framerates( m_pCam[0], m_nVideoMode, &vFramerates);
 //    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get framerates");
 //    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
