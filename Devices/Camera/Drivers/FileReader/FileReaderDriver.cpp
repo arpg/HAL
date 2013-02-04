@@ -1,11 +1,11 @@
 
 #include "FileReaderDriver.h"
+
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
-#include "opencv2/highgui/highgui.hpp"
-#include "RPG/Devices/Camera/Drivers/Dvi2Pci/SDK/includes/s_fio.h"	// for imread()
 
-//using namespace boost;
+#include <RPG/Devices/VirtualDevice.h>
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,6 +33,15 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         m_cBufferEmpty.wait(lock);
     }
 
+    boost::mutex::scoped_lock vd_lock(VirtualDevice::MUTEX);
+
+    // check if timestamp is the top of the queue
+    while( VirtualDevice::NextTime() < _GetNextTime() ) {
+        VirtualDevice::CONDVAR.wait( vd_lock );
+    }
+    // sweet, we are good to go!
+    vd_lock.unlock();
+
     //***************************************************
     // consume from buffer
     //***************************************************
@@ -42,17 +51,18 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumChannels );
 
     // now fetch the next set of images from buffer
-    for( unsigned int ii = 0; ii < m_nNumChannels; ii++ )
+    for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
+    }
 
-
-    // remove image from queue
+    // remove image from buffer queue
     m_qImageBuffer.pop();
-
-    //***************************************************
 
     // send notification that the buffer has space
     m_cBufferFull.notify_one();
+
+    // push next timestamp to queue now that we popped from the buffer
+    VirtualDevice::PopAndPushTime( _GetNextTime() );
 
     return true;
 }
@@ -76,6 +86,7 @@ bool FileReaderDriver::Init()
     m_nCurrentImageIndex = m_nStartFrame;
     m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
+    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "LoggerTime" );;
 
     if(m_nNumChannels < 1) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
@@ -85,7 +96,7 @@ bool FileReaderDriver::Init()
     m_vFileList.resize( m_nNumChannels );
 
     // Get data path
-     std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
+    std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         //std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
@@ -121,10 +132,16 @@ bool FileReaderDriver::Init()
         }
     }
 
+    // fill buffer
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {	_Read(); }
 
+    // push timestamp of first image into the Virtual Device Queue
+    VirtualDevice::PushTime( _GetNextTime() );
 
+
+    // run thread to keep buffer full
     m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
+
 
     return true;
 }
@@ -148,7 +165,6 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//void FileReaderDriver::_Read( std::vector<rpg::ImageWrapper>& vImages)
 bool FileReaderDriver::_Read()
 {
     boost::mutex::scoped_lock lock(m_Mutex);
@@ -173,19 +189,12 @@ bool FileReaderDriver::_Read()
 
     // now fetch the next set of images
     std::string sFileName;
-    std::vector<rpg::ImageWrapper> vImages;
+    std::vector< rpg::ImageWrapper > vImages;
     vImages.resize(m_nNumChannels);
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
-        // check if it is our own "portable depth map" format
-        if( sExtension == "pdm" ) {
-            vImages[ii].Image = _OpenPDM( sFileName );
-        } else {
-            // otherwise let OpenCV open it
-            vImages[ii].Image = cv::imread( sFileName, m_iCvImageReadFlags );
-        }
+        vImages[ii].read( sFileName, 1, m_iCvImageReadFlags );
     }
 
     m_nCurrentImageIndex++;
@@ -201,31 +210,11 @@ bool FileReaderDriver::_Read()
     return true;
 }
 
-cv::Mat FileReaderDriver::_OpenPDM( const std::string& FileName )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+double FileReaderDriver::_GetNextTime()
 {
-    // magic number P7, portable depthmap, binary
-    ifstream File( FileName.c_str() );
-
-    unsigned int nImgWidth;
-    unsigned int nImgHeight;
-    long unsigned int nImgSize;
-
-    cv::Mat DepthImg;
-
-    if( File.is_open() ) {
-        string sType;
-        File >> sType;
-        File >> nImgWidth;
-        File >> nImgHeight;
-        File >> nImgSize;
-//		nImgSize++;
-
-//		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
-        nImgSize = 4 * nImgWidth * nImgHeight;
-        DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
-        File.seekg(File.tellg()+(ifstream::pos_type)1, ios::beg);
-        File.read( (char*)DepthImg.data, nImgSize );
-        File.close();
+    if( m_qImageBuffer.size() == 0 ) {
+        return -1;
     }
-    return DepthImg;
+    return m_qImageBuffer.front()[0].Map.GetProperty<double>( m_sTimeKeeper, 0 );
 }

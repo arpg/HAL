@@ -5,6 +5,13 @@ if( Build_MicroStrain )
     add_definitions( -DUSE_MICROSTRAIN )
 endif()
 
+# Build IMULog driver
+set( Build_IMULog true CACHE BOOL force )
+if( Build_IMULog )
+    add_subdirectory( IMULog )
+    add_definitions( -DUSE_IMULOG )
+endif()
+
 # Build Phidgets Driver
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Phidgets ${CMAKE_MODULE_PATH})
 find_package( PHIDGETS QUIET )

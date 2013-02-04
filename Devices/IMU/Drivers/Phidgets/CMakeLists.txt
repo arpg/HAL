@@ -1,5 +1,4 @@
 include_directories(${PHIDGETS_INCLUDE_DIR})
-message(${PHIDGETS_INCLUDE_DIR})
 set( PHIDGETS_DRIVER_SOURCES PhidgetsDriver.cpp )
 set( PHIDGETS_DRIVER_HEADERS PhidgetsDriver.h )
 add_library( PhidgetsDriver ${PHIDGETS_DRIVER_SOURCES} ${PHIDGETS_DRIVER_HEADERS} )

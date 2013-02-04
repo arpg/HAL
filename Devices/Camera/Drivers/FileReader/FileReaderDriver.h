@@ -8,8 +8,6 @@
 
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
-using namespace std;
-
 class FileReaderDriver : public CameraDriver
 {
     public:
@@ -20,9 +18,8 @@ class FileReaderDriver : public CameraDriver
 
     private:
         static void _ThreadCaptureFunc( FileReaderDriver* pFR );
-        //void _Read( std::vector<rpg::ImageWrapper>& vImages );
         bool _Read();
-        cv::Mat _OpenPDM( const std::string& FileName );
+        double _GetNextTime();
 
     private:
         boost::thread*									m_CaptureThread;
@@ -41,8 +38,7 @@ class FileReaderDriver : public CameraDriver
         unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nBufferSize;
         int                                             m_iCvImageReadFlags;
-
-        //std::vector< bool >                             m_vBufferFree;
+        std::string                                     m_sTimeKeeper;
 };
 
 #endif

@@ -95,7 +95,13 @@ namespace rpg {
                 std::cerr << USAGE;
                 return false;
             }
-            Cam.SetProperty("DataSourceDir", sSourceDir );
+            std::string     sSourceDirImage = clArgs.follow( "", 1, "-sdir_image"  );
+
+            if( sSourceDirImage.empty() ) {
+                Cam.SetProperty("DataSourceDir", sSourceDir );
+            } else {
+                Cam.SetProperty("DataSourceDir", sSourceDirImage );
+            }
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
             Cam.SetProperty("Channel-1",     sRightFileRegex );
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );

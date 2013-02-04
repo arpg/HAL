@@ -67,7 +67,7 @@ void PhidgetsDriver::_AttachHandler(CPhidgetHandle spatial)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_DetachHandler(CPhidgetHandle spatial)
+void PhidgetsDriver::_DetachHandler(CPhidgetHandle /*spatial*/)
 {
 //    int serialNo;
 //    CPhidget_getSerialNumber(spatial, &serialNo);
@@ -75,13 +75,13 @@ void PhidgetsDriver::_DetachHandler(CPhidgetHandle spatial)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_ErrorHandler(CPhidgetHandle spatial, int ErrorCode, const char *unknown)
+void PhidgetsDriver::_ErrorHandler(CPhidgetHandle /*spatial*/, int ErrorCode, const char *unknown)
 {
     printf("Phidgets Driver: Error handled. %d - %s \n", ErrorCode, unknown);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
+void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
 {
     int i;
     /*
@@ -115,9 +115,6 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidget
 /////////////////////////////////////////////////////////////////////////////////////////
 bool PhidgetsDriver::Init()
 {
-    int result;
-    const char *err;
-
     //create the spatial object
     CPhidgetSpatial_create(&m_hSpatial);
 
@@ -133,6 +130,8 @@ bool PhidgetsDriver::Init()
 
     //open the spatial object for device connections
     CPhidget_open((CPhidgetHandle)m_hSpatial, -1);
+
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

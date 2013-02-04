@@ -17,7 +17,7 @@ namespace rpg {
         /// Read an image from sImageFileName. If bReadExtraInfo is set to true, this call will automatically deduce the
         /// file holding the extra info by replacing the extension by ".txt".
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
-        inline ImageWrapper read( const std::string&  sImageFileName,         //< Input: File Name
+        inline void read( const std::string&  sImageFileName,         //< Input: File Name
                                   bool                bReadExtraInfo = true,  //< Input: If ExtraInfo file should be read or not
                                   int                 nFlags = -1             //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
                                   );
@@ -25,7 +25,7 @@ namespace rpg {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// Read an image from sImageFileName and the property map from sExtraInfoName.
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
-        inline ImageWrapper read( const std::string&  sImageFileName,      //< Input: Image File Name
+        inline void read( const std::string&  sImageFileName,      //< Input: Image File Name
                                   const std::string&  sExtraInfoFileName,  //< Input: Extra Info File Name
                                   int                 nFlags = -1          //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
                                   );
@@ -53,19 +53,19 @@ namespace rpg {
         ////////////////////////////////////////////////////////////////////////////
 
         /// Return Image's data pointer
-        unsigned char* data() { return Image.data; }
+        inline unsigned char* data() { return Image.data; }
 
         /// Check if the image has any data
-        bool empty() { return Image.data == NULL; }
+        inline bool empty() { return Image.data == NULL; }
 
         /// Return image width
-        int width() { return Image.cols; }
+        inline int width() { return Image.cols; }
 
         /// Return image height
-        int height() { return Image.rows; }
+        inline int height() { return Image.rows; }
 
         /// Return image step
-        int widthStep() { return static_cast<int>( Image.step ); }
+        inline int widthStep() { return static_cast<int>( Image.step ); }
 
         /// Image clone wrapper... missing cloning property map
         class ImageWrapper clone() { class ImageWrapper ret = *this; this->Image = ret.Image.clone(); return *this; }
@@ -126,7 +126,7 @@ namespace rpg {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    inline ImageWrapper ImageWrapper::read(
+    inline void ImageWrapper::read(
             const std::string&              sImageFileName,
             bool                            bReadExtraInfo,
             int                             nFlags
@@ -143,22 +143,20 @@ namespace rpg {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    inline ImageWrapper ImageWrapper::read(
+    inline void ImageWrapper::read(
             const std::string&              sImageFileName,
             const std::string&              sExtraInfoFileName,
             int                             nFlags
             )
     {
-        ImageWrapper retImage;
-
         std::string sExtension = sImageFileName.substr( sImageFileName.rfind( "." ) + 1 );
 
         // check if it is our own "portable depth map" format
         if( sExtension == "pdm" ) {
-            retImage.Image = _OpenPDM( sImageFileName );
+            Image = _OpenPDM( sImageFileName );
         } else {
             // ... otherwise let OpenCV open it
-            retImage.Image = cv::imread( sImageFileName, nFlags );
+            Image = cv::imread( sImageFileName, nFlags );
         }
 
         if( sExtraInfoFileName != "" ) {
@@ -173,12 +171,10 @@ namespace rpg {
                 for( cv::FileNodeIterator it = fnode.begin(); it != fnode.end(); it++ ) {
                     //std::cout << (*it).name() << std::endl;
                     //std::cout << (std::string)oFile[ (*it).name() ] << std::endl;
-                    retImage.Map.SetProperty( (*it).name(),
-                                              (std::string)oFile[ (*it).name() ] );
+                    Map.SetProperty( (*it).name(), (std::string)oFile[ (*it).name() ] );
                 }
             }
         }
-        return retImage;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
