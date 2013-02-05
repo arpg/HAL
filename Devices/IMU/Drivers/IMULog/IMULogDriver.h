@@ -17,7 +17,7 @@ public:
     void RegisterDataCallback(GPSDriverDataCallback callback);
 
 private:
-    double _GetNextTime();
+    bool _GetNextTime( double& dNextTime, double& dNextTimePPS );
     static void _ThreadCaptureFunc( IMULogDriver* Ptr );
 
 private:
@@ -33,8 +33,7 @@ private:
     std::ifstream           m_pFileGPS;
     volatile bool           m_bShouldRun;
     double                  m_dNextTime;
-    IMUData                 m_NextData;
-    GPSData                 m_NextGPS;
+    double                  m_dNextTimePPS;
     boost::thread           m_DeviceThread;
     IMUDriverDataCallback   m_IMUCallback;
     GPSDriverDataCallback   m_GPSCallback;

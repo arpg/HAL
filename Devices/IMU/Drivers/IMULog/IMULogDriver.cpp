@@ -13,6 +13,7 @@ IMULogDriver::IMULogDriver()
     m_bHaveGPS = false;
 
     m_dNextTime = 0;
+    m_dNextTimePPS = 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +21,8 @@ IMULogDriver::~IMULogDriver()
 {
     // close capture thread
     m_bShouldRun = false;
+
+    // this is fugly, but we need to wake up the sleeping capture thread somehow
     VirtualDevice::CONDVAR.notify_all();
 
     // wait for capture thread to die
@@ -68,7 +71,6 @@ bool IMULogDriver::Init()
         std::cerr << "IMULog: File with timestamps is required." << std::endl;
         return false;
     } else {
-        std::cout << "Timestamp file is: " << sFileTimestamp << std::endl;
         m_pFileTime.open( sFileTimestamp.c_str() );
         if( m_pFileTime.is_open() == false ) {
             std::cerr << "IMULog: File with timestamps could not be opened." << std::endl;
@@ -112,8 +114,12 @@ bool IMULogDriver::Init()
         }
     }
 
-    // read once and push timestamp to VD queue
-    m_dNextTime = _GetNextTime();
+    // read one timestamp.. return false if error occurs
+    if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
+        return false;
+    }
+
+    // push timestamp to VD queue
     VirtualDevice::PushTime( m_dNextTime );
 
     // start capture thread
@@ -155,28 +161,64 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         // sweet, we are good to go!
         vd_lock.unlock();
 
-        /*
+
+        //---------------------------------------------------------
+
         // get data and pack
         // we already have the timestamp so no need to read it!
-        std::stringstream sValue;
+        std::string     sValue;
+        float           fValue;
 
-        IMUData& dataIMU = pSelf->m_NextData;
+        IMUData dataIMU;
         dataIMU.data_present = 0;
 
         if( pSelf->m_bHaveAccel ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_ACCEL;
+            getline ( pSelf->m_pFileAccel, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.accel(0) = fValue;
+            getline ( pSelf->m_pFileAccel, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.accel(1) = fValue;
+            getline ( pSelf->m_pFileAccel, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.accel(2) = fValue;
+            getline ( pSelf->m_pFileAccel, sValue );
         }
+
+        // TODO: add "euler"
 
         if( pSelf->m_bHaveGyro ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_GYRO;
+            getline ( pSelf->m_pFileGyro, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.gyro(0) = fValue;
+            getline ( pSelf->m_pFileGyro, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.gyro(1) = fValue;
+            getline ( pSelf->m_pFileGyro, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.gyro(2) = fValue;
+            getline ( pSelf->m_pFileGyro, sValue );
         }
 
         if( pSelf->m_bHaveMag ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_MAG;
+            getline ( pSelf->m_pFileMag, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.mag(0) = fValue;
+            getline ( pSelf->m_pFileMag, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.mag(1) = fValue;
+            getline ( pSelf->m_pFileMag, sValue, ',' );
+            fValue = atof( sValue.c_str() );
+            dataIMU.mag(2) = fValue;
+            getline ( pSelf->m_pFileMag, sValue );
         }
 
         if( dataIMU.data_present && !pSelf->m_IMUCallback.empty() ) {
-            dataIMU.timestamp_system = 00000;
+            dataIMU.timestamp_system = pSelf->m_dNextTime;
+            dataIMU.timestamp_pps = pSelf->m_dNextTimePPS;
             pSelf->m_IMUCallback( dataIMU );
         }
 
@@ -185,27 +227,28 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
 
         GPSData dataGPS;
         dataGPS.data_present = 0;
-        dataGPS.timestamp_system = 0;
 
         if( pSelf->m_bHaveGPS ) {
             dataGPS.data_present = IMU_GPS_LLH;
+            // TODO: this needs to be filled
+            // I didn't have a log to see the format
         }
 
         if( dataGPS.data_present && !pSelf->m_GPSCallback.empty() ) {
-            dataGPS.timestamp_system = 00000;
+            dataGPS.timestamp_system = pSelf->m_dNextTime;
+            dataIMU.timestamp_pps = pSelf->m_dNextTimePPS;
             pSelf->m_GPSCallback( dataGPS );
         }
-        */
 
+        //---------------------------------------------------------
 
-        // push next timestamp to queue now that we popped from the buffer
-        pSelf->m_dNextTime = pSelf->_GetNextTime();
 
         // break if EOF
-        if( pSelf->m_dNextTime == -1 ) {
+        if( pSelf->_GetNextTime( pSelf->m_dNextTime, pSelf->m_dNextTimePPS ) == false ) {
             goto DIE;
         }
 
+        // pop front and push next timestamp to queue
         VirtualDevice::PopAndPushTime( pSelf->m_dNextTime );
     }
 
@@ -214,15 +257,18 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline double IMULogDriver::_GetNextTime()
+inline bool IMULogDriver::_GetNextTime(
+        double& dNextTime,                  //< Output
+        double& dNextTimePPS                //< Output
+        )
 {
-    double time;
     std::string sValue;
     if( m_pFileTime.eof() ) {
-        return -1;
+        return false;
     }
     getline ( m_pFileTime, sValue, ',' );
-    time = atof( sValue.c_str() );
+    dNextTime = atof( sValue.c_str() );
     getline ( m_pFileTime, sValue );
-    return time;
+    dNextTimePPS = atof( sValue.c_str() );
+    return true;
 }

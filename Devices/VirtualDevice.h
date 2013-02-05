@@ -1,3 +1,21 @@
+/*
+ * These methods are used for devices that replay sensor information (ie. logs) and are used to
+ * synchronize multiple devices through timestamps. The QUEUE holds the _next_ timestamp of the
+ * sensor reading. The QUEUE is ordered non-decreasing, so whenever the time inserted is on top
+ * of the QUEUE, then the sensor can deliver the reading.
+ *
+ * The general template to use this is as follows:
+ *
+ * - On the sensor's INIT function, read ahead the upcoming event's timestamp and use PushTime()
+ *   to push it to the QUEUE.
+ *
+ * - In the CAPTURE method, lock_wait() until the timestamp on top of the QUEUE [accessed via
+ *   NextTime()] matches the one you pushed. If it does, give reading to user and call
+ *   PopAndPushTime() which will pop your time from the QUEUE and push in the NEW time of your
+ *   NEXT event.
+ *
+ */
+
 #ifndef VIRTUALDEVICE_H
 #define VIRTUALDEVICE_H
 
@@ -35,39 +53,38 @@ inline double NextTime()
 /// Push time on top of queue
 inline void PushTime( double T )
 {
-//    std::cout.precision(15);
-//    std::cout << "Initial Push Time: " << std::fixed << T << std::endl;
-
     // don't push in bad times
+    // (0 is a special time when no timestamps are in use)
     if( T >= 0 ) {
         boost::mutex::scoped_lock lock(MUTEX);
         QUEUE.push( T );
     }
-//    std::cout << "-------- Top of Queue[" << QUEUE.size() << "] is: " << std::fixed << NextTime() << std::endl;
 }
 
 
 /// Pop top of queue and push new time
 inline void PopAndPushTime( double T )
 {
-//    std::cout.precision(15);
-//    std::cout << "Pushing Time: " << std::fixed << T << std::endl;
-
+    // get lock
     boost::mutex::scoped_lock lock(MUTEX);
+
+    // pop top of queue which is what got us the lock in the first place!
     QUEUE.pop();
 
     // don't push in bad times
+    // (0 is a special time when no timestamps are in use)
     if( T >= 0 ) {
         QUEUE.push( T );
     }
-//    std::cout << "-------- Top of Queue[" << QUEUE.size() << "] is: " << std::fixed << NextTime() << std::endl;
 
+    // notify waiting threads that a change in the QUEUE has occured
     CONDVAR.notify_all();
 }
 
 
 
-/// Pop time on top of queue
+/// Pop time on top of queue. This should never be used unless in some really really special
+/// circumstances. Use PopAndPushTime() instead!
 inline void PopTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);

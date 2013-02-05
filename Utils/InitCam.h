@@ -12,12 +12,10 @@
 #include <RPG/Utils/GetPot>
 #include <RPG/Devices/Camera/CameraDevice.h>
 
-#include <boost/lexical_cast.hpp>
-
 namespace rpg {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const char USAGE[] =
+    const char CAM_USAGE[] =
         "FLAGS:     -idev <input> <options>\n"
         "\n"
         "where input device can be: FileReader Bumblebee2 etc\n"
@@ -44,58 +42,58 @@ namespace rpg {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool InitCam(
+    bool ParseCamArgs(
             CameraDevice&       Cam,
             GetPot&             clArgs
             )
     {
         if( clArgs.search( 3, "--help", "-help", "-h" ) ) {
-            std::cout << USAGE << std::endl;
+            std::cout << CAM_USAGE << std::endl;
             return false;
         }
 
 
         // get general params
-        std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
-        std::string     sLeftCameraModel    = clArgs.follow( "lcmod.xml", 1, "-lcmod" );
-        std::string     sRightCameraModel   = clArgs.follow( "rcmod.xml", 1, "-rcmod" );
-        std::string     sLeftFileRegex      = clArgs.follow( "left.*pgm", 1, "-lfile" );
-        std::string     sRightFileRegex     = clArgs.follow( "right.*pgm", 1, "-rfile" );
-        std::string     sSourceDir          = clArgs.follow( ".", 1, "-sdir"  );
-        unsigned int    nFPS                = clArgs.follow( 30, 1, "-fps"  );
-        std::string     sResolution         = clArgs.follow( "VGA", 1, "-res"  ); // follow format of FHD, HD, XGA, SVGA, VGA, QVGA, QQVGA, etc.
-        bool            bForceGreyscale     = clArgs.follow( true, 1, "-forcegreyscale");
+        std::string     sDeviceDriver       = clArgs.follow( "", "-idev" );
+        std::string     sLeftCameraModel    = clArgs.follow( "lcmod.xml", "-lcmod" );
+        std::string     sRightCameraModel   = clArgs.follow( "rcmod.xml", "-rcmod" );
+        std::string     sLeftFileRegex      = clArgs.follow( "left.*pgm", "-lfile" );
+        std::string     sRightFileRegex     = clArgs.follow( "right.*pgm", "-rfile" );
+        std::string     sSourceDir          = clArgs.follow( ".", "-sdir"  );
+        unsigned int    nFPS                = clArgs.follow( 30, "-fps"  );
+        std::string     sResolution         = clArgs.follow( "VGA", "-res"  ); // follow format of FHD, HD, XGA, SVGA, VGA, QVGA, QQVGA, etc.
+        bool            bForceGreyscale     = clArgs.search( "-forcegreyscale" );
 
         //----------------------------------------------- BUMBLEBEE
         if( sDeviceDriver == "Bumblebee2" ) {
             if( sLeftCameraModel.empty() || sRightCameraModel.empty() ) {
                 std::cerr << "One or more camera model files is missing!\n" << std::endl;
-                std::cerr << USAGE;
+                std::cerr << CAM_USAGE;
                 return false;
             }
             Cam.SetProperty("DataSourceDir", sSourceDir);
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );
-            Cam.SetProperty("Rectify",       clArgs.follow(true, 1, "-rectify" ) );
+            Cam.SetProperty("Rectify",       clArgs.search( "-rectify" ) );
         }
 
         //----------------------------------------------- FILEREADER
         if( sDeviceDriver == "FileReader") {
-            Cam.SetProperty( "StartFrame",    clArgs.follow( 0, 1, "-sf" ));
+            Cam.SetProperty( "StartFrame",    clArgs.follow( 0, "-sf" ));
             Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
 
             if( sLeftCameraModel.empty() || sRightCameraModel.empty() ) {
                 std::cerr << "One or more camera model files is missing!\n" << std::endl;
-                std::cerr << USAGE;
+                std::cerr << CAM_USAGE;
                 return false;
             }
             if( sLeftFileRegex.empty() || sRightFileRegex.empty() ) {
                 std::cerr << "One or more file names is missing!\n" << std::endl;
-                std::cerr << USAGE;
+                std::cerr << CAM_USAGE;
                 return false;
             }
-            std::string     sSourceDirImage = clArgs.follow( "", 1, "-sdir_image"  );
+            std::string     sSourceDirImage = clArgs.follow( "", "-sdir_image"  );
 
             if( sSourceDirImage.empty() ) {
                 Cam.SetProperty("DataSourceDir", sSourceDir );
@@ -107,11 +105,14 @@ namespace rpg {
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   2 );
+
+            /// ADDITIONAL NON-CL ARGUMENTS
+            // "TimeKeeper": Name of variable that holds timestamps [default 'LoggerTime'].
         }
 
         //----------------------------------------------- TOYOTAREADER
         if( sDeviceDriver == "ToyotaReader") {
-            Cam.SetProperty( "StartFrame",    clArgs.follow( 0, 1, "-sf" ));
+            Cam.SetProperty( "StartFrame",    clArgs.follow( 0, "-sf" ));
             Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
             Cam.SetProperty("DataSourceDir", sSourceDir );
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
@@ -144,7 +145,6 @@ namespace rpg {
             int numNodes = 0;
             std::stringstream ss;
             while(true) {
-                //std::string arg = boost::lexical_cast<std::string>(numNodes);
                 ss << numNodes;
                 std::string arg = ss.str();
                 if(!clArgs.search( ("-n"+arg).c_str() ) ) break;
@@ -155,11 +155,37 @@ namespace rpg {
             Cam.SetProperty("NumNodes", numNodes);
         }
 
+        return true;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    bool ParseCamArgs(
+            CameraDevice&       Cam,
+            int                 argc,
+            char**              argv
+            )
+    {
+        GetPot clArgs( argc, argv );
+        return ParseCamArgs( Cam, clArgs );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    bool InitCam(
+            CameraDevice&       Cam,
+            GetPot&             clArgs
+            )
+    {
+        if( ParseCamArgs( Cam, clArgs ) == false ) {
+            return false;
+        }
+
+        std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
 
         // init driver
         if( !Cam.InitDriver( sDeviceDriver ) ) {
             std::cerr << "Invalid input device." << std::endl;
-            std::cerr << USAGE;
+            std::cerr << CAM_USAGE;
             return false;
         }
 
@@ -174,8 +200,8 @@ namespace rpg {
             char**              argv
             )
     {
-        GetPot cl( argc, argv );
-        return InitCam( Cam, cl);
+        GetPot clArgs( argc, argv );
+        return InitCam( Cam, clArgs );
     }
 
 
