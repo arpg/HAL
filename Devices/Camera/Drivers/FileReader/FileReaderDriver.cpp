@@ -84,7 +84,7 @@ bool FileReaderDriver::Init()
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
     m_nCurrentImageIndex = m_nStartFrame;
-    m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
+    m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
     m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "LoggerTime" );;
 
