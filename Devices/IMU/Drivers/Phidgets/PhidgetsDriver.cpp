@@ -48,7 +48,6 @@ PhidgetsDriver::PhidgetsDriver() : m_hSpatial(0)
 PhidgetsDriver::~PhidgetsDriver()
 {
     //since user input has been read, this is a signal to terminate the program so we will close the phidget and delete the object we created
-    printf("Closing...\n");
     CPhidget_close((CPhidgetHandle)m_hSpatial);
     CPhidget_delete((CPhidgetHandle)m_hSpatial);
 }
