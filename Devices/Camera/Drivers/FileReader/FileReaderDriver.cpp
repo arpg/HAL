@@ -33,14 +33,7 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         m_cBufferEmpty.wait(lock);
     }
 
-    boost::mutex::scoped_lock vd_lock(VirtualDevice::MUTEX);
-
-    // check if timestamp is the top of the queue
-    while( VirtualDevice::NextTime() < _GetNextTime() ) {
-        VirtualDevice::CONDVAR.wait( vd_lock );
-    }
-    // sweet, we are good to go!
-    vd_lock.unlock();
+    VirtualDevice::WaitForTime( _GetNextTime() );
 
     //***************************************************
     // consume from buffer

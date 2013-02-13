@@ -37,7 +37,6 @@ extern std::priority_queue< double, std::vector<double>, std::greater<double> > 
 extern boost::mutex                 MUTEX;
 extern boost::condition_variable    CONDVAR;
 
-
 /// Get time on top of queue
 inline double NextTime()
 {
@@ -46,8 +45,20 @@ inline double NextTime()
     } else {
         return QUEUE.top();
     }
-
 }
+
+inline void WaitForTime(double nextTime)
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+
+    // check if timestamp is the top of the queue
+    while( NextTime() < nextTime ) {
+        CONDVAR.wait( lock );
+    }
+    // sweet, we are good to go!
+    lock.unlock();
+}
+
 
 
 /// Push time on top of queue

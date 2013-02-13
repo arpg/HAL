@@ -218,6 +218,7 @@ int ToyotaReaderDriver::_GetImageFormat(string& format) {
     if( !format.compare("BAYER_GB") ) return BAYER_GB;
     if( !format.compare("BAYER_RG") ) return BAYER_RG;
     if( !format.compare("BAYER_GR") ) return BAYER_GR;
+    return RGB;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

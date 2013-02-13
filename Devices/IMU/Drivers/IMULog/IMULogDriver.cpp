@@ -21,9 +21,11 @@ IMULogDriver::~IMULogDriver()
 {
     // close capture thread
     m_bShouldRun = false;
+    
+    m_DeviceThread.interrupt();
 
-    // this is fugly, but we need to wake up the sleeping capture thread somehow
-    VirtualDevice::CONDVAR.notify_all();
+//    // this is fugly, but we need to wake up the sleeping capture thread somehow
+//    VirtualDevice::CONDVAR.notify_all();
 
     // wait for capture thread to die
     m_DeviceThread.join();
@@ -146,21 +148,11 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
 {
     while( pSelf->m_bShouldRun ) {
 
-        boost::mutex::scoped_lock vd_lock(VirtualDevice::MUTEX);
-
-        // check if timestamp is the top of the queue
-        while( VirtualDevice::NextTime() < pSelf->m_dNextTime ) {
-            VirtualDevice::CONDVAR.wait( vd_lock );
-
-            // check if this variable has changed during our sleep
-            if( pSelf->m_bShouldRun == false ) {
-                // oops, someone wants use dead
-                goto DIE;
-            }
+        try{
+            VirtualDevice::WaitForTime(pSelf->m_dNextTime );
+        }catch(boost::thread_interrupted const&) {
+            continue;
         }
-        // sweet, we are good to go!
-        vd_lock.unlock();
-
 
         //---------------------------------------------------------
 
@@ -245,15 +237,12 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
 
         // break if EOF
         if( pSelf->_GetNextTime( pSelf->m_dNextTime, pSelf->m_dNextTimePPS ) == false ) {
-            goto DIE;
+            break;
         }
 
         // pop front and push next timestamp to queue
         VirtualDevice::PopAndPushTime( pSelf->m_dNextTime );
     }
-
-    DIE:
-    VirtualDevice::PopTime();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
