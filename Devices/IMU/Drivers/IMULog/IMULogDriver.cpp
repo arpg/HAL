@@ -159,7 +159,6 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         // get data and pack
         // we already have the timestamp so no need to read it!
         std::string     sValue;
-        float           fValue;
 
         IMUData dataIMU;
         dataIMU.data_present = 0;
@@ -167,15 +166,13 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         if( pSelf->m_bHaveAccel ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_ACCEL;
             getline ( pSelf->m_pFileAccel, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.accel(0) = fValue;
+            dataIMU.accel(0) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileAccel, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.accel(1) = fValue;
-            getline ( pSelf->m_pFileAccel, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.accel(2) = fValue;
+            dataIMU.accel(1) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileAccel, sValue );
+            dataIMU.accel(2) = atof( sValue.c_str() );
         }
 
         // TODO: add "euler"
@@ -183,29 +180,25 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         if( pSelf->m_bHaveGyro ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_GYRO;
             getline ( pSelf->m_pFileGyro, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.gyro(0) = fValue;
+            dataIMU.gyro(0) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileGyro, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.gyro(1) = fValue;
-            getline ( pSelf->m_pFileGyro, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.gyro(2) = fValue;
+            dataIMU.gyro(1) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileGyro, sValue );
+            dataIMU.gyro(2) = atof( sValue.c_str() );
         }
 
         if( pSelf->m_bHaveMag ) {
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_MAG;
             getline ( pSelf->m_pFileMag, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.mag(0) = fValue;
+            dataIMU.mag(0) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileMag, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.mag(1) = fValue;
-            getline ( pSelf->m_pFileMag, sValue, ',' );
-            fValue = atof( sValue.c_str() );
-            dataIMU.mag(2) = fValue;
+            dataIMU.mag(1) = atof( sValue.c_str() );
+            
             getline ( pSelf->m_pFileMag, sValue );
+            dataIMU.mag(2) = atof( sValue.c_str() );
         }
 
         if( dataIMU.data_present && !pSelf->m_IMUCallback.empty() ) {
@@ -213,7 +206,6 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
             dataIMU.timestamp_pps = pSelf->m_dNextTimePPS;
             pSelf->m_IMUCallback( dataIMU );
         }
-
 
 
 
@@ -252,12 +244,15 @@ inline bool IMULogDriver::_GetNextTime(
         )
 {
     std::string sValue;
-    if( m_pFileTime.eof() ) {
-        return false;
-    }
+
     getline ( m_pFileTime, sValue, ',' );
     dNextTime = atof( sValue.c_str() );
     getline ( m_pFileTime, sValue );
     dNextTimePPS = atof( sValue.c_str() );
+
+    if( m_pFileTime.eof() ) {
+        return false;
+    }
+    
     return true;
 }

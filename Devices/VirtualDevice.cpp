@@ -78,6 +78,9 @@ void PopTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
     QUEUE.pop();
+
+    // notify waiting threads that a change in the QUEUE has occured
+    CONDVAR.notify_all();
 }
 
 void SetRealtime(bool realtime)
