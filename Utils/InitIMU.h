@@ -54,7 +54,7 @@ namespace rpg {
 
 
         // get general params
-        std::string     sDeviceDriver       = clArgs.follow( "", "-idev" );
+        std::string     sDeviceDriver       = clArgs.follow( "", "-imudev" );
         std::string     sSourceDir          = clArgs.follow( ".", "-sdir"  );
         int             nHzGPS              = clArgs.follow( 1, "-hz_gps" );
         int             nHzAHRS             = clArgs.follow( 100, "-hz_ahrs" );

@@ -68,6 +68,114 @@ bool dc1394CameraCompare(dc1394camera_t* c1, dc1394camera_t* c2) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void _cleanup_and_exit(dc1394camera_t *pCam)
+{
+    dc1394_video_set_transmission(pCam, DC1394_OFF);
+    dc1394_capture_stop(pCam);
+    dc1394_camera_free(pCam);
+    exit(-1);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void ShowCameraProperties(
+        dc1394camera_t* camera
+    )
+{
+    dc1394featureset_t features;
+    dc1394_feature_get_all(camera, &features);
+    dc1394_feature_print_all( &features, stdout );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+dc1394error_t SetCameraProperties(
+        dc1394camera_t* camera,
+        dc1394video_mode_t mode,
+        dc1394framerate_t framerate,
+        unsigned dma_channels
+    )
+{
+    dc1394error_t e;
+
+    e = dc1394_video_set_operation_mode(camera, DC1394_OPERATION_MODE_1394B);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
+
+    e = dc1394_video_set_iso_speed(camera, DC1394_ISO_SPEED_800);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
+
+    e = dc1394_video_set_mode(camera, mode);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set video mode");
+
+    e = dc1394_video_set_framerate(camera, framerate);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set framerate");
+
+    e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera.");
+
+    dc1394color_coding_t coding;
+    e = dc1394_get_color_coding_from_video_mode( camera, mode, &coding );
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not get color coding");
+//    std::cout << "Color Coding is: " << coding << std::endl;
+
+    return DC1394_SUCCESS;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+dc1394error_t SetCameraProperties_Format7(
+        dc1394camera_t* camera,
+        dc1394video_mode_t mode,
+        dc1394color_coding_t coding,
+        float framerate,
+        unsigned dma_channels,
+        unsigned int img_width = 640,
+        unsigned int img_height = 480,
+        unsigned int left = 0,
+        unsigned int top = 0
+    )
+{
+    dc1394error_t e;
+
+    e = dc1394_video_set_operation_mode(camera, DC1394_OPERATION_MODE_1394B);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
+
+    // set ISO speed
+    e = dc1394_video_set_iso_speed(camera, DC1394_ISO_SPEED_800);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
+
+    // set video mode
+    e = dc1394_video_set_mode(camera, mode);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set video mode");
+
+    // set image position
+    e = dc1394_format7_set_image_position( camera, mode, left, top );
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set image position.");
+
+    // set image size
+    e = dc1394_format7_set_image_size( camera, mode, img_width, img_height );
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set image size.");
+
+    // set color coding
+    e = dc1394_format7_set_color_coding( camera, mode, coding );
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set color coding.");
+
+    // set framerate
+    e = dc1394_feature_set_mode(camera, DC1394_FEATURE_FRAME_RATE, DC1394_FEATURE_MODE_MANUAL);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set manual framerate");
+
+    e = dc1394_feature_set_absolute_control(camera, DC1394_FEATURE_FRAME_RATE, DC1394_ON);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set absolute control for framerate");
+
+    e = dc1394_feature_set_absolute_value(camera, DC1394_FEATURE_FRAME_RATE, framerate);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set framerate value");
+
+    // set DMA channel
+    e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera.");
+
+    return DC1394_SUCCESS;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 bool FireFlyDriver::Init()
 {
     assert(m_pPropertyMap);
@@ -101,7 +209,7 @@ bool FireFlyDriver::Init()
         m_pCam[ m_nNumCams ] = pCam;
         m_nNumCams++;
     }
-    
+
     // Sort cameras into canonical order (so they are consistent each time
     // they are loaded).
     std::sort(m_pCam, m_pCam + m_nNumCams, dc1394CameraCompare);
@@ -110,43 +218,14 @@ bool FireFlyDriver::Init()
     dc1394_camera_free_list( pCameraList );
 
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-        printf("Using camera with GUID %llu\n", m_pCam[ii]->guid );
-    }
-
-    // always this
-    m_nVideoMode = DC1394_VIDEO_MODE_640x480_MONO8;
-
-    dc1394color_coding_t coding;
-    e = dc1394_get_color_coding_from_video_mode( m_pCam[0], m_nVideoMode, &coding );
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get color coding");
-
-    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-        e = dc1394_video_set_iso_speed( m_pCam[ii], DC1394_ISO_SPEED_400 );
-        DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[ii]),"Could not set iso speed");
-
-        e = dc1394_video_set_mode( m_pCam[ii], m_nVideoMode );
-        DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]),"Could not set video mode");
-    }
-
-    // get highest framerate
-//    dc1394framerates_t vFramerates;
-//    e = dc1394_video_get_supported_framerates( m_pCam[0], m_nVideoMode, &vFramerates);
-//    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not get framerates");
-//    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
-    m_nFramerate = DC1394_FRAMERATE_30;
-
-    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-        e = dc1394_video_set_framerate( m_pCam[ii], m_nFramerate );
-        DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]),"Could not set framerate" );
-    }
-
-    int nNumDMAChannels = m_pPropertyMap->GetProperty( "DMA", 4 );
-
-    std::cout << "NumCams: " << m_nNumCams << std::endl;
-
-    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-        e = dc1394_capture_setup( m_pCam[ii], nNumDMAChannels, DC1394_CAPTURE_FLAGS_DEFAULT );
-        DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera." );
+        printf("Configuring camera with GUID %llu ... ", m_pCam[ii]->guid );
+        fflush( stdout );
+        dc1394_camera_reset(m_pCam[ii]);
+        // TODO: allow people to modify these parameters through property map!!!
+        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_1280x960_MONO8, DC1394_FRAMERATE_30, 4 ) == DC1394_SUCCESS ) {
+//            ShowCameraProperties(m_pCam[ii]);
+            printf("OK.\n");
+        }
     }
 
     // initiate transmission
@@ -184,7 +263,8 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( m_nNumCams );
         // and setup images
         for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-            vImages[ii].Image = cv::Mat(m_nImageHeight, m_nImageWidth, CV_8UC1);
+            // TODO: this has to change if parameters are changed in the Init (adjust type accordingly)
+            vImages[ii].Image = cv::Mat( m_nImageHeight, m_nImageWidth, CV_8UC1 );
         }
     }
 
@@ -195,6 +275,7 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
+        // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
         SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );
         e = dc1394_capture_enqueue( m_pCam[ii], pFrame );
