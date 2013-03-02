@@ -31,7 +31,7 @@ bool WebcamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     
     if(m_bForceGreyscale) {
         static Mat temp;
-        success = m_pCam.retrieve(temp);
+        success = m_pCam.read(temp);
         cvtColor(temp,vImages[0].Image, CV_RGB2GRAY);
     }else{
         success = m_pCam.retrieve(vImages[0].Image);
@@ -46,9 +46,6 @@ bool WebcamDriver::Init()
 {
     assert(m_pPropertyMap);    
     m_bForceGreyscale = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false );
-    bool success = m_pCam.open(0);
-    if(success) {
-        m_pCam.set(CV_CAP_PROP_CONVERT_RGB,1);
-    }
-    return success;
+    
+    return m_pCam.open(0);
 }
