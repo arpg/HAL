@@ -105,6 +105,7 @@ namespace rpg {
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   2 );
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );            
 
             /// ADDITIONAL NON-CL ARGUMENTS
             // "TimeKeeper": Name of variable that holds timestamps [default 'LoggerTime'].
@@ -153,6 +154,11 @@ namespace rpg {
                 ss.str("");
             }
             Cam.SetProperty("NumNodes", numNodes);
+        }
+        
+        //----------------------------------------------- OpenCV Webcam
+        if( sDeviceDriver == "Webcam" ) {
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );
         }
 
         return true;
