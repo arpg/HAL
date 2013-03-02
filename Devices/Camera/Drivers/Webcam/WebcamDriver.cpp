@@ -32,9 +32,11 @@ bool WebcamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     if(m_bForceGreyscale) {
         static Mat temp;
         success = m_pCam.read(temp);
-        cvtColor(temp,vImages[0].Image, CV_RGB2GRAY);
+        if(success) {
+            cvtColor(temp,vImages[0].Image, CV_RGB2GRAY);
+        }
     }else{
-        success = m_pCam.retrieve(vImages[0].Image);
+        success = m_pCam.read(vImages[0].Image);
     }
     
     return success;
