@@ -1,24 +1,36 @@
 #include "VirtualDevice.h"
 
+#include <exception>
 #include <queue>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
 namespace VirtualDevice {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 /// Queue of Virtual Devices
-std::priority_queue< double, std::vector<double>, std::greater<double> >    QUEUE;
+std::priority_queue< double, std::vector<double>, std::greater<double> >  QUEUE;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 /// Mutex Lock
-boost::mutex                                                                MUTEX;
-boost::condition_variable                                                   CONDVAR;
+boost::mutex                                                              MUTEX;
+boost::condition_variable                                                 CONDVAR;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 /// Playback
-bool                                                                        REALTIME = false;
+bool                                                                      REALTIME = false;
 
+////////////////////////////////////////////////////////////////////////////////
+/// Rogue time value representing paused playback
+const double PAUSED_VALUE = -std::numeric_limits<double>::max();
+
+////////////////////////////////////////////////////////////////////////////////
+inline bool IsPaused()
+{
+    return (QUEUE.size() > 0 && QUEUE.top() == PAUSED_VALUE);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 double NextTime()
 {
     if( QUEUE.size() == 0 ) {
@@ -28,6 +40,7 @@ double NextTime()
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void WaitForTime(double nextTime)
 {
     boost::mutex::scoped_lock lock(MUTEX);
@@ -46,6 +59,7 @@ void WaitForTime(double nextTime)
     lock.unlock();
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void PushTime( double T )
 {
     // don't push in bad times
@@ -56,10 +70,15 @@ void PushTime( double T )
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void PopAndPushTime( double T )
 {
     // get lock
     boost::mutex::scoped_lock lock(MUTEX);
+    
+    while(IsPaused()) {
+        CONDVAR.wait( lock );        
+    }
 
     // pop top of queue which is what got us the lock in the first place!
     QUEUE.pop();
@@ -74,6 +93,7 @@ void PopAndPushTime( double T )
     CONDVAR.notify_all();
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void PopTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
@@ -83,9 +103,53 @@ void PopTime()
     CONDVAR.notify_all();
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void SetRealtime(bool realtime)
 {
     REALTIME = realtime;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+void PauseTime()
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+
+    // Push dummy time that exists before any other event
+    QUEUE.push( PAUSED_VALUE );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void UnpauseTime()
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+    
+    // Check that time was actually paused
+    if(NextTime() != PAUSED_VALUE ) {
+        std::cerr << "Unpause called without corresponding pause" << std::endl;
+        throw std::exception();
+    }
+    
+    QUEUE.pop();
+
+    // notify waiting threads that a change in the QUEUE has occured
+    CONDVAR.notify_all();    
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void TogglePauseTime()
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+    
+    if(NextTime() == PAUSED_VALUE) {
+        // unpause
+        QUEUE.pop();
+        CONDVAR.notify_all();            
+    }else{
+        // pause
+        QUEUE.push( PAUSED_VALUE );
+    }
+}
+
+
 
 }

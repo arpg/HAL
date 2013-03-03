@@ -40,6 +40,15 @@ void PopTime();
 /// Specify whether events should be played back in realtime
 void SetRealtime(bool realtime=true);
 
+/// Pause virtual time to stop new events
+void PauseTime();
+
+/// Unpause virtual time to resume receiving events
+void UnpauseTime();
+
+/// Toggle between playing and pausing virtual time.
+void TogglePauseTime();
+
 }
 
 #endif // VIRTUALDEVICE_H
