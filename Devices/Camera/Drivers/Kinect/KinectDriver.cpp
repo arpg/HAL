@@ -80,11 +80,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::ImageGenerator imageGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, imageGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(imageGen);
@@ -106,11 +106,11 @@ bool KinectDriver::Init()
         unsigned int count = 0;
         for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::DepthGenerator depthGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, depthGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(depthGen);
@@ -164,11 +164,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = IRNodeList.Begin(); it != IRNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::IRGenerator irGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, irGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(irGen);
