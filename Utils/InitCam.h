@@ -134,6 +134,7 @@ namespace rpg {
             Cam.SetProperty( "AlignDepth", bAlignDepth );
             Cam.SetProperty( "FPS", nFPS );
             Cam.SetProperty( "Resolution", sResolution );
+            Cam.SetProperty( "ForceGreyscale",bForceGreyscale );            
         }
 
         //----------------------------------------------- DVI2PCI
