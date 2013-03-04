@@ -275,6 +275,10 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
+        
+        // Get capture time at ring buffer dequeue
+        vImages[ii].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
+        
         // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
         SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );

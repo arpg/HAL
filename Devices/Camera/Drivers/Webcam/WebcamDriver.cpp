@@ -1,6 +1,10 @@
 
 #include "WebcamDriver.h"
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/types_c.h>
 #include "opencv2/highgui/highgui.hpp"	// for cap
+
+#include <RPG/Utils/TicToc.h>
 
 using namespace cv;
 
@@ -25,16 +29,32 @@ bool WebcamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         vImages.resize( 1 );
     }
 
-    m_pCam >> vImages[0].Image;
-    if( !vImages[0].Image.data )
-	return false;
+    bool success = false;
+    double systemTime = 0;
+    
+    if(m_bForceGreyscale) {
+        static Mat temp;
+        success = m_pCam.read(temp);
+        systemTime = Tic();
+        if(success) {
+            cvtColor(temp,vImages[0].Image, CV_RGB2GRAY);
+        }
+    }else{
+        success = m_pCam.read(vImages[0].Image);
+        systemTime = Tic();
+    }
 
-    return true;
+    vImages[0].Map.SetProperty("SystemTime", systemTime );
+    
+    return success;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 bool WebcamDriver::Init()
 {
-    return m_pCam.open(0);
+    assert(m_pPropertyMap);    
+    m_bForceGreyscale = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false );
+    const int camId = m_pPropertyMap->GetProperty<bool>( "CamId",  false );
+    return m_pCam.open(camId);
 }

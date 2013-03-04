@@ -6,6 +6,9 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <RPG/Utils/TicToc.h>
+
+
 #define MAX_DEPTH 10000
 
 using namespace xn;
@@ -80,11 +83,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::ImageGenerator imageGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, imageGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(imageGen);
@@ -106,11 +109,11 @@ bool KinectDriver::Init()
         unsigned int count = 0;
         for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::DepthGenerator depthGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, depthGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(depthGen);
@@ -164,11 +167,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = IRNodeList.Begin(); it != IRNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::IRGenerator irGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, irGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(irGen);
@@ -228,6 +231,8 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     // Read a new frame
     rc = m_Context.WaitAndUpdateAll();
+    const double systemTime = Tic();
+    
     if (rc != XN_STATUS_OK)
     {
         printf("Read failed: %s\n", xnGetStatusString(rc));
@@ -257,18 +262,21 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
         memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
         memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
         memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
 
