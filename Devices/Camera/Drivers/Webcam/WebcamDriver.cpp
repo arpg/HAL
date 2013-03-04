@@ -55,6 +55,6 @@ bool WebcamDriver::Init()
 {
     assert(m_pPropertyMap);    
     m_bForceGreyscale = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false );
-    
-    return m_pCam.open(0);
+    const int camId = m_pPropertyMap->GetProperty<bool>( "CamId",  false );
+    return m_pCam.open(camId);
 }

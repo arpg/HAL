@@ -159,6 +159,7 @@ namespace rpg {
         //----------------------------------------------- OpenCV Webcam
         if( sDeviceDriver == "Webcam" ) {
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );
+            Cam.SetProperty("CamId", clArgs.follow( 0,"-camid" ) );
         }
 
         return true;
