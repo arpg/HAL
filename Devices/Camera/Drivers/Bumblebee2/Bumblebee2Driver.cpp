@@ -101,6 +101,10 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         std::cerr << "Could not capture frame" << std::endl;
         return false;
     }
+    
+    // Get capture time at ring buffer dequeue
+    vImages[0].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
+    vImages[1].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
         
     // Deinterlace into buffer
     dc1394_deinterlace_stereo( pFrame->image, m_pDeinterlaceBuffer, m_uImageWidth, m_uImageHeight*2 );    
