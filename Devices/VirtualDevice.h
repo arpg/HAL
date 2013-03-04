@@ -49,6 +49,9 @@ void UnpauseTime();
 /// Toggle between playing and pausing virtual time.
 void TogglePauseTime();
 
+/// Allow numEvents events to pass before pausing
+void StepTime(int numEvents);
+
 }
 
 #endif // VIRTUALDEVICE_H

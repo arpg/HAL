@@ -9,25 +9,27 @@ namespace VirtualDevice {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Queue of Virtual Devices
-std::priority_queue< double, std::vector<double>, std::greater<double> >  QUEUE;
+std::priority_queue< double,
+    std::vector<double>,
+    std::greater<double> >    QUEUE;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Mutex Lock
-boost::mutex                                                              MUTEX;
-boost::condition_variable                                                 CONDVAR;
+boost::mutex                  MUTEX;
+boost::condition_variable     CONDVAR;
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Playback
-bool                                                                      REALTIME = false;
+/// Wait for correct time to elapse if REALTIME is true
+bool                          REALTIME = false;
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Rogue time value representing paused playback
-const double PAUSED_VALUE = -std::numeric_limits<double>::max();
+/// TO_READ can be used to step through and pause events
+unsigned long                 EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
 
 ////////////////////////////////////////////////////////////////////////////////
 inline bool IsPaused()
 {
-    return (QUEUE.size() > 0 && QUEUE.top() == PAUSED_VALUE);
+    return EVENTS_TO_QUEUE == 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,9 +56,6 @@ void WaitForTime(double nextTime)
     if(REALTIME) {
         boost::this_thread::sleep(boost::posix_time::milliseconds(1E3/1000.0));        
     }
-    
-    // sweet, we are good to go!
-    lock.unlock();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,9 +72,9 @@ void PushTime( double T )
 ////////////////////////////////////////////////////////////////////////////////
 void PopAndPushTime( double T )
 {
-    // get lock
     boost::mutex::scoped_lock lock(MUTEX);
     
+    // Hold up the device at the top of the queue whilst time is 'paused'
     while(IsPaused()) {
         CONDVAR.wait( lock );        
     }
@@ -88,6 +87,9 @@ void PopAndPushTime( double T )
     if( T >= 0 ) {
         QUEUE.push( T );
     }
+    
+    // Signify that event has been queued
+    EVENTS_TO_QUEUE--;
 
     // notify waiting threads that a change in the QUEUE has occured
     CONDVAR.notify_all();
@@ -113,23 +115,16 @@ void SetRealtime(bool realtime)
 void PauseTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
-
-    // Push dummy time that exists before any other event
-    QUEUE.push( PAUSED_VALUE );
+    
+    EVENTS_TO_QUEUE = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void UnpauseTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
-    
-    // Check that time was actually paused
-    if(NextTime() != PAUSED_VALUE ) {
-        std::cerr << "Unpause called without corresponding pause" << std::endl;
-        throw std::exception();
-    }
-    
-    QUEUE.pop();
+
+    EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
 
     // notify waiting threads that a change in the QUEUE has occured
     CONDVAR.notify_all();    
@@ -140,15 +135,24 @@ void TogglePauseTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
     
-    if(NextTime() == PAUSED_VALUE) {
+    if(IsPaused()) {
         // unpause
-        QUEUE.pop();
-        CONDVAR.notify_all();            
+        EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
+        CONDVAR.notify_all();    
     }else{
         // pause
-        QUEUE.push( PAUSED_VALUE );
+        EVENTS_TO_QUEUE = 0;
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+void StepTime(int numEvents)
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+    EVENTS_TO_QUEUE = numEvents;    
+    CONDVAR.notify_all();    
+}
+
 
 
 
