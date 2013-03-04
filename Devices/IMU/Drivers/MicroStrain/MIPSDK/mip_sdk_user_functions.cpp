@@ -49,7 +49,7 @@
 std::string DeviceById(int id)
 {
     //search /dev/serial for microstrain devices in Linux
-    FILE* instream = popen("find /dev/serial -print | grep -i microstrain","r");
+    FILE* instream = popen("find /dev/serial -print 2> /dev/null | grep -i microstrain","r");
 
     if(!instream) {
         std::cerr << "Unable to open pipe." << std::endl;
@@ -77,6 +77,7 @@ std::string DeviceById(int id)
         }
     }
 
+    std::cerr << "Unable to find device." << std::endl;
     return std::string();
 }
 
