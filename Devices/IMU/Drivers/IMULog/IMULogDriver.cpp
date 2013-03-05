@@ -75,7 +75,7 @@ bool IMULogDriver::Init()
     } else {
         m_pFileTime.open( sFileTimestamp.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: File with timestamps could not be opened." << std::endl;
+            std::cerr << "IMULog: Couldn't open timestamp file '" << sFileTimestamp << "'" << std::endl;
             return false;
         }
     }
@@ -83,7 +83,7 @@ bool IMULogDriver::Init()
     if( sFileAccel.empty() == false ) {
         m_pFileAccel.open( sFileAccel.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: File with accel info could not be opened." << std::endl;
+            std::cerr << "IMULog: Couldn't open accel file '" << sFileAccel << "'" << std::endl;
         } else {
             m_bHaveAccel = true;
         }
@@ -92,7 +92,7 @@ bool IMULogDriver::Init()
     if( sFileGyro.empty() == false ) {
         m_pFileGyro.open( sFileGyro.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: File with gyro info could not be opened." << std::endl;
+            std::cerr << "IMULog: Couldn't open gyro file '" << sFileGyro << "'" << std::endl;
         } else {
             m_bHaveGyro = true;
         }
@@ -101,7 +101,7 @@ bool IMULogDriver::Init()
     if( sFileMag.empty() == false ) {
         m_pFileMag.open( sFileMag.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: File with mag info could not be opened." << std::endl;
+            std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;            
         } else {
             m_bHaveMag = true;
         }
@@ -110,7 +110,7 @@ bool IMULogDriver::Init()
     if( sFileGPS.empty() == false ) {
         m_pFileGPS.open( sFileGPS.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: File with GPS info could not be opened." << std::endl;
+            std::cerr << "IMULog: Couldn't open gps file '" << sFileGPS << "'" << std::endl;
         } else {
             m_bHaveGPS = true;
         }

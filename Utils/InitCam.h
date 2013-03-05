@@ -104,11 +104,11 @@ namespace rpg {
             Cam.SetProperty("Channel-1",     sRightFileRegex );
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
-            Cam.SetProperty("NumChannels",   2 );
+            Cam.SetProperty("NumChannels",   clArgs.follow(2,"-numchannels") );
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );            
 
             /// ADDITIONAL NON-CL ARGUMENTS
-            // "TimeKeeper": Name of variable that holds timestamps [default 'LoggerTime'].
+            // "TimeKeeper": Name of variable that holds timestamps [default 'SystemTime'].
         }
 
         //----------------------------------------------- TOYOTAREADER
