@@ -45,7 +45,7 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     // now fetch the next set of images from buffer
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
+        vImages[ii] = m_qImageBuffer.front()[ii].clone();
     }
 
     // remove image from buffer queue
@@ -187,7 +187,7 @@ bool FileReaderDriver::_Read()
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        vImages[ii].read( sFileName, 1, m_iCvImageReadFlags );
+        vImages[ii].read( sFileName, true, m_iCvImageReadFlags );
     }
 
     m_nCurrentImageIndex++;
