@@ -33,27 +33,6 @@ class IMUDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
-        void RegisterIMUDataCallback(IMUDriverDataCallback callback)
-        {
-            if( m_pDriver ){
-                m_pDriver->RegisterDataCallback( callback );
-            }else{
-                std::cerr << "ERROR: no driver initialized!\n";
-            }
-            return;
-        }
-
-        ///////////////////////////////////////////////////////////////
-        void RegisterGPSDataCallback(GPSDriverDataCallback callback)
-        {
-            if( m_pDriver ){
-                m_pDriver->RegisterDataCallback( callback );
-            }else{
-                std::cerr << "ERROR: no driver initialized!\n";
-            }
-            return;
-        }
-
         void DeinitDriver()
         {
             if(m_pDriver) {
@@ -77,6 +56,34 @@ class IMUDevice : public PropertyMap
 
             return false;
         }
+        
+        ///////////////////////////////////////////////////////////////
+        bool IsInitialized()
+        {
+            return m_pDriver;
+        }        
+        
+        ///////////////////////////////////////////////////////////////
+        void RegisterIMUDataCallback(IMUDriverDataCallback callback)
+        {
+            if( m_pDriver ){
+                m_pDriver->RegisterDataCallback( callback );
+            }else{
+                std::cerr << "ERROR: no driver initialized!\n";
+            }
+            return;
+        }
+
+        ///////////////////////////////////////////////////////////////
+        void RegisterGPSDataCallback(GPSDriverDataCallback callback)
+        {
+            if( m_pDriver ){
+                m_pDriver->RegisterDataCallback( callback );
+            }else{
+                std::cerr << "ERROR: no driver initialized!\n";
+            }
+            return;
+        }        
 
     private:
         // A IMU device will create and initialize a particular driver:

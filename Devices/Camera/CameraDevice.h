@@ -32,6 +32,7 @@ class CameraDevice : public PropertyMap
             DeinitDriver();
         }
         
+        ///////////////////////////////////////////////////////////////
         void DeinitDriver()
         {
             if(m_pDriver) {
@@ -53,6 +54,12 @@ class CameraDevice : public PropertyMap
                 return success; 
             }
             return false;
+        }
+        
+        ///////////////////////////////////////////////////////////////
+        bool IsInitialized()
+        {
+            return m_pDriver;
         }
 
         ///////////////////////////////////////////////////////////////
