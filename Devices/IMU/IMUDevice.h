@@ -70,7 +70,9 @@ class IMUDevice : public PropertyMap
             m_pDriver = CreateIMUDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
-                return m_pDriver->Init();
+                const bool success = m_pDriver->Init();
+                if(!success) DeinitDriver();
+                return success;
             }
 
             return false;

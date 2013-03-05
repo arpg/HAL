@@ -66,7 +66,7 @@ std::string DeviceById(int id)
         return std::string(devname);
     } else {
         //search /dev/cu.usbmodem1 for microstrain devices in MacOS
-        instream = popen("find /dev/cu.usbmodem1 -print","r");
+        instream = popen("find /dev/cu.usbmodem1 -print 2> /dev/null","r");
 
         for(devfound=-1; devfound < id && fgets(devname,sizeof(devname), instream); ++devfound) {
         }
@@ -77,7 +77,6 @@ std::string DeviceById(int id)
         }
     }
 
-    std::cerr << "Unable to find device." << std::endl;
     return std::string();
 }
 
@@ -120,8 +119,8 @@ u16 mip_sdk_port_open(void **port_handle, int port_num, int baudrate)
 {
     const std::string comPortPath = DeviceById(port_num);
     if( comPortPath.empty() ) {
-        puts("Device not connected");
-        return -1;
+        std::cerr << "Device not connected" << std::endl;
+        return MIP_USER_FUNCTION_ERROR;
     }
 
     ComPortHandle comPort = open(comPortPath.c_str(), O_RDWR | O_NOCTTY);
