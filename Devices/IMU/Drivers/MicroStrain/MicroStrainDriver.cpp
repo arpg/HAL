@@ -113,9 +113,9 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
                         imuData.data_present |= IMU_AHRS_ACCEL;
-                        imuData.accel << curr_ahrs_accel.scaled_accel[0] * GRAVITY_MAGNITUDE,
-                                         curr_ahrs_accel.scaled_accel[1] * GRAVITY_MAGNITUDE,
-                                         curr_ahrs_accel.scaled_accel[2] * GRAVITY_MAGNITUDE;
+                        imuData.accel << curr_ahrs_accel.scaled_accel[0],
+                                         curr_ahrs_accel.scaled_accel[1],
+                                         curr_ahrs_accel.scaled_accel[2];
                     }break;
 
                     // Scaled Gyro
