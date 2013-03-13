@@ -21,6 +21,8 @@
 
 namespace VirtualDevice {
 
+void ResetTime();
+
 /// Get time on top of queue
 double NextTime();
 

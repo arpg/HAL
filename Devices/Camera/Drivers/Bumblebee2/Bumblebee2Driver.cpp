@@ -129,7 +129,11 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
                 // MVL image wrapper around OpenCV Rectified / Unrectified data
                 mvl_image_t* img = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
                 mvl_image_t* img_rect = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[cam].Image.data );
-                mvl_rectify( m_pLeftCMod, img, img_rect );
+                if(cam==0){
+                    mvl_rectify( m_pLeftCMod, img, img_rect );
+                }else{
+                    mvl_rectify( m_pRightCMod, img, img_rect );
+                }
             }
             
         }        

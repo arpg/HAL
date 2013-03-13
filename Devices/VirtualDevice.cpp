@@ -33,6 +33,14 @@ inline bool IsPaused()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+void ResetTime()
+{
+    boost::mutex::scoped_lock lock(MUTEX);
+    // clear queue
+    QUEUE = std::priority_queue< double, std::vector<double>, std::greater<double> >();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 double NextTime()
 {
     if( QUEUE.size() == 0 ) {
