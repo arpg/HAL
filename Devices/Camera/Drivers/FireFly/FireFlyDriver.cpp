@@ -90,8 +90,9 @@ void ShowCameraProperties(
 dc1394error_t SetCameraProperties(
         dc1394camera_t* camera,
         dc1394video_mode_t mode,
-        dc1394framerate_t framerate,
-        unsigned dma_channels
+        dc1394framerate_t framerate = DC1394_FRAMERATE_30,
+        dc1394speed_t   iso_speed = DC1394_ISO_SPEED_400,
+        unsigned dma_channels = 4
     )
 {
     dc1394error_t e;
@@ -99,7 +100,7 @@ dc1394error_t SetCameraProperties(
     e = dc1394_video_set_operation_mode(camera, DC1394_OPERATION_MODE_1394B);
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
 
-    e = dc1394_video_set_iso_speed(camera, DC1394_ISO_SPEED_800);
+    e = dc1394_video_set_iso_speed(camera, iso_speed );
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
 
     e = dc1394_video_set_mode(camera, mode);
@@ -124,8 +125,9 @@ dc1394error_t SetCameraProperties_Format7(
         dc1394camera_t* camera,
         dc1394video_mode_t mode,
         dc1394color_coding_t coding,
-        float framerate,
-        unsigned dma_channels,
+        float framerate = DC1394_FRAMERATE_30,
+        dc1394speed_t iso_speed = DC1394_ISO_SPEED_400,
+        unsigned dma_channels = 4,
         unsigned int img_width = 640,
         unsigned int img_height = 480,
         unsigned int left = 0,
@@ -138,7 +140,7 @@ dc1394error_t SetCameraProperties_Format7(
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
 
     // set ISO speed
-    e = dc1394_video_set_iso_speed(camera, DC1394_ISO_SPEED_800);
+    e = dc1394_video_set_iso_speed(camera, iso_speed);
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
 
     // set video mode
@@ -222,7 +224,8 @@ bool FireFlyDriver::Init()
         fflush( stdout );
         dc1394_camera_reset(m_pCam[ii]);
         // TODO: allow people to modify these parameters through property map!!!
-        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_1280x960_MONO8, DC1394_FRAMERATE_30, 4 ) == DC1394_SUCCESS ) {
+        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_60 ) == DC1394_SUCCESS ) {
+//        if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_RAW8 ) == DC1394_SUCCESS ) {
 //            ShowCameraProperties(m_pCam[ii]);
             printf("OK.\n");
         }
@@ -235,6 +238,7 @@ bool FireFlyDriver::Init()
     }
 
     //  capture one frame
+    // note: If you are getting no captures, check that the ISO speed is OK!
     dc1394video_frame_t* pFrame;
     e = dc1394_capture_dequeue( m_pCam[0], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam[0]),"Could not capture a frame");
@@ -245,6 +249,7 @@ bool FireFlyDriver::Init()
     // print capture image information. this is RAW
     m_nImageWidth = pFrame->size[0];
     m_nImageHeight = pFrame->size[1];
+
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam[0], pFrame );
@@ -275,10 +280,10 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
-        
+
         // Get capture time at ring buffer dequeue
         vImages[ii].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
-        
+
         // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
         SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );

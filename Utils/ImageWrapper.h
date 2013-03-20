@@ -59,10 +59,10 @@ namespace rpg {
         inline bool empty() { return Image.data == NULL; }
 
         /// Return image width
-        inline int width() { return Image.cols; }
+        inline int width() const { return Image.cols; }
 
         /// Return image height
-        inline int height() { return Image.rows; }
+        inline int height() const { return Image.rows; }
 
         /// Return image step
         inline int widthStep() { return static_cast<int>( Image.step ); }
