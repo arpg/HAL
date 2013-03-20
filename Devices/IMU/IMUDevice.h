@@ -33,6 +33,37 @@ class IMUDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
+        void DeinitDriver()
+        {
+            if(m_pDriver) {
+                delete m_pDriver;
+                m_pDriver = 0;
+            }
+        }
+
+        ///////////////////////////////////////////////////////////////
+        bool InitDriver( const std::string& sDriver )
+        {
+            DeinitDriver();
+
+            m_pDriver = CreateIMUDriver( sDriver );
+            if( m_pDriver ){
+                m_pDriver->SetPropertyMap( this );
+                const bool success = m_pDriver->Init();
+                if(!success) DeinitDriver();
+                return success;
+            }
+
+            return false;
+        }
+        
+        ///////////////////////////////////////////////////////////////
+        bool IsInitialized()
+        {
+            return m_pDriver;
+        }        
+        
+        ///////////////////////////////////////////////////////////////
         void RegisterIMUDataCallback(IMUDriverDataCallback callback)
         {
             if( m_pDriver ){
@@ -52,29 +83,7 @@ class IMUDevice : public PropertyMap
                 std::cerr << "ERROR: no driver initialized!\n";
             }
             return;
-        }
-
-        void DeinitDriver()
-        {
-            if(m_pDriver) {
-                delete m_pDriver;
-                m_pDriver = 0;
-            }
-        }
-
-        ///////////////////////////////////////////////////////////////
-        bool InitDriver( const std::string& sDriver )
-        {
-            DeinitDriver();
-
-            m_pDriver = CreateIMUDriver( sDriver );
-            if( m_pDriver ){
-                m_pDriver->SetPropertyMap( this );
-                return m_pDriver->Init();
-            }
-
-            return false;
-        }
+        }        
 
     private:
         // A IMU device will create and initialize a particular driver:

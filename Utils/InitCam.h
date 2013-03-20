@@ -104,12 +104,12 @@ namespace rpg {
             Cam.SetProperty("Channel-1",     sRightFileRegex );
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
-            Cam.SetProperty("NumChannels",   2 );
-            Cam.SetProperty("ForceGreyscale",bForceGreyscale );
+            Cam.SetProperty("NumChannels",   clArgs.follow(2,"-numchannels") );
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );            
 
             /// ADDITIONAL NON-CL ARGUMENTS
             // "BufferSize": Size of pre-read buffer [default '35']
-            // "TimeKeeper": Name of variable that holds timestamps [default 'LoggerTime'].
+            // "TimeKeeper": Name of variable that holds timestamps [default 'SystemTime'].
         }
 
         //----------------------------------------------- TOYOTAREADER
@@ -135,6 +135,7 @@ namespace rpg {
             Cam.SetProperty( "AlignDepth", bAlignDepth );
             Cam.SetProperty( "FPS", nFPS );
             Cam.SetProperty( "Resolution", sResolution );
+            Cam.SetProperty( "ForceGreyscale",bForceGreyscale );            
         }
 
         //----------------------------------------------- DVI2PCI

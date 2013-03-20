@@ -29,25 +29,37 @@ class CameraDevice : public PropertyMap
         ///////////////////////////////////////////////////////////////
         ~CameraDevice()
         {
+            DeinitDriver();
+        }
+        
+        ///////////////////////////////////////////////////////////////
+        void DeinitDriver()
+        {
             if(m_pDriver) {
                 delete m_pDriver;
-            }
+                m_pDriver = 0;
+            }            
         }
 
         ///////////////////////////////////////////////////////////////
         bool InitDriver( const std::string& sDriver )
         {
-            if(m_pDriver) {
-                delete m_pDriver;
-                m_pDriver = 0;
-            }
-
+            DeinitDriver();
+            
             m_pDriver = CreateCameraDriver( sDriver );
             if( m_pDriver ){
                 m_pDriver->SetPropertyMap( this );
-                return m_pDriver->Init();
+                const bool success = m_pDriver->Init();
+                if(!success) DeinitDriver();
+                return success; 
             }
             return false;
+        }
+        
+        ///////////////////////////////////////////////////////////////
+        bool IsInitialized()
+        {
+            return m_pDriver;
         }
 
         ///////////////////////////////////////////////////////////////

@@ -68,7 +68,12 @@ namespace rpg {
         inline int widthStep() { return static_cast<int>( Image.step ); }
 
         /// Image clone wrapper... missing cloning property map
-        class ImageWrapper clone() { class ImageWrapper ret = *this; this->Image = ret.Image.clone(); return *this; }
+        inline ImageWrapper clone() {
+            ImageWrapper ret; 
+            ret.Image = Image.clone();
+            ret.Map = Map;
+            return ret;
+        }
 
 
     private:

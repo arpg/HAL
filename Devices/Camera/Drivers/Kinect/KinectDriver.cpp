@@ -4,6 +4,9 @@
 
 #include "KinectDriver.h"
 
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/types_c.h>
+
 #include <boost/lexical_cast.hpp>
 
 #include <RPG/Utils/TicToc.h>
@@ -45,6 +48,8 @@ bool KinectDriver::Init()
     std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
     unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
     bool            bAlignDepth = m_pPropertyMap->GetProperty( "AlignDepth", false );
+    
+    m_bForceGreyscale = m_pPropertyMap->GetProperty( "ForceGreyscale", false);
 
     XnMapOutputMode MapMode;
     MapMode.nFPS = nFPS;
@@ -247,7 +252,7 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
         int n = 0;
         for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_8UC3 );
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, m_bForceGreyscale ? CV_8UC1 : CV_8UC3 );
         }
         for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
             vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
@@ -263,7 +268,13 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         m_ImageGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
         vImages[n].Map.SetProperty( "SystemTime", systemTime );
-        memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+        if(m_bForceGreyscale) {
+            static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
+            memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
+            cvtColor(temp,vImages[n++].Image, CV_RGB2GRAY);
+        }else{
+            memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+        }
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;

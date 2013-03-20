@@ -45,7 +45,7 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     // now fetch the next set of images from buffer
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
+        vImages[ii] = m_qImageBuffer.front()[ii].clone();
     }
 
     // remove image from buffer queue
@@ -79,11 +79,11 @@ bool FileReaderDriver::Init()
     m_nCurrentImageIndex = m_nStartFrame;
     m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
-    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "LoggerTime" );;
+    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "SystemTime" );;
 
     if(m_nNumChannels < 1) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
-        exit(1);
+        return false;
     }
 
     m_vFileList.resize( m_nNumChannels );
@@ -96,8 +96,8 @@ bool FileReaderDriver::Init()
         std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
 
-        // check if regular expression has a subdirectory
-        size_t pos = sChannelRegex.find("/");
+        // Split channel regex into directory and file components
+        size_t pos = sChannelRegex.rfind("/");
         std::string sSubDirectory;
 
         if(pos != string::npos)
@@ -112,7 +112,7 @@ bool FileReaderDriver::Init()
         if(mvl::FindFiles(sChannelPath + "/" + sSubDirectory, sChannelRegex, vFiles) == false){
         //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
             mvl::PrintError( "ERROR: No files found from regexp\n" );
-            exit(1);
+            return false;
         }
     }
 
@@ -121,7 +121,7 @@ bool FileReaderDriver::Init()
     for( unsigned int ii = 1; ii < m_nNumChannels; ii++ ){
         if( m_vFileList[ii].size() != m_nNumImages ){
             mvl::PrintError( "ERROR: uneven number of files\n" );
-            exit(1);
+            return false;
         }
     }
 
@@ -187,7 +187,7 @@ bool FileReaderDriver::_Read()
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        vImages[ii].read( sFileName, 1, m_iCvImageReadFlags );
+        vImages[ii].read( sFileName, true, m_iCvImageReadFlags );
     }
 
     m_nCurrentImageIndex++;

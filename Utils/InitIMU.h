@@ -125,7 +125,7 @@ namespace rpg {
             return false;
         }
 
-        std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
+        std::string     sDeviceDriver       = clArgs.follow( "", 1, "-imudev" );
 
         // init driver
         if( !IMU.InitDriver( sDeviceDriver ) ) {
