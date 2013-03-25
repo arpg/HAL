@@ -18,31 +18,31 @@ namespace rpg {
         /// file holding the extra info by replacing the extension by ".txt".
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
         inline void read( const std::string&  sImageFileName,         //< Input: File Name
-                                  bool                bReadExtraInfo = true,  //< Input: If ExtraInfo file should be read or not
-                                  int                 nFlags = -1             //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
-                                  );
+                          bool                bReadExtraInfo = true,  //< Input: If ExtraInfo file should be read or not
+                          int                 nFlags = -1             //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
+                          );
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// Read an image from sImageFileName and the property map from sExtraInfoName.
         /// nFlags can be used to automatically load in color or image (or keep as such - default).
         inline void read( const std::string&  sImageFileName,      //< Input: Image File Name
-                                  const std::string&  sExtraInfoFileName,  //< Input: Extra Info File Name
-                                  int                 nFlags = -1          //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
-                                  );
+                          const std::string&  sExtraInfoFileName,  //< Input: Extra Info File Name
+                          int                 nFlags = -1          //< Input: OpenCV flags (>0 color, 0 greyscale, <0 as is)
+                          );
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// If bWriteExtraInfo is set to true, this call will automatically deduce the sExtraInfoName from the sImageName by
         /// replacing the extension by ".txt" (if no extension is found, ".txt" will be appended).
         /// No checks are made for overwriting.
-        inline bool write( const std::string&       sImageName,             //< Input: Image File Name
-                           bool                     bWriteExtraInfo = true  //< Input: True if ExtraInfo should be written
+        inline bool write( const std::string&       sImageFileName,             //< Input: Image File Name
+                           bool                     bWriteExtraInfo = true      //< Input: True if ExtraInfo should be written
                            );
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// Write an image to sImageName and the property map to sExtraInfoName.
         /// No checks are made for overwriting.
-        inline bool write( const std::string&       sImageName,             //< Input: Image File Name
-                           const std::string&       sExtraInfoName          //< Input: Extra Info File Name
+        inline bool write( const std::string&       sImageFileName,             //< Input: Image File Name
+                           const std::string&       sExtraInfoFileName          //< Input: Extra Info File Name
                            );
 
 
@@ -69,7 +69,7 @@ namespace rpg {
 
         /// Image clone wrapper... missing cloning property map
         inline ImageWrapper clone() {
-            ImageWrapper ret; 
+            ImageWrapper ret;
             ret.Image = Image.clone();
             ret.Map = Map;
             return ret;
@@ -80,8 +80,15 @@ namespace rpg {
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// Open a "Portable Depthmap" image.
-        inline cv::Mat _OpenPDM(
+        inline cv::Mat _ReadPDM(
                 const std::string&                  FileName    //< Input: Image File Name
+                );
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// Save a "Portable Depthmap" image.
+        inline bool _WritePDM(
+                const std::string&                  FileName,   //< Input: Image File Name
+                const cv::Mat&                      Image       //< Input: Image
                 );
 
     public:
@@ -94,39 +101,56 @@ namespace rpg {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     inline bool ImageWrapper::write(
-            const std::string&          sImageName,
+            const std::string&          sImageFileName,
             bool                        bWriteExtraInfo
             )
     {
         if( bWriteExtraInfo ) {
-            std::string sExtraInfoName = sImageName;
+            std::string sExtraInfoName = sImageFileName;
             sExtraInfoName.erase( sExtraInfoName.rfind( '.' ) );
             sExtraInfoName += ".txt";
-            return write( sImageName, sExtraInfoName );
+            return write( sImageFileName, sExtraInfoName );
         }
-        else {
-            return cv::imwrite( sImageName.c_str(), Image );
-        }
-        return true;
+        return write( sImageFileName, "" );
     }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     inline bool ImageWrapper::write(
-            const std::string&          sImageName,
-            const std::string&          sExtraInfoName
+            const std::string&          sImageFileName,
+            const std::string&          sExtraInfoFileName
             )
     {
-        bool bSuccess = cv::imwrite( sImageName.c_str(), Image );
-        if( !bSuccess) { return bSuccess; }
-        cv::FileStorage oFile( sExtraInfoName.c_str(), cv::FileStorage::WRITE );
-        if( !oFile.isOpened() ) { return false; }
+        std::string sExtension = sImageFileName.substr( sImageFileName.rfind( "." ) + 1 );
 
-        std::map<std::string,std::string>& ppMap = Map.GetPropertyMap();
-        for( std::map<std::string,std::string>::iterator it = ppMap.begin(); it != ppMap.end(); it++ ) {
-            oFile << it->first << it->second;
+        bool bImgSuccess;
+
+        // check if it is our own "portable depth map" format
+        if( sExtension == "pdm" ) {
+             bImgSuccess = _WritePDM( sImageFileName, Image );
+        } else {
+            // ... otherwise let OpenCV open it
+            bImgSuccess = cv::imwrite( sImageFileName.c_str(), Image );
         }
-        return bSuccess;
+
+        if( !bImgSuccess ) {
+            return false;
+        }
+
+        // check if they want us to write the extra info to a file
+
+        if( sExtraInfoFileName != "" ) {
+            cv::FileStorage oFile( sExtraInfoFileName.c_str(), cv::FileStorage::WRITE );
+            if( !oFile.isOpened() ) {
+                return false;
+            }
+
+            std::map<std::string,std::string>& ppMap = Map.GetPropertyMap();
+            for( std::map<std::string,std::string>::iterator it = ppMap.begin(); it != ppMap.end(); it++ ) {
+                oFile << it->first << it->second;
+            }
+        }
+        return true;
     }
 
 
@@ -158,7 +182,7 @@ namespace rpg {
 
         // check if it is our own "portable depth map" format
         if( sExtension == "pdm" ) {
-            Image = _OpenPDM( sImageFileName );
+            Image = _ReadPDM( sImageFileName );
         } else {
             // ... otherwise let OpenCV open it
             Image = cv::imread( sImageFileName, nFlags );
@@ -183,7 +207,7 @@ namespace rpg {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    inline cv::Mat ImageWrapper::_OpenPDM(
+    inline cv::Mat ImageWrapper::_ReadPDM(
             const std::string&              FileName
             )
     {
@@ -218,6 +242,27 @@ namespace rpg {
         }
         return DepthImg;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    inline bool ImageWrapper::_WritePDM(
+            const std::string&              FileName,
+            const cv::Mat&                  Image
+            )
+    {
+        if( Image.type() != CV_32FC1 ) {
+            return false;
+        }
+
+        std::ofstream pFile( FileName.c_str(), std::ios::out | std::ios::binary );
+        pFile << "P7" << std::endl;
+        pFile << Image.cols << " " << Image.rows << std::endl;
+        const unsigned int Size = Image.elemSize1() * Image.rows * Image.cols;
+        pFile << 4294967295 << std::endl;
+        pFile.write( (const char*)Image.data, Size );
+        pFile.close();
+        return true;
+    }
+
 
 } /* RPG namespace */
 
