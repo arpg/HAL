@@ -35,13 +35,13 @@ Bumblebee2Driver::~Bumblebee2Driver()
     dc1394_video_set_transmission( m_pCam, DC1394_OFF );
     dc1394_capture_stop( m_pCam );
     dc1394_camera_free( m_pCam );
-	
-	if(m_pDeinterlaceBuffer) delete m_pDeinterlaceBuffer;
+
+    if(m_pDeinterlaceBuffer) delete m_pDeinterlaceBuffer;
     if(m_pDebayerBuffer) delete m_pDebayerBuffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc1394camera_t* pCam)
+void Bumblebee2Driver::_SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc1394camera_t* pCam)
 {
     // obtain meta data from image
     dc1394error_t e;
@@ -59,18 +59,18 @@ void SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc1394camera_t* pCam)
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
     if( e == DC1394_SUCCESS ) {
         img.Map.SetProperty("Gamma", feature );
-    }    
+    }
 }
 
 // TODO: refactor into MVL?
-void bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int srcWidth, unsigned int srcHeight )
+void Bumblebee2Driver::_bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int srcWidth, unsigned int srcHeight )
 {
     for( int ii = 0; ii < (int)srcHeight; ii+=2 ) {
         for( int jj = 0; jj < (int)srcWidth; jj+=2 ) {
             const unsigned int a = src[ (ii * srcWidth) + jj   ];
             const unsigned int b = src[ (ii * srcWidth) + jj + 1 ];
             const unsigned int c = src[((ii + 1) * srcWidth) + jj ];
-            const unsigned int d = src[((ii + 1) * srcWidth) + jj + 1 ];                
+            const unsigned int d = src[((ii + 1) * srcWidth) + jj + 1 ];
             dst[ ((ii/2)*(srcWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
         }
     }
@@ -79,21 +79,21 @@ void bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int s
 ///////////////////////////////////////////////////////////////////////////////
 bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 {
-	
+
     // allocate images if necessary
     if( vImages.size() != 2 ){
         vImages.resize( 2 );
     }
-    
+
     // should also check images are the right size, type etc
     if(vImages[0].Image.rows != (int)m_uImageHeight/2  || vImages[0].Image.cols != (int)m_uImageWidth/2 ) {
         // and setup images
         vImages[0].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, m_nCvOutputType);
         vImages[1].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, m_nCvOutputType);
-    }    
-    
-    SetImageMetaDataFromCamera(vImages[0], m_pCam);
-	
+    }
+
+    _SetImageMetaDataFromCamera(vImages[0], m_pCam);
+
     //  capture one frame
     dc1394video_frame_t* pFrame;
     dc1394error_t e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
@@ -101,18 +101,18 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         std::cerr << "Could not capture frame" << std::endl;
         return false;
     }
-    
+
     // Get capture time at ring buffer dequeue
     vImages[0].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
     vImages[1].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
-        
+
     // Deinterlace into buffer
-    dc1394_deinterlace_stereo( pFrame->image, m_pDeinterlaceBuffer, m_uImageWidth, m_uImageHeight*2 );    
-    
+    dc1394_deinterlace_stereo( pFrame->image, m_pDeinterlaceBuffer, m_uImageWidth, m_uImageHeight*2 );
+
     if( m_nCvOutputType == CV_8UC3 ) {
         // Debayer and downsample into RGB image
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer,vImages[0].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );        
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth,vImages[1].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );        
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer,vImages[0].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth,vImages[1].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );
 
         // TODO: Allow rectification
         assert(m_bOutputRectified == false);
@@ -121,10 +121,10 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         for(unsigned int cam=0; cam < 2; ++cam) {
             unsigned char* imgBayer = m_pDeinterlaceBuffer + cam*m_uImageWidth*m_uImageHeight;
             unsigned char* imgGrey  = m_bOutputRectified ? m_pDebayerBuffer : vImages[cam].Image.data;
-            
+
             // Debayer into Greyscale, half-sampled.
-            bayer8_to_grey8_half(imgBayer, imgGrey, m_uImageWidth, m_uImageHeight);
-            
+            _bayer8_to_grey8_half(imgBayer, imgGrey, m_uImageWidth, m_uImageHeight);
+
             if(m_bOutputRectified) {
                 // MVL image wrapper around OpenCV Rectified / Unrectified data
                 mvl_image_t* img = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
@@ -135,8 +135,8 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
                     mvl_rectify( m_pRightCMod, img, img_rect );
                 }
             }
-            
-        }        
+
+        }
     }
 
     // release the frame
@@ -154,18 +154,18 @@ bool Bumblebee2Driver::Init()
 
     // get camera model from files
     double pose[16];
-    
+
     m_bOutputRectified = m_pPropertyMap->GetProperty("Rectify", true);
-    m_nCvOutputType = m_pPropertyMap->GetProperty("ForceGreyscale", true) ? CV_8UC1 : CV_8UC3;    
-            
+    m_nCvOutputType = m_pPropertyMap->GetProperty("ForceGreyscale", true) ? CV_8UC1 : CV_8UC3;
+
     if(m_bOutputRectified) {
         std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
         std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","lcmod.xml");
-        std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","rcmod.xml");        
-        
+        std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","rcmod.xml");
+
         m_pLeftCMod  = mvl_read_camera(sLeftCModel.c_str(), pose );
         m_pRightCMod = mvl_read_camera(sRightCModel.c_str(), pose );
-     
+
         if( m_pLeftCMod == NULL || m_pRightCMod == NULL ) {
             std::cerr << "Error reading camera model! Not rectifying.\n" << std::endl;
             m_bOutputRectified = false;
@@ -253,11 +253,11 @@ bool Bumblebee2Driver::Init()
     // print capture image information. this is RAW, interlaced and in Format7
     m_uImageWidth = pFrame->size[0];
     m_uImageHeight = pFrame->size[1];
-    
+
     // alloc memory for deinterlacing buffer
     m_pDeinterlaceBuffer = new unsigned char[pFrame->total_bytes];
     m_pDebayerBuffer = new unsigned char[m_uImageWidth*m_uImageHeight / 4];
-	
+
     /*
     printf("\nIMAGE INFORMATION:\n");
     printf("------------------------\n");
@@ -270,6 +270,6 @@ bool Bumblebee2Driver::Init()
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
-    
+
     return true;
 }
