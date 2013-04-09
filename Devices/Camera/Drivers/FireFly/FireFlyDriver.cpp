@@ -181,7 +181,7 @@ dc1394error_t SetCameraProperties_Format7(
 bool FireFlyDriver::Init()
 {
     assert(m_pPropertyMap);
-    m_pPropertyMap->PrintPropertyMap();
+//    m_pPropertyMap->PrintPropertyMap();
 
 //    std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
 //    std::string sCamModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel","");
@@ -224,7 +224,7 @@ bool FireFlyDriver::Init()
         fflush( stdout );
         dc1394_camera_reset(m_pCam[ii]);
         // TODO: allow people to modify these parameters through property map!!!
-        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_60 ) == DC1394_SUCCESS ) {
+        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
 //        if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_RAW8 ) == DC1394_SUCCESS ) {
 //            ShowCameraProperties(m_pCam[ii]);
             printf("OK.\n");
