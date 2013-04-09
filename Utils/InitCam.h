@@ -105,9 +105,10 @@ namespace rpg {
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   clArgs.follow(2,"-numchannels") );
-            Cam.SetProperty("ForceGreyscale",bForceGreyscale );            
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );
 
             /// ADDITIONAL NON-CL ARGUMENTS
+            // "BufferSize": Size of pre-read buffer [default '35']
             // "TimeKeeper": Name of variable that holds timestamps [default 'SystemTime'].
         }
 
@@ -118,8 +119,10 @@ namespace rpg {
             Cam.SetProperty("DataSourceDir", sSourceDir );
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
             Cam.SetProperty("Channel-1",     sRightFileRegex );
+
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
+
             Cam.SetProperty("NumChannels",   2 );
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );
         }
@@ -137,7 +140,7 @@ namespace rpg {
             Cam.SetProperty( "AlignDepth", bAlignDepth );
             Cam.SetProperty( "FPS", nFPS );
             Cam.SetProperty( "Resolution", sResolution );
-            Cam.SetProperty( "ForceGreyscale",bForceGreyscale );            
+            Cam.SetProperty( "ForceGreyscale",bForceGreyscale );
         }
 
         //----------------------------------------------- DVI2PCI
@@ -159,7 +162,7 @@ namespace rpg {
             }
             Cam.SetProperty("NumNodes", numNodes);
         }
-        
+
         //----------------------------------------------- OpenCV Webcam
         if( sDeviceDriver == "Webcam" ) {
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );

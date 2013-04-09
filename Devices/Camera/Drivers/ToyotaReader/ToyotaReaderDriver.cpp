@@ -15,13 +15,13 @@ ToyotaReaderDriver::ToyotaReaderDriver(){}
 ToyotaReaderDriver::~ToyotaReaderDriver() {
     m_CaptureThread->interrupt();
     m_CaptureThread->join();
-    
+
     // Close files
     for( unsigned int ii = 0; ii < m_uNumChannels; ++ii ) {
         if( m_vChannels[ii]->is_open())
                 m_vChannels[ii]->close();
     }
-    
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,13 +66,15 @@ bool ToyotaReaderDriver::Init() {
 
     assert(m_pPropertyMap);
 
-    m_uNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-    m_uBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
-    m_uStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 ); // Not used
-    m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
-    m_uCurrentImageIndex = m_uStartFrame;
-    m_nCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
+
+    m_uNumChannels          = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
+    m_uBufferSize           = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
+    m_uStartFrame           = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 ); // Not used
+    m_bLoop                 = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
+    m_uCurrentImageIndex    = m_uStartFrame;
+    m_nCvImageReadFlags     = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
+    m_bOutputRectified = m_pPropertyMap->GetProperty("Rectify", true);
 
     if( m_uNumChannels < 1 ) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
@@ -86,13 +88,14 @@ bool ToyotaReaderDriver::Init() {
     string sFilename;
     string sField;
     ifstream fin;
-    
+
+
     // Open channel data ( .cam files for left and right images)
     for( unsigned int ii = 0; ii < m_uNumChannels; ii++ ) {
         //std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
         std::string sChannelPropertyName  = (boost::format("Channel-%d")%ii).str();
         std::string sChannelFileName = m_pPropertyMap->GetProperty( sChannelPropertyName, "");
-        
+
         // Read channel info (.info.yml  files)
         sFilename = sChannelPath + "/" + sChannelFileName + ".info.yml";
         fin.open(sFilename.c_str());
@@ -101,17 +104,30 @@ bool ToyotaReaderDriver::Init() {
             exit(1);
         }
         fin >> sField >> sField >> sField;
-        fin >> sField >> cam.w >> sField >> cam.h >> sField >> cam.sformat >> sField >> cam.fps >> sField >> cam.name; 
+        fin >> sField >> cam.w >> sField >> cam.h >> sField >> cam.sformat >> sField >> cam.fps >> sField >> cam.name;
         fin.close();
         cam.format = _GetImageFormat(cam.sformat);
+
         // Compute frame size in bytes (for reading)
         if(cam.format == RGB || cam.format == BGR )
             cam.fsize = cam.w * cam.h * 3;
         else // (BAYER)
             cam.fsize = cam.w * cam.h;
-        
+
+        // get camera intrinsics
+        if( m_bOutputRectified ) {
+            std::string sCModPropertyName  = (boost::format("CamModel-%d")%ii).str();
+            std::string sCModel = sChannelPath + "/" + m_pPropertyMap->GetProperty( sCModPropertyName, "" );
+
+            cam.pCMod = new mvl::CameraModel( sCModel );
+
+            if( cam.pCMod->GetModel() == NULL ) {
+                std::cerr << "Error reading camera model! Not rectifying.\n" << std::endl;
+                m_bOutputRectified = false;
+            }
+        }
         m_vCamerasInfo.push_back(cam);
-        
+
         // open channel for reading
         sFilename = sChannelPath + "/" + sChannelFileName + ".cam";
         ifstream* channel = new ifstream(sFilename.c_str(), ios::in | ios::binary);
@@ -121,9 +137,14 @@ bool ToyotaReaderDriver::Init() {
         }
         m_vChannels.push_back(channel);
     }
-    
-    _PrintCamInfo();
-    
+
+    if( m_uNumChannels == 2 && m_bOutputRectified ) {
+        m_Rectify.Init( *(m_vCamerasInfo[0].pCMod), *(m_vCamerasInfo[1].pCMod) );
+    }
+
+
+//    _PrintCamInfo();
+
     // fill buffer
     for (unsigned int ii=0; ii < m_uBufferSize; ii++) {	_Read(); }
 
@@ -136,7 +157,7 @@ bool ToyotaReaderDriver::Init() {
 ///////////////////////////////////////////////////////////////////////////////
 // Producer
 void ToyotaReaderDriver::_ThreadCaptureFunc( ToyotaReaderDriver* pFR ) {
-    
+
     while(1) {
         try {
             boost::this_thread::interruption_point();
@@ -149,7 +170,21 @@ void ToyotaReaderDriver::_ThreadCaptureFunc( ToyotaReaderDriver* pFR ) {
             break;
         }
     }
-    
+
+}
+
+// TODO: refactor into MVL?
+void ToyotaReaderDriver::_bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int srcWidth, unsigned int srcHeight )
+{
+    for( int ii = 0; ii < (int)srcHeight; ii+=2 ) {
+        for( int jj = 0; jj < (int)srcWidth; jj+=2 ) {
+            const unsigned int a = src[ (ii * srcWidth) + jj   ];
+            const unsigned int b = src[ (ii * srcWidth) + jj + 1 ];
+            const unsigned int c = src[((ii + 1) * srcWidth) + jj ];
+            const unsigned int d = src[((ii + 1) * srcWidth) + jj + 1 ];
+            dst[ ((ii/2)*(srcWidth/2))+(jj/2) ] = ( a + b + c + d) / 4;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -166,7 +201,7 @@ bool ToyotaReaderDriver::_Read() {
     //*************************************************************************
     // produce to buffer
     //*************************************************************************
-   
+
     // now fetch the next set of images
     std::vector<rpg::ImageWrapper> vImages;
     vImages.resize(m_uNumChannels);
@@ -180,26 +215,50 @@ bool ToyotaReaderDriver::_Read() {
                 m_uCurrentImageIndex = 0;
             } else {
                 return false;
-            }      
-        } 
+            }
+        }
         // allocate memory for the frame
-        int format =m_vCamerasInfo[ii].format ; 
+        int format =m_vCamerasInfo[ii].format ;
         int type = ( format == RGB || format == BGR)?CV_8UC3:CV_8UC1;
-        vImages[ii].Image.create(m_vCamerasInfo[ii].h,m_vCamerasInfo[ii].w, type);
+
         // read from file
         if( m_vChannels[ii]->is_open() ) {
-            m_vChannels[ii]->read((char*)vImages[ii].Image.data,m_vCamerasInfo[ii].fsize);     
+            if( format > 1 ) { // BAYER
+                vImages[ii].Image.create(m_vCamerasInfo[ii].h/2,m_vCamerasInfo[ii].w/2, type);
+                cv::Mat imgBayer(m_vCamerasInfo[ii].h,m_vCamerasInfo[ii].w, type);
+                m_vChannels[ii]->read((char*)imgBayer.data,m_vCamerasInfo[ii].fsize);
+                if( type == CV_8UC3 ) {
+                    // Debayer and downsample into RGB image
+//                    dc1394_bayer_decoding_8bit(imgBayer.data,vImages[ii].Image.data, m_vCamerasInfo[ii].w, m_vCamerasInfo[ii].h, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+
+                } else {
+                    // Debayer into Greyscale, half-sampled.
+                    _bayer8_to_grey8_half(imgBayer.data, vImages[ii].Image.data, m_vCamerasInfo[ii].w, m_vCamerasInfo[ii].h);
+                }
+            } else {
+                vImages[ii].Image.create(m_vCamerasInfo[ii].h,m_vCamerasInfo[ii].w, type);
+                m_vChannels[ii]->read((char*)vImages[ii].Image.data,m_vCamerasInfo[ii].fsize);
+            }
         } else {
             mvl::PrintError( "ERROR file closed \n");
         }
-        
+
     }
-   
+
+    if( m_uNumChannels == 2 && m_bOutputRectified ) {
+        cv::Mat rectImage0( vImages[0].Image.rows, vImages[0].Image.cols, CV_8UC1 );
+        cv::Mat rectImage1( vImages[1].Image.rows, vImages[1].Image.cols, CV_8UC1 );
+        m_Rectify.Rectify( vImages[0].Image, vImages[1].Image, rectImage0, rectImage1 );
+        vImages[0].Image = rectImage0;
+        vImages[1].Image = rectImage1;
+    }
+
+
     m_uCurrentImageIndex++;
     //cout << "frame : " << m_uCurrentImageIndex << endl;
     // add images at the back of the queue
     m_qImageBuffer.push(vImages);
-    
+
     //*************************************************************************
     // send notification that the buffer is not empty
     m_cBufferEmpty.notify_one();
@@ -224,7 +283,7 @@ int ToyotaReaderDriver::_GetImageFormat(string& format) {
 void ToyotaReaderDriver::_PrintCamInfo( ) {
      for( unsigned int ii = 0; ii < m_uNumChannels; ++ii ) {
         std::cout << "========================" << std::endl;
-        std::cout << " Channel [ " << ii << " ]" << std::endl; 
+        std::cout << " Channel [ " << ii << " ]" << std::endl;
         std::cout << "========================" << std::endl;
         std::cout <<  std::setw(8) << std::left << "w,h:";
         std:: cout << std::setw(4) << std::left << m_vCamerasInfo[ii].w << " , " << m_vCamerasInfo[ii].h << std::endl;
@@ -239,6 +298,6 @@ void ToyotaReaderDriver::_PrintCamInfo( ) {
             case BAYER_RG:  std::cout <<  std::setw(12) <<  std::left << "BAYER_RG" << std::endl; break;
             case BAYER_GR:  std::cout <<  std::setw(12) <<  std::left << "BAYER_GR" << std::endl; break;
         }
-        std::cout <<  std::setw(8) << "name:" <<  std::setw(12) <<  std::left << m_vCamerasInfo[ii].name<< std::endl;  
+        std::cout <<  std::setw(8) << "name:" <<  std::setw(12) <<  std::left << m_vCamerasInfo[ii].name<< std::endl;
      }
 }
