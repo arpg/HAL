@@ -118,7 +118,10 @@ namespace rpg {
             Cam.SetProperty("DataSourceDir", sSourceDir );
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
             Cam.SetProperty("Channel-1",     sRightFileRegex );
+            Cam.SetProperty("CamModel-L",    sLeftCameraModel );
+            Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   2 );
+            Cam.SetProperty("ForceGreyscale",bForceGreyscale );
         }
 
         //----------------------------------------------- KINECT
@@ -188,7 +191,7 @@ namespace rpg {
             return false;
         }
 
-        std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
+        std::string sDeviceDriver = clArgs.follow( "", 1, "-idev" );
 
         // init driver
         if( !Cam.InitDriver( sDeviceDriver ) ) {

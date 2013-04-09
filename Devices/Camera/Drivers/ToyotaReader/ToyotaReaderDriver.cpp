@@ -66,12 +66,12 @@ bool ToyotaReaderDriver::Init() {
 
     assert(m_pPropertyMap);
 
-    m_uNumChannels          = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-    m_uBufferSize               = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
-    m_uStartFrame              = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 ); // Not used
-    m_bLoop                       = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
-    m_uCurrentImageIndex  = m_uStartFrame;
-    m_nCvImageReadFlags   = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
+    m_uNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
+    m_uBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
+    m_uStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 ); // Not used
+    m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
+    m_uCurrentImageIndex = m_uStartFrame;
+    m_nCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGrayscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
 
     if( m_uNumChannels < 1 ) {
@@ -81,7 +81,6 @@ bool ToyotaReaderDriver::Init() {
 
     // Get data path
     std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
-
 
     CameraInfo cam;
     string sFilename;

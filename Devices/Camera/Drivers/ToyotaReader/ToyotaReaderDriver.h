@@ -17,11 +17,11 @@ class ToyotaReaderDriver : public CameraDriver
     };
  
     struct CameraInfo{
-        int w;                // width in cells
-	int h;                 // height in cells 
-	int fps;              // estimated fps of hardware 
-	int format;         // BGR / Bayer
-        int fsize;            // frame size in bytes 
+        int w;              // width in cells
+	    int h;              // height in cells 
+	    int fps;            // estimated fps of hardware 
+	    int format;         // BGR / Bayer
+        int fsize;          // frame size in bytes 
         string sformat;
         string name;
     };
