@@ -59,6 +59,7 @@ namespace rpg {
         std::string     sRightCameraModel   = clArgs.follow( "rcmod.xml", "-rcmod" );
         std::string     sLeftFileRegex      = clArgs.follow( "left.*pgm", "-lfile" );
         std::string     sRightFileRegex     = clArgs.follow( "right.*pgm", "-rfile" );
+        std::string     sDepthFileRegex     = clArgs.follow( "depth.*pdm", "-dfile" );
         std::string     sSourceDir          = clArgs.follow( ".", "-sdir"  );
         unsigned int    nFPS                = clArgs.follow( 30, "-fps"  );
         std::string     sResolution         = clArgs.follow( "VGA", "-res"  ); // follow format of FHD, HD, XGA, SVGA, VGA, QVGA, QQVGA, etc.
@@ -102,6 +103,7 @@ namespace rpg {
             }
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
             Cam.SetProperty("Channel-1",     sRightFileRegex );
+            Cam.SetProperty("Channel-2",     sDepthFileRegex );
             Cam.SetProperty("CamModel-L",    sLeftCameraModel );
             Cam.SetProperty("CamModel-R",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   clArgs.follow(2,"-numchannels") );

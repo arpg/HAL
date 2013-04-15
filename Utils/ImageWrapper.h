@@ -105,13 +105,16 @@ namespace rpg {
             bool                        bWriteExtraInfo
             )
     {
+        std::string sEmptyStr;
+
         if( bWriteExtraInfo ) {
             std::string sExtraInfoName = sImageFileName;
             sExtraInfoName.erase( sExtraInfoName.rfind( '.' ) );
+
             sExtraInfoName += ".txt";
             return write( sImageFileName, sExtraInfoName );
         }
-        return write( sImageFileName, "" );
+        return write( sImageFileName, sEmptyStr );
     }
 
 
@@ -139,7 +142,7 @@ namespace rpg {
 
         // check if they want us to write the extra info to a file
 
-        if( sExtraInfoFileName != "" ) {
+        if( sExtraInfoFileName.empty() == false ) {
             cv::FileStorage oFile( sExtraInfoFileName.c_str(), cv::FileStorage::WRITE );
             if( !oFile.isOpened() ) {
                 return false;

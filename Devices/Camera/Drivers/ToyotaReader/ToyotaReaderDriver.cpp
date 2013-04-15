@@ -118,13 +118,22 @@ bool ToyotaReaderDriver::Init() {
         if( m_bOutputRectified ) {
             std::string sCModPropertyName  = (boost::format("CamModel-%d")%ii).str();
             std::string sCModel = sChannelPath + "/" + m_pPropertyMap->GetProperty( sCModPropertyName, "" );
+            std::cout << "Loading: " << sCModel << std::endl;
 
+            /* */
             cam.pCMod = new mvl::CameraModel( sCModel );
 
             if( cam.pCMod->GetModel() == NULL ) {
                 std::cerr << "Error reading camera model! Not rectifying.\n" << std::endl;
                 m_bOutputRectified = false;
             }
+            /* */
+
+            /*
+            cv::FileStorage fs( sCModel,  cv::FileStorage::READ );
+            fs["map_row"] >> cam.RectMapRow;
+            fs["map_col"] >> cam.RectMapCol;
+            /* */
         }
         m_vCamerasInfo.push_back(cam);
 
@@ -135,6 +144,8 @@ bool ToyotaReaderDriver::Init() {
              mvl::PrintError( "ERROR opening: %s\n", sFilename.c_str());
             exit(1);
         }
+        const unsigned int nStartPtr = m_uStartFrame * cam.fsize;
+        channel->seekg( nStartPtr, ios::beg);
         m_vChannels.push_back(channel);
     }
 
@@ -142,8 +153,7 @@ bool ToyotaReaderDriver::Init() {
         m_Rectify.Init( *(m_vCamerasInfo[0].pCMod), *(m_vCamerasInfo[1].pCMod) );
     }
 
-
-//    _PrintCamInfo();
+    _PrintCamInfo();
 
     // fill buffer
     for (unsigned int ii=0; ii < m_uBufferSize; ii++) {	_Read(); }
@@ -233,6 +243,10 @@ bool ToyotaReaderDriver::_Read() {
 
                 } else {
                     // Debayer into Greyscale, half-sampled.
+//                    cv::Mat rectImage;
+//                    cv::remap( imgBayer, rectImage, m_vCamerasInfo[ii].RectMapCol, m_vCamerasInfo[ii].RectMapRow, CV_INTER_LINEAR );
+//                    cv::remap( imgBayer, vImages[ii].Image, m_vCamerasInfo[ii].RectMapCol, m_vCamerasInfo[ii].RectMapRow, CV_INTER_LINEAR );
+//                    _bayer8_to_grey8_half(rectImage.data, vImages[ii].Image.data, m_vCamerasInfo[ii].w, m_vCamerasInfo[ii].h);
                     _bayer8_to_grey8_half(imgBayer.data, vImages[ii].Image.data, m_vCamerasInfo[ii].w, m_vCamerasInfo[ii].h);
                 }
             } else {
@@ -248,6 +262,8 @@ bool ToyotaReaderDriver::_Read() {
     if( m_uNumChannels == 2 && m_bOutputRectified ) {
         cv::Mat rectImage0( vImages[0].Image.rows, vImages[0].Image.cols, CV_8UC1 );
         cv::Mat rectImage1( vImages[1].Image.rows, vImages[1].Image.cols, CV_8UC1 );
+//        cv::remap( vImages[0].Image, rectImage0, m_vCamerasInfo[0].RectMapCol, m_vCamerasInfo[0].RectMapRow, CV_INTER_LINEAR );
+//        cv::remap( vImages[1].Image, rectImage1, m_vCamerasInfo[1].RectMapCol, m_vCamerasInfo[1].RectMapRow, CV_INTER_LINEAR );
         m_Rectify.Rectify( vImages[0].Image, vImages[1].Image, rectImage0, rectImage1 );
         vImages[0].Image = rectImage0;
         vImages[1].Image = rectImage1;

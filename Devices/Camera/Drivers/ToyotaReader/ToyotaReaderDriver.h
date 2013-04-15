@@ -28,6 +28,8 @@ class ToyotaReaderDriver : public CameraDriver
         string              sformat;
         string              name;
         mvl::CameraModel*   pCMod;
+        cv::Mat             RectMapRow;
+        cv::Mat             RectMapCol;
     };
 
     public:
