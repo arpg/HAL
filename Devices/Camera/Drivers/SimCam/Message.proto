@@ -1,0 +1,17 @@
+package msg;
+
+message Image
+{
+    required bytes      image           = 1;
+    required int32      image_type      = 2;
+    required int32      image_height    = 3;
+    required int32      image_width     = 4;
+    required int32      image_size      = 5;
+    repeated string     property_name   = 6;
+    repeated string     property_val    = 7;
+}
+
+message NodeCam
+{
+    repeated Image      image       = 1;
+}
