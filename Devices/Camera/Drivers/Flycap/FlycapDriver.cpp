@@ -46,11 +46,11 @@ bool FlycapDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     Error error;
 
     // allocate images if necessary
-    if( vImages.size() != 2 ){
-        vImages.resize( 2 );
+    if( vImages.size() != 1 ){
+        vImages.resize( 1 );
         // and setup images
         vImages[0].Image = cv::Mat(m_nImgHeight, m_nImgWidth, CV_8UC1);
-        vImages[1].Image = cv::Mat(m_nImgHeight, m_nImgWidth, CV_8UC1);
+//        vImages[1].Image = cv::Mat(m_nImgHeight, m_nImgWidth, CV_8UC1);
     }
 
     Image Image1, Image2;
@@ -63,12 +63,12 @@ bool FlycapDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         memcpy( vImages[0].Image.data, Image1.GetData(), m_nImgWidth * m_nImgHeight );
     }
 
-    error = m_Cam2.RetrieveBuffer( &Image2 );
+//    error = m_Cam2.RetrieveBuffer( &Image2 );
 
     if( error != PGRERROR_OK ) {
         cerr << "Error grabbing camera 2 image." << endl;
     } else {
-        memcpy( vImages[1].Image.data, Image2.GetData(), m_nImgWidth * m_nImgHeight );
+//        memcpy( vImages[1].Image.data, Image2.GetData(), m_nImgWidth * m_nImgHeight );
     }
 
     return true;
@@ -96,7 +96,9 @@ bool FlycapDriver::Init()
 
     // initialize
     m_nImgWidth  = 640;
-    m_nImgHeight = 510;
+    m_nImgHeight = 480;
+    m_nImgWidth  = 1280;
+    m_nImgHeight = 960;
 
     Error error;
 
@@ -106,8 +108,8 @@ bool FlycapDriver::Init()
     error = BusMgr.GetNumOfCameras( &nNumCams );
     CheckError(error);
 
-    if( nNumCams != 2 ) {
-       printf( "Two cameras are required to initialize this driver.\n" );
+    if( nNumCams == 0 ) {
+       printf( "No camera found!\n" );
        return false;
     }
 
@@ -168,6 +170,9 @@ bool FlycapDriver::Init()
     error = m_Cam1.Connect(&GUID);
     CheckError(error);
 
+    m_Cam1.SetVideoModeAndFrameRate(VIDEOMODE_1280x960Y8, FRAMERATE_60);
+
+    /*
     // set video mode and framerate
     error = m_Cam1.SetFormat7Configuration( &F7Config, PacketSize );
     CheckError(error);
@@ -209,7 +214,9 @@ bool FlycapDriver::Init()
 
     error = m_Cam1.SetStrobe( &Strobe );
     CheckError(error);
+    */
 
+    /*
     // look for camera 2
     error = BusMgr.GetCameraFromIndex(1, &GUID);
     CheckError(error);
@@ -244,13 +251,14 @@ bool FlycapDriver::Init()
 
     error = m_Cam2.SetTriggerMode( &Trigger );
     CheckError(error);
+    */
 
     // initiate transmission
     error = m_Cam1.StartCapture();
     CheckError(error);
 
-    error = m_Cam2.StartCapture();
-    CheckError(error);
+//    error = m_Cam2.StartCapture();
+//    CheckError(error);
 
     return true;
 }

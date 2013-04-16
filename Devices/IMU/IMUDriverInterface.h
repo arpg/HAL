@@ -20,9 +20,9 @@ enum IMUDataType
 {
     IMU_AHRS_TIMESTAMP_PPS = 1,
     IMU_AHRS_QUATERNION    = 2,
-    IMU_AHRS_EULER         = 4,
-    IMU_AHRS_ACCEL         = 8,
-    IMU_AHRS_GYRO          = 16,
+    IMU_AHRS_EULER         = 4,  // rad
+    IMU_AHRS_ACCEL         = 8,  // g
+    IMU_AHRS_GYRO          = 16, // rad s^-1
     IMU_AHRS_MAG           = 32
 };
 

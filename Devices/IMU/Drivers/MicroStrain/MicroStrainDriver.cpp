@@ -47,21 +47,24 @@ MicroStrainDriver::~MicroStrainDriver()
 {
     mShouldRun = false;
     mDeviceThread.join();
-
-    if(m_bGetAHRS) {
-        // Take out of continuous ahrs mode
-        u8 ahrs_enable = 0;
-        while(mip_3dm_cmd_continuous_data_stream(
-            &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
-            MIP_3DM_AHRS_DATASTREAM, &ahrs_enable) != MIP_INTERFACE_OK) { }
-    }
-
-    if(m_bGetGPS) {
-        // Take out of continuous GPS mode
-        u8 gps_enable = 0;
-        while(mip_3dm_cmd_continuous_data_stream(
-             &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
-              MIP_3DM_GPS_DATASTREAM, &gps_enable) != MIP_INTERFACE_OK) { }
+    
+    if(mDeviceInterface.port_handle)
+    {
+        if(m_bGetAHRS) {
+            // Take out of continuous ahrs mode
+            u8 ahrs_enable = 0;
+            while(mip_3dm_cmd_continuous_data_stream(
+                &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
+                MIP_3DM_AHRS_DATASTREAM, &ahrs_enable) != MIP_INTERFACE_OK) { }
+        }
+    
+        if(m_bGetGPS) {
+            // Take out of continuous GPS mode
+            u8 gps_enable = 0;
+            while(mip_3dm_cmd_continuous_data_stream(
+                 &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
+                  MIP_3DM_GPS_DATASTREAM, &gps_enable) != MIP_INTERFACE_OK) { }
+        }
     }
 }
 
@@ -110,9 +113,9 @@ void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_siz
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
                         imuData.data_present |= IMU_AHRS_ACCEL;
-                        imuData.accel << curr_ahrs_accel.scaled_accel[0] * GRAVITY_MAGNITUDE,
-                                         curr_ahrs_accel.scaled_accel[1] * GRAVITY_MAGNITUDE,
-                                         curr_ahrs_accel.scaled_accel[2] * GRAVITY_MAGNITUDE;
+                        imuData.accel << curr_ahrs_accel.scaled_accel[0],
+                                         curr_ahrs_accel.scaled_accel[1],
+                                         curr_ahrs_accel.scaled_accel[2];
                     }break;
 
                     // Scaled Gyro
@@ -245,7 +248,7 @@ bool MicroStrainDriver::Init()
                           DEFAULT_PACKET_TIMEOUT_MS) != MIP_INTERFACE_OK) {
         return false;
     }
-
+    
     // Listen to commands only (no data output)
     while(mip_base_cmd_idle(&mDeviceInterface) != MIP_INTERFACE_OK) { }
 

@@ -13,5 +13,15 @@ std::map<std::string,IMUDriver*(*)()> g_mIMUDriverTable;
 IMUDriverRegisteryEntry<MicroStrainDriver> _MicroStrainReg( "MicroStrain" );
 #endif
 
+#ifdef USE_IMULOG
+#include "RPG/Devices/IMU/Drivers/IMULog/IMULogDriver.h"
+IMUDriverRegisteryEntry<IMULogDriver> _IMULogReg( "IMULog" );
+#endif
+
+#ifdef USE_PHIDGETS
+#include "RPG/Devices/IMU/Drivers/Phidgets/PhidgetsDriver.h"
+IMUDriverRegisteryEntry<PhidgetsDriver> _PhidgetsReg( "Phidgets" );
+#endif
+
 #endif
 

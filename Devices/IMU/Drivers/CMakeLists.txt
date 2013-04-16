@@ -5,12 +5,20 @@ if( Build_MicroStrain )
     add_definitions( -DUSE_MICROSTRAIN )
 endif()
 
-# Build Bumblebee 2 driver (you also need to make sure to edit DriverList.h)
- set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Phidgets ${CMAKE_MODULE_PATH})
+# Build IMULog driver
+set( Build_IMULog true CACHE BOOL force )
+if( Build_IMULog )
+    add_subdirectory( IMULog )
+    add_definitions( -DUSE_IMULOG )
+endif()
+
+# Build Phidgets Driver
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Phidgets ${CMAKE_MODULE_PATH})
 find_package( PHIDGETS QUIET )
 if( PHIDGETS_FOUND )
     set( Build_Phidgets true CACHE BOOL force )
     if( Build_Phidgets )
+        include_directories( ${PHIDGETS_INCLUDE_DIR} )
         add_subdirectory( Phidgets )
         add_definitions( -DUSE_PHIDGETS )
     endif()

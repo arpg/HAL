@@ -20,6 +20,7 @@ class KinectDriver : public CameraDriver
     private:
         unsigned int            m_nImgHeight;
         unsigned int            m_nImgWidth;
+        bool                    m_bForceGreyscale;
         xn::Context             m_Context;
         std::vector<xn::DepthGenerator> m_DepthGenerators;
         std::vector<xn::ImageGenerator> m_ImageGenerators;

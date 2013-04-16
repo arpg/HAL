@@ -4,7 +4,13 @@
 
 #include "KinectDriver.h"
 
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/types_c.h>
+
 #include <boost/lexical_cast.hpp>
+
+#include <RPG/Utils/TicToc.h>
+
 
 #define MAX_DEPTH 10000
 
@@ -42,6 +48,8 @@ bool KinectDriver::Init()
     std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
     unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
     bool            bAlignDepth = m_pPropertyMap->GetProperty( "AlignDepth", false );
+    
+    m_bForceGreyscale = m_pPropertyMap->GetProperty( "ForceGreyscale", false);
 
     XnMapOutputMode MapMode;
     MapMode.nFPS = nFPS;
@@ -80,11 +88,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = ImageNodeList.Begin(); it != ImageNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::ImageGenerator imageGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, imageGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(imageGen);
@@ -106,11 +114,11 @@ bool KinectDriver::Init()
         unsigned int count = 0;
         for(NodeInfoList::Iterator it = DepthNodeList.Begin(); it != DepthNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::DepthGenerator depthGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, depthGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(depthGen);
@@ -164,11 +172,11 @@ bool KinectDriver::Init()
 
         for(NodeInfoList::Iterator it = IRNodeList.Begin(); it != IRNodeList.End(); ++it) {
             // create depth generator
-            const NodeInfo& node = *it;
+            NodeInfo node = *it;
 
             xn::IRGenerator irGen;
 
-            rc = m_Context.CreateProductionTree(const_cast<xn::NodeInfo&>(node));
+            rc = m_Context.CreateProductionTree(node, irGen);
             CHECK_XN_RETURN(rc);
 
             rc = node.GetInstance(irGen);
@@ -228,6 +236,8 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     // Read a new frame
     rc = m_Context.WaitAndUpdateAll();
+    const double systemTime = Tic();
+    
     if (rc != XN_STATUS_OK)
     {
         printf("Read failed: %s\n", xnGetStatusString(rc));
@@ -242,7 +252,7 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
         int n = 0;
         for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_8UC3 );
+            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, m_bForceGreyscale ? CV_8UC1 : CV_8UC3 );
         }
         for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
             vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
@@ -257,18 +267,27 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
-        memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
+        if(m_bForceGreyscale) {
+            static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
+            memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
+            cvtColor(temp,vImages[n++].Image, CV_RGB2GRAY);
+        }else{
+            memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+        }
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
         memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
         vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
+        vImages[n].Map.SetProperty( "SystemTime", systemTime );
         memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
     }
 

@@ -48,7 +48,6 @@ PhidgetsDriver::PhidgetsDriver() : m_hSpatial(0)
 PhidgetsDriver::~PhidgetsDriver()
 {
     //since user input has been read, this is a signal to terminate the program so we will close the phidget and delete the object we created
-    printf("Closing...\n");
     CPhidget_close((CPhidgetHandle)m_hSpatial);
     CPhidget_delete((CPhidgetHandle)m_hSpatial);
 }
@@ -58,7 +57,7 @@ void PhidgetsDriver::_AttachHandler(CPhidgetHandle spatial)
 {
     //Set the data rate for the spatial events
     int minRate;
-    CPhidgetSpatial_getDataRateMin((CPhidgetSpatialHandle)spatial,&minRate);
+    CPhidgetSpatial_getDataRateMax((CPhidgetSpatialHandle)spatial,&minRate);
     CPhidgetSpatial_setDataRate((CPhidgetSpatialHandle)spatial, minRate);
 
 //    int serialNo;
@@ -67,7 +66,7 @@ void PhidgetsDriver::_AttachHandler(CPhidgetHandle spatial)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_DetachHandler(CPhidgetHandle spatial)
+void PhidgetsDriver::_DetachHandler(CPhidgetHandle /*spatial*/)
 {
 //    int serialNo;
 //    CPhidget_getSerialNumber(spatial, &serialNo);
@@ -75,15 +74,16 @@ void PhidgetsDriver::_DetachHandler(CPhidgetHandle spatial)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_ErrorHandler(CPhidgetHandle spatial, int ErrorCode, const char *unknown)
+void PhidgetsDriver::_ErrorHandler(CPhidgetHandle /*spatial*/, int ErrorCode, const char *unknown)
 {
     printf("Phidgets Driver: Error handled. %d - %s \n", ErrorCode, unknown);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
+void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
 {
     int i;
+    /*
     printf("Number of Data Packets in this event: %d\n", count);
     for(i = 0; i < count; i++)
     {
@@ -95,6 +95,7 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidget
     }
 
     printf("---------------------------------------------\n");
+    */
 
     for(i = 0; i < count; i++){
         IMUData imuData;
@@ -102,20 +103,17 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidget
         imuData.gyro = Eigen::Vector3f(data[i]->angularRate[0], data[i]->angularRate[1], data[i]->angularRate[2]);
         imuData.mag = Eigen::Vector3f(data[i]->magneticField[0], data[i]->magneticField[1], data[i]->magneticField[2]);
         imuData.timestamp_system = Tic();
+        imuData.data_present =     IMU_AHRS_TIMESTAMP_PPS | IMU_AHRS_ACCEL | IMU_AHRS_GYRO | IMU_AHRS_MAG;
         imuData.timestamp_pps =  data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6;
         if(m_ImuCallback.empty() == false){
             m_ImuCallback(imuData);
         }
     }
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 bool PhidgetsDriver::Init()
 {
-    int result;
-    const char *err;
-
     //create the spatial object
     CPhidgetSpatial_create(&m_hSpatial);
 
@@ -131,6 +129,8 @@ bool PhidgetsDriver::Init()
 
     //open the spatial object for device connections
     CPhidget_open((CPhidgetHandle)m_hSpatial, -1);
+
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
