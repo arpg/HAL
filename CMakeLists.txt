@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project( RPG )
 
-# Add generic libs/headers we often use
-include( Common.cmake )
-
 # RPG macros for driver writers.
 macro( add_to_rpg_include_dirs dirs )
     list( APPEND RPG_INCLUDE_DIRS ${dirs} )
@@ -42,6 +39,9 @@ find_package( OpenCV2 REQUIRED )
 include_directories( ${OpenCV2_INCLUDE_DIRS} )
 link_libraries( ${OpenCV2_LIBRARIES} )
 
+# boost
+find_package( Boost COMPONENTS regex REQUIRED )
+
 # find MVL
 find_package( MVL REQUIRED )
 include_directories( ${MVL_INCLUDE_DIRS} )
@@ -51,8 +51,8 @@ link_directories( ${MVL_LIBRARY_DIRS} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 
-set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${COMMON_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
-set( RPG_LIBRARIES ${MVL_LIBRARIES} ${COMMON_LIBRARIES} ${OpenCV2_LIBRARIES} CACHE INTERNAL "" FORCE )
+set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
+set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 
 add_subdirectory( Devices )
