@@ -6,6 +6,9 @@
 
 #include "Message.pb.h"
 
+#include <boost/format.hpp>
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
 NodeCamDriver::NodeCamDriver()

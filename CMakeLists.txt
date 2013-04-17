@@ -40,7 +40,7 @@ include_directories( ${OpenCV2_INCLUDE_DIRS} )
 link_libraries( ${OpenCV2_LIBRARIES} )
 
 # boost
-find_package( Boost COMPONENTS regex REQUIRED )
+find_package( Boost REQUIRED )
 
 # find MVL
 find_package( MVL REQUIRED )
