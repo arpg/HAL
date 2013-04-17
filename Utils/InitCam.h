@@ -121,8 +121,6 @@ namespace rpg {
             Cam.SetProperty("DataSourceDir", sSourceDir );
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
             Cam.SetProperty("Channel-1",     sRightFileRegex );
-            Cam.SetProperty("CamModel-0",    sLeftCameraModel );
-            Cam.SetProperty("CamModel-1",    sRightCameraModel );
             Cam.SetProperty("NumChannels",   2 );
         }
 

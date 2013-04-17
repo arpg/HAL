@@ -10,7 +10,6 @@
 
 #include "RPG/Devices/Camera/CameraDriverInterface.h"
 
-using namespace std;
 
 class ToyotaReaderDriver : public CameraDriver
 {
@@ -24,9 +23,8 @@ class ToyotaReaderDriver : public CameraDriver
         int                 fps;            // estimated fps of hardware
         int                 format;         // BGR / Bayer
         int                 fsize;          // frame size in bytes
-        string              sformat;
-        string              name;
-        mvl::CameraModel*   pCMod;
+        std::string         sformat;
+        std::string         name;
         cv::Mat             RectMapRow;
         cv::Mat             RectMapCol;
     };
@@ -41,8 +39,7 @@ class ToyotaReaderDriver : public CameraDriver
         static void _ThreadCaptureFunc( ToyotaReaderDriver* pTR );
         bool _Read();
         void _PrintCamInfo();
-        int   _GetImageFormat(string& format);
-        void _bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int srcWidth, unsigned int srcHeight );
+        int   _GetImageFormat( std::string& format );
 
     private:
         boost::thread*                                  m_CaptureThread;
@@ -52,21 +49,19 @@ class ToyotaReaderDriver : public CameraDriver
         boost::condition_variable                       m_cBufferEmpty;
         boost::condition_variable                       m_cBufferFull;
 
-        std::queue< std::vector<rpg::ImageWrapper> >    m_qImageBuffer;
+        std::queue< std::vector< rpg::ImageWrapper > >  m_qImageBuffer;
 
         bool                                            m_bLoop;
         bool                                            m_bOutputRectified;
+        bool                                            m_bReadTimestamps;
         unsigned int                                    m_uCurrentImageIndex;
         unsigned int                                    m_uStartFrame;
-        unsigned int                                    m_uNumImages;
         unsigned int                                    m_uNumChannels;
         unsigned int                                    m_uBufferSize;
-        int                                             m_nCvImageReadFlags;
 
-        mvl::StereoRectification                        m_Rectify;
-        std::vector<CameraInfo>                         m_vCamerasInfo;
-        std::vector<ifstream*>                          m_vChannels;
-
+        std::vector< CameraInfo* >                      m_vCamerasInfo;
+        std::vector< std::ifstream* >                   m_vChannels;
+        std::vector< std::ifstream* >                   m_vTimes;
 };
 
 #endif
