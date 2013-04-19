@@ -60,6 +60,9 @@ void Bumblebee2Driver::_SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc139
     if( e == DC1394_SUCCESS ) {
         img.Map.SetProperty("Gamma", feature );
     }
+
+    img.Map.SetProperty("CameraModel", pCam->model);
+    img.Map.SetProperty("CameraGUID", pCam->guid);
 }
 
 // TODO: refactor into MVL?
