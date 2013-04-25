@@ -7,8 +7,8 @@
 #include <stdint.h>
 
 #include <dc1394/conversions.h>
-#include <mvl/image/image.h> // to rectify
-#include <mvl/stereo/stereo.h>
+
+#include <opencv.hpp>
 
 #include "FireFlyDriver.h"
 
@@ -125,7 +125,7 @@ dc1394error_t SetCameraProperties_Format7(
         dc1394camera_t* camera,
         dc1394video_mode_t mode,
         dc1394color_coding_t coding,
-        float framerate = DC1394_FRAMERATE_30,
+        int packet_size = 4095,
         dc1394speed_t iso_speed = DC1394_ISO_SPEED_400,
         unsigned dma_channels = 4,
         unsigned int img_width = 640,
@@ -159,15 +159,10 @@ dc1394error_t SetCameraProperties_Format7(
     e = dc1394_format7_set_color_coding( camera, mode, coding );
     DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set color coding.");
 
-    // set framerate
-    e = dc1394_feature_set_mode(camera, DC1394_FEATURE_FRAME_RATE, DC1394_FEATURE_MODE_MANUAL);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set manual framerate");
-
-    e = dc1394_feature_set_absolute_control(camera, DC1394_FEATURE_FRAME_RATE, DC1394_ON);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set absolute control for framerate");
-
-    e = dc1394_feature_set_absolute_value(camera, DC1394_FEATURE_FRAME_RATE, framerate);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set framerate value");
+    // set ROI
+    // FPS = 1 / ( ( img_width * img_height * bytes_per_pixel / packet_size ) * 0.000125 )
+    e = dc1394_format7_set_roi( camera, mode, coding, packet_size, left, top, img_width, img_height );
+    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set ROI.");
 
     // set DMA channel
     e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
@@ -183,8 +178,7 @@ bool FireFlyDriver::Init()
     assert(m_pPropertyMap);
 //    m_pPropertyMap->PrintPropertyMap();
 
-//    std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
-//    std::string sCamModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel","");
+    m_bOutputRectified = m_pPropertyMap->GetProperty( "Rectify", true );
 
     // here we connect to the firefly and see if it's alive
     m_pBus = dc1394_new();
@@ -209,6 +203,25 @@ bool FireFlyDriver::Init()
             break;
         }
         m_pCam[ m_nNumCams ] = pCam;
+
+        if(m_bOutputRectified) {
+            std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
+            char            Index[10];
+            sprintf( Index, "%d", m_nNumCams );
+            std::string sCModelPrefix = "CamModel-";
+            std::string sCModelName = sCModelPrefix + Index;
+            std::string sCModel = sPath + "/" + m_pPropertyMap->GetProperty( sCModelName, "" );
+
+            double pose[16];
+            m_pCMod[ m_nNumCams ] = mvl_read_camera(sCModel.c_str(), pose );
+
+            if( m_pCMod[ m_nNumCams ] == NULL ) {
+                std::cerr << "Error reading camera model! Not rectifying." << std::endl;
+                m_bOutputRectified = false;
+            }
+        }
+
+
         m_nNumCams++;
     }
 
@@ -224,8 +237,9 @@ bool FireFlyDriver::Init()
         fflush( stdout );
         dc1394_camera_reset(m_pCam[ii]);
         // TODO: allow people to modify these parameters through property map!!!
-        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
-//        if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_RAW8 ) == DC1394_SUCCESS ) {
+//        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
+        if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_MONO8,
+                                         4095, DC1394_ISO_SPEED_400, 2, 512, 384, 56, 0 ) == DC1394_SUCCESS ) {
 //            ShowCameraProperties(m_pCam[ii]);
             printf("OK.\n");
         }
@@ -287,6 +301,19 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
         memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
         SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );
+
+        if(m_bOutputRectified) {
+            cv::Mat Tmp;
+            cv::Mat Intrinsics = (cv::Mat_<float>(3,3) <<    m_pCMod[ii]->warped.fx, 0, m_pCMod[ii]->warped.cx,
+                                                              0, m_pCMod[ii]->warped.fy, m_pCMod[ii]->warped.cy,
+                                                              0, 0, 1);
+            cv::Mat Distortion = (cv::Mat_<float>(1,5) <<   m_pCMod[ii]->warped.kappa1, m_pCMod[ii]->warped.kappa2, m_pCMod[ii]->warped.tau1,
+                                  m_pCMod[ii]->warped.tau2, m_pCMod[ii]->warped.kappa3);
+
+            cv::undistort( vImages[ii].Image, Tmp, Intrinsics, Distortion );
+            vImages[0].Image = Tmp;
+        }
+
         e = dc1394_capture_enqueue( m_pCam[ii], pFrame );
     }
 

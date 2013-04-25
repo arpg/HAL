@@ -79,6 +79,24 @@ namespace rpg {
             Cam.SetProperty("Rectify",       clArgs.search( "-rectify" ) );
         }
 
+        //----------------------------------------------- FireFly
+        if( sDeviceDriver == "FireFly" ) {
+            Cam.SetProperty("DataSourceDir", sSourceDir);
+            Cam.SetProperty("Rectify",       clArgs.search( "-rectify" ) );
+
+            int numCams = 0;
+            std::stringstream ss;
+            while(true) {
+                ss << numCams;
+                std::string arg = ss.str();
+                if(!clArgs.search( ("-cmod"+arg).c_str() ) ) break;
+                Cam.SetProperty("CamModel-" + arg, clArgs.follow("", ("-cmod"+arg).c_str() ) );
+                numCams++;
+                ss.str("");
+            }
+            Cam.SetProperty( "NumCams", numCams );
+        }
+
         //----------------------------------------------- FILEREADER
         if( sDeviceDriver == "FileReader") {
             Cam.SetProperty( "StartFrame",    clArgs.follow( 0, "-sf" ));
