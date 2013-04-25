@@ -29,7 +29,7 @@ void SetImageMetaDataFromCamera2(rpg::ImageWrapper& img, dc1394camera_t* pCam)
         img.Map.SetProperty("Gain", feature );
     }
 
-    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
+//    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
     if( e == DC1394_SUCCESS ) {
         img.Map.SetProperty("Gamma", feature );
     }
@@ -164,6 +164,17 @@ dc1394error_t SetCameraProperties_Format7(
     e = dc1394_format7_set_roi( camera, mode, coding, packet_size, left, top, img_width, img_height );
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set ROI.");
 
+    // set some stuff
+//    e = dc1394_feature_set_mode(camera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set manual framerate");
+
+//    e = dc1394_feature_set_absolute_control(camera, DC1394_FEATURE_FRAME_RATE, DC1394_ON);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set absolute control for framerate");
+
+//    e = dc1394_feature_set_absolute_value(camera, DC1394_FEATURE_SHUTTER, framerate);
+    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set framerate value");
+
+
     // set DMA channel
     e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
     DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera.");
@@ -239,7 +250,7 @@ bool FireFlyDriver::Init()
         // TODO: allow people to modify these parameters through property map!!!
 //        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
         if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_MONO8,
-                                         4095, DC1394_ISO_SPEED_400, 2, 512, 384, 56, 0 ) == DC1394_SUCCESS ) {
+                                         9200, DC1394_ISO_SPEED_400, 2, 512, 384, 56, 0 ) == DC1394_SUCCESS ) {
 //            ShowCameraProperties(m_pCam[ii]);
             printf("OK.\n");
         }
