@@ -60,6 +60,9 @@ void Bumblebee2Driver::_SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc139
     if( e == DC1394_SUCCESS ) {
         img.Map.SetProperty("Gamma", feature );
     }
+
+    img.Map.SetProperty("CameraModel", pCam->model);
+    img.Map.SetProperty("CameraGUID", pCam->guid);
 }
 
 // TODO: refactor into MVL?
@@ -111,8 +114,8 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     if( m_nCvOutputType == CV_8UC3 ) {
         // Debayer and downsample into RGB image
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer,vImages[0].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth,vImages[1].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GRBG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer,vImages[0].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth,vImages[1].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
 
         // TODO: Allow rectification
         assert(m_bOutputRectified == false);
@@ -129,7 +132,7 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
                 // MVL image wrapper around OpenCV Rectified / Unrectified data
                 mvl_image_t* img = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
                 mvl_image_t* img_rect = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[cam].Image.data );
-                if(cam==0){
+                if(cam == 0) {
                     mvl_rectify( m_pLeftCMod, img, img_rect );
                 }else{
                     mvl_rectify( m_pRightCMod, img, img_rect );
@@ -155,13 +158,13 @@ bool Bumblebee2Driver::Init()
     // get camera model from files
     double pose[16];
 
-    m_bOutputRectified = m_pPropertyMap->GetProperty("Rectify", true);
-    m_nCvOutputType = m_pPropertyMap->GetProperty("ForceGreyscale", true) ? CV_8UC1 : CV_8UC3;
+    m_bOutputRectified = m_pPropertyMap->GetProperty( "Rectify", true );
+    m_nCvOutputType = m_pPropertyMap->GetProperty( "ForceGreyscale", true ) ? CV_8UC1 : CV_8UC3;
 
     if(m_bOutputRectified) {
         std::string sPath =  m_pPropertyMap->GetProperty("DataSourceDir","");
-        std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L","lcmod.xml");
-        std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R","rcmod.xml");
+        std::string sLeftCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-L", "lcmod.xml");
+        std::string sRightCModel = sPath + "/" + m_pPropertyMap->GetProperty("CamModel-R", "rcmod.xml");
 
         m_pLeftCMod  = mvl_read_camera(sLeftCModel.c_str(), pose );
         m_pRightCMod = mvl_read_camera(sRightCModel.c_str(), pose );
@@ -213,7 +216,7 @@ bool Bumblebee2Driver::Init()
     // get highest framerate (not supported on BB apparently)
 //    dc1394framerates_t vFramerates;
 //    e = dc1394_video_get_supported_framerates( m_pCam, m_nVideoMode,&vFramerates);
-//    DC1394_ERR_CLN_RTN(e,cleanup_and_exit(m_pCam),"Could not get framrates");
+//    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not get framerates");
 //    m_nFramerate = vFramerates.framerates[vFramerates.num-1];
 
     e = dc1394_video_set_iso_speed( m_pCam, DC1394_ISO_SPEED_400 );
@@ -255,7 +258,7 @@ bool Bumblebee2Driver::Init()
     m_uImageHeight = pFrame->size[1];
 
     // alloc memory for deinterlacing buffer
-    m_pDeinterlaceBuffer = new unsigned char[pFrame->total_bytes];
+    m_pDeinterlaceBuffer = new unsigned char[m_uImageWidth * m_uImageHeight * 2];
     m_pDebayerBuffer = new unsigned char[m_uImageWidth*m_uImageHeight / 4];
 
     /*
@@ -266,7 +269,7 @@ bool Bumblebee2Driver::Init()
     printf("Stride: %d\n", pFrame->stride );
     printf("Total Bytes: %llu\n", pFrame->total_bytes );
     printf("------------------------\n");
-    */
+    /* */
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );
