@@ -228,7 +228,10 @@ bool ToyotaReaderDriver::_Read() {
 
         if( m_vChannels[ii]->is_open() ) {
 
-            if( ImgFormat == RGB || ImgFormat == BGR ) {
+            if( ImgFormat == GRAY ) {
+                vImages[ii].Image.create( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
+                m_vChannels[ii]->read( (char*)vImages[ii].Image.data, m_vCamerasInfo[ii]->fsize );
+            } else if( ImgFormat == RGB || ImgFormat == BGR ) {
                 cv::Mat ImgColor( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC3 );
                 m_vChannels[ii]->read( (char*)ImgColor.data, m_vCamerasInfo[ii]->fsize );
                 cv::cvtColor( ImgColor, vImages[ii].Image, CV_RGB2GRAY );
@@ -291,7 +294,7 @@ int ToyotaReaderDriver::_GetImageFormat(string& format) {
     if( !format.compare("BAYER_GB") ) return BAYER_GB;
     if( !format.compare("BAYER_RG") ) return BAYER_RG;
     if( !format.compare("BAYER_GR") ) return BAYER_GR;
-    return RGB;
+    return GRAY;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

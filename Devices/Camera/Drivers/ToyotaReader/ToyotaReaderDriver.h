@@ -14,7 +14,7 @@
 class ToyotaReaderDriver : public CameraDriver
 {
     enum ColorFormat {RGB, BGR, BAYER, /* BAYER == BAYER_GB */
-                BAYER_BG, BAYER_GB, BAYER_RG, BAYER_GR
+                BAYER_BG, BAYER_GB, BAYER_RG, BAYER_GR, GRAY
     };
 
     struct CameraInfo {
