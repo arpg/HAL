@@ -1,8 +1,8 @@
 /*
 
-   Joint between links.
+   Joint between links (bodies).
 
- */
+*/
 
 
 #ifndef _JOINT_H_
@@ -13,29 +13,7 @@
 
 class Joint : public ModelNode
 {
-//        Joint();
 
-//        Joint(Body *A, Body *B, Eigen::Vector3d pose)
-//        {
-//            m_dAnchor = pose;
-//            //        m_BodyA = A;
-//            //        m_BodyB = B;
-//            m_pParent = A;
-//            this->AddChild(B);
-//        }
-
-        //    void AddToScene(SceneGraph::GLSceneGraph &glGraph, Eigen::Vector6d pose)
-        //    {
-        //        Eigen::Vector6d ChildPose;
-
-        //            fprintf(stderr, "Number of children for node '%s': %d\r\n", this->Name(), this->NumChildren());
-
-        //        for (int count=0; count < this->NumChildren(); count++) {
-        //            ChildPose = mvl::T2Cart(mvl::Cart2T(pose)*(this->m_Tpo));
-        //            m_vChildren[count]->AddToScene( glGraph, ChildPose );
-        //        }
-
-        //    }
 public:
 
         Eigen::Vector3d m_dAnchor;
@@ -46,6 +24,130 @@ public:
         Body*           m_pParentBody;
         Body*           m_pChildBody;
 };
+
+class GenericJoint : public Joint
+{
+public:
+    GenericJoint(
+            const std::string& sName,
+            Body* pParentBody,
+            Body* pChildBody,
+            Eigen::Vector6d TransformA,
+            Eigen::Vector6d TransformB,
+            bool useLinear
+            )
+    {
+        m_sName = sName;
+        m_pParentBody = pParentBody;
+        m_pChildBody = pChildBody;
+        m_bUseLinear = useLinear;
+        m_TransformA = TransformA;
+        m_TransformB = TransformB;
+    }
+
+private:
+    bool m_bUseLinear;
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+
+
+};
+
+class Point2Point : public Joint
+{
+
+
+public:
+
+    Point2Point(
+            const std::string& sName,
+            Body* pParentBody,
+            Body* pChildBody,
+            Eigen::Vector3d Axis
+            )
+    {
+        m_sName = sName;
+        m_pParentBody = pParentBody;
+        m_pChildBody = pChildBody;
+        m_Axis1 = Axis;
+    }
+
+    Point2Point(
+            const std::string& sName,
+            Body* pParentBody,
+            Body* pChildBody,
+            Eigen::Vector3d AxisA,
+            Eigen::Vector3d AxisB
+            )
+    {
+        m_sName = sName;
+        m_pParentBody = pParentBody;
+        m_pChildBody = pChildBody;
+        m_Axis1 = AxisA;
+        m_Axis2 = AxisB;
+    }
+
+private:
+
+    Eigen::Vector3d m_Axis1;
+    Eigen::Vector3d m_Axis2;
+
+};
+
+class Slider : public Joint
+{
+
+public:
+    Slider(
+            const std::string& sName,
+            Body* pParentBody,
+            Body* pChildBody,
+            Eigen::Vector6d TransformA,
+            Eigen::Vector6d TransformB,
+            bool useLinear
+            )
+    {
+        m_sName = sName;
+        m_pParentBody = pParentBody;
+        m_pChildBody = pChildBody;
+        m_bUseLinear = useLinear;
+        m_TransformA = TransformA;
+        m_TransformB = TransformB;
+    }
+
+private:
+    bool m_bUseLinear;
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+};
+
+
+class ConeTwist : public Joint
+{
+public:
+    ConeTwist(
+            const std::string& sName,
+            Body* pParentBody,
+            Body* pChildBody,
+            Eigen::Vector6d TransformA,
+            Eigen::Vector6d TransformB,
+            bool useLinear
+            )
+    {
+        m_sName = sName;
+        m_pParentBody = pParentBody;
+        m_pChildBody = pChildBody;
+        m_bUseLinear = useLinear;
+        m_TransformA = TransformA;
+        m_TransformB = TransformB;
+    }
+
+private:
+    bool m_bUseLinear;
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+};
+
 
 class HingeJoint : public Joint
 {
