@@ -1,0 +1,8 @@
+
+SET( NODE_INCLUDE_DIRS  "@NODE_INCLUDE_DIRS@" CACHE INTERNAL "NODE include directories" FORCE )
+SET( NODE_LIBRARIES  "@NODE_LIBRARIES@" CACHE INTERNAL "NODE libraries" FORCE )
+
+mark_as_advanced( NODE_INCLUDE_DIRS )
+mark_as_advanced( NODE_LIBRARIES )
+
+
