@@ -10,17 +10,17 @@ std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
 #ifdef USE_FILEREADER
 #include "HAL/Camera/Drivers/FileReader/FileReaderDriver.h"
-CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
+CameraDriverRegisteryEntry<hal::FileReaderDriver> _FileReaderReg( "FileReader" );
 #endif
 
 #ifdef USE_TOYOTAREADER
 #include "HAL/Camera/Drivers/ToyotaReader/ToyotaReaderDriver.h"
-CameraDriverRegisteryEntry<ToyotaReaderDriver> _ToyotaReaderReg( "ToyotaReader" );
+CameraDriverRegisteryEntry<hal::ToyotaReaderDriver> _ToyotaReaderReg( "ToyotaReader" );
 #endif
 
 #ifdef USE_WEBCAM
 #include "HAL/Camera/Drivers/Webcam/WebcamDriver.h"
-CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
+CameraDriverRegisteryEntry<hal::WebcamDriver> _WebcamReg( "Webcam" );
 #endif
 
 #ifdef USE_HDMI
@@ -35,7 +35,7 @@ CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
 
 #ifdef USE_BUMBLEBEE_2
 #include "HAL/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
-CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
+CameraDriverRegisteryEntry<hal::Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 #endif
 
 #ifdef USE_FLYCAP

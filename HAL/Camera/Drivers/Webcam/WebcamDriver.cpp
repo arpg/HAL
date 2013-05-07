@@ -7,6 +7,7 @@
 #include <RPG/Utils/TicToc.h>
 
 using namespace cv;
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
 WebcamDriver::WebcamDriver()
@@ -21,13 +22,11 @@ WebcamDriver::~WebcamDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool WebcamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+bool WebcamDriver::Capture( pb::CameraMsg& vImages )
 {
 
-    // allocate images if necessary
-    if( vImages.size() != 1 ){
-        vImages.resize( 1 );
-    }
+    cv::Mat         cvImg;
+    pb::ImageMsg*   pbImg = vImages.add_image();
 
     bool success = false;
     double systemTime = 0;
@@ -37,14 +36,21 @@ bool WebcamDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         success = m_pCam.read(temp);
         systemTime = Tic();
         if(success) {
-            cvtColor(temp,vImages[0].Image, CV_RGB2GRAY);
+            cvtColor(temp,cvImg, CV_RGB2GRAY);
         }
+        pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
     }else{
-        success = m_pCam.read(vImages[0].Image);
+        success = m_pCam.read(cvImg);
         systemTime = Tic();
+        pbImg->set_format( pb::ImageMsg_Format_PB_RGB );
     }
 
-    vImages[0].Map.SetProperty("SystemTime", systemTime );
+    pbImg->set_type(pb::ImageMsg_Type_PB_BYTE);
+    pbImg->set_height( cvImg.rows );
+    pbImg->set_width( cvImg.cols );
+    pbImg->set_data( (const char*)cvImg.data );
+
+    vImages.set_devicetime( systemTime );
 
     return success;
 }

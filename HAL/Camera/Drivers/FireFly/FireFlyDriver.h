@@ -17,7 +17,7 @@ class FireFlyDriver : public CameraDriver
     public:
         FireFlyDriver();
         virtual ~FireFlyDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
     private:
