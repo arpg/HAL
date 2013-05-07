@@ -1,9 +1,9 @@
+HAL         -- Hardware abstraction layer. Contains devices and associated device drivers.
+LogTools    -- Tools for logging and reading logs
+Messages    -- Standard messages used by sensors, loggers, etc.
+ModelGraph  -- Topological model used to represent robots, actors, etc.
+Node        -- Newotrking: provides server-less, pub-sub, RPC and named service discovery
+Devices     -- Node aware devices.
+Utils       -- Common functionality many find useful.
 
-Robotic Perception Group.
-
-Common device drivers and utilities.
-
-Use
-$ ccmake ../RPG -G"Eclipse CDT4 - Unix Makefiles"
-to build for Eclipse.
 

@@ -1,6 +1,6 @@
-#include <RobotGames/Model.h>
-#include <RobotGames/Body.h>
-#include <RobotGames/Link.h>
-#include <RobotGames/Joint.h>
-#include <RobotGames/ModelNode.h>
-#include <RobotGames/Shape.h>
+#include <ModelGraph/Model.h>
+#include <ModelGraph/Body.h>
+#include <ModelGraph/Link.h>
+#include <ModelGraph/Joint.h>
+#include <ModelGraph/ModelNode.h>
+#include <ModelGraph/Shape.h>
