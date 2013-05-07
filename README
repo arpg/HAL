@@ -1,4 +1,4 @@
-HAL         -- Hardware abstraction layer. Contains devices and associated device drivers.
+HAL         -- Hardware Abstraction Layer. Contains devices and associated device drivers.
 LogTools    -- Tools for logging and reading logs
 Messages    -- Standard messages used by sensors, loggers, etc.
 ModelGraph  -- Topological model used to represent robots, actors, etc.
