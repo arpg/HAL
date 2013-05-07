@@ -2,19 +2,22 @@
 #define _WEBCAM_H_
 
 #include "HAL/Camera/CameraDriverInterface.h"
-#include "opencv2/highgui/highgui.hpp"
+
+namespace hal {
 
 class WebcamDriver : public CameraDriver
 {
     public:
         WebcamDriver();
         virtual ~WebcamDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
     private:
         bool             m_bForceGreyscale;
         cv::VideoCapture m_pCam;
 };
+
+}
 
 #endif

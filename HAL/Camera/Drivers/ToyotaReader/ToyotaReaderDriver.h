@@ -6,10 +6,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
-#include <Mvlpp/Mvl.h>
-
 #include "HAL/Camera/CameraDriverInterface.h"
 
+namespace hal {
 
 class ToyotaReaderDriver : public CameraDriver
 {
@@ -33,7 +32,7 @@ class ToyotaReaderDriver : public CameraDriver
     public:
         ToyotaReaderDriver();
         virtual ~ToyotaReaderDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
 
@@ -51,7 +50,7 @@ class ToyotaReaderDriver : public CameraDriver
         boost::condition_variable                       m_cBufferEmpty;
         boost::condition_variable                       m_cBufferFull;
 
-        std::queue< std::vector< rpg::ImageWrapper > >  m_qImageBuffer;
+        std::queue< pb::CameraMsg >                     m_qImageBuffer;
 
         bool                                            m_bLoop;
         bool                                            m_bOutputRectified;
@@ -65,5 +64,7 @@ class ToyotaReaderDriver : public CameraDriver
         std::vector< std::ifstream* >                   m_vChannels;
         std::vector< std::ifstream* >                   m_vTimes;
 };
+
+}
 
 #endif

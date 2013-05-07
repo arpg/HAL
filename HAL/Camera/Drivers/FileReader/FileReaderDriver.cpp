@@ -7,6 +7,7 @@
 #include <HAL/VirtualDevice.h>
 
 using namespace std;
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver(){}
@@ -22,7 +23,7 @@ FileReaderDriver::~FileReaderDriver()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Consumer
-bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
 {
     if( m_nCurrentImageIndex >= m_nNumImages && m_qImageBuffer.size() == 0 && !m_bLoop) {
         return false;
@@ -41,14 +42,9 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     // consume from buffer
     //***************************************************
 
-    // allocate images if necessary
-    if( vImages.size() != m_nNumChannels )
-        vImages.resize( m_nNumChannels );
 
     // now fetch the next set of images from buffer
-    for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        vImages[ii] = m_qImageBuffer.front()[ii].clone();
-    }
+    vImages = m_qImageBuffer.front();
 
     // remove image from buffer queue
     m_qImageBuffer.pop();
@@ -207,12 +203,30 @@ bool FileReaderDriver::_Read()
 
     // now fetch the next set of images
     std::string sFileName;
-    std::vector< rpg::ImageWrapper > vImages;
-    vImages.resize(m_nNumChannels);
 
+    pb::CameraMsg vImages;
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
+        pb::ImageMsg* pbImg = vImages.add_image();
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        vImages[ii].read( sFileName, true, m_iCvImageReadFlags );
+        cv::Mat cvImg = cv::imread( sFileName, m_iCvImageReadFlags );
+        pbImg->set_data( (const char*)cvImg.data );
+        pbImg->set_height( cvImg.rows );
+        pbImg->set_width( cvImg.cols );
+
+        // TODO this is BAD since 4 bytes can be int, or float, etc, etc
+        if( cvImg.elemSize1() == 1 ) {
+            pbImg->set_type( pb::ImageMsg_Type_PB_BYTE );
+        }
+        if( cvImg.elemSize1() == 4 ) {
+            pbImg->set_type( pb::ImageMsg_Type_PB_FLOAT );
+        }
+
+        if( cvImg.channels() == 1 ) {
+            pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+        }
+        if( cvImg.channels() == 3 ) {
+            pbImg->set_format( pb::ImageMsg_Format_PB_RGB );
+        }
     }
 
     m_nCurrentImageIndex++;
@@ -234,5 +248,5 @@ double FileReaderDriver::_GetNextTime()
     if( m_qImageBuffer.size() == 0 ) {
         return -1;
     }
-    return m_qImageBuffer.front()[0].Map.GetProperty<double>( m_sTimeKeeper, 0 );
+//    return m_qImageBuffer.front()[0].Map.GetProperty<double>( m_sTimeKeeper, 0 );
 }

@@ -15,7 +15,7 @@ class KinectDriver : public CameraDriver
     public:
         KinectDriver();
         virtual ~KinectDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
     private:

@@ -6,8 +6,11 @@
 #ifndef _CAMERA_DRIVER_H_
 #define _CAMERA_DRIVER_H_
 
-#include <RPG/Utils/ImageWrapper.h>
-#include <vector>
+#include <Messages/Camera.pb.h>
+#include <RPG/Utils/PropertyMap.h>
+
+// TODO remove this once OpenCV dependency is removed
+#include <opencv.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic camera driver interface
@@ -15,7 +18,7 @@ class CameraDriver
 {
     public:
         // Pure virtual functions driver writers must implement:
-        virtual bool Capture( std::vector<rpg::ImageWrapper>& vImages ) = 0;
+        virtual bool Capture( pb::CameraMsg& vImages ) = 0;
         virtual void PrintInfo() = 0;
         virtual bool Init() = 0;
 
