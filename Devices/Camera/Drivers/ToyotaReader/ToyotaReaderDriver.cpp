@@ -116,7 +116,7 @@ bool ToyotaReaderDriver::Init() {
     }
 
     // Get data path
-    std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "" );s
+    std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "" );
 
     // Open channel data ( .cam files for left and right images)
     for( unsigned int ii = 0; ii < m_uNumChannels; ii++ ) {
