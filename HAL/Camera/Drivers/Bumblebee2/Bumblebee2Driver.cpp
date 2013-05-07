@@ -7,9 +7,10 @@
 #include <stdint.h>
 #include "Bumblebee2Driver.h"
 #include <dc1394/conversions.h>
-#include <Messages/Messages.pb.h>
 #include <mvl/image/image.h> // to rectify
 #include <mvl/stereo/stereo.h>
+
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Releases the cameras and exits
@@ -42,28 +43,27 @@ Bumblebee2Driver::~Bumblebee2Driver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Bumblebee2Driver::_SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc1394camera_t* pCam)
+void Bumblebee2Driver::_SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam )
 {
+    pb::ImageInfoMsg* info = img->mutable_info();
+
     // obtain meta data from image
     dc1394error_t e;
     float feature;
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_SHUTTER, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Shutter", feature );
+        info->set_shutter( feature );
     }
 
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAIN, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Gain", feature );
+        info->set_gain( feature );
     }
 
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Gamma", feature );
+        info->set_gamma( feature );
     }
-
-    img.Map.SetProperty("CameraModel", pCam->model);
-    img.Map.SetProperty("CameraGUID", pCam->guid);
 }
 
 // TODO: refactor into MVL?
@@ -81,22 +81,14 @@ void Bumblebee2Driver::_bayer8_to_grey8_half(unsigned char* src, unsigned char* 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+bool Bumblebee2Driver::Capture( pb::CameraMsg& vImages )
 {
 
-    // allocate images if necessary
-    if( vImages.size() != 2 ){
-        vImages.resize( 2 );
-    }
+    pb::ImageMsg* pbImg1 = vImages.add_image();
+    pb::ImageMsg* pbImg2 = vImages.add_image();
 
-    // should also check images are the right size, type etc
-    if(vImages[0].Image.rows != (int)m_uImageHeight/2  || vImages[0].Image.cols != (int)m_uImageWidth/2 ) {
-        // and setup images
-        vImages[0].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, m_nCvOutputType);
-        vImages[1].Image = cv::Mat(m_uImageHeight/2, m_uImageWidth/2, m_nCvOutputType);
-    }
-
-    _SetImageMetaDataFromCamera(vImages[0], m_pCam);
+    _SetImageMetaDataFromCamera( pbImg1, m_pCam );
+    _SetImageMetaDataFromCamera( pbImg2, m_pCam );
 
     //  capture one frame
     dc1394video_frame_t* pFrame;
@@ -106,9 +98,7 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
         return false;
     }
 
-    // Get capture time at ring buffer dequeue
-    vImages[0].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
-    vImages[1].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
+    vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
 
     // Deinterlace into buffer
     dc1394_deinterlace_stereo( pFrame->image, m_pDeinterlaceBuffer, m_uImageWidth, m_uImageHeight*2 );

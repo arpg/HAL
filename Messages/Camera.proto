@@ -7,11 +7,10 @@ import "Pose.proto";
 message CameraMsg {
     optional int32 id = 1;
     optional double deviceTime = 2;
-    repeated ImageMsg images = 3;
-    repeated ImageInfoMsg imageInfos = 4;
+    repeated ImageMsg image = 3;
 }
 
-message CameraModelMsg{
+message CameraModelMsg {
     optional string name = 1;
     optional int32 id = 2;
     optional string serialNumber = 3;

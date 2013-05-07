@@ -8,12 +8,14 @@
 
 #include "HAL/Camera/CameraDriverInterface.h"
 
+namespace hal {
+
 class FileReaderDriver : public CameraDriver
 {
     public:
         FileReaderDriver();
         virtual ~FileReaderDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
 
@@ -30,7 +32,7 @@ class FileReaderDriver : public CameraDriver
         boost::condition_variable                       m_cBufferEmpty;
         boost::condition_variable                       m_cBufferFull;
 
-        std::queue< std::vector<rpg::ImageWrapper> >    m_qImageBuffer;
+        std::queue< pb::CameraMsg >                     m_qImageBuffer;
         std::vector< std::vector< std::string > >		m_vFileList;
         unsigned int                                    m_nCurrentImageIndex;
         unsigned int                                    m_nStartFrame;
@@ -41,5 +43,7 @@ class FileReaderDriver : public CameraDriver
         int                                             m_iCvImageReadFlags;
         std::string                                     m_sTimeKeeper;
 };
+
+}
 
 #endif

@@ -12,17 +12,19 @@
 #include <boost/thread/mutex.hpp>
 #include "HAL/Camera/CameraDriverInterface.h"
 
+namespace hal {
+
 class Bumblebee2Driver : public CameraDriver
 {
     public:
         Bumblebee2Driver();
         virtual ~Bumblebee2Driver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        bool Capture( pb::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
     private:
         ///////////////////////////////////////////////////////////////////////////////
-        void _SetImageMetaDataFromCamera(rpg::ImageWrapper& img, dc1394camera_t* pCam);
+        void _SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam );
         void _bayer8_to_grey8_half(unsigned char* src, unsigned char* dst, unsigned int srcWidth, unsigned int srcHeight );
         void _cleanup_and_exit( dc1394camera_t *pCam );
     private:
@@ -41,5 +43,7 @@ class Bumblebee2Driver : public CameraDriver
         int                     m_nCvOutputType;
         bool                    m_bOutputRectified;
 };
+
+}
 
 #endif
