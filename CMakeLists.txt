@@ -48,18 +48,21 @@ include_directories( ${MVL_INCLUDE_DIRS} )
 link_libraries( ${MVL_LIBRARIES} )
 link_directories( ${MVL_LIBRARY_DIRS} )
 
+
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 
-set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
+set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR} ${MVL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
 set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 
-add_subdirectory( Devices )
 add_subdirectory( Messages ) # the BEST LIBRARY
 add_subdirectory( LogTools ) # the "BEAVER"
-#add_subdirectory( Robots )
+add_subdirectory( HAL )
 add_subdirectory( Utils )
+#add_subdirectory( ModelGraph )
 
 #message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" )
 
