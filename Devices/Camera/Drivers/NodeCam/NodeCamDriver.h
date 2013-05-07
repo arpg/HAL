@@ -16,6 +16,7 @@ class NodeCamDriver : public CameraDriver
         NodeCamDriver();
         virtual ~NodeCamDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
     private:
         unsigned int        m_nNumNodes;

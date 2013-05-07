@@ -184,11 +184,28 @@ dc1394error_t SetCameraProperties_Format7(
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void FireFlyDriver::PrintInfo() {
+
+    std::cout <<
+    "\nFIREFLY\n"
+    "--------------------------------\n"
+    "Opens all available cameras (up to 5) using DC1394."
+    "\n\n"
+    "Options:\n"
+    "   -sdir           <source directory for images and camera model files> [default '.']\n"
+    "   -cmodN          <camera model file for camera N>\n"
+    "\n"
+    "Flags:\n"
+    "   -rectify        If images should be rectified.\n"
+    "\n"
+    "Example:\n"
+    "./Exec  -idev FireFly  -cmod0 cmod.xml\n\n";
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 bool FireFlyDriver::Init()
 {
-    assert(m_pPropertyMap);
-//    m_pPropertyMap->PrintPropertyMap();
-
     m_bOutputRectified = m_pPropertyMap->GetProperty( "Rectify", true );
 
     // here we connect to the firefly and see if it's alive
@@ -250,7 +267,7 @@ bool FireFlyDriver::Init()
         // TODO: allow people to modify these parameters through property map!!!
 //        if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
         if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_MONO8,
-                                         9200, DC1394_ISO_SPEED_400, 2, 512, 384, 56, 0 ) == DC1394_SUCCESS ) {
+                                         9200, DC1394_ISO_SPEED_400, 2, 640, 480, 56, 0 ) == DC1394_SUCCESS ) {
 //            ShowCameraProperties(m_pCam[ii]);
             printf("OK.\n");
         }

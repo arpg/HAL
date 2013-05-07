@@ -15,8 +15,9 @@ class FlycapDriver : public CameraDriver
         FlycapDriver();
         virtual ~FlycapDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
-	private:
+    private:
         void PrintError( FlyCapture2::Error error );
         void CheckError( FlyCapture2::Error error );
     private:

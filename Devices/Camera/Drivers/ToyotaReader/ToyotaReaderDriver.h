@@ -33,6 +33,7 @@ class ToyotaReaderDriver : public CameraDriver
         ToyotaReaderDriver();
         virtual ~ToyotaReaderDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
 
     private:

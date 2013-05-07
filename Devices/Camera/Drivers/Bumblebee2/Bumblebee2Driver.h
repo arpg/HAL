@@ -18,6 +18,7 @@ class Bumblebee2Driver : public CameraDriver
         Bumblebee2Driver();
         virtual ~Bumblebee2Driver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
     private:
         ///////////////////////////////////////////////////////////////////////////////

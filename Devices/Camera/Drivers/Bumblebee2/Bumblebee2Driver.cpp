@@ -150,6 +150,28 @@ bool Bumblebee2Driver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void Bumblebee2Driver::PrintInfo() {
+
+    std::cout <<
+    "\nBUMBLEBEE2\n"
+    "--------------------------------\n"
+    "Streams stereo images from a Bumblebee2 camera connected to firewire via DC1394."
+    "\n\n"
+    "Options:\n"
+    "   -sdir           <source directory for images and camera model files> [default '.']\n"
+    "   -lcmod          <left camera model xml file>\n"
+    "   -rcmod          <right camera model xml file>\n"
+    "\n"
+    "Flags:\n"
+    "   -rectify        If images should be rectified.\n"
+    "   -greyscale      If the driver should return images in greyscale.\n"
+    "\n"
+    "Example:\n"
+    "./Exec  -idev Bumblebee2  -sdir ~/CamModels  -lcmod BB-3145-l.xml  -rcmod BB-3145-r.xml\n\n";
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 bool Bumblebee2Driver::Init()
 {
     assert(m_pPropertyMap);

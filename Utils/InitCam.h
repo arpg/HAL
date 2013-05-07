@@ -212,11 +212,13 @@ namespace rpg {
         std::string     sDeviceDriver       = clArgs.follow( "", 1, "-idev" );
 
         // init driver
+        /*
         if( !Cam.InitDriver( sDeviceDriver ) ) {
             std::cerr << "Invalid input device." << std::endl;
             std::cerr << CAM_USAGE;
             return false;
         }
+        */
 
         return true;
     }

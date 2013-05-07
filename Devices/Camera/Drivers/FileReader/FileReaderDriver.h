@@ -14,6 +14,7 @@ class FileReaderDriver : public CameraDriver
         FileReaderDriver();
         virtual ~FileReaderDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
 
     private:
