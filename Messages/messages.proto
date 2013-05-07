@@ -1,6 +1,0 @@
-package pb;
-import "Camera.proto";
-import "Image.proto";
-import "Pose.proto";
-import "PoseSensor.proto";
-import "Imu.proto";
