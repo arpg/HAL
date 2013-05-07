@@ -10,6 +10,7 @@ class WebcamDriver : public CameraDriver
         WebcamDriver();
         virtual ~WebcamDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
+        void PrintInfo();
         bool Init();
     private:
         bool             m_bForceGreyscale;

@@ -1,7 +1,6 @@
 #ifndef PHIDGETSDRIVER_H
 #define PHIDGETSDRIVER_H
 
-#include <boost/thread.hpp>
 #include <phidget21.h>
 #include "RPG/Devices/IMU/IMUDriverInterface.h"
 

@@ -9,7 +9,12 @@ add_to_rpg_libraries( WebcamDriver )
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
-install( TARGETS WebcamDriver ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS WebcamDriver
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 install( FILES ${WEBCAM_DRIVER_HEADERS}
          DESTINATION 
 	 ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/Webcam )

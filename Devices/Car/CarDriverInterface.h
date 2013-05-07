@@ -21,8 +21,9 @@ class CarDriverInterface
 	virtual ~CarDriverInterface() {}
 
         // Pure virtual functions car drivers must implement
-	virtual bool Initialize( void ) = 0;
-        virtual bool ApplyCommand( float flVelocity, float flSteering ) = 0;
+	virtual bool Init( void ) = 0;
+
+    virtual bool ApplyCommand( float flVelocity, float flSteering ) = 0;
 
 	// Getters and setters
         PropertyMap *GetPropertyMap( void ) { return m_pPropertyMap; }

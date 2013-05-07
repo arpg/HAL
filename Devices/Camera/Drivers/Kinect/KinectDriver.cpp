@@ -38,6 +38,35 @@ KinectDriver::~KinectDriver()
     } \
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+void KinectDriver::PrintInfo() {
+
+    std::cout <<
+    "\nKINECT\n"
+    "--------------------------------\n"
+    "Uses OpenNI to open all available depth cameras connected."
+    "\n\n"
+    "Options:\n"
+    "   -fps            <framerate> [default 30]\n"
+    "   -res            <resolution> [default 'VGA']\n"
+    "\n"
+    "Flags:\n"
+    "   -greyscale      If the driver should return images in greyscale.\n"
+    "   -no-rgb         If no RGB images should be captured.\n"
+    "   -no-depth       If no depth images should be taken.\n"
+    "   -with-ir        If infrared images should be returned.\n"
+    "   -align-depth    If the depth map should be aligned to the RGB image.\n"
+    "\n"
+    "Notes:\n"
+    "   Infrared and depth images cannot be captured at the same time.\n"
+    "   It is not possible to capture full res at 60FPS; the resolution must be QVGA.\n"
+    "\n"
+    "Examples:\n"
+    "./Exec  -idev Kinect  -no-depth   -with-ir\n\n";
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 bool KinectDriver::Init()
@@ -48,7 +77,7 @@ bool KinectDriver::Init()
     std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "VGA" );
     unsigned int    nFPS        = m_pPropertyMap->GetProperty( "FPS", 30 );
     bool            bAlignDepth = m_pPropertyMap->GetProperty( "AlignDepth", false );
-    
+
     m_bForceGreyscale = m_pPropertyMap->GetProperty( "ForceGreyscale", false);
 
     XnMapOutputMode MapMode;
@@ -237,7 +266,7 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
     // Read a new frame
     rc = m_Context.WaitAndUpdateAll();
     const double systemTime = Tic();
-    
+
     if (rc != XN_STATUS_OK)
     {
         printf("Read failed: %s\n", xnGetStatusString(rc));

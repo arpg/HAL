@@ -9,7 +9,12 @@ add_to_rpg_libraries( ToyotaReaderDriver )
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
-install( TARGETS ToyotaReaderDriver ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS ToyotaReaderDriver
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 install( FILES ${TOYOTAREADER_DRIVER_HEADERS}
          DESTINATION 
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/ToyotaReader )

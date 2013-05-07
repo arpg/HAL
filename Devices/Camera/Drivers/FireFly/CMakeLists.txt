@@ -15,7 +15,12 @@ add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 #MESSAGE( STATUS "here ${RPG_LIBRARIES}" )
 
 # 3) And make sure we are able to install it correctly:
-install( TARGETS FireFlyDriver ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS FireFlyDriver
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 install( FILES ${FF_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/FireFly )

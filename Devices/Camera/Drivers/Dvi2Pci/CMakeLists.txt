@@ -106,7 +106,12 @@ add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( FILES frmgrab DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-install( TARGETS Dvi2PciDriver ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS Dvi2PciDriver
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 install( FILES ${DVI2PCI_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/Dvi2Pci )

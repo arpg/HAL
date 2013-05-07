@@ -14,8 +14,10 @@ FileReaderDriver::FileReaderDriver(){}
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
 {
-    m_CaptureThread->interrupt();
-    m_CaptureThread->join();
+    if( m_CaptureThread ) {
+        m_CaptureThread->interrupt();
+        m_CaptureThread->join();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,24 +64,48 @@ bool FileReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
 
 ///////////////////////////////////////////////////////////////////////////////
+void FileReaderDriver::PrintInfo() {
+
+    std::cout <<
+    "\nFILEREADER\n"
+    "--------------------------------\n"
+    "Reads images from the disk."
+    "\n\n"
+    "Options:\n"
+    "   -sdir           <source directory for images and camera model files> [default '.']\n"
+    "   -chanN          <regular expression for channel N>\n"
+    "   -sf             <start frame> [default 0]\n"
+    "   -buffsize       <size of buffer for image pre-read> [default 35]\n"
+    "   -timekeeper     <name of variable holding image timestamps> [default 'SystemTime']\n"
+    "\n"
+    "Note:\n"
+    "   -lfile & -rfile can be used as aliases to Channel-0 & Channel-1.\n"
+    "\n"
+    "Flags:\n"
+    "   -greyscale      If the driver should return images in greyscale.\n"
+    "   -loop           If the driver should restart once images are consumed.\n"
+    "\n"
+    "Examples:\n"
+    "./Exec  -idev FileReader  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n"
+    "./Exec  -idev FileReader  -chan0 \"left.*pgm\"  -chan1 \"right.*pgm\"   -chan2 \"depth.*pdm\"\n\n";
+}
+
+///////////////////////////////////////////////////////////////////////////////
 bool FileReaderDriver::Init()
 {
     // clear variables if previously initialized
-     //m_qImageBuffer.clear();
-     m_vFileList.clear();
+    m_vFileList.clear();
 
 
-    assert(m_pPropertyMap);
-//    m_pPropertyMap->PrintPropertyMap();
-
-    m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
     m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
     m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
     m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
     m_nCurrentImageIndex = m_nStartFrame;
     m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false )
             ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
-    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "SystemTime" );;
+    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "SystemTime" );
+
+    m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
 
     if(m_nNumChannels < 1) {
         mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
@@ -92,7 +118,6 @@ bool FileReaderDriver::Init()
     std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        //std::cerr << "SlamThread: Finding files channel " << ii << std::endl;
         std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
         std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
 
@@ -107,7 +132,7 @@ bool FileReaderDriver::Init()
         }
 
         // Now generate the list of files for each channel
-        std::vector< std::string>& vFiles = m_vFileList[ii];
+        std::vector< std::string >& vFiles = m_vFileList[ii];
 
         if(mvl::FindFiles(sChannelPath + "/" + sSubDirectory, sChannelRegex, vFiles) == false){
         //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {

@@ -19,7 +19,7 @@ class AlliedVisionDriver : public CameraDriver
         virtual ~AlliedVisionDriver();
         bool Capture( std::vector<rpg::ImageWrapper>& vImages );
         bool Capture(AlliedVisionCamera* cam, rpg::ImageWrapper& img );
-
+        void PrintInfo();
         bool Init();
 
     private:

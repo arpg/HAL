@@ -1,0 +1,81 @@
+package msg;
+
+message ResourceLocator
+{
+    required string resource = 1;
+    required string address = 2;
+}
+
+message ResourceTable
+{
+    repeated ResourceLocator urls = 1;
+    required uint32 version = 2;
+    required uint32 checksum = 3;
+}
+
+message GetTableRequest
+{
+    required string requesting_node_name = 1;
+    required string requesting_node_addr = 2;
+}
+
+message GetTableResponse
+{
+    required string sender_name = 1;
+    required ResourceTable resource_table = 2;
+}
+
+message SetTableRequest
+{
+    required string requesting_node_name = 1;
+    required string requesting_node_addr = 2;
+    required ResourceTable resource_table = 3;
+}
+
+message SetTableResponse
+{
+    required uint32 version = 1;
+    required uint32 checksum = 2;
+}
+ 
+message DeleteFromTableRequest
+{
+    required string requesting_node_name = 1;
+    required string requesting_node_addr = 2;
+    repeated ResourceLocator urls_to_delete = 3;
+}
+
+message DeleteFromTableResponse
+{
+}
+
+message HeartbeatRequest
+{
+    required uint32 version = 1;
+    required uint32 checksum = 2;
+}
+
+message HeartbeatResponse
+{
+    required uint32 version = 1;
+    required uint32 checksum = 2;
+    optional ResourceTable resource_table = 3;
+}
+
+message Bool
+{
+    required bool val = 1;
+}
+
+message String {
+  optional string value = 1;
+}
+
+message Int {
+  optional int32 value = 1;
+}
+
+message Void {
+}
+
+

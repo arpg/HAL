@@ -11,7 +11,7 @@
     When this variable is instantiated (which happens before main runs) the
     CameraDriverRegisteryEntry constructor registers the "FileReader" name
     and a function pointer to a function that a CameraDevice can then use to
-    instantiate a FileReader driver. 
+    instantiate a FileReader driver.
 
     Thus, given a CameraDevice C, when we call C.InitDriver("FileReader") it
     will call the appropriate function pointer to set it's internal driver to
@@ -23,6 +23,7 @@
 #define _CAMERA_DRIVER_REGISTERY_H_
 
 
+void ListCameraDrivers();
 CameraDriver* CreateCameraDriver( const std::string& sDriverName );
 
 extern std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;

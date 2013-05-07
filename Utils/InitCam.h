@@ -79,6 +79,24 @@ namespace rpg {
             Cam.SetProperty("Rectify",       clArgs.search( "-rectify" ) );
         }
 
+        //----------------------------------------------- FireFly
+        if( sDeviceDriver == "FireFly" ) {
+            Cam.SetProperty("DataSourceDir", sSourceDir);
+            Cam.SetProperty("Rectify",       clArgs.search( "-rectify" ) );
+
+            int numCams = 0;
+            std::stringstream ss;
+            while(true) {
+                ss << numCams;
+                std::string arg = ss.str();
+                if(!clArgs.search( ("-cmod"+arg).c_str() ) ) break;
+                Cam.SetProperty("CamModel-" + arg, clArgs.follow("", ("-cmod"+arg).c_str() ) );
+                numCams++;
+                ss.str("");
+            }
+            Cam.SetProperty( "NumCams", numCams );
+        }
+
         //----------------------------------------------- FILEREADER
         if( sDeviceDriver == "FileReader") {
             Cam.SetProperty( "StartFrame",    clArgs.follow( 0, "-sf" ));
@@ -120,11 +138,7 @@ namespace rpg {
             Cam.SetProperty( "Loop",          clArgs.search( "-loop" ));
             Cam.SetProperty("DataSourceDir", sSourceDir );
             Cam.SetProperty("Channel-0",     sLeftFileRegex );
-            Cam.SetProperty("Channel-1",     sRightFileRegex );
-
-            Cam.SetProperty("CamModel-L",    sLeftCameraModel );
-            Cam.SetProperty("CamModel-R",    sRightCameraModel );
-
+            Cam.SetProperty("Channel-1",     sRightFileRegex );ss
             Cam.SetProperty("NumChannels",   2 );
             Cam.SetProperty("ForceGreyscale",bForceGreyscale );
         }
@@ -199,11 +213,13 @@ namespace rpg {
         std::string sDeviceDriver = clArgs.follow( "", 1, "-idev" );
 
         // init driver
+        /*
         if( !Cam.InitDriver( sDeviceDriver ) ) {
             std::cerr << "Invalid input device." << std::endl;
             std::cerr << CAM_USAGE;
             return false;
         }
+        */
 
         return true;
     }

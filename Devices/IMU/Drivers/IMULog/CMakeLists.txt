@@ -12,7 +12,12 @@ add_to_rpg_libraries( IMULogDriver )
 add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
-install( TARGETS IMULogDriver ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install( TARGETS IMULogDriver
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 install( FILES ${IMULOG_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/IMU/Drivers/IMULog )

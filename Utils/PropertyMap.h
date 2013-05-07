@@ -16,8 +16,6 @@
 #include <string>
 #include <map>
 #include <limits>
-#include <boost/regex.hpp>
-#include <boost/format.hpp> // printf like format
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper class to endow objects with generic "properties"

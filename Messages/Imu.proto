@@ -1,0 +1,17 @@
+message msg_Matrix {
+  optional uint32 rows = 1;
+  optional uint32 cols = 2;
+  repeated double data = 3 [packed=true];
+}
+
+message msg_Imu{
+    optional double systemTime = 1;
+    optional double deviceTime = 2;
+    optional msg_Matrix accel = 3;
+    optional msg_Matrix gyro = 4;
+}
+
+message msg_Log {
+    required double timestamp = 1;
+    optional msg_Imu imu = 2;
+}

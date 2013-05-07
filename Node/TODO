@@ -1,0 +1,11 @@
+
+TODO:
+* add Namespaces, w commandline interface
+* add name remapping, w commandline interface 
+* need some from of regression testing
+* add boost::bind functionality
+* add more provide_rpc/call_rpc specializations
+* produce RPC method stubs from .proto files
+* parse ROS XDR files into RPC methods and publishes
+* ROS compatibility layer -- how?
+ 
