@@ -6,7 +6,7 @@
 #ifndef _KINECT_H_
 #define _KINECT_H_
 
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 
 #include <XnCppWrapper.h>
 

@@ -1,7 +1,7 @@
 #ifndef _WEBCAM_H_
 #define _WEBCAM_H_
 
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 #include "opencv2/highgui/highgui.hpp"
 
 class WebcamDriver : public CameraDriver

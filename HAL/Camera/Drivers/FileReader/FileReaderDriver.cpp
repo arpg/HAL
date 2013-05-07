@@ -4,7 +4,7 @@
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
 
-#include <RPG/VirtualDevice.h>
+#include <HAL/VirtualDevice.h>
 
 using namespace std;
 

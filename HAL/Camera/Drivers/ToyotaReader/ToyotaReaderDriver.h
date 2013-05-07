@@ -8,7 +8,7 @@
 
 #include <Mvlpp/Mvl.h>
 
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 
 
 class ToyotaReaderDriver : public CameraDriver

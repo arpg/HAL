@@ -10,7 +10,7 @@
 #include <mvl/camera/camera.h>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 
 class Bumblebee2Driver : public CameraDriver
 {

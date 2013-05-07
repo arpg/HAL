@@ -2,7 +2,7 @@
 #define PHIDGETSDRIVER_H
 
 #include <phidget21.h>
-#include "RPG/IMU/IMUDriverInterface.h"
+#include "HAL/IMU/IMUDriverInterface.h"
 
 int CCONV AttachHandler(CPhidgetHandle spatial, void *userptr);
 int CCONV DetachHandler(CPhidgetHandle spatial, void *userptr);

@@ -10,7 +10,7 @@
 
 #include <mvl/camera/camera.h>
 
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 
 class FireFlyDriver : public CameraDriver
 {

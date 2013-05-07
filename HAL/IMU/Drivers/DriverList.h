@@ -9,17 +9,17 @@
 std::map<std::string,IMUDriver*(*)()> g_mIMUDriverTable;
 
 #ifdef USE_MICROSTRAIN
-#include "RPG/IMU/Drivers/MicroStrain/MicroStrainDriver.h"
+#include "HAL/IMU/Drivers/MicroStrain/MicroStrainDriver.h"
 IMUDriverRegisteryEntry<MicroStrainDriver> _MicroStrainReg( "MicroStrain" );
 #endif
 
 #ifdef USE_IMULOG
-#include "RPG/IMU/Drivers/IMULog/IMULogDriver.h"
+#include "HAL/IMU/Drivers/IMULog/IMULogDriver.h"
 IMUDriverRegisteryEntry<IMULogDriver> _IMULogReg( "IMULog" );
 #endif
 
 #ifdef USE_PHIDGETS
-#include "RPG/IMU/Drivers/Phidgets/PhidgetsDriver.h"
+#include "HAL/IMU/Drivers/Phidgets/PhidgetsDriver.h"
 IMUDriverRegisteryEntry<PhidgetsDriver> _PhidgetsReg( "Phidgets" );
 #endif
 

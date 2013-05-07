@@ -1,7 +1,7 @@
-#include "RPG/Camera/CameraDriverInterface.h"
-#include "RPG/Camera/Drivers/CameraDriverRegistery.h"
+#include "HAL/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/Drivers/CameraDriverRegistery.h"
 
-#include "RPG/Camera/Drivers/DriverList.h"
+#include "HAL/Camera/Drivers/DriverList.h"
 
 void ListCameraDrivers()
 {
