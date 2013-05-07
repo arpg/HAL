@@ -56,6 +56,7 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACH
 
 
 add_subdirectory( Devices )
+add_subdirectory( Messages ) # the BEST LIBRARY
 #add_subdirectory( Robots )
 add_subdirectory( Utils )
 
