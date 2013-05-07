@@ -48,6 +48,9 @@ include_directories( ${MVL_INCLUDE_DIRS} )
 link_libraries( ${MVL_LIBRARIES} )
 link_directories( ${MVL_LIBRARY_DIRS} )
 
+
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 
@@ -55,9 +58,8 @@ set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${Boost
 set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 
-add_subdirectory( Devices )
 add_subdirectory( Messages ) # the BEST LIBRARY
-#add_subdirectory( Robots )
+add_subdirectory( RPG )
 add_subdirectory( Utils )
 
 #message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" )
