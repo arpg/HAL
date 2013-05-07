@@ -8,8 +8,8 @@
 #ifndef _JOINT_H_
 #define _JOINT_H_
 
-#include <RobotGames/ModelNode.h>
-#include <RobotGames/Body.h>
+#include <RPG/ModelGraph/ModelNode.h>
+#include <RPG/ModelGraph/Body.h>
 
 class Joint : public ModelNode
 {
@@ -58,6 +58,8 @@ class Point2Point : public Joint
 
 
 public:
+    Eigen::Vector3d m_Axis1;
+    Eigen::Vector3d m_Axis2;
 
     Point2Point(
             const std::string& sName,
@@ -89,8 +91,6 @@ public:
 
 private:
 
-    Eigen::Vector3d m_Axis1;
-    Eigen::Vector3d m_Axis2;
 
 };
 
@@ -98,6 +98,10 @@ class Slider : public Joint
 {
 
 public:
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+
+
     Slider(
             const std::string& sName,
             Body* pParentBody,
@@ -115,10 +119,13 @@ public:
         m_TransformB = TransformB;
     }
 
+    bool UseLinear( void )
+    {
+        return m_bUseLinear;
+    }
+
 private:
     bool m_bUseLinear;
-    Eigen::Vector6d m_TransformA;
-    Eigen::Vector6d m_TransformB;
 };
 
 

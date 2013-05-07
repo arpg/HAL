@@ -14,9 +14,9 @@
 #include <map>
 #include <stdio.h>
 
-#include <RobotGames/ModelNode.h>
-#include <RobotGames/Body.h>
-#include <RobotGames/Joint.h>
+#include <RPG/ModelGraph/ModelNode.h>
+#include <RPG/ModelGraph/Body.h>
+#include <RPG/ModelGraph/Joint.h>
 
 
 class Model : public ModelNode
