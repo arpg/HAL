@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include <RPG/Utils/GetPot>
-#include <RPG/Camera/CameraDevice.h>
+#include <HAL/Camera/CameraDevice.h>
 
 namespace rpg {
 

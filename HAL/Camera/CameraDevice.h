@@ -10,8 +10,8 @@
 
 #include <RPG/Utils/GetPot>
 #include <RPG/Utils/PropertyMap.h>		// so a CameraDevice can have generic "properties"
-#include <RPG/Devices/Camera/CameraDriverInterface.h>
-#include <RPG/Devices/Camera/Drivers/CameraDriverRegistery.h>
+#include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Camera/Drivers/CameraDriverRegistery.h>
 
 // Driver Creation Factory
 extern CameraDriver* CreateCameraDriver( const std::string& sDriverName );
