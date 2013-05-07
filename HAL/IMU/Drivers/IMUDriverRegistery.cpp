@@ -1,7 +1,7 @@
-#include "RPG/IMU/IMUDriverInterface.h"
-#include "RPG/IMU/Drivers/IMUDriverRegistery.h"
+#include "HAL/IMU/IMUDriverInterface.h"
+#include "HAL/IMU/Drivers/IMUDriverRegistery.h"
 
-#include "RPG/IMU/Drivers/DriverList.h"
+#include "HAL/IMU/Drivers/DriverList.h"
 
 IMUDriver* CreateIMUDriver( const std::string& sDriverName )
 {

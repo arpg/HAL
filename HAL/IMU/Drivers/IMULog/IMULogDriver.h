@@ -1,7 +1,7 @@
 #ifndef IMULOGDRIVER_H
 #define IMULOGDRIVER_H
 
-#include "RPG/IMU/IMUDriverInterface.h"
+#include "HAL/IMU/IMUDriverInterface.h"
 
 #include <fstream>
 #include <boost/thread.hpp>

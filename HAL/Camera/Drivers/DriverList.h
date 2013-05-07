@@ -9,57 +9,57 @@
 std::map<std::string,CameraDriver*(*)()> g_mCameraDriverTable;
 
 #ifdef USE_FILEREADER
-#include "RPG/Camera/Drivers/FileReader/FileReaderDriver.h"
+#include "HAL/Camera/Drivers/FileReader/FileReaderDriver.h"
 CameraDriverRegisteryEntry<FileReaderDriver> _FileReaderReg( "FileReader" );
 #endif
 
 #ifdef USE_TOYOTAREADER
-#include "RPG/Camera/Drivers/ToyotaReader/ToyotaReaderDriver.h"
+#include "HAL/Camera/Drivers/ToyotaReader/ToyotaReaderDriver.h"
 CameraDriverRegisteryEntry<ToyotaReaderDriver> _ToyotaReaderReg( "ToyotaReader" );
 #endif
 
 #ifdef USE_WEBCAM
-#include "RPG/Camera/Drivers/Webcam/WebcamDriver.h"
+#include "HAL/Camera/Drivers/Webcam/WebcamDriver.h"
 CameraDriverRegisteryEntry<WebcamDriver> _WebcamReg( "Webcam" );
 #endif
 
 #ifdef USE_HDMI
-#include "RPG/Camera/Drivers/HDMI/HDMIDriver.h"
+#include "HAL/Camera/Drivers/HDMI/HDMIDriver.h"
 CameraDriverRegisteryEntry<HDMIDriver> _HDMIReg( "HDMI" );
 #endif
 
 #ifdef USE_DVI2PCI
-#include "RPG/Camera/Drivers/Dvi2Pci/Dvi2PciDriver.h"
+#include "HAL/Camera/Drivers/Dvi2Pci/Dvi2PciDriver.h"
 CameraDriverRegisteryEntry<Dvi2PciDriver> _Dvi2PciReg( "Dvi2Pci" );
 #endif
 
 #ifdef USE_BUMBLEBEE_2
-#include "RPG/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
+#include "HAL/Camera/Drivers/Bumblebee2/Bumblebee2Driver.h"
 CameraDriverRegisteryEntry<Bumblebee2Driver> _Bumblebee2Reg( "Bumblebee2" );
 #endif
 
 #ifdef USE_FLYCAP
-#include "RPG/Camera/Drivers/Flycap/FlycapDriver.h"
+#include "HAL/Camera/Drivers/Flycap/FlycapDriver.h"
 CameraDriverRegisteryEntry<FlycapDriver> _FlycapReg( "Flycap" );
 #endif
 
 #ifdef USE_ALLIEDVISION
-#include "RPG/Camera/Drivers/AlliedVision/AlliedVisionDriver.h"
+#include "HAL/Camera/Drivers/AlliedVision/AlliedVisionDriver.h"
 CameraDriverRegisteryEntry<AlliedVisionDriver> _AlliedVisionReg( "AlliedVision" );
 #endif
 
 #ifdef USE_FIREFLY
-#include "RPG/Camera/Drivers/FireFly/FireFlyDriver.h"
+#include "HAL/Camera/Drivers/FireFly/FireFlyDriver.h"
 CameraDriverRegisteryEntry<FireFlyDriver> _FireFlyReg( "FireFly" );
 #endif
 
 #ifdef USE_KINECT
-#include "RPG/Camera/Drivers/Kinect/KinectDriver.h"
+#include "HAL/Camera/Drivers/Kinect/KinectDriver.h"
 CameraDriverRegisteryEntry<KinectDriver> _KinectReg( "Kinect" );
 #endif
 
 #ifdef USE_NODECAM
-#include "RPG/Camera/Drivers/NodeCam/NodeCamDriver.h"
+#include "HAL/Camera/Drivers/NodeCam/NodeCamDriver.h"
 CameraDriverRegisteryEntry<NodeCamDriver> _NodeCamReg( "NodeCam" );
 #endif
 

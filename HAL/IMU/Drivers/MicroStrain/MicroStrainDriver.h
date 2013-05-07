@@ -3,7 +3,7 @@
 
 #include <boost/thread.hpp>
 
-#include "RPG/IMU/IMUDriverInterface.h"
+#include "HAL/IMU/IMUDriverInterface.h"
 
 #include "MIPSDK/mip_sdk.h"
 

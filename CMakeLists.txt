@@ -54,12 +54,12 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 
-set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${MVL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
+set( RPG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR} ${MVL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )
 set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 
 add_subdirectory( Messages ) # the BEST LIBRARY
-add_subdirectory( RPG )
+add_subdirectory( HAL )
 add_subdirectory( Utils )
 add_subdirectory( ModelGraph )
 

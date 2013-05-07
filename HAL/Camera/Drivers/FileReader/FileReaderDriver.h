@@ -6,7 +6,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
-#include "RPG/Camera/CameraDriverInterface.h"
+#include "HAL/Camera/CameraDriverInterface.h"
 
 class FileReaderDriver : public CameraDriver
 {
