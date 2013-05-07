@@ -61,9 +61,6 @@ public:
 
 private:
     bool m_bUseLinear;
-    Eigen::Vector6d m_TransformA;
-    Eigen::Vector6d m_TransformB;
-
 
 };
 
@@ -126,6 +123,8 @@ class SliderJoint : public Joint
 public:
     Eigen::Vector6d m_TransformA;
     Eigen::Vector6d m_TransformB;
+    double LowerLinLimit;
+    double UpperLinLimit;
 
 
     SliderJoint(
@@ -160,8 +159,19 @@ public:
         return m_bUseLinear;
     }
 
+    void setLowerLimit(double limit)
+    {
+        LowerLinLimit = limit;
+    }
+
+    void setUpperLimit(double limit)
+    {
+        UpperLinLimit = limit;
+    }
+
 private:
     bool m_bUseLinear;
+
 };
 
 
@@ -195,10 +205,6 @@ public:
         m_TransformB = TransformB;
     }
 
-private:
-    bool m_bUseLinear;
-    Eigen::Vector6d m_TransformA;
-    Eigen::Vector6d m_TransformB;
 };
 
 
