@@ -14,15 +14,9 @@
 #include <map>
 #include <stdio.h>
 
-<<<<<<< HEAD
-#include <RPG/ModelGraph/ModelNode.h>
-#include <RPG/ModelGraph/Body.h>
-#include <RPG/ModelGraph/Joint.h>
-=======
 #include <ModelGraph/ModelNode.h>
 #include <ModelGraph/Body.h>
 #include <ModelGraph/Joint.h>
->>>>>>> ffb7b6953a74ed2eb5a15f34dd2302855651e229
 
 
 class Model : public ModelNode

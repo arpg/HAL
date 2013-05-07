@@ -8,7 +8,7 @@
 #include <vector>
 #include <map>
 #include <stdio.h>
-#include <RPG/ModelGraph/SE3.h> // TODO -- use Eigen equiv.
+#include <ModelGraph/SE3.h> // TODO -- use Eigen equiv.
 
 /////////////////////////////////////////////////////////////////////////////////
 namespace Eigen

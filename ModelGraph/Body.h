@@ -14,8 +14,8 @@
 #include <map>
 #include <stdio.h>
 
-#include <RPG/ModelGraph/ModelNode.h>
-#include <RPG/ModelGraph/Shape.h>
+#include <ModelGraph/ModelNode.h>
+#include <ModelGraph/Shape.h>
 
 class Body : public ModelNode
 {

@@ -8,8 +8,8 @@
 #ifndef _JOINT_H_
 #define _JOINT_H_
 
-#include <RPG/ModelGraph/ModelNode.h>
-#include <RPG/ModelGraph/Body.h>
+#include <ModelGraph/ModelNode.h>
+#include <ModelGraph/Body.h>
 
 class Joint : public ModelNode
 {
