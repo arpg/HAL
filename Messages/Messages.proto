@@ -4,3 +4,12 @@ import "Image.proto";
 import "Pose.proto";
 import "PoseSensor.proto";
 import "Imu.proto";
+
+message Msg {
+    optional CameraModelMsg cameraModel = 1;
+    optional CameraMsg camera = 2;
+    optional ImageMsg image = 3;
+    optional ImuMsg imu = 4;
+    optional PoseSensorMsg poseSensor = 5;
+
+}

@@ -1,5 +1,12 @@
 package pb;
 
+
+message ImageInfoMsg {
+    optional double exposure = 1;
+    optional double shutterSpeed = 2;
+    optional double gain = 3;
+}
+
 message ImageMsg {
     enum Type {
         GL_BYTE             = 0x1400;
@@ -29,9 +36,4 @@ message ImageMsg {
     optional Format format = 5 [default = GL_RGB];
 }
 
-message ImageInfoMsg {
-    optional double exposure = 1;
-    optional double shutterSpeed = 2;
-    optional double gain = 3;
-}
 
