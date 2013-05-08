@@ -79,10 +79,10 @@ class CameraDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages )
+        bool Capture( pb::CameraMsg Images )
         {
             if( m_pDriver ){
-                return m_pDriver->Capture( vImages );
+                return m_pDriver->Capture( Images );
             }
             std::cerr << "ERROR: no driver initialized!\n";
             return false;

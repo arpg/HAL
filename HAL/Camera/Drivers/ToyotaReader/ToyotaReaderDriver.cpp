@@ -1,10 +1,12 @@
 
 #include "ToyotaReaderDriver.h"
+
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
-#include <opencv.hpp>
 
+//using namespace boost;
 using namespace std;
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
 ToyotaReaderDriver::ToyotaReaderDriver(){}
@@ -24,7 +26,7 @@ ToyotaReaderDriver::~ToyotaReaderDriver() {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Consumer
-bool ToyotaReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages ) {
+bool ToyotaReaderDriver::Capture( pb::CameraMsg& vImages ) {
 
     if( m_qImageBuffer.size() == 0 && !m_bLoop) {
         return false;
@@ -40,14 +42,9 @@ bool ToyotaReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages ) {
     //***************************************************
     // consume from buffer
     //***************************************************
-    // allocate images if necessary
-    if( vImages.size() != m_uNumChannels )
-        vImages.resize( m_uNumChannels );
 
     // now fetch the next set of images from buffer
-    for( unsigned int ii = 0; ii < m_uNumChannels; ++ii ) {
-        vImages[ii].Image = m_qImageBuffer.front()[ii].Image.clone();
-    }
+    vImages = m_qImageBuffer.front();
 
     // remove image from queue
     m_qImageBuffer.pop();
@@ -58,10 +55,7 @@ bool ToyotaReaderDriver::Capture( std::vector<rpg::ImageWrapper>& vImages ) {
 
     // sanity check
     // TODO: fix _Read so that if timestamps differ, then "align" reads
-    if( vImages[0].Map.GetProperty("Timestamp", 0) != vImages[1].Map.GetProperty("Timestamp", 0) ) {
-        std::cerr << "ERROR: discrepancies in timestamps!!!" << std::endl;
-        return false;
-    }
+    // TODO verify that the timestamps match
 
     return true;
 }
@@ -98,6 +92,7 @@ void ToyotaReaderDriver::PrintInfo() {
 bool ToyotaReaderDriver::Init() {
 
     assert(m_pPropertyMap);
+
 
     m_uNumChannels          = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 2 );
     m_uBufferSize           = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
@@ -236,8 +231,7 @@ bool ToyotaReaderDriver::_Read() {
     //*************************************************************************
 
     // now fetch the next set of images
-    std::vector<rpg::ImageWrapper> vImages;
-    vImages.resize( m_uNumChannels );
+    pb::CameraMsg vImages;
 
     for( unsigned int ii = 0; ii < m_uNumChannels; ++ii ) {
         //check if we are not at the end of the file
@@ -255,42 +249,51 @@ bool ToyotaReaderDriver::_Read() {
 
         if( m_vChannels[ii]->is_open() ) {
 
+            cv::Mat         cvImg;
+            pb::ImageMsg*   pbImg = vImages.add_image();
+
             if( ImgFormat == GRAY ) {
-                vImages[ii].Image.create( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
-                m_vChannels[ii]->read( (char*)vImages[ii].Image.data, m_vCamerasInfo[ii]->fsize );
+                cvImg.create( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
+                m_vChannels[ii]->read( (char*)cvImg.data, m_vCamerasInfo[ii]->fsize );
             } else if( ImgFormat == RGB || ImgFormat == BGR ) {
                 cv::Mat ImgColor( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC3 );
                 m_vChannels[ii]->read( (char*)ImgColor.data, m_vCamerasInfo[ii]->fsize );
-                cv::cvtColor( ImgColor, vImages[ii].Image, CV_RGB2GRAY );
+                cv::cvtColor( ImgColor, cvImg, CV_RGB2GRAY );
             } else if( ImgFormat == BAYER || ImgFormat == BAYER_GB ) {
                 cv::Mat ImgBayer( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
                 m_vChannels[ii]->read( (char*)ImgBayer.data, m_vCamerasInfo[ii]->fsize );
-                cv::cvtColor( ImgBayer, vImages[ii].Image, CV_BayerGB2GRAY );
+                cv::cvtColor( ImgBayer, cvImg, CV_BayerGB2GRAY );
             } else if( ImgFormat == BAYER_GR ) {
                 cv::Mat ImgBayer( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
                 m_vChannels[ii]->read( (char*)ImgBayer.data, m_vCamerasInfo[ii]->fsize );
-                cv::cvtColor( ImgBayer, vImages[ii].Image, CV_BayerGR2GRAY );
+                cv::cvtColor( ImgBayer, cvImg, CV_BayerGR2GRAY );
             } else if( ImgFormat == BAYER_BG ) {
                 cv::Mat ImgBayer( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
                 m_vChannels[ii]->read( (char*)ImgBayer.data, m_vCamerasInfo[ii]->fsize );
-                cv::cvtColor( ImgBayer, vImages[ii].Image, CV_BayerBG2GRAY );
+                cv::cvtColor( ImgBayer, cvImg, CV_BayerBG2GRAY );
             } else if( ImgFormat == BAYER_RG ) {
                 cv::Mat ImgBayer( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
                 m_vChannels[ii]->read( (char*)ImgBayer.data, m_vCamerasInfo[ii]->fsize );
-                cv::cvtColor( ImgBayer, vImages[ii].Image, CV_BayerRG2GRAY );
+                cv::cvtColor( ImgBayer, cvImg, CV_BayerRG2GRAY );
             }
 
 
             if( m_bOutputRectified ) {
                 cv::Mat rectImage;
-                cv::remap( vImages[ii].Image, rectImage, m_vCamerasInfo[ii]->RectMapCol, m_vCamerasInfo[ii]->RectMapRow, CV_INTER_LINEAR );
-                vImages[ii].Image = rectImage;
+                cv::remap( cvImg, rectImage, m_vCamerasInfo[ii]->RectMapCol, m_vCamerasInfo[ii]->RectMapRow, CV_INTER_LINEAR );
+                cvImg = rectImage;
             }
+
+            pbImg->set_data( (const char*)cvImg.data );
+            pbImg->set_height( cvImg.rows );
+            pbImg->set_width( cvImg.cols );
+            pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+            pbImg->set_type( pb::ImageMsg_Type_PB_BYTE );
 
             if( m_bReadTimestamps ) {
                 double dTimestamp;
                 m_vTimes[ii]->read( (char*)&dTimestamp, 8 );
-                vImages[ii].Map.SetProperty("Timestamp", dTimestamp );
+                // TODO do something with timestamps
             }
 
         } else {

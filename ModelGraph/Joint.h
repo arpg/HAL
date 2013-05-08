@@ -28,6 +28,9 @@ public:
 class GenericJoint : public Joint
 {
 public:
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+
     GenericJoint(
             const std::string& sName,
             Body* pParentBody,
@@ -37,6 +40,12 @@ public:
             bool useLinear
             )
     {
+        pParentBody->AddChild( this );
+        this->AddChild( pChildBody );
+
+        this->m_pParent = pParentBody;
+        pChildBody->m_pParent = this;
+
         m_sName = sName;
         m_pParentBody = pParentBody;
         m_pChildBody = pChildBody;
@@ -45,11 +54,13 @@ public:
         m_TransformB = TransformB;
     }
 
+    bool UseLinear( void )
+    {
+        return m_bUseLinear;
+    }
+
 private:
     bool m_bUseLinear;
-    Eigen::Vector6d m_TransformA;
-    Eigen::Vector6d m_TransformB;
-
 
 };
 
@@ -68,6 +79,12 @@ public:
             Eigen::Vector3d Axis
             )
     {
+        pParentBody->AddChild( this );
+        this->AddChild( pChildBody );
+
+        this->m_pParent = pParentBody;
+        pChildBody->m_pParent = this;
+
         m_sName = sName;
         m_pParentBody = pParentBody;
         m_pChildBody = pChildBody;
@@ -82,6 +99,12 @@ public:
             Eigen::Vector3d AxisB
             )
     {
+        pParentBody->AddChild( this );
+        this->AddChild( pChildBody );
+
+        this->m_pParent = pParentBody;
+        pChildBody->m_pParent = this;
+
         m_sName = sName;
         m_pParentBody = pParentBody;
         m_pChildBody = pChildBody;
@@ -94,15 +117,17 @@ private:
 
 };
 
-class Slider : public Joint
+class SliderJoint : public Joint
 {
 
 public:
     Eigen::Vector6d m_TransformA;
     Eigen::Vector6d m_TransformB;
+    double LowerLinLimit;
+    double UpperLinLimit;
 
 
-    Slider(
+    SliderJoint(
             const std::string& sName,
             Body* pParentBody,
             Body* pChildBody,
@@ -111,6 +136,16 @@ public:
             bool useLinear
             )
     {
+        pParentBody->AddChild( this );
+        this->AddChild( pChildBody );
+
+        this->m_pParent = pParentBody;
+        pChildBody->m_pParent = this;
+
+        Eigen::Matrix4d pose;
+        pose << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+        SetPose(pose);
+
         m_sName = sName;
         m_pParentBody = pParentBody;
         m_pChildBody = pChildBody;
@@ -124,14 +159,29 @@ public:
         return m_bUseLinear;
     }
 
+    void setLowerLimit(double limit)
+    {
+        LowerLinLimit = limit;
+    }
+
+    void setUpperLimit(double limit)
+    {
+        UpperLinLimit = limit;
+    }
+
 private:
     bool m_bUseLinear;
+
 };
 
 
 class ConeTwist : public Joint
 {
 public:
+    bool m_bUseLinear;
+    Eigen::Vector6d m_TransformA;
+    Eigen::Vector6d m_TransformB;
+
     ConeTwist(
             const std::string& sName,
             Body* pParentBody,
@@ -141,6 +191,12 @@ public:
             bool useLinear
             )
     {
+        pParentBody->AddChild( this );
+        this->AddChild( pChildBody );
+
+        this->m_pParent = pParentBody;
+        pChildBody->m_pParent = this;
+
         m_sName = sName;
         m_pParentBody = pParentBody;
         m_pChildBody = pChildBody;
@@ -149,10 +205,6 @@ public:
         m_TransformB = TransformB;
     }
 
-private:
-    bool m_bUseLinear;
-    Eigen::Vector6d m_TransformA;
-    Eigen::Vector6d m_TransformB;
 };
 
 
