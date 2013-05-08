@@ -16,6 +16,7 @@ class ToyotaReaderDriver : public CameraDriver
                 BAYER_BG, BAYER_GB, BAYER_RG, BAYER_GR, GRAY
     };
 
+
     struct CameraInfo {
         int                 w;              // width in cells
         int                 h;              // height in cells

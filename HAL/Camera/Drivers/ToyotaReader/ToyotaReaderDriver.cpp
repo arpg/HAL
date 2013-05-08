@@ -101,6 +101,7 @@ bool ToyotaReaderDriver::Init() {
 
     assert(m_pPropertyMap);
 
+
     m_uNumChannels          = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 2 );
     m_uBufferSize           = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
     m_uStartFrame           = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );

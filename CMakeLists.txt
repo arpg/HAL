@@ -61,6 +61,8 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACH
 add_subdirectory( Messages ) # the BEST LIBRARY
 add_subdirectory( HAL )
 add_subdirectory( Utils )
+add_subdirectory( LogTools ) # the "BEAVER"
+
 #add_subdirectory( ModelGraph )
 
 #message( STATUS "Got RPG_LIBRARIES ${RPG_LIBRARIES}" )
