@@ -35,7 +35,8 @@ message ImageMsg {
     optional bytes data = 3;
     optional Type type = 4 [default = PB_UNSIGNED_BYTE];
     optional Format format = 5 [default = PB_RGB];
-    optional ImageInfoMsg info = 6;
+    optional double timestamp = 6;
+    optional ImageInfoMsg info = 7;
 }
 
 

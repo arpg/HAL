@@ -12,26 +12,29 @@
 
 #include "FireFlyDriver.h"
 
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
-void SetImageMetaDataFromCamera2(rpg::ImageWrapper& img, dc1394camera_t* pCam)
+void SetImageMetaDataFromCamera2( pb::ImageMsg* img, dc1394camera_t* pCam )
 {
+    pb::ImageInfoMsg* info = img->mutable_info();
+
     // obtain meta data from image
     dc1394error_t e;
     float feature;
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_SHUTTER, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Shutter", feature );
+        info->set_shutter( feature );
     }
 
     e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAIN, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Gain", feature );
+        info->set_gain( feature );
     }
 
 //    e = dc1394_feature_get_absolute_value( pCam, DC1394_FEATURE_GAMMA, &feature );
     if( e == DC1394_SUCCESS ) {
-        img.Map.SetProperty("Gamma", feature );
+        info->set_gamma( feature );
     }
 }
 
@@ -302,33 +305,26 @@ bool FireFlyDriver::Init()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+bool FireFlyDriver::Capture( pb::CameraMsg& vImages )
 {
-
-    // allocate images if necessary
-    if( vImages.size() != m_nNumCams ){
-        vImages.resize( m_nNumCams );
-        // and setup images
-        for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
-            // TODO: this has to change if parameters are changed in the Init (adjust type accordingly)
-            vImages[ii].Image = cv::Mat( m_nImageHeight, m_nImageWidth, CV_8UC1 );
-        }
-    }
-
     //  capture
     dc1394video_frame_t* pFrame;
     dc1394error_t e;
 
+
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
+
+        pb::ImageMsg* pbImg = vImages.add_image();
+
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
-        DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(m_pCam[ii]),"Could not capture a frame");
+        DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]), "Could not capture a frame" );
 
         // Get capture time at ring buffer dequeue
-        vImages[ii].Map.SetProperty("SystemTime", (double)pFrame->timestamp * 1E-6 );
+        vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
 
         // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
-        memcpy( vImages[ii].Image.data, pFrame->image, m_nImageWidth * m_nImageHeight );
-        SetImageMetaDataFromCamera2( vImages[ii], m_pCam[ii] );
+        cv::Mat cvImg( m_nImageHeight, m_nImageWidth, CV_8UC1 );
+        memcpy( cvImg.data, pFrame->image, m_nImageWidth * m_nImageHeight );
 
         if(m_bOutputRectified) {
             cv::Mat Tmp;
@@ -338,9 +334,12 @@ bool FireFlyDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
             cv::Mat Distortion = (cv::Mat_<float>(1,5) <<   m_pCMod[ii]->warped.kappa1, m_pCMod[ii]->warped.kappa2, m_pCMod[ii]->warped.tau1,
                                   m_pCMod[ii]->warped.tau2, m_pCMod[ii]->warped.kappa3);
 
-            cv::undistort( vImages[ii].Image, Tmp, Intrinsics, Distortion );
-            vImages[0].Image = Tmp;
+            cv::undistort( cvImg, Tmp, Intrinsics, Distortion );
+            cvImg = Tmp;
         }
+
+        SetImageMetaDataFromCamera2( pbImg, m_pCam[ii] );
+        pbImg->set_data( cvImg.data, m_nImageHeight * m_nImageWidth );
 
         e = dc1394_capture_enqueue( m_pCam[ii], pFrame );
     }

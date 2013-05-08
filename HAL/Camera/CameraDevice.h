@@ -13,6 +13,8 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/Drivers/CameraDriverRegistery.h>
 
+namespace hal {
+
 // Driver Creation Factory
 extern CameraDriver* CreateCameraDriver( const std::string& sDriverName );
 
@@ -79,9 +81,10 @@ class CameraDevice : public PropertyMap
         }
 
         ///////////////////////////////////////////////////////////////
-        bool Capture( pb::CameraMsg Images )
+        bool Capture( pb::CameraMsg& Images )
         {
             if( m_pDriver ){
+                Images.Clear();
                 return m_pDriver->Capture( Images );
             }
             std::cerr << "ERROR: no driver initialized!\n";
@@ -228,5 +231,7 @@ private:
         std::string             m_sDriverType;
         CameraDriver*           m_pDriver;
 };
+
+}
 
 #endif

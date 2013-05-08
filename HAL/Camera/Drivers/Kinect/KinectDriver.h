@@ -10,6 +10,8 @@
 
 #include <XnCppWrapper.h>
 
+namespace hal {
+
 class KinectDriver : public CameraDriver
 {
     public:
@@ -27,5 +29,7 @@ class KinectDriver : public CameraDriver
         std::vector<xn::ImageGenerator> m_ImageGenerators;
         std::vector<xn::IRGenerator>    m_IRGenerators;
 };
+
+}
 
 #endif

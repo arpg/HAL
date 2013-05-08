@@ -22,6 +22,7 @@
 #ifndef _CAMERA_DRIVER_REGISTERY_H_
 #define _CAMERA_DRIVER_REGISTERY_H_
 
+namespace hal {
 
 void ListCameraDrivers();
 CameraDriver* CreateCameraDriver( const std::string& sDriverName );
@@ -59,5 +60,7 @@ class CameraDriverRegisteryEntry
 //            }
         }
 };
+
+}
 
 #endif

@@ -12,6 +12,8 @@
 // TODO remove this once OpenCV dependency is removed
 #include <opencv.hpp>
 
+namespace hal {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Generic camera driver interface
 class CameraDriver
@@ -39,4 +41,7 @@ class CameraDriver
     protected:
         PropertyMap* m_pPropertyMap; // from parent device that instantiates this driver.
 };
+
+}
+
 #endif

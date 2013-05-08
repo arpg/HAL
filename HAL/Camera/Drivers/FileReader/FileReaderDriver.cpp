@@ -217,6 +217,9 @@ bool FileReaderDriver::_Read()
         if( cvImg.elemSize1() == 1 ) {
             pbImg->set_type( pb::ImageMsg_Type_PB_BYTE );
         }
+        if( cvImg.elemSize1() == 2 ) {
+            pbImg->set_type( pb::ImageMsg_Type_PB_SHORT );
+        }
         if( cvImg.elemSize1() == 4 ) {
             pbImg->set_type( pb::ImageMsg_Type_PB_FLOAT );
         }
