@@ -21,7 +21,7 @@ IMULogDriver::~IMULogDriver()
 {
     // close capture thread
     m_bShouldRun = false;
-    
+
     m_DeviceThread.interrupt();
 
 //    // this is fugly, but we need to wake up the sleeping capture thread somehow
@@ -101,7 +101,7 @@ bool IMULogDriver::Init()
     if( sFileMag.empty() == false ) {
         m_pFileMag.open( sFileMag.c_str() );
         if( m_pFileTime.is_open() == false ) {
-            std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;            
+            std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;
         } else {
             m_bHaveMag = true;
         }
@@ -122,7 +122,7 @@ bool IMULogDriver::Init()
     }
 
     // push timestamp to VD queue
-    VirtualDevice::PushTime( m_dNextTime );
+    hal::VirtualDevice::PushTime( m_dNextTime );
 
     // start capture thread
     m_bShouldRun = true;
@@ -149,7 +149,7 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
     while( pSelf->m_bShouldRun ) {
 
         try{
-            VirtualDevice::WaitForTime(pSelf->m_dNextTime );
+            hal::VirtualDevice::WaitForTime(pSelf->m_dNextTime );
         }catch(boost::thread_interrupted const&) {
             continue;
         }
@@ -167,10 +167,10 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_ACCEL;
             getline ( pSelf->m_pFileAccel, sValue, ',' );
             dataIMU.accel(0) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileAccel, sValue, ',' );
             dataIMU.accel(1) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileAccel, sValue );
             dataIMU.accel(2) = atof( sValue.c_str() );
         }
@@ -181,10 +181,10 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_GYRO;
             getline ( pSelf->m_pFileGyro, sValue, ',' );
             dataIMU.gyro(0) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileGyro, sValue, ',' );
             dataIMU.gyro(1) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileGyro, sValue );
             dataIMU.gyro(2) = atof( sValue.c_str() );
         }
@@ -193,10 +193,10 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
             dataIMU.data_present = dataIMU.data_present | IMU_AHRS_MAG;
             getline ( pSelf->m_pFileMag, sValue, ',' );
             dataIMU.mag(0) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileMag, sValue, ',' );
             dataIMU.mag(1) = atof( sValue.c_str() );
-            
+
             getline ( pSelf->m_pFileMag, sValue );
             dataIMU.mag(2) = atof( sValue.c_str() );
         }
@@ -233,7 +233,7 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         }
 
         // pop front and push next timestamp to queue
-        VirtualDevice::PopAndPushTime( pSelf->m_dNextTime );
+        hal::VirtualDevice::PopAndPushTime( pSelf->m_dNextTime );
     }
 }
 
@@ -253,6 +253,6 @@ inline bool IMULogDriver::_GetNextTime(
     if( m_pFileTime.eof() ) {
         return false;
     }
-    
+
     return true;
 }

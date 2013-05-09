@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Logger.h"
 
 Logger *g_pLoggerInstance = NULL;

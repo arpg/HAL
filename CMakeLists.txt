@@ -61,7 +61,11 @@ set( RPG_LIBRARIES ${MVL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES} CACH
 add_subdirectory( Messages ) # the BEST LIBRARY
 add_subdirectory( HAL )
 add_subdirectory( Utils )
-add_subdirectory( LogTools ) # the "BEAVER"
+
+set( Build_LogTools false CACHE BOOL force )
+if( Build_LogTools )
+    add_subdirectory( LogTools ) # the "BEAVER"
+endif()
 
 #add_subdirectory( ModelGraph )
 

@@ -5,6 +5,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
+namespace hal {
 namespace VirtualDevice {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -59,10 +60,10 @@ void WaitForTime(double nextTime)
     while( NextTime() < nextTime ) {
         CONDVAR.wait( lock );
     }
-    
+
     // TODO: Sleep for appropriate amount of time.
     if(REALTIME) {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1E3/1000.0));        
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1E3/1000.0));
     }
 }
 
@@ -81,10 +82,10 @@ void PushTime( double T )
 void PopAndPushTime( double T )
 {
     boost::mutex::scoped_lock lock(MUTEX);
-    
+
     // Hold up the device at the top of the queue whilst time is 'paused'
     while(IsPaused()) {
-        CONDVAR.wait( lock );        
+        CONDVAR.wait( lock );
     }
 
     // pop top of queue which is what got us the lock in the first place!
@@ -95,7 +96,7 @@ void PopAndPushTime( double T )
     if( T >= 0 ) {
         QUEUE.push( T );
     }
-    
+
     // Signify that event has been queued
     EVENTS_TO_QUEUE--;
 
@@ -123,7 +124,7 @@ void SetRealtime(bool realtime)
 void PauseTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
-    
+
     EVENTS_TO_QUEUE = 0;
 }
 
@@ -135,18 +136,18 @@ void UnpauseTime()
     EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
 
     // notify waiting threads that a change in the QUEUE has occured
-    CONDVAR.notify_all();    
+    CONDVAR.notify_all();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void TogglePauseTime()
 {
     boost::mutex::scoped_lock lock(MUTEX);
-    
+
     if(IsPaused()) {
         // unpause
         EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
-        CONDVAR.notify_all();    
+        CONDVAR.notify_all();
     }else{
         // pause
         EVENTS_TO_QUEUE = 0;
@@ -157,11 +158,12 @@ void TogglePauseTime()
 void StepTime(int numEvents)
 {
     boost::mutex::scoped_lock lock(MUTEX);
-    EVENTS_TO_QUEUE = numEvents;    
-    CONDVAR.notify_all();    
+    EVENTS_TO_QUEUE = numEvents;
+    CONDVAR.notify_all();
 }
 
 
 
 
+}
 }
