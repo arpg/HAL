@@ -1,13 +1,19 @@
 project( LogTools )
 cmake_minimum_required(VERSION 2.8) 
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror -DBOOST_NO_CXX11_NUMERIC_LIMITS")
+
+IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+ENDIF()
+
 # Add to module path, so we can find our cmake modules 
 find_package( Pangolin REQUIRED )
 find_package( SceneGraph REQUIRED )
 
 set( _INCLUDE_DIRS 
-        ${Pangolin_INCLUDE_DIR}
-        ${SceneGraph_INCLUDE_DIR}
+        ${Pangolin_INCLUDE_DIRS}
+        ${SceneGraph_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/..  
         )

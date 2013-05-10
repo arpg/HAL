@@ -12,7 +12,8 @@
 #include <vector>
 #include <pangolin/pangolin.h>
 #include <SceneGraph/SceneGraph.h>
-#include "GLThumbnails.h"
+#include <Widgets/GLWidgetView.h>
+#include "GLThumbnailView.h"
 
 class ViewerGui
 {
@@ -21,10 +22,11 @@ public:
 
     ViewerGui(const std::string  name   = "BEAVER",
               const unsigned int width  = 640,
-              const unsigned int height = 480)
-            : m_sWindowName( name ),
-              m_uWindowWidth( width ),
-              m_uWindowHeight( height ){}
+              const unsigned int height = 480
+             )
+             : m_sWindowName( name ),
+               m_uWindowWidth( width ),
+               m_uWindowHeight( height ){}
 
     void Init( int argc, char** argv );
     void Run();
@@ -36,17 +38,21 @@ private:
 
 private:
 
-
+    // Gui vars
     std::string  m_sWindowName;
     unsigned int m_uWindowWidth;
     unsigned int m_uWindowHeight;
 
-    // GL Objects
-    // TODO
+    // Pangolin views
+    GLWidgetView          m_WidgetView;
+    GLThumbnailView       m_ThumbnailView;
+    SceneGraph::ImageView m_ImageView;
 
-    // Images
-    std::vector< SceneGraph::ImageView > m_vSelectedImages;
-    GLThumbnails                         m_glThumbnails;
+    // SceneGraph GLObjects
+
+    // Widget vars
+    bool m_bCheckBox1;
+    bool m_bCheckBox2;
 
 };
 
@@ -60,7 +66,7 @@ void ViewerGui::Init( int argc, char **argv )
     _RegisterCVars();
 
     // Create OpenGL window in single line thanks to GLUT
-    pangolin::CreateGlutWindowAndBind(m_sWindowName,m_uWindowWidth,m_uWindowHeight );
+    pangolin::CreateGlutWindowAndBind( m_sWindowName, m_uWindowWidth, m_uWindowHeight );
 
     // Add views to window
     // e.g. [pangolin::DisplayBase().AddDisplay( m_View3d );]
@@ -68,6 +74,23 @@ void ViewerGui::Init( int argc, char **argv )
     // Set up SceneGraphs
     SceneGraph::GLSceneGraph::ApplyPreferredGlSettings();
     glClearColor(0.0,0.0,0.0,1.0);
+
+    // Set up Panel
+    m_WidgetView.Init(0, 1, 0, Attach::Pix(200),
+        [&] (nv::GlutUIContext& context,nv::Rect& rect) {
+            context.beginFrame(nv::GroupFlags_GrowDownFromLeft,rect);
+                 context.doCheckButton(nv::Rect(),"Checkbox1:", &m_bCheckBox1);
+                 context.doCheckButton(nv::Rect(),"Checkbox2:", &m_bCheckBox2);
+                 context.beginGroup(nv::GroupFlags_GrowRightFromTop);
+                     context.doLabel(nv::Rect(),"123");
+                     context.doLabel(nv::Rect(),"456");
+                 context.endGroup();
+            context.endFrame();
+        }
+    );
+
+    pangolin::DisplayBase().AddDisplay( m_WidgetView );
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
