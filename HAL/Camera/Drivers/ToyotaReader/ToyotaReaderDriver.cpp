@@ -57,7 +57,7 @@ bool ToyotaReaderDriver::Capture( pb::CameraMsg& vImages ) {
     const unsigned int nNumImgs = vImages.image_size();
 
     double dTime = vImages.image(0).timestamp();
-    for( int ii = 1; ii < nNumImgs; ++ii ) {
+    for( unsigned int ii = 1; ii < nNumImgs; ++ii ) {
         if( dTime != vImages.image(1).timestamp() ) {
             std::cerr << "error: Timestamps do not match!!!" << std::endl;
             return false;

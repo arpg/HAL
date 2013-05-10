@@ -1,0 +1,8 @@
+
+SET( HAL_INCLUDE_DIRS  "@HAL_INCLUDE_DIRS@" CACHE INTERNAL "HAL include directories" FORCE )
+SET( HAL_LIBRARIES  "@HAL_LIBRARIES@" CACHE INTERNAL "HAL libraries" FORCE )
+
+mark_as_advanced( HAL_INCLUDE_DIRS )
+mark_as_advanced( HAL_LIBRARIES )
+
+

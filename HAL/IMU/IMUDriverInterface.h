@@ -7,7 +7,7 @@
 #define _IMU_DRIVER_H_
 
 #include <Eigen/Eigen>
-#include <RPG/Utils/PropertyMap.h>
+#include <HAL/Utils/PropertyMap.h>
 #include <boost/function.hpp>
 
 
