@@ -15,6 +15,7 @@
 #define MAX_DEPTH 10000
 
 using namespace xn;
+using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -185,8 +186,8 @@ bool KinectDriver::Init()
             depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
 
             const int camn = m_DepthGenerators.size();
-            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
-            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
+//            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
+//            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
 
             m_DepthGenerators.push_back(depthGen);
         }
@@ -259,13 +260,14 @@ bool KinectDriver::Init()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+bool KinectDriver::Capture( pb::CameraMsg& vImages )
 {
     XnStatus rc = XN_STATUS_OK;
 
     // Read a new frame
     rc = m_Context.WaitAndUpdateAll();
     const double systemTime = Tic();
+    vImages.set_devicetime( systemTime );
 
     if (rc != XN_STATUS_OK)
     {
@@ -275,50 +277,43 @@ bool KinectDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 
     // prepare return images
     const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
-    if( vImages.size() != nNumImgs )
-    {
-        vImages.resize( nNumImgs );
-
-        int n = 0;
-        for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, m_bForceGreyscale ? CV_8UC1 : CV_8UC3 );
-        }
-        for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
-        }
-        for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
-            vImages[n++].Image = cv::Mat( m_nImgHeight, m_nImgWidth, CV_16UC1 );
-        }
-    }
+    vImages.mutable_image()->Reserve(nNumImgs);
 
     int n = 0;
     for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
-        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
-        vImages[n].Map.SetProperty( "SystemTime", systemTime );
+        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pbImg->set_timestamp( metaData.Timestamp() );
         if(m_bForceGreyscale) {
             static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
+            cv::Mat cvImg;
             memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
-            cvtColor(temp,vImages[n++].Image, CV_RGB2GRAY);
+            cvtColor(temp, cvImg, CV_RGB2GRAY);
+            pbImg->set_data( (const char*)cvImg.data );
         }else{
-            memcpy(vImages[n++].Image.data, metaData.RGB24Data(), metaData.DataSize() );
+            pbImg->mutable_data()->resize( metaData.DataSize() );
+            memcpy((void*)pbImg->mutable_data()->data(), metaData.RGB24Data(), metaData.DataSize() );
         }
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
-        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
-        vImages[n].Map.SetProperty( "SystemTime", systemTime );
-        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
+        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pbImg->set_timestamp( metaData.Timestamp() );
+        pbImg->mutable_data()->resize( metaData.DataSize() );
+        memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
-        vImages[n].Map.SetProperty( "CameraTime", metaData.Timestamp() );
-        vImages[n].Map.SetProperty( "SystemTime", systemTime );
-        memcpy(vImages[n++].Image.data, metaData.Data(), metaData.DataSize() );
+        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pbImg->set_timestamp( metaData.Timestamp() );
+        pbImg->mutable_data()->resize( metaData.DataSize() );
+        memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
     }
+
+
 
     return true;
 }

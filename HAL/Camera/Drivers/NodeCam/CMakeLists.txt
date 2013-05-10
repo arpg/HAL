@@ -11,14 +11,14 @@ set( DRIVER_SOURCES NodeCamDriver.cpp )
 set( DRIVER_HEADERS NodeCamDriver.h )
 add_library( NodeCamDriver ${PROTO_HDRS} ${DRIVER_HEADERS} ${PROTO_SRCS} ${DRIVER_SOURCES} )
 
-# Tell RPG about this library:
+# Tell HAL about this library:
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-add_to_rpg_libraries( NodeCamDriver )
+add_to_hal_libraries( NodeCamDriver )
 
-list( APPEND RPG_LIBRARIES ${ZeroMQ_LIBRARIES} ${PROTOBUF_LIBRARIES} )
-set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
+list( APPEND HAL_LIBRARIES ${ZeroMQ_LIBRARIES} ${PROTOBUF_LIBRARIES} )
+set( HAL_LIBRARIES ${HAL_LIBRARIES} CACHE INTERNAL "" FORCE )
 
-add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_hal_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS NodeCamDriver

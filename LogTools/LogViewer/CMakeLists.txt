@@ -26,7 +26,7 @@ set( _LINK_DIRS
 include_directories( ${_INCLUDE_DIRS} )
 link_directories( ${_LINK_DIRS} )
 
-add_executable( beaver Viewer.cpp )
+add_executable( beaver ViewerGui.h GLThumbnails.h Viewer.cpp )
 
 target_link_libraries( beaver ${Pangolin_LIBRARIES} )
 target_link_libraries( beaver ${SceneGraph_LIBRARIES} )

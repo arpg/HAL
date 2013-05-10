@@ -98,38 +98,75 @@ bool Bumblebee2Driver::Capture( pb::CameraMsg& vImages )
         return false;
     }
 
+    // set timestamp
     vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
+    pbImg1->set_timestamp( (double)pFrame->timestamp * 1E-6 );
+    pbImg2->set_timestamp( (double)pFrame->timestamp * 1E-6 );
 
     // Deinterlace into buffer
     dc1394_deinterlace_stereo( pFrame->image, m_pDeinterlaceBuffer, m_uImageWidth, m_uImageHeight*2 );
 
+
+    const unsigned int nImageWidth = m_uImageWidth / 2;
+    const unsigned int nImageHeight = m_uImageHeight / 2;
+
     if( m_nCvOutputType == CV_8UC3 ) {
+        std::string* pbData1 = pbImg1->mutable_data();
+        pbData1->resize( 3 * nImageWidth * nImageHeight );
+        pbImg1->set_height( nImageHeight );
+        pbImg1->set_width( nImageWidth );
+        pbImg1->set_format( pb::ImageMsg_Format_PB_RGB );
+        pbImg1->set_type( pb::ImageMsg_Type_PB_BYTE );
+        std::string* pbData2 = pbImg2->mutable_data();
+        pbData2->resize( 3 * nImageWidth * nImageHeight );
+        pbImg2->set_height( nImageHeight );
+        pbImg2->set_width( nImageWidth );
+        pbImg2->set_format( pb::ImageMsg_Format_PB_RGB );
+        pbImg2->set_type( pb::ImageMsg_Type_PB_BYTE );
         // Debayer and downsample into RGB image
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer,vImages[0].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
-        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth,vImages[1].Image.data, m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer, (uint8_t*)pbData1->data(), m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
+        dc1394_bayer_decoding_8bit(m_pDeinterlaceBuffer+m_uImageHeight*m_uImageWidth, (uint8_t*)pbData2->data(), m_uImageWidth, m_uImageHeight, DC1394_COLOR_FILTER_GBRG, DC1394_BAYER_METHOD_DOWNSAMPLE );
 
         // TODO: Allow rectification
         assert(m_bOutputRectified == false);
     } else {
         // Debayer and (optionally) rectify each camera
-        for(unsigned int cam=0; cam < 2; ++cam) {
-            unsigned char* imgBayer = m_pDeinterlaceBuffer + cam*m_uImageWidth*m_uImageHeight;
-            unsigned char* imgGrey  = m_bOutputRectified ? m_pDebayerBuffer : vImages[cam].Image.data;
+        std::string* pbData1 = pbImg1->mutable_data();
+        pbData1->resize( nImageWidth * nImageHeight );
+        pbImg1->set_height( nImageHeight );
+        pbImg1->set_width( nImageWidth );
+        pbImg1->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+        pbImg1->set_type( pb::ImageMsg_Type_PB_BYTE );
+        unsigned char* imgBayer = m_pDeinterlaceBuffer;
+        unsigned char* imgGrey  = m_bOutputRectified ? m_pDebayerBuffer : (unsigned char*)pbData1->data();
 
-            // Debayer into Greyscale, half-sampled.
-            _bayer8_to_grey8_half(imgBayer, imgGrey, m_uImageWidth, m_uImageHeight);
+        // Debayer into Greyscale, half-sampled.
+        _bayer8_to_grey8_half(imgBayer, imgGrey, m_uImageWidth, m_uImageHeight);
 
-            if(m_bOutputRectified) {
-                // MVL image wrapper around OpenCV Rectified / Unrectified data
-                mvl_image_t* img = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
-                mvl_image_t* img_rect = mvl_image_alloc( vImages[cam].Image.cols, vImages[cam].Image.rows,  GL_UNSIGNED_BYTE, GL_LUMINANCE, vImages[cam].Image.data );
-                if(cam == 0) {
-                    mvl_rectify( m_pLeftCMod, img, img_rect );
-                }else{
-                    mvl_rectify( m_pRightCMod, img, img_rect );
-                }
-            }
+        if(m_bOutputRectified) {
+            // MVL image wrapper around OpenCV Rectified / Unrectified data
+            mvl_image_t* img = mvl_image_alloc( nImageWidth, nImageHeight,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
+            mvl_image_t* img_rect = mvl_image_alloc( nImageWidth, nImageHeight,  GL_UNSIGNED_BYTE, GL_LUMINANCE, (unsigned char*)pbData1->data() );
+            mvl_rectify( m_pLeftCMod, img, img_rect );
+        }
 
+        std::string* pbData2 = pbImg2->mutable_data();
+        pbData2->resize( nImageWidth * nImageHeight );
+        pbImg2->set_height( nImageHeight );
+        pbImg2->set_width( nImageWidth );
+        pbImg2->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+        pbImg2->set_type( pb::ImageMsg_Type_PB_BYTE );
+        imgBayer = m_pDeinterlaceBuffer + m_uImageWidth*m_uImageHeight;
+        imgGrey  = m_bOutputRectified ? m_pDebayerBuffer : (unsigned char*)pbData2->data();
+
+        // Debayer into Greyscale, half-sampled.
+        _bayer8_to_grey8_half(imgBayer, imgGrey, m_uImageWidth, m_uImageHeight);
+
+        if(m_bOutputRectified) {
+            // MVL image wrapper around OpenCV Rectified / Unrectified data
+            mvl_image_t* img = mvl_image_alloc( nImageWidth, nImageHeight,  GL_UNSIGNED_BYTE, GL_LUMINANCE, imgGrey );
+            mvl_image_t* img_rect = mvl_image_alloc( nImageWidth, nImageHeight,  GL_UNSIGNED_BYTE, GL_LUMINANCE, (unsigned char*)pbData2->data() );
+            mvl_rectify( m_pRightCMod, img, img_rect );
         }
     }
 

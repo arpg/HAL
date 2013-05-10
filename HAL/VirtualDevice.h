@@ -18,7 +18,7 @@
 
 #ifndef VIRTUALDEVICE_H
 #define VIRTUALDEVICE_H
-
+namespace hal {
 namespace VirtualDevice {
 
 void ResetTime();
@@ -54,6 +54,7 @@ void TogglePauseTime();
 /// Allow numEvents events to pass before pausing
 void StepTime(int numEvents);
 
+}
 }
 
 #endif // VIRTUALDEVICE_H

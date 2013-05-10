@@ -3,6 +3,8 @@
 
 #include "HAL/Camera/Drivers/DriverList.h"
 
+namespace hal {
+
 void ListCameraDrivers()
 {
     std::map<std::string,CameraDriver*(*)()>::iterator it;
@@ -27,4 +29,6 @@ CameraDriver* CreateCameraDriver( const std::string& sDriverName )
         std::cerr << "\t" << it->first << std::endl;
     }
     return NULL;
+}
+
 }

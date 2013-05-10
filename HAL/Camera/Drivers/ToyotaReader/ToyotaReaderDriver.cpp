@@ -4,7 +4,6 @@
 #include <Mvlpp/Utils.h>  // for FindFiles and PrintError
 #include <boost/format.hpp>
 
-//using namespace boost;
 using namespace std;
 using namespace hal;
 
@@ -55,7 +54,16 @@ bool ToyotaReaderDriver::Capture( pb::CameraMsg& vImages ) {
 
     // sanity check
     // TODO: fix _Read so that if timestamps differ, then "align" reads
-    // TODO verify that the timestamps match
+    const unsigned int nNumImgs = vImages.image_size();
+
+    double dTime = vImages.image(0).timestamp();
+    for( int ii = 1; ii < nNumImgs; ++ii ) {
+        if( dTime != vImages.image(1).timestamp() ) {
+            std::cerr << "error: Timestamps do not match!!!" << std::endl;
+            return false;
+        }
+    }
+
 
     return true;
 }
@@ -293,7 +301,7 @@ bool ToyotaReaderDriver::_Read() {
             if( m_bReadTimestamps ) {
                 double dTimestamp;
                 m_vTimes[ii]->read( (char*)&dTimestamp, 8 );
-                // TODO do something with timestamps
+                pbImg->set_timestamp( dTimestamp );
             }
 
         } else {

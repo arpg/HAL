@@ -12,6 +12,8 @@
 
 #include "HAL/Camera/CameraDriverInterface.h"
 
+namespace hal {
+
 class FireFlyDriver : public CameraDriver
 {
     public:
@@ -34,5 +36,7 @@ class FireFlyDriver : public CameraDriver
         bool                        m_bOutputRectified;
 
 };
+
+}
 
 #endif
