@@ -20,13 +20,13 @@ class ViewerGui
     
 public:
 
-    ViewerGui(const std::string  name   = "BEAVER",
-              const unsigned int width  = 640,
-              const unsigned int height = 480
+    ViewerGui(const std::string  sName   = "BEAVER",
+              const unsigned int nWidth  = 640,
+              const unsigned int nHeight = 480
              )
-             : m_sWindowName( name ),
-               m_uWindowWidth( width ),
-               m_uWindowHeight( height ){}
+             : m_sWindowName( sName ),
+               m_nWindowWidth( nWidth ),
+               m_nWindowHeight( nHeight ){}
 
     void Init( int argc, char** argv );
     void Run();
@@ -40,8 +40,8 @@ private:
 
     // Gui vars
     std::string  m_sWindowName;
-    unsigned int m_uWindowWidth;
-    unsigned int m_uWindowHeight;
+    unsigned int m_nWindowWidth;
+    unsigned int m_nWindowHeight;
 
     // Pangolin views
     GLWidgetView          m_WidgetView;
@@ -66,7 +66,9 @@ void ViewerGui::Init( int argc, char **argv )
     _RegisterCVars();
 
     // Create OpenGL window in single line thanks to GLUT
-    pangolin::CreateGlutWindowAndBind( m_sWindowName, m_uWindowWidth, m_uWindowHeight );
+    pangolin::CreateGlutWindowAndBind( m_sWindowName,
+                                       m_nWindowWidth,
+                                       m_nWindowHeight );
 
     // Add views to window
     // e.g. [pangolin::DisplayBase().AddDisplay( m_View3d );]
