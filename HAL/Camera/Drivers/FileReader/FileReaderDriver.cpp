@@ -5,6 +5,7 @@
 #include <boost/format.hpp>
 
 #include <HAL/VirtualDevice.h>
+//#include <Messages/Image.h>
 
 using namespace std;
 using namespace hal;
@@ -147,6 +148,8 @@ bool FileReaderDriver::Init()
     }
 
     // fill buffer
+    m_nHead = m_nTail = 0;
+    m_vBuffer.resize( m_nBufferSize );
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {	_Read(); }
 
     // push timestamp of first image into the Virtual Device Queue
@@ -205,10 +208,12 @@ bool FileReaderDriver::_Read()
     std::string sFileName;
 
     pb::CameraMsg vImages;
-    for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
+    for( unsigned int ii = 0; ii < m_nNumChannels; ++ii ) {
         pb::ImageMsg* pbImg = vImages.add_image();
         sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-        cv::Mat cvImg = cv::imread( sFileName, m_iCvImageReadFlags );
+        cv::Mat cvImg = _ReadFile( sFileName, m_iCvImageReadFlags );
+
+//        pb::ReadCvMat( cvImg, pbImg );
         pbImg->set_data( (const char*)cvImg.data );
         pbImg->set_height( cvImg.rows );
         pbImg->set_width( cvImg.cols );
@@ -245,11 +250,69 @@ bool FileReaderDriver::_Read()
     return true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+inline cv::Mat FileReaderDriver::_ReadFile(
+        const std::string&              sImageFileName,
+        int                             nFlags
+        )
+{
+    std::string sExtension = sImageFileName.substr( sImageFileName.rfind( "." ) + 1 );
+
+    // check if it is our own "portable depth map" format
+    if( sExtension == "pdm" ) {
+        return _ReadPDM( sImageFileName );
+    } else {
+        // ... otherwise let OpenCV open it
+        return cv::imread( sImageFileName, nFlags );
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+inline cv::Mat FileReaderDriver::_ReadPDM(
+        const std::string&              FileName
+        )
+{
+    // magic number P7, portable depthmap, binary
+    std::ifstream File( FileName.c_str() );
+
+    unsigned int        nImgWidth;
+    unsigned int        nImgHeight;
+    long unsigned int   nImgSize;
+
+    cv::Mat DepthImg;
+
+    if( File.is_open() ) {
+        std::string sType;
+        File >> sType;
+        File >> nImgWidth;
+        File >> nImgHeight;
+        File >> nImgSize;
+
+        // the actual PGM/PPM expects this as the next field:
+        //		nImgSize++;
+        //		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
+
+        // but ours has the actual size (4 bytes of float * pixels):
+        nImgSize = 4 * nImgWidth * nImgHeight;
+
+        DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
+
+        File.seekg( File.tellg() + (std::ifstream::pos_type)1, std::ios::beg );
+        File.read( (char*)DepthImg.data, nImgSize );
+        File.close();
+    }
+    return DepthImg;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 double FileReaderDriver::_GetNextTime()
 {
     if( m_qImageBuffer.size() == 0 ) {
         return -1;
     }
+    return 0;
 //    return m_qImageBuffer.front()[0].Map.GetProperty<double>( m_sTimeKeeper, 0 );
 }

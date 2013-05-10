@@ -4,7 +4,7 @@
 #include <opencv2/imgproc/types_c.h>
 #include "opencv2/highgui/highgui.hpp"	// for cap
 
-#include <RPG/Utils/TicToc.h>
+#include <HAL/Utils/TicToc.h>
 
 using namespace cv;
 using namespace hal;

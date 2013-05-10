@@ -16,6 +16,12 @@ find_package( Eigen3 REQUIRED )
 find_package( Protobuf REQUIRED )
 find_package( Sophus REQUIRED )
 
+
+find_package( OpenCV2 QUIET )
+if( OpenCV2_FOUND )
+    add_definitions( -DHAVE_OPENCV )
+endif()
+
 set( _PROTO_SRCS
     Messages.proto
     Camera.proto
@@ -42,23 +48,23 @@ set( PBMSGS_INCLUDE_DIRS ${_INCLUDE_DIRS}  CACHE INTERNAL "" FORCE )
 
 set( SRCS
     ${PROTO_SRCS}
-    Logger.h
+    Logger.cpp
    )
 
 set( HDRS
     ${PROTO_HDRS}
-    Logger.cpp;
+    Logger.h
+    Image.h
     Matrix.h
     Pose.h
    )
 
 
 add_library( PbMsgs ${SRCS} ${HDRS} )
-list( APPEND RPG_LIBRARIES ${PROTOBUF_LIBRARIES} )
-add_to_rpg_libraries( PbMsgs )
 
 get_target_property( _LIBRARY PbMsgs LOCATION )
-list( INSERT PBMSGS_LIBRARIES 0 ${_LIBRARY} )
+set( PBMSGS_LIBRARIES ${_LIBRARY} ${PROTOBUF_LIBRARIES} CACHE INTERNAL "" FORCE )
+
 
 # Create the *Config.cmake file for the build tree.
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/PbMsgsConfig.cmake.in

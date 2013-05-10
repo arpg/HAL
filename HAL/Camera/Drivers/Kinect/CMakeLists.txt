@@ -9,15 +9,15 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_library( KinectDriver ${KINECT_DRIVER_SOURCES} ${KINECT_DRIVER_HEADERS} )
 
-# 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${OPENNI_INCLUDE_DIRS} )
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_to_rpg_libraries( KinectDriver )
+# 2) Tell HAL about this library:
+add_to_hal_include_dirs( ${OPENNI_INCLUDE_DIRS} )
+add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
+add_to_hal_libraries( KinectDriver )
 
-list( APPEND RPG_LIBRARIES ${OPENNI_LIBRARY} )
-set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
+list( APPEND HAL_LIBRARIES ${OPENNI_LIBRARY} )
+set( HAL_LIBRARIES ${HAL_LIBRARIES} CACHE INTERNAL "" FORCE )
 
-add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_hal_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS KinectDriver

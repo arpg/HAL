@@ -8,10 +8,10 @@
 #ifndef _CAMERA_DEVICE_H_
 #define _CAMERA_DEVICE_H_
 
-#include <RPG/Utils/GetPot>
-#include <RPG/Utils/PropertyMap.h>		// so a CameraDevice can have generic "properties"
+#include <HAL/Utils/GetPot>
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/Drivers/CameraDriverRegistery.h>
+#include <Messages/Image.h>
 
 namespace hal {
 
@@ -90,6 +90,15 @@ class CameraDevice : public PropertyMap
             std::cerr << "ERROR: no driver initialized!\n";
             return false;
         }
+
+        ///////////////////////////////////////////////////////////////
+        bool Capture( pb::ImageArray& Images )
+        {
+            const bool ret = Capture( Images.ref() );
+            Images.SelfUpdate();
+            return ret;
+        }
+
 
 
 private:
