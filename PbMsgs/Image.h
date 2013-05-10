@@ -2,7 +2,7 @@
 #define IMAGE_H
 
 #include <Eigen/Eigen>
-#include <Messages/Messages.pb.h>
+#include <PbMsgs/Messages.pb.h>
 
 #define HAVE_OPENCV
 #ifdef HAVE_OPENCV
@@ -142,12 +142,12 @@ public:
     void SelfUpdate()
     {
         if( m_vImages.size() == 0 ) {
-            for( int ii = 0; ii < numImages(); ++ii ) {
+            for( unsigned int ii = 0; ii < numImages(); ++ii ) {
                 m_vImages.push_back( new Image() );
             }
         }
 
-        for( int ii = 0; ii < numImages(); ++ii ) {
+        for( unsigned int ii = 0; ii < numImages(); ++ii ) {
             m_vImages[ii]->_UpdatePointer( m_Message.mutable_image(ii) );
         }
     }

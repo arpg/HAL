@@ -109,4 +109,4 @@ endif()
 add_library( CameraDriverRegistery CameraDriverRegistery.cpp DriverList.h )
 
 # Build the camera driver registery library
-add_to_rpg_libraries( CameraDriverRegistery )
+add_to_hal_libraries( CameraDriverRegistery )

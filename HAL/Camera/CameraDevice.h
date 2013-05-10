@@ -11,7 +11,7 @@
 #include <HAL/Utils/GetPot>
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/Drivers/CameraDriverRegistery.h>
-#include <Messages/Image.h>
+#include <PbMsgs/Image.h>
 
 namespace hal {
 

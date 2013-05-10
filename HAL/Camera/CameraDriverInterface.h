@@ -6,8 +6,7 @@
 #ifndef _CAMERA_DRIVER_H_
 #define _CAMERA_DRIVER_H_
 
-#include <Messages/Image.h>
-#include <Messages/Camera.pb.h>
+#include <PbMsgs/Camera.pb.h>
 #include <HAL/Utils/PropertyMap.h>
 
 // TODO remove this once OpenCV dependency is removed
@@ -21,7 +20,6 @@ class CameraDriver
 {
     public:
         // Pure virtual functions driver writers must implement:
-        virtual bool Capture( pb::ImageArray& vImages ) = 0;
         virtual bool Capture( pb::CameraMsg& vImages ) = 0;
         virtual void PrintInfo() = 0;
         virtual bool Init() = 0;

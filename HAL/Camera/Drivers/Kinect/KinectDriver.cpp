@@ -9,7 +9,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <RPG/Utils/TicToc.h>
+#include <HAL/Utils/TicToc.h>
 
 
 #define MAX_DEPTH 10000
