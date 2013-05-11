@@ -8,10 +8,11 @@
 #ifndef _CAMERA_DEVICE_H_
 #define _CAMERA_DEVICE_H_
 
+#include <PbMsgs/Image.h>
+
 #include <HAL/Utils/GetPot>
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/Drivers/CameraDriverRegistery.h>
-#include <PbMsgs/Image.h>
 
 namespace hal {
 
@@ -191,6 +192,13 @@ private:
 
             //--- CAMERA ID
             SetProperty( "CamId",           clArgs.follow( 0, "-camid" ) );
+
+
+            //--- KINECT
+            SetProperty( "GetRGB",          !clArgs.search( "-no-rgb" ) );
+            SetProperty( "GetDepth",        !clArgs.search( "-no-depth" ) );
+            SetProperty( "GetIr",           clArgs.search( "-with-ir" ) );
+            SetProperty( "AlignDepth",      clArgs.search( "-align-depth" ) );
 
 
             //--- FILE CONTROLS
