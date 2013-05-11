@@ -46,7 +46,9 @@ void KinectDriver::PrintInfo() {
     std::cout <<
     "\nKINECT\n"
     "--------------------------------\n"
-    "Uses OpenNI to open all available depth cameras connected."
+    "Uses OpenNI to open all available depth cameras connected. If more than 1 camera is connected, it returns images in the\n"
+    "following order:\n"
+    "\t\tRGB1, RGB2, Depth1, Depth2, IR1, IR2"
     "\n\n"
     "Options:\n"
     "   -fps            <framerate> [default 30]\n"
@@ -277,43 +279,61 @@ bool KinectDriver::Capture( pb::CameraMsg& vImages )
 
     // prepare return images
     const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
+    std::cout << "HERE2" << std::endl;
     vImages.mutable_image()->Reserve(nNumImgs);
+    std::cout << "HERE3" << std::endl;
 
     int n = 0;
     for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
+        std::cout << "HERE4" << std::endl;
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
         pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        std::cout << "HERE5" << std::endl;
         pbImg->set_timestamp( metaData.Timestamp() );
+        std::cout << "HERE5a" << std::endl;
+        pbImg->set_width( m_nImgWidth );
+        pbImg->set_height( m_nImgHeight );
+        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_BYTE);
+        std::cout << "HERE6" << std::endl;
         if(m_bForceGreyscale) {
             static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
             cv::Mat cvImg;
             memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
             cvtColor(temp, cvImg, CV_RGB2GRAY);
-            pbImg->set_data( (const char*)cvImg.data );
+            pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth );
+            pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
         }else{
             pbImg->mutable_data()->resize( metaData.DataSize() );
             memcpy((void*)pbImg->mutable_data()->data(), metaData.RGB24Data(), metaData.DataSize() );
+            pbImg->set_format(pb::ImageMsg_Format_PB_RGB);
         }
     }
+    std::cout << "HERE" << std::endl;
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
         pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pbImg->set_width( m_nImgWidth );
+        pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->mutable_data()->resize( metaData.DataSize() );
         memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
+        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_SHORT);
+        pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
         pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pbImg->set_width( m_nImgWidth );
+        pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->mutable_data()->resize( metaData.DataSize() );
         memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
+        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_BYTE);
+        pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
     }
-
-
 
     return true;
 }

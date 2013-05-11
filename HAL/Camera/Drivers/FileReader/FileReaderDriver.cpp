@@ -5,7 +5,6 @@
 #include <boost/format.hpp>
 
 #include <HAL/VirtualDevice.h>
-//#include <Messages/Image.h>
 
 using namespace std;
 using namespace hal;
@@ -214,7 +213,6 @@ bool FileReaderDriver::_Read()
         cv::Mat cvImg = _ReadFile( sFileName, m_iCvImageReadFlags );
 
 //        pb::ReadCvMat( cvImg, pbImg );
-        pbImg->set_data( (const char*)cvImg.data );
         pbImg->set_height( cvImg.rows );
         pbImg->set_width( cvImg.cols );
 
@@ -235,6 +233,7 @@ bool FileReaderDriver::_Read()
         if( cvImg.channels() == 3 ) {
             pbImg->set_format( pb::ImageMsg_Format_PB_RGB );
         }
+        pbImg->set_data( (const char*)cvImg.data, cvImg.rows * cvImg.cols * cvImg.elemSize1() );
     }
 
     m_nCurrentImageIndex++;
