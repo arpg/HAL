@@ -62,7 +62,7 @@ void KinectDriver::PrintInfo() {
     "   -align-depth    If the depth map should be aligned to the RGB image.\n"
     "\n"
     "Notes:\n"
-    "   Infrared and depth images cannot be captured at the same time.\n"
+    "   Infrared images cannot be captured along other images.\n"
     "   It is not possible to capture full res at 60FPS; the resolution must be QVGA.\n"
     "\n"
     "Examples:\n"
@@ -182,12 +182,12 @@ bool KinectDriver::Init()
             depthGen.GetRealProperty( "ZPPS", pixelSize );  // in mm
 
             // focal length in pixels
-            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
+//            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
 
             XnDouble dBaselineRGBDepth;
             depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
 
-            const int camn = m_DepthGenerators.size();
+//            const int camn = m_DepthGenerators.size();
 //            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
 //            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
 
@@ -278,28 +278,20 @@ bool KinectDriver::Capture( pb::CameraMsg& vImages )
     }
 
     // prepare return images
-    const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
-    std::cout << "HERE2" << std::endl;
-    vImages.mutable_image()->Reserve(nNumImgs);
-    std::cout << "HERE3" << std::endl;
+//    const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
 
-    int n = 0;
     for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
-        std::cout << "HERE4" << std::endl;
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
-        std::cout << "HERE5" << std::endl;
+        pb::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_timestamp( metaData.Timestamp() );
-        std::cout << "HERE5a" << std::endl;
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_BYTE);
-        std::cout << "HERE6" << std::endl;
         if(m_bForceGreyscale) {
             static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
-            cv::Mat cvImg;
             memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
+            cv::Mat cvImg;
             cvtColor(temp, cvImg, CV_RGB2GRAY);
             pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth );
             pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
@@ -309,11 +301,10 @@ bool KinectDriver::Capture( pb::CameraMsg& vImages )
             pbImg->set_format(pb::ImageMsg_Format_PB_RGB);
         }
     }
-    std::cout << "HERE" << std::endl;
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pb::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
@@ -325,7 +316,7 @@ bool KinectDriver::Capture( pb::CameraMsg& vImages )
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.mutable_image(n++);
+        pb::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
