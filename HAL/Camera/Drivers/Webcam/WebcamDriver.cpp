@@ -1,8 +1,7 @@
 
 #include "WebcamDriver.h"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgproc/types_c.h>
-#include "opencv2/highgui/highgui.hpp"	// for cap
+
+#include <opencv.hpp>
 
 #include <HAL/Utils/TicToc.h>
 

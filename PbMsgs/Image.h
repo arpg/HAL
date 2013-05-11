@@ -135,7 +135,7 @@ public:
         if( idx < numImages() ) {
             return *(m_vImages[idx]);
         }
-        std::cerr << "warning: Image index out of bounds." << std::endl;
+        std::cerr << "error: Image index out of bounds." << std::endl;
         exit(1);
     }
 
