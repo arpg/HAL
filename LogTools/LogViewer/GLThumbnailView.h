@@ -14,9 +14,9 @@ public:
 
 private:
     
-    unsigned int m_uWindowSize;
-    unsigned int m_uThumbWidth;
-    unsigned int m_uThumbHeight;
+    unsigned int m_nWindowSize;
+    unsigned int m_nThumbWidth;
+    unsigned int m_nThumbHeight;
 };
 
 /////////////////////////////////////////////////////////////////////////////

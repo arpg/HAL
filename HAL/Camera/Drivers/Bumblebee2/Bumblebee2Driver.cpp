@@ -319,7 +319,7 @@ bool Bumblebee2Driver::Init()
     printf("Stride: %d\n", pFrame->stride );
     printf("Total Bytes: %llu\n", pFrame->total_bytes );
     printf("------------------------\n");
-    /* */
+    */
 
     // release the frame
     e = dc1394_capture_enqueue( m_pCam, pFrame );

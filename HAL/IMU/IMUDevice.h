@@ -8,9 +8,9 @@
 #ifndef _IMU_DEVICE_H_
 #define _IMU_DEVICE_H_
 
-#include <RPG/Utils/PropertyMap.h>
-#include <RPG/Devices/IMU/IMUDriverInterface.h>
-#include <RPG/Devices/IMU/Drivers/IMUDriverRegistery.h>
+#include <HAL/Utils/PropertyMap.h>
+#include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/IMU/Drivers/IMUDriverRegistery.h>
 
 // Driver Creation Factory
 extern IMUDriver* CreateIMUDriver( const std::string& sDriverName );
