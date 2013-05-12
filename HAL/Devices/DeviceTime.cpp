@@ -1,4 +1,4 @@
-#include "VirtualDevice.h"
+#include "DeviceTime.h"
 
 #include <exception>
 #include <queue>
@@ -6,7 +6,7 @@
 #include <boost/thread/condition.hpp>
 
 namespace hal {
-namespace VirtualDevice {
+namespace DeviceTime {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Queue of Virtual Devices

@@ -83,26 +83,21 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 add_library( slava ${SLAVA_FILES} )
 
-add_to_rpg_libraries( slava )
+add_to_hal_libraries( slava )
 
 if(APPLE)
         file( COPY SDK/libfrmgrab/macosx/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
         list( INSERT RPG_LIBRARIES 0 "-framework Carbon" )
-        #add_to_rpg_libraries( "-framework Carbon" )
+        #add_to_hal_libraries( "-framework Carbon" )
 else()
         file( COPY SDK/libfrmgrab/linux/x86_64/libfrmgrab.a DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 endif(APPLE)
 
 add_custom_target( frmgrab )
 set_property( TARGET frmgrab PROPERTY LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libfrmgrab.a )
-add_to_rpg_libraries( frmgrab )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR}/includes )
-add_to_rpg_libraries( Dvi2PciDriver )
-add_to_rpg_libraries( v2u )
-add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_hal_libraries( frmgrab Dvi2PciDriver v2u)
 
 # 3) And make sure we are able to install it correctly:
 install( FILES frmgrab DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

@@ -1,15 +1,14 @@
 # 1) Build the library
-set( FILEREADER_DRIVER_SOURCES FileReaderDriver.cpp ReadImage.cpp DirUtils.cpp)
-set( FILEREADER_DRIVER_HEADERS FileReaderDriver.h ReadImage.h DirUtils.h)
+set( DEVICES_SOURCES DeviceTime.cpp)
+set( DEVICES_HEADERS DeviceTime.h DeviceFactory.h DeviceRegistry.h )
 
-add_library( FileReaderDriver ${FILEREADER_DRIVER_SOURCES} ${FILEREADER_DRIVER_HEADERS} )
+add_library( Devices ${DEVICES_SOURCES} ${DEVICES_HEADERS} )
 
 # 2) Tell HAL about this library:
-add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_to_hal_libraries( FileReaderDriver )
+add_to_hal_libraries( Devices )
 
 # 3) And make sure we are able to install it correctly:
-install( TARGETS FileReaderDriver
+install( TARGETS Devices
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
   LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
   ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib

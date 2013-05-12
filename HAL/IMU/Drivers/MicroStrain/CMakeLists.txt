@@ -15,7 +15,6 @@ add_library( MicroStrainDriver ${MICROSTRAIN_DRIVER_SOURCES} ${MICROSTRAIN_DRIVE
 # 2) Tell HAL about this library:
 add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_hal_libraries( MicroStrainDriver )
-add_to_hal_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS MicroStrainDriver

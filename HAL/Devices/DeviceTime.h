@@ -16,10 +16,10 @@
  *
  */
 
-#ifndef VIRTUALDEVICE_H
-#define VIRTUALDEVICE_H
+#pragma once
+
 namespace hal {
-namespace VirtualDevice {
+namespace DeviceTime {
 
 void ResetTime();
 
@@ -56,5 +56,3 @@ void StepTime(int numEvents);
 
 }
 }
-
-#endif // VIRTUALDEVICE_H

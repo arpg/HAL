@@ -1,15 +1,7 @@
-/*
-    \file Defines the interface all IMU drivers must honor.
-*/
-
-
-#ifndef _IMU_DRIVER_H_
-#define _IMU_DRIVER_H_
+#pragma once
 
 #include <Eigen/Eigen>
-#include <HAL/Utils/PropertyMap.h>
 #include <boost/function.hpp>
-
 
 namespace Eigen
 {
@@ -65,26 +57,12 @@ typedef boost::function<void (const GPSData&)> GPSDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU driver interface
-class IMUDriver
+class IMUDriverInterface
 {
     public:
         // Pure virtual functions driver writers must implement:
-        virtual ~IMUDriver() {}
-        virtual bool Init() = 0;
+        virtual ~IMUDriverInterface() {}
         virtual void RegisterDataCallback(IMUDriverDataCallback callback) = 0;
         virtual void RegisterDataCallback(GPSDriverDataCallback callback) = 0;
-
-        IMUDriver()
-        {
-            m_pPropertyMap = NULL;
-        }
-
-        // Called by IMUDevice::InitDriver
-        void SetPropertyMap( PropertyMap* pMap )
-        {
-            m_pPropertyMap = pMap;
-        }
-    protected:
-        PropertyMap* m_pPropertyMap; // from parent device that instantiates this driver.
 };
-#endif
+

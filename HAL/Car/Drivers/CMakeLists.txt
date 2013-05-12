@@ -5,4 +5,4 @@ add_subdirectory( SimulatedCarDriver )
 add_library( CarDriverRegistery CarDriverRegistery.cpp DriverList.h )
 
 # Build the car driver registery library
-add_to_rpg_libraries( CarDriverRegistery )
+add_to_hal_libraries( CarDriverRegistery )

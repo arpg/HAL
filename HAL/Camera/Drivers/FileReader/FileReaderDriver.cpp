@@ -1,16 +1,18 @@
 
 #include "FileReaderDriver.h"
 
-#include <Mvlpp/Utils.h>  // for FindFiles and PrintError
-#include <boost/format.hpp>
+#include <HAL/Devices/DeviceTime.h>
+#include <HAL/Camera/CameraException.h>
 
-#include <HAL/VirtualDevice.h>
+#include <opencv2/opencv.hpp>
+
+#include "ReadImage.h"
+#include "DirUtils.h"
 
 using namespace std;
-using namespace hal;
 
-///////////////////////////////////////////////////////////////////////////////
-FileReaderDriver::FileReaderDriver(){}
+namespace hal
+{
 
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
@@ -36,7 +38,7 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
         m_cBufferEmpty.wait(lock);
     }
 
-    VirtualDevice::WaitForTime( _GetNextTime() );
+    DeviceTime::WaitForTime( _GetNextTime() );
 
     //***************************************************
     // consume from buffer
@@ -53,69 +55,59 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
     m_cBufferFull.notify_one();
 
     // push next timestamp to queue now that we popped from the buffer
-    VirtualDevice::PopAndPushTime( _GetNextTime() );
+    DeviceTime::PopAndPushTime( _GetNextTime() );
 
     return true;
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-void FileReaderDriver::PrintInfo() {
+/////////////////////////////////////////////////////////////////////////////////
+//void FileReaderDriver::PrintInfo() {
 
-    std::cout <<
-    "\nFILEREADER\n"
-    "--------------------------------\n"
-    "Reads images from the disk."
-    "\n\n"
-    "Options:\n"
-    "   -sdir           <source directory for images and camera model files> [default '.']\n"
-    "   -chanN          <regular expression for channel N>\n"
-    "   -sf             <start frame> [default 0]\n"
-    "   -buffsize       <size of buffer for image pre-read> [default 35]\n"
-    "   -timekeeper     <name of variable holding image timestamps> [default 'SystemTime']\n"
-    "\n"
-    "Note:\n"
-    "   -lfile & -rfile can be used as aliases to Channel-0 & Channel-1.\n"
-    "\n"
-    "Flags:\n"
-    "   -greyscale      If the driver should return images in greyscale.\n"
-    "   -loop           If the driver should restart once images are consumed.\n"
-    "\n"
-    "Examples:\n"
-    "./Exec  -idev FileReader  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n"
-    "./Exec  -idev FileReader  -chan0 \"left.*pgm\"  -chan1 \"right.*pgm\"   -chan2 \"depth.*pdm\"\n\n";
-}
+//    std::cout <<
+//    "\nFILEREADER\n"
+//    "--------------------------------\n"
+//    "Reads images from the disk."
+//    "\n\n"
+//    "Options:\n"
+//    "   -sdir           <source directory for images and camera model files> [default '.']\n"
+//    "   -chanN          <regular expression for channel N>\n"
+//    "   -sf             <start frame> [default 0]\n"
+//    "   -buffsize       <size of buffer for image pre-read> [default 35]\n"
+//    "   -timekeeper     <name of variable holding image timestamps> [default 'SystemTime']\n"
+//    "\n"
+//    "Note:\n"
+//    "   -lfile & -rfile can be used as aliases to Channel-0 & Channel-1.\n"
+//    "\n"
+//    "Flags:\n"
+//    "   -greyscale      If the driver should return images in greyscale.\n"
+//    "   -loop           If the driver should restart once images are consumed.\n"
+//    "\n"
+//    "Examples:\n"
+//    "./Exec  -idev FileReader  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n"
+//    "./Exec  -idev FileReader  -chan0 \"left.*pgm\"  -chan1 \"right.*pgm\"   -chan2 \"depth.*pdm\"\n\n";
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
-bool FileReaderDriver::Init()
+FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame, bool Loop, size_t BufferSize, int cvFlags)
+    : m_nNumChannels(ChannelRegex.size()),
+      m_nStartFrame(StartFrame),
+      m_nCurrentImageIndex(StartFrame),
+      m_bLoop(Loop),
+      m_nBufferSize(BufferSize),
+      m_iCvImageReadFlags(cvFlags)
 {
     // clear variables if previously initialized
     m_vFileList.clear();
-
-
-    m_nBufferSize        = m_pPropertyMap->GetProperty<unsigned int>( "BufferSize", 35 );
-    m_nStartFrame        = m_pPropertyMap->GetProperty<unsigned int>( "StartFrame",  0 );
-    m_bLoop              = m_pPropertyMap->GetProperty<bool>( "Loop",  false );
-    m_nCurrentImageIndex = m_nStartFrame;
-    m_iCvImageReadFlags  = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false )
-            ? cv::IMREAD_GRAYSCALE : cv::IMREAD_UNCHANGED;
-    m_sTimeKeeper = m_pPropertyMap->GetProperty<std::string>( "TimeKeeper",  "SystemTime" );
-
-    m_nNumChannels       = m_pPropertyMap->GetProperty<unsigned int>( "NumChannels", 0 );
-
+    
     if(m_nNumChannels < 1) {
-        mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
-        return false;
+        throw VideoException( "ERROR: No channels specified." );
     }
 
     m_vFileList.resize( m_nNumChannels );
 
-    // Get data path
-    std::string sChannelPath = m_pPropertyMap->GetProperty( "DataSourceDir", "");
-
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        std::string sChannelName  = (boost::format("Channel-%d")%ii).str();
-        std::string sChannelRegex = m_pPropertyMap->GetProperty( sChannelName, "");
+        std::string sChannelRegex = ChannelRegex[ii];
 
         // Split channel regex into directory and file components
         size_t pos = sChannelRegex.rfind("/");
@@ -130,10 +122,8 @@ bool FileReaderDriver::Init()
         // Now generate the list of files for each channel
         std::vector< std::string >& vFiles = m_vFileList[ii];
 
-        if(mvl::FindFiles(sChannelPath + "/" + sSubDirectory, sChannelRegex, vFiles) == false){
-        //if( mvl::FindFiles( sChannelRegex, vFiles ) == false ) {
-            mvl::PrintError( "ERROR: No files found from regexp\n" );
-            return false;
+        if(hal::FindFiles(sSubDirectory, sChannelRegex, vFiles) == false){
+            throw VideoException("ERROR: No files found from regexp" );
         }
     }
 
@@ -141,8 +131,7 @@ bool FileReaderDriver::Init()
     m_nNumImages = m_vFileList[0].size();
     for( unsigned int ii = 1; ii < m_nNumChannels; ii++ ){
         if( m_vFileList[ii].size() != m_nNumImages ){
-            mvl::PrintError( "ERROR: uneven number of files\n" );
-            return false;
+            throw VideoException("ERROR: uneven number of files" );
         }
     }
 
@@ -152,14 +141,10 @@ bool FileReaderDriver::Init()
     for (unsigned int ii=0; ii < m_nBufferSize; ii++) {	_Read(); }
 
     // push timestamp of first image into the Virtual Device Queue
-    VirtualDevice::PushTime( _GetNextTime() );
-
+    DeviceTime::PushTime( _GetNextTime() );
 
     // run thread to keep buffer full
     m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
-
-
-    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -251,62 +236,6 @@ bool FileReaderDriver::_Read()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline cv::Mat FileReaderDriver::_ReadFile(
-        const std::string&              sImageFileName,
-        int                             nFlags
-        )
-{
-    std::string sExtension = sImageFileName.substr( sImageFileName.rfind( "." ) + 1 );
-
-    // check if it is our own "portable depth map" format
-    if( sExtension == "pdm" ) {
-        return _ReadPDM( sImageFileName );
-    } else {
-        // ... otherwise let OpenCV open it
-        return cv::imread( sImageFileName, nFlags );
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline cv::Mat FileReaderDriver::_ReadPDM(
-        const std::string&              FileName
-        )
-{
-    // magic number P7, portable depthmap, binary
-    std::ifstream File( FileName.c_str() );
-
-    unsigned int        nImgWidth;
-    unsigned int        nImgHeight;
-    long unsigned int   nImgSize;
-
-    cv::Mat DepthImg;
-
-    if( File.is_open() ) {
-        std::string sType;
-        File >> sType;
-        File >> nImgWidth;
-        File >> nImgHeight;
-        File >> nImgSize;
-
-        // the actual PGM/PPM expects this as the next field:
-        //		nImgSize++;
-        //		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
-
-        // but ours has the actual size (4 bytes of float * pixels):
-        nImgSize = 4 * nImgWidth * nImgHeight;
-
-        DepthImg = cv::Mat( nImgHeight, nImgWidth, CV_32FC1 );
-
-        File.seekg( File.tellg() + (std::ifstream::pos_type)1, std::ios::beg );
-        File.read( (char*)DepthImg.data, nImgSize );
-        File.close();
-    }
-    return DepthImg;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 double FileReaderDriver::_GetNextTime()
 {
     if( m_qImageBuffer.size() == 0 ) {
@@ -314,4 +243,6 @@ double FileReaderDriver::_GetNextTime()
     }
     return 0;
 //    return m_qImageBuffer.front()[0].Map.GetProperty<double>( m_sTimeKeeper, 0 );
+}
+
 }

@@ -9,7 +9,6 @@ set( HAL_LIBRARIES ${HAL_LIBRARIES} CACHE INTERNAL "" FORCE )
 # 2) Tell HAL about this library:
 add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_hal_libraries( IMULogDriver )
-add_to_hal_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS IMULogDriver

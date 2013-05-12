@@ -5,9 +5,7 @@ set( HDMI_DRIVER_HEADERS HDMIDriver.h CaptureDelegate.h)
 add_library( HDMIDriver ${HDMI_DRIVER_SOURCES} ${HDMI_DRIVER_HEADERS} )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_to_rpg_libraries( HDMIDriver )
-add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_hal_libraries( HDMIDriver )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS HDMIDriver

@@ -4,14 +4,12 @@ set( HDRS SimulatedCarDriver.h ../CarDriverInterface.h ../../../../Utils/Propert
 add_library( SimulatedCarDriver ${SRCS} ${HDRS} )
 
 # 2) Tell RPG about this library:
-add_to_rpg_include_dirs( ${CMAKE_CURRENT_BINARY_DIR} )
-add_to_rpg_libraries( SimulatedCarDriver )
+add_to_hal_include_dirs( ${CMAKE_CURRENT_BINARY_DIR} )
+add_to_hal_libraries( SimulatedCarDriver )
 
 #list( APPEND RPG_LIBRARIES ${OGRE_LIBRARIES} )
 #set( RPG_LIBRARIES ${RPG_LIBRARIES} CACHE INTERNAL "" FORCE )
 
-add_to_rpg_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
- 
 #MESSAGE( STATUS "here ${RPG_LIBRARIES}" )
 
 # 3) And make sure we are able to install it correctly:

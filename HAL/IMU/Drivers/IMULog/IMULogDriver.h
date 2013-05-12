@@ -6,7 +6,7 @@
 #include <fstream>
 #include <boost/thread.hpp>
 
-class IMULogDriver : public IMUDriver
+class IMULogDriver : public IMUDriverInterface
 {
 
 public:

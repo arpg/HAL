@@ -7,7 +7,7 @@
 
 #include "MIPSDK/mip_sdk.h"
 
-class MicroStrainDriver : public IMUDriver
+class MicroStrainDriver : public IMUDriverInterface
 {
     public:
         MicroStrainDriver();

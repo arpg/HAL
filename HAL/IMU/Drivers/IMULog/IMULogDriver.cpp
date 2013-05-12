@@ -122,7 +122,7 @@ bool IMULogDriver::Init()
     }
 
     // push timestamp to VD queue
-    hal::VirtualDevice::PushTime( m_dNextTime );
+    hal::DeviceTime::PushTime( m_dNextTime );
 
     // start capture thread
     m_bShouldRun = true;
@@ -149,7 +149,7 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
     while( pSelf->m_bShouldRun ) {
 
         try{
-            hal::VirtualDevice::WaitForTime(pSelf->m_dNextTime );
+            hal::DeviceTime::WaitForTime(pSelf->m_dNextTime );
         }catch(boost::thread_interrupted const&) {
             continue;
         }
@@ -233,7 +233,7 @@ void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
         }
 
         // pop front and push next timestamp to queue
-        hal::VirtualDevice::PopAndPushTime( pSelf->m_dNextTime );
+        hal::DeviceTime::PopAndPushTime( pSelf->m_dNextTime );
     }
 }
 
