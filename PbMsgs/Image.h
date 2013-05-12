@@ -5,11 +5,11 @@
 #include <PbMsgs/Messages.pb.h>
 
 #define HAVE_OPENCV
+
 #ifdef HAVE_OPENCV
+#pragma GCC system_header
 #include <opencv.hpp>
 #endif
-
-
 
 namespace pb {
 
@@ -41,7 +41,7 @@ void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
 
 cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
 {
-    int nCvType;
+    int nCvType = 0;
     if( pbImage->type() == pb::ImageMsg_Type_PB_BYTE || pbImage->type() == pb::ImageMsg_Type_PB_UNSIGNED_BYTE ) {
         if(pbImage->format() == pb::ImageMsg_Format_PB_LUMINANCE ) {
             nCvType = CV_8UC1;

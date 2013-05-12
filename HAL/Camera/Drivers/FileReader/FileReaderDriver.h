@@ -1,11 +1,10 @@
-#ifndef _FILE_READER_H_
-#define _FILE_READER_H_
+#pragma once
 
 #include <vector>
 #include <queue>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "HAL/Camera/CameraDriverInterface.h"
 
@@ -24,12 +23,13 @@ class FileReaderDriver : public CameraDriverInterface
         double _GetNextTime();
 
     private:
-        boost::thread*									m_CaptureThread;
+        volatile bool                                   m_bShouldRun;
+        std::thread*									m_CaptureThread;
 
         // vector of lists of files
-        boost::mutex                                      m_Mutex;
-        boost::condition_variable                         m_cBufferEmpty;
-        boost::condition_variable                         m_cBufferFull;
+        std::mutex                                      m_Mutex;
+        std::condition_variable                         m_cBufferEmpty;
+        std::condition_variable                         m_cBufferFull;
 
         std::vector< pb::CameraMsg >                    m_vBuffer;
         unsigned int                                    m_nHead;
@@ -48,5 +48,3 @@ class FileReaderDriver : public CameraDriverInterface
 };
 
 }
-
-#endif

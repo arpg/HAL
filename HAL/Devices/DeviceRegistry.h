@@ -1,3 +1,5 @@
+#pragma once
+
 #include <HAL/Utils/Uri.h>
 
 #include <memory>
@@ -43,14 +45,14 @@ public:
         auto pf = m_factories.find(uri.scheme);
         if(pf != m_factories.end()) {
             std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
-            m_instances[uri.scheme].insert( dev );
+//            m_instances[uri.scheme].insert( dev );
             return dev;
         }else{
             throw VideoException("Scheme '" + uri.scheme + "' not registered for factory");
         }
     }
     
-    static void Destroy(BaseDevice* dev)
+    void Destroy(BaseDevice* dev)
     {
         auto i = std::find(m_instances.begin(), m_instances.end(), dev);
         

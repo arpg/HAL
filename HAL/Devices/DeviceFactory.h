@@ -1,3 +1,5 @@
+#pragma once
+
 #include <HAL/Devices/DeviceRegistry.h>
 
 #include <memory>
@@ -13,6 +15,7 @@ public:
     struct Param
     {
         std::string param;
+        std::string defaultval;
         std::string help;
     };
     

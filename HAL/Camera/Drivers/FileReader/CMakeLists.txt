@@ -1,5 +1,5 @@
 # 1) Build the library
-set( FILEREADER_DRIVER_SOURCES FileReaderDriver.cpp ReadImage.cpp DirUtils.cpp)
+set( FILEREADER_DRIVER_SOURCES FileReaderDriver.cpp FileReaderFactory.cpp ReadImage.cpp DirUtils.cpp)
 set( FILEREADER_DRIVER_HEADERS FileReaderDriver.h ReadImage.h DirUtils.h)
 
 add_library( FileReaderDriver ${FILEREADER_DRIVER_SOURCES} ${FILEREADER_DRIVER_HEADERS} )

@@ -17,8 +17,8 @@ namespace hal
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::~FileReaderDriver()
 {
+    m_bShouldRun = false;
     if( m_CaptureThread ) {
-        m_CaptureThread->interrupt();
         m_CaptureThread->join();
     }
 }
@@ -31,7 +31,7 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
         return false;
     }
 
-    boost::mutex::scoped_lock lock(m_Mutex);
+    std::unique_lock<std::mutex> lock(m_Mutex);
 
     // Wait until the buffer has data to read
     while(m_qImageBuffer.size() == 0){
@@ -90,7 +90,8 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
 
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame, bool Loop, size_t BufferSize, int cvFlags)
-    : m_nNumChannels(ChannelRegex.size()),
+    : m_bShouldRun(false),
+      m_nNumChannels(ChannelRegex.size()),
       m_nStartFrame(StartFrame),
       m_nCurrentImageIndex(StartFrame),
       m_bLoop(Loop),
@@ -144,22 +145,16 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     DeviceTime::PushTime( _GetNextTime() );
 
     // run thread to keep buffer full
-    m_CaptureThread = new boost::thread( &_ThreadCaptureFunc, this );
+    m_bShouldRun = true;
+    m_CaptureThread = new std::thread( &_ThreadCaptureFunc, this );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Producer
 void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 {
-    while(1){
-        try {
-            boost::this_thread::interruption_point();
-
-            if(!pFR->_Read()) {
-                break;
-            }
-
-        } catch( boost::thread_interrupted& interruption ) {
+    while(pFR->m_bShouldRun){
+        if(!pFR->_Read()) {
             break;
         }
     }
@@ -168,7 +163,7 @@ void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 ///////////////////////////////////////////////////////////////////////////////
 bool FileReaderDriver::_Read()
 {
-    boost::mutex::scoped_lock lock(m_Mutex);
+    std::unique_lock<std::mutex> lock(m_Mutex);
 
     // Wait until there is space in the buffer
     while(! (m_qImageBuffer.size() < m_nBufferSize) ){

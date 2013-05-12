@@ -45,7 +45,7 @@ set( _INCLUDE_DIRS
 include_directories( ${_INCLUDE_DIRS} )
 
 # expose these for third parties
-set( PBMSGS_INCLUDE_DIRS ${_INCLUDE_DIRS}  CACHE INTERNAL "" FORCE )
+set( PbMsgs_INCLUDE_DIRS ${_INCLUDE_DIRS}  CACHE INTERNAL "" FORCE )
 
 set( SRCS
     ${PROTO_SRCS}
@@ -64,7 +64,7 @@ set( HDRS
 add_library( PbMsgs ${SRCS} ${HDRS} )
 
 get_target_property( _LIBRARY PbMsgs LOCATION )
-set( PBMSGS_LIBRARIES ${_LIBRARY} ${PROTOBUF_LIBRARIES} CACHE INTERNAL "" FORCE )
+set( PbMsgs_LIBRARIES ${_LIBRARY} ${PROTOBUF_LIBRARIES} CACHE INTERNAL "" FORCE )
 
 
 # Create the *Config.cmake file for the build tree.

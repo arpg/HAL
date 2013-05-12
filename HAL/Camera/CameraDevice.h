@@ -2,9 +2,10 @@
 
 #include <PbMsgs/Image.h>
 
-#include <HAL/Uri.h>
-#include <HAL/DeviceRegistry.h>
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Devices/DeviceRegistry.h>
+#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Utils/Uri.h>
 
 namespace hal {
 
@@ -26,6 +27,12 @@ public:
     }    
     
     ///////////////////////////////////////////////////////////////
+    ~Camera()
+    {
+        Clear();
+    }
+    
+    ///////////////////////////////////////////////////////////////
     inline void Reset()
     {
         Clear();
@@ -33,11 +40,12 @@ public:
     }   
     
     ///////////////////////////////////////////////////////////////
-    ~Camera()
+    inline void Clear()
     {
-        Clear();
+//        DeviceRegistry<CameraDriverInterface>::Destroy(m_cam);
+        m_cam = nullptr;
     }
-    
+        
     ///////////////////////////////////////////////////////////////
     bool Capture( pb::CameraMsg& Images )
     {

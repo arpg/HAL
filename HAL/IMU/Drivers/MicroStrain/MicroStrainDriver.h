@@ -1,7 +1,7 @@
 #ifndef _MICROSTRAINDRIVER_H_
 #define _MICROSTRAINDRIVER_H_
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include "HAL/IMU/IMUDriverInterface.h"
 
@@ -25,7 +25,7 @@ class MicroStrainDriver : public IMUDriverInterface
 
         volatile bool mShouldRun;
         mip_interface mDeviceInterface;
-        boost::thread mDeviceThread;
+        std::thread mDeviceThread;
 
         IMUDriverDataCallback mIMUCallback;
         GPSDriverDataCallback mGPSCallback;

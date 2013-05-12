@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Eigen/Eigen>
-#include <boost/function.hpp>
+#include <function>
 
 namespace Eigen
 {
@@ -52,8 +52,8 @@ struct GPSData
     Eigen::Vector6d    llh;              // (latitude,longitude,height)
 };
 
-typedef boost::function<void (const IMUData&)> IMUDriverDataCallback;
-typedef boost::function<void (const GPSData&)> GPSDriverDataCallback;
+typedef std::function<void (const IMUData&)> IMUDriverDataCallback;
+typedef std::function<void (const GPSData&)> GPSDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU driver interface

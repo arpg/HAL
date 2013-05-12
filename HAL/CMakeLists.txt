@@ -8,6 +8,8 @@ IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 ENDIF()
 
+OPTION (BUILD_SHARED_LIBS "Build shared libraries." OFF)
+
 #############################################################################
 # Find required libraries
 
@@ -15,16 +17,14 @@ set( HAL_INCLUDE_DIRS "" CACHE INTERNAL "" FORCE)
 set( HAL_LIBRARIES "" CACHE INTERNAL "" FORCE)
 
 find_package( OpenCV2 REQUIRED )
-find_package( Boost COMPONENTS thread REQUIRED )
 find_package( PbMsgs REQUIRED )
 
 list( APPEND HAL_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/..
-    ${PBMSGS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}
-    ${OpenCV2_INCLUDE_DIRS} 
+    ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} 
 )
 list( APPEND HAL_LIBRARIES
-    ${PBMSGS_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV2_LIBRARIES}
+    ${PbMsgs_LIBRARIES} ${OpenCV2_LIBRARIES}
 )
 
 include_directories( ${HAL_INCLUDE_DIRS} )
@@ -56,6 +56,8 @@ add_subdirectory( Devices )
 add_subdirectory( Camera )
 #add_subdirectory( IMU )
 #add_subdirectory( Car )
+
+message(STATUS "${SRCS}")
 
 #############################################################################
 # Export library

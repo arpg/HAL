@@ -14,7 +14,8 @@
 
 #include <memory>
 
-#include "StringUtils.h"
+#include <HAL/Utils/StringUtils.h>
+#include <HAL/Camera/CameraException.h>
 
 namespace hal
 {
@@ -22,18 +23,21 @@ namespace hal
 class PropertyMap
 {
 public:
-    bool Contains(const std::string& key) {
+    bool Contains(const std::string& key) const
+    {
         return params.find(key) != params.end();
     }
     
     template<typename T>
-    void Set(const std::string& key, T value) {
+    void Set(const std::string& key, T value)
+    {
         params[key] = ValToStr<T>(value);
     }
 
     template<typename T>
-    T Get(const std::string& key, T default_val) {
-        std::map<std::string,std::string>::iterator v = params.find(key);
+    T Get(const std::string& key, T default_val) const
+    {
+        std::map<std::string,std::string>::const_iterator v = params.find(key);
         if(v != params.end()) {
             return StrToVal<T>(v->second);
         }else{

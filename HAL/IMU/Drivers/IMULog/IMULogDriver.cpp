@@ -126,7 +126,7 @@ bool IMULogDriver::Init()
 
     // start capture thread
     m_bShouldRun = true;
-    m_DeviceThread = boost::thread( &IMULogDriver::_ThreadCaptureFunc, this );
+    m_DeviceThread = std::thread( &IMULogDriver::_ThreadCaptureFunc, this );
 
     return true;
 }
@@ -147,12 +147,7 @@ void IMULogDriver::RegisterDataCallback( GPSDriverDataCallback callback )
 void IMULogDriver::_ThreadCaptureFunc( IMULogDriver* pSelf )
 {
     while( pSelf->m_bShouldRun ) {
-
-        try{
-            hal::DeviceTime::WaitForTime(pSelf->m_dNextTime );
-        }catch(boost::thread_interrupted const&) {
-            continue;
-        }
+        hal::DeviceTime::WaitForTime(pSelf->m_dNextTime );
 
         //---------------------------------------------------------
 
