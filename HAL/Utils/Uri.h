@@ -117,13 +117,13 @@ struct ImageRoi
     size_t w; size_t h;
 };
 
-std::istream& operator>> (std::istream &is, ImageDim &dim)
+inline std::istream& operator>> (std::istream &is, ImageDim &dim)
 {
     is >> dim.x; is.get(); is >> dim.y;
     return is;
 }
 
-std::istream& operator>> (std::istream &is, ImageRoi &roi)
+inline std::istream& operator>> (std::istream &is, ImageRoi &roi)
 {
     is >> roi.x; is.get(); is >> roi.y; is.get();
     is >> roi.w; is.get(); is >> roi.h;

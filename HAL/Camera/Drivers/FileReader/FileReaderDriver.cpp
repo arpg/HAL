@@ -190,20 +190,20 @@ bool FileReaderDriver::_Read()
 
         // TODO this is BAD since 4 bytes can be int, or float, etc, etc
         if( cvImg.elemSize1() == 1 ) {
-            pbImg->set_type( pb::ImageMsg_Type_PB_BYTE );
+            pbImg->set_type( pb::PB_UNSIGNED_BYTE );
         }
         if( cvImg.elemSize1() == 2 ) {
-            pbImg->set_type( pb::ImageMsg_Type_PB_SHORT );
+            pbImg->set_type( pb::PB_UNSIGNED_SHORT );
         }
         if( cvImg.elemSize1() == 4 ) {
-            pbImg->set_type( pb::ImageMsg_Type_PB_FLOAT );
+            pbImg->set_type( pb::PB_FLOAT );
         }
 
         if( cvImg.channels() == 1 ) {
-            pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+            pbImg->set_format( pb::PB_LUMINANCE );
         }
         if( cvImg.channels() == 3 ) {
-            pbImg->set_format( pb::ImageMsg_Format_PB_RGB );
+            pbImg->set_format( pb::PB_RGB );
         }
         pbImg->set_data( (const char*)cvImg.data, cvImg.rows * cvImg.cols * cvImg.elemSize1() );
     }

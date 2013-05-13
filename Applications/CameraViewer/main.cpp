@@ -8,7 +8,7 @@ int main( int argc, char* argv[] )
 {
     GetPot cl(argc,argv);
     hal::Camera camera(cl.follow("", "-cam" ));
-    
+
     // Capture first image
     pb::ImageArray imgs;
     camera.Capture(imgs);
@@ -18,7 +18,7 @@ int main( int argc, char* argv[] )
     const int w = imgs[0].width();
     const int h = imgs[0].height();
 
-    // Setup OpenGL Display (based on GLUT)    
+    // Setup OpenGL Display (based on GLUT)
     pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);

@@ -10,10 +10,7 @@ endif()
 find_package(Pangolin QUIET)
 find_package(HAL QUIET)
 
-message(STATUS "Here")
-
 if(Pangolin_FOUND AND HAL_FOUND)
-    message(STATUS "Here2")
     add_executable( CameraViewer main.cpp )
 
     include_directories( ${HAL_INCLUDE_DIRS} )

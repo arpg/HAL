@@ -1,5 +1,7 @@
 #include "OpenNIDriver.h"
 
+#include <HAL/Devices/DeviceException.h>
+
 
 #include <HAL/Utils/TicToc.h>
 
@@ -14,8 +16,7 @@ using namespace hal;
         XnChar strError[1024]; \
         EnumerationErrors errors; \
         errors.ToString(strError, 1024); \
-        printf("%s\n", strError); \
-        return false; \
+        throw DeviceException(strError); \
     } \
 }
 
@@ -186,8 +187,6 @@ OpenNIDriver::OpenNIDriver(
 
     rc = m_Context.StartGeneratingAll();
     CHECK_XN_RETURN(rc);
-
-    return true;
 }
 
 #undef CHECK_XN_RETURN
@@ -224,19 +223,10 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
-        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_BYTE);
-        if(m_bForceGreyscale) {
-            static cv::Mat temp(m_nImgHeight, m_nImgWidth, CV_8UC3);
-            memcpy(temp.data, metaData.RGB24Data(), metaData.DataSize() );
-            cv::Mat cvImg;
-            cvtColor(temp, cvImg, CV_RGB2GRAY);
-            pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth );
-            pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
-        }else{
-            pbImg->mutable_data()->resize( metaData.DataSize() );
-            memcpy((void*)pbImg->mutable_data()->data(), metaData.RGB24Data(), metaData.DataSize() );
-            pbImg->set_format(pb::ImageMsg_Format_PB_RGB);
-        }
+        pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+        pbImg->mutable_data()->resize( metaData.DataSize() );
+        memcpy((void*)pbImg->mutable_data()->data(), metaData.RGB24Data(), metaData.DataSize() );
+        pbImg->set_format(pb::PB_RGB);
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
@@ -247,8 +237,8 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->mutable_data()->resize( metaData.DataSize() );
         memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
-        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_SHORT);
-        pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
+        pbImg->set_type(pb::PB_UNSIGNED_SHORT);
+        pbImg->set_format(pb::PB_LUMINANCE);
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
@@ -259,8 +249,8 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->mutable_data()->resize( metaData.DataSize() );
         memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
-        pbImg->set_type(pb::ImageMsg_Type_PB_UNSIGNED_BYTE);
-        pbImg->set_format(pb::ImageMsg_Format_PB_LUMINANCE);
+        pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+        pbImg->set_format(pb::PB_LUMINANCE);
     }
 
     return true;

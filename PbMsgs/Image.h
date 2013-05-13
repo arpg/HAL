@@ -25,47 +25,47 @@ void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
     pbImage->set_width( cvImage.cols );
 
     if( cvImage.elemSize1() == 1 ) {
-        pbImage->set_type( pb::ImageMsg_Type_PB_UNSIGNED_BYTE );
+        pbImage->set_type( pb::PB_UNSIGNED_BYTE );
     }
     if( cvImage.elemSize1() == 2 ) {
-        pbImage->set_type( pb::ImageMsg_Type_PB_UNSIGNED_SHORT );
+        pbImage->set_type( pb::PB_UNSIGNED_SHORT );
     }
     if( cvImage.elemSize1() == 4 ) {
-        pbImage->set_type( pb::ImageMsg_Type_PB_FLOAT );
+        pbImage->set_type( pb::PB_FLOAT );
     }
 
     if( cvImage.channels() == 1 ) {
-        pbImage->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+        pbImage->set_format( pb::PB_LUMINANCE );
     }
     if( cvImage.channels() == 3 ) {
-        pbImage->set_format( pb::ImageMsg_Format_PB_RGB );
+        pbImage->set_format( pb::PB_RGB );
     }
 }
 
 cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
 {
     int nCvType = 0;
-    if( pbImage->type() == pb::ImageMsg_Type_PB_BYTE || pbImage->type() == pb::ImageMsg_Type_PB_UNSIGNED_BYTE ) {
-        if(pbImage->format() == pb::ImageMsg_Format_PB_LUMINANCE ) {
+    if( pbImage->type() == pb::PB_BYTE || pbImage->type() == pb::PB_UNSIGNED_BYTE ) {
+        if(pbImage->format() == pb::PB_LUMINANCE ) {
             nCvType = CV_8UC1;
         }
-        if(pbImage->format() == pb::ImageMsg_Format_PB_RGB ) {
+        if(pbImage->format() == pb::PB_RGB ) {
             nCvType = CV_8UC3;
         }
     }
-    if( pbImage->type() == pb::ImageMsg_Type_PB_UNSIGNED_SHORT || pbImage->type() == pb::ImageMsg_Type_PB_SHORT ) {
-        if(pbImage->format() == pb::ImageMsg_Format_PB_LUMINANCE ) {
+    if( pbImage->type() == pb::PB_UNSIGNED_SHORT || pbImage->type() == pb::PB_SHORT ) {
+        if(pbImage->format() == pb::PB_LUMINANCE ) {
             nCvType = CV_16UC1;
         }
-        if(pbImage->format() == pb::ImageMsg_Format_PB_RGB ) {
+        if(pbImage->format() == pb::PB_RGB ) {
             nCvType = CV_16UC3;
         }
     }
-    if( pbImage->type() == pb::ImageMsg_Type_PB_FLOAT ) {
-        if(pbImage->format() == pb::ImageMsg_Format_PB_LUMINANCE ) {
+    if( pbImage->type() == pb::PB_FLOAT ) {
+        if(pbImage->format() == pb::PB_LUMINANCE ) {
             nCvType = CV_32FC1;
         }
-        if(pbImage->format() == pb::ImageMsg_Format_PB_RGB ) {
+        if(pbImage->format() == pb::PB_RGB ) {
             nCvType = CV_32FC3;
         }
     }

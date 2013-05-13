@@ -14,11 +14,11 @@ endif()
 find_package( OpenCV2 REQUIRED )
 find_package( PbMsgs REQUIRED )
 
-set_property( GLOBAL PROPERTY P_INCLUDE_DIRS 
+set_property( GLOBAL PROPERTY P_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/..
-    ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} 
+    ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS}
 )
-set_property( GLOBAL PROPERTY P_LIBRARIES 
+set_property( GLOBAL PROPERTY P_LIBRARIES
     ${PbMsgs_LIBRARIES} ${OpenCV2_LIBRARIES}
 )
 
@@ -33,7 +33,11 @@ endmacro()
 macro( add_to_hal_libraries )
     foreach( lib ${ARGN} )
         get_target_property( libpath ${lib} LOCATION )
-        set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
+        if(libpath)
+            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
+        else()
+            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+        endif()
     endforeach()
 endmacro()
 
