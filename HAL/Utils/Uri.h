@@ -15,7 +15,7 @@
 #include <memory>
 
 #include <HAL/Utils/StringUtils.h>
-#include <HAL/Camera/CameraException.h>
+#include <HAL/Devices/DeviceException.h>
 
 namespace hal
 {
@@ -84,7 +84,7 @@ public:
                             properties.Set(key, val);
                         }
                     }else{
-                        throw CameraException("Bad video URI");
+                        throw DeviceException("Bad video URI");
                     }
                 }
                 
