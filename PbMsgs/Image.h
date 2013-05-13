@@ -126,27 +126,47 @@ class Image
 public:
     Image()
         : m_pImage(nullptr)
-    {    
+    {
     }
-    
+
     Image(ImageMsg* Ptr)
         : m_pImage(Ptr)
     {
     }
 
-    unsigned int Width()
+    unsigned int Width() const
     {
         return m_pImage->width();
     }
 
-    unsigned int Height()
+    unsigned int Height() const
     {
         return m_pImage->height();
     }
 
-    const char* data()
+    int Type() const
     {
-        return m_pImage->mutable_data()->data();
+        return m_pImage->type();
+    }
+
+    int Format() const
+    {
+        return m_pImage->format();
+    }
+
+    double Timestamp() const
+    {
+        return m_pImage->timestamp();
+    }
+
+    const pb::ImageInfoMsg& GetInfo() const
+    {
+        m_pImage->info();
+    }
+
+    char* data()
+    {
+        return &m_pImage->mutable_data()->front();
     }
 
 #ifdef HAVE_OPENCV
@@ -177,12 +197,12 @@ public:
         return m_Message.image_size();
     }
 
-    Image& operator[]( unsigned int idx  )
+    Image operator[]( unsigned int idx  )
     {
         if( idx < Size() ) {
-            return Image(m_Message.mutable_image(ii));
+            return Image(m_Message.mutable_image(idx));
         }
-        
+
         // TODO: define ensure macro
         std::cerr << "error: Image index out of bounds." << std::endl;
         exit(1);

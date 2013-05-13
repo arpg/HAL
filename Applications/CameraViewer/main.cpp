@@ -15,8 +15,8 @@ int main( int argc, char* argv[] )
 
     // N cameras, each w*h in dimension, greyscale
     const int N = imgs.Size();
-    const int w = imgs[0].width();
-    const int h = imgs[0].height();
+    const int w = imgs[0].Width();
+    const int h = imgs[0].Height();
 
     // Setup OpenGL Display (based on GLUT)
     pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
@@ -65,9 +65,7 @@ int main( int argc, char* argv[] )
             container[i].Activate();
             tex.Upload(
                 imgs[i].data(),
-                GL_LUMINANCE, GL_UNSIGNED_BYTE
-//                imgs[i].channels() == 1 ? GL_LUMINANCE : GL_RGB,
-//                imgs[i].elemSize1() == 1 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT
+                        imgs[i].Format(), imgs[i].Type()
             );
             tex.RenderToViewportFlipY();
         }

@@ -14,6 +14,7 @@ public:
         Params() = {
             {"startframe", "0", "First frame to capture."},
             {"loop", "false", "Play beginning once finished."},
+            {"grey", "false", "Convert internally to greyscale."},
             {"buffer", "10", "Number of frames to cache in memory"},
         };
     }
@@ -26,7 +27,8 @@ public:
         size_t StartFrame = uri.properties.Get("startframe", 0);
         bool Loop =         uri.properties.Get("loop", false);
         size_t BufferSize = uri.properties.Get("buffer", 10);
-        int cvFlags = 0;
+        bool Grey =         uri.properties.Get("grey", false);
+        int cvFlags = Grey ? 0 : -1;
 
         FileReaderDriver* filereader = new FileReaderDriver(
                     ChannelRegex, StartFrame, Loop, BufferSize, cvFlags
