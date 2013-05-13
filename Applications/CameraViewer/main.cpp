@@ -14,7 +14,7 @@ int main( int argc, char* argv[] )
     camera.Capture(imgs);
 
     // N cameras, each w*h in dimension, greyscale
-    const int N = imgs.size();
+    const int N = imgs.Size();
     const int w = imgs[0].width();
     const int h = imgs[0].height();
 
