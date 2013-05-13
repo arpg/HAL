@@ -84,7 +84,7 @@ public:
                             properties.Set(key, val);
                         }
                     }else{
-                        throw VideoException("Bad video URI");
+                        throw CameraException("Bad video URI");
                     }
                 }
                 

@@ -102,7 +102,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     m_vFileList.clear();
     
     if(m_nNumChannels < 1) {
-        throw VideoException( "ERROR: No channels specified." );
+        throw CameraException( "ERROR: No channels specified." );
     }
 
     m_vFileList.resize( m_nNumChannels );
@@ -112,7 +112,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
         std::vector< std::string >& vFiles = m_vFileList[ii];
 
         if(hal::FindFiles(ChannelRegex[ii], vFiles) == false){
-            throw VideoException("No files found from regexp", ChannelRegex[ii] );
+            throw CameraException("No files found from regexp", ChannelRegex[ii] );
         }
     }
 
@@ -120,7 +120,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     m_nNumImages = m_vFileList[0].size();
     for( unsigned int ii = 1; ii < m_nNumChannels; ii++ ){
         if( m_vFileList[ii].size() != m_nNumImages ){
-            throw VideoException("Uneven number of files" );
+            throw CameraException("Uneven number of files" );
         }
     }
 

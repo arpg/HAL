@@ -48,7 +48,7 @@ public:
 //            m_instances[uri.scheme].insert( dev );
             return dev;
         }else{
-            throw VideoException("Scheme '" + uri.scheme + "' not registered for factory");
+            throw CameraException("Scheme '" + uri.scheme + "' not registered for factory");
         }
     }
     

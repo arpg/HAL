@@ -5,13 +5,13 @@
 
 namespace hal {
 
-struct VideoException : std::exception
+struct CameraException : std::exception
 {
-    VideoException(std::string str) : desc(str) {}
-    VideoException(std::string str, std::string detail) {
+    CameraException(std::string str) : desc(str) {}
+    CameraException(std::string str, std::string detail) {
         desc = str + "\n\t" + detail;
     }
-    ~VideoException() throw() {}
+    ~CameraException() throw() {}
     const char* what() const throw() { return desc.c_str(); }
     std::string desc;
 };
