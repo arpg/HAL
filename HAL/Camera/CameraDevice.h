@@ -49,14 +49,14 @@ public:
     ///////////////////////////////////////////////////////////////
     bool Capture( pb::CameraMsg& Images )
     {
+        Images.Clear();
         return m_cam->Capture(Images);
     }
 
     ///////////////////////////////////////////////////////////////
     bool Capture( pb::ImageArray& Images )
     {
-        const bool ret = Capture( Images.ref() );
-        return ret;
+        return Capture( Images.ref() );
     }
 
 protected:

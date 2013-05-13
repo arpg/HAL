@@ -1,9 +1,9 @@
 #include "OpenNIDriver.h"
 
 #include <HAL/Devices/DeviceException.h>
-
-
 #include <HAL/Utils/TicToc.h>
+
+#include <iostream>
 
 
 #define MAX_DEPTH 10000
@@ -224,9 +224,8 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-        pbImg->mutable_data()->resize( metaData.DataSize() );
-        memcpy((void*)pbImg->mutable_data()->data(), metaData.RGB24Data(), metaData.DataSize() );
         pbImg->set_format(pb::PB_RGB);
+        pbImg->set_data( metaData.RGB24Data(), metaData.DataSize() );
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
@@ -235,8 +234,7 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
-        pbImg->mutable_data()->resize( metaData.DataSize() );
-        memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
+        pbImg->set_data( metaData.Data(), metaData.DataSize() );
         pbImg->set_type(pb::PB_UNSIGNED_SHORT);
         pbImg->set_format(pb::PB_LUMINANCE);
     }
@@ -247,9 +245,8 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
-        pbImg->mutable_data()->resize( metaData.DataSize() );
-        memcpy((void*)pbImg->mutable_data()->data(), metaData.Data(), metaData.DataSize() );
-        pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+        pbImg->set_data( metaData.Data(), metaData.DataSize() );
+        pbImg->set_type(pb::PB_UNSIGNED_SHORT);
         pbImg->set_format(pb::PB_LUMINANCE);
     }
 

@@ -2,10 +2,8 @@
 
 #include "HAL/Camera/CameraDriverInterface.h"
 
-//#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC system_header
 #include <XnCppWrapper.h>
-//#pragma GCC diagnostic pop
 
 
 namespace hal {

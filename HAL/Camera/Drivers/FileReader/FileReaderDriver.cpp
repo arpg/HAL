@@ -205,7 +205,7 @@ bool FileReaderDriver::_Read()
         if( cvImg.channels() == 3 ) {
             pbImg->set_format( pb::PB_RGB );
         }
-        pbImg->set_data( (const char*)cvImg.data, cvImg.rows * cvImg.cols * cvImg.elemSize1() );
+        pbImg->set_data( (const char*)cvImg.data, cvImg.rows * cvImg.cols * cvImg.elemSize1() * cvImg.channels() );
     }
 
     m_nCurrentImageIndex++;
