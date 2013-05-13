@@ -63,9 +63,6 @@ get_property( HAL_INCLUDE_DIRS GLOBAL PROPERTY P_INCLUDE_DIRS)
 get_property( HAL_LIBRARIES GLOBAL PROPERTY P_LIBRARIES)
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES)
 
-message(STATUS "INCDIRS: ${HAL_INCLUDE_DIRS}")
-message(STATUS "INCDIRS: ${HAL_LIBRARIES}")
-
 include_directories( ${HAL_INCLUDE_DIRS} )
 add_library(hal ${HAL_SOURCES})
 target_link_libraries( hal ${HAL_LIBRARIES} )
