@@ -1,6 +1,8 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include <fstream>
+
 #include <Eigen/Eigen>
 #include <PbMsgs/Messages.pb.h>
 
@@ -15,6 +17,7 @@ namespace pb {
 
 
 #ifdef HAVE_OPENCV
+
 void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
 {
     pbImage->set_data( (const char*)cvImage.data );
@@ -69,6 +72,50 @@ cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
 
     return cv::Mat( pbImage->height(), pbImage->width(), nCvType, (void*)pbImage->mutable_data()->data() );
 }
+
+void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
+{
+    cv::Mat Image;
+
+    std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
+
+    // check if it is our own "portable depth map" format
+    if( sExtension == "pdm" ) {
+
+        // magic number P7, portable depthmap, binary
+        std::ifstream File( sFileName.c_str() );
+
+        unsigned int        nImgWidth;
+        unsigned int        nImgHeight;
+        long unsigned int   nImgSize;
+
+        if( File.is_open() ) {
+            std::string sType;
+            File >> sType;
+            File >> nImgWidth;
+            File >> nImgHeight;
+            File >> nImgSize;
+
+            // the actual PGM/PPM expects this as the next field:
+            //		nImgSize++;
+            //		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
+
+            // but ours has the actual size (4 bytes of float * pixels):
+            nImgSize = 4 * nImgWidth * nImgHeight;
+
+            Image.create( nImgHeight, nImgWidth, CV_32FC1 );
+
+            File.seekg( File.tellg() + (std::ifstream::pos_type)1, std::ios::beg );
+            File.read( (char*)Image.data, nImgSize );
+            File.close();
+        }
+    } else {
+        // ... otherwise let OpenCV open it
+        Image = cv::imread( sFileName, cv::IMREAD_UNCHANGED );
+    }
+    ReadCvMat( Image, pbImage );
+}
+
 #endif
 
 
@@ -115,6 +162,7 @@ private:
 };
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ImageArray
 {
 public:
