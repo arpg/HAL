@@ -11,7 +11,7 @@ namespace hal
 template<typename BaseDevice>
 class DeviceFactory
 {
-public:    
+public:        
     struct Param
     {
         std::string param;
@@ -22,7 +22,7 @@ public:
     DeviceFactory(std::string name)
         : m_name(name)
     {
-        hal::DeviceRegistry<BaseDevice>::I().RegisterFactory(m_name, this);
+        Registry().RegisterFactory(m_name, this);
     }
     
     virtual ~DeviceFactory() {}
@@ -32,9 +32,13 @@ public:
         return std::vector<std::string>();
     }
     
-    std::vector<Param>& Params() {
+    inline std::vector<Param>& Params() {
         return m_params;
     }
+    
+    inline static hal::DeviceRegistry<BaseDevice>& Registry() {
+        return hal::DeviceRegistry<BaseDevice>::I();
+    }    
     
 protected:
     std::string m_name;

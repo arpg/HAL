@@ -12,7 +12,7 @@ public:
     {
         std::cout << "+OpenNIFactory" << std::endl;
         Params() = {
-            {"res", "VGA", "Capture resolution."},
+            {"size", "640x480", "Capture resolution."},
             {"fps", "30", "Capture framerate."},
             {"rgb", "true", "Capture RGB image."},
             {"depth", "true", "Capture depth image."},
@@ -23,7 +23,7 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        std::string sRes    = uri.properties.Get("res", "VGA");
+        ImageDim Dims       = uri.properties.Get("size", ImageDim(640,480));
         unsigned int nFPS   = uri.properties.Get("fps", 30);
         bool bRGB           = uri.properties.Get("rgb", true);
         bool bDepth         = uri.properties.Get("depth", true);
@@ -31,7 +31,7 @@ public:
         bool bAlign         = uri.properties.Get("align", false);
 
         OpenNIDriver* pDriver = new OpenNIDriver(
-                    sRes, nFPS, bRGB, bDepth, bIR, bAlign
+                    Dims.x, Dims.y, nFPS, bRGB, bDepth, bIR, bAlign
                     );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }

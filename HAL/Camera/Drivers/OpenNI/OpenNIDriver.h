@@ -10,7 +10,8 @@ class OpenNIDriver : public CameraDriverInterface
 {
     public:
         OpenNIDriver(
-                const std::string&      sResolution,
+                unsigned int            nWidth,
+                unsigned int            nHeight,
                 unsigned int            nFPS,
                 bool                    bCaptureRGB,
                 bool                    bCaptureDepth,

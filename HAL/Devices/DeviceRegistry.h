@@ -52,7 +52,7 @@ public:
 //            m_instances[uri.scheme].insert( dev );
             return dev;
         }else{
-            throw CameraException("Scheme '" + uri.scheme + "' not registered for factory");
+            throw DeviceException("Scheme '" + uri.scheme + "' not registered for factory");
         }
     }
 

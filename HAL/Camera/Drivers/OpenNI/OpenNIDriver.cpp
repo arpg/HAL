@@ -22,7 +22,8 @@ using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 OpenNIDriver::OpenNIDriver(
-        const std::string&      sResolution,
+        unsigned int            nWidth,
+        unsigned int            nHeight,
         unsigned int            nFPS,
         bool                    bCaptureRGB,
         bool                    bCaptureDepth,
@@ -33,26 +34,10 @@ OpenNIDriver::OpenNIDriver(
     XnMapOutputMode MapMode;
     MapMode.nFPS = nFPS;
 
-    if( sResolution == "VGA" ) {
-        m_nImgHeight = XN_VGA_Y_RES;
-        m_nImgWidth = XN_VGA_X_RES;
-        MapMode.nXRes = XN_VGA_X_RES;
-        MapMode.nYRes = XN_VGA_Y_RES;
-    }
-
-    if( sResolution == "QVGA" ) {
-        m_nImgHeight = XN_QVGA_Y_RES;
-        m_nImgWidth = XN_QVGA_X_RES;
-        MapMode.nXRes = XN_QVGA_X_RES;
-        MapMode.nYRes = XN_QVGA_Y_RES;
-    }
-
-    if( sResolution == "QQVGA" ) {
-        m_nImgHeight = XN_QQVGA_Y_RES;
-        m_nImgWidth = XN_QQVGA_X_RES;
-        MapMode.nXRes = XN_QQVGA_X_RES;
-        MapMode.nYRes = XN_QQVGA_Y_RES;
-    }
+    m_nImgWidth = nWidth;
+    m_nImgHeight = nHeight;
+    MapMode.nXRes = nWidth;
+    MapMode.nYRes = nHeight;
 
     XnStatus rc;
 

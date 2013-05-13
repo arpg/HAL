@@ -6,7 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "HAL/Camera/CameraDriverInterface.h"
+#include <HAL/Camera/CameraDriverInterface.h>
 
 namespace hal {
 
