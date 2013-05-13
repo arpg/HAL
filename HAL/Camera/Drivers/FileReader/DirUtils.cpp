@@ -145,6 +145,29 @@ namespace hal
         }
         return sPath;
     }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    bool RealPath( const std::string& sPath, std::string& sRealPath )
+    {
+#ifdef PATH_MAX
+        int path_max = PATH_MAX;
+#else
+        int path_max = pathconf(path, _PC_PATH_MAX);
+        if (path_max <= 0){
+            path_max = 4096;
+        }
+#endif
+        char *resolved_path = (char*)malloc( path_max );
+        bool retVal = true;
+        if( realpath( sPath.c_str(), resolved_path ) == NULL ) {
+            retVal = false;
+        }
+        else {
+            sRealPath = resolved_path;
+        }
+        free( resolved_path );
+        return retVal;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     bool IsDirectory( const std::string& sDir )
@@ -536,14 +559,25 @@ namespace hal
             bool bMatchCase
             )
     {
-        std::string sRegexCopy = sRegex;
+        std::string sFileRegex = sRegex;
+        
+        // Split channel regex into directory and file components
+        size_t pos = sFileRegex.rfind("/");
+        std::string sDir = ".";
+
+        if(pos != std::string::npos)
+        {
+            sDir = sFileRegex.substr(0,pos);
+            sFileRegex = sFileRegex.substr(pos+1);
+        }
+        
         if( bMatchCase == false ){
-            sRegexCopy = ToLower( sRegexCopy ); 
+            sFileRegex = ToLower( sFileRegex ); 
         }
 
-        std::regex ex( sRegex.c_str() );
+        std::regex ex( sFileRegex.c_str() );
         std::list<std::string> vThisDirFileList;
-        if( !hal::GetCachedDirectoryContents( ".", vThisDirFileList )){
+        if( !hal::GetCachedDirectoryContents( sDir, vThisDirFileList )){
             return false;
         }
 

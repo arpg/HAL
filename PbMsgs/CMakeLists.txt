@@ -60,8 +60,8 @@ set( HDRS
     Pose.h
    )
 
-
 add_library( PbMsgs ${SRCS} ${HDRS} )
+target_link_libraries(PbMsgs ${PROTOBUF_LIBRARIES})
 
 get_target_property( _LIBRARY PbMsgs LOCATION )
 set( PbMsgs_LIBRARIES ${_LIBRARY} ${PROTOBUF_LIBRARIES} CACHE INTERNAL "" FORCE )

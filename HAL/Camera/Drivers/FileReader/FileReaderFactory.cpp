@@ -35,7 +35,7 @@ public:
     }
 };
 
-// Register this factory by creating static instance
+// Register this factory by creating static instance of factory
 static FileReaderFactory g_FileReaderFactory("filereader");
 
 }

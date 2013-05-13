@@ -95,7 +95,7 @@ public:
     }
 
 #ifdef HAVE_OPENCV
-    cv::Mat cvMat()
+    operator cv::Mat()
     {
         return WriteCvMat(m_pImage);
     }
@@ -125,14 +125,14 @@ public:
         return m_Message;
     }
 
-    unsigned int numImages()
+    unsigned int size()
     {
         return m_Message.image_size();
     }
 
-    Image& operator()( unsigned int idx = 0 )
+    Image& operator[]( unsigned int idx  )
     {
-        if( idx < numImages() ) {
+        if( idx < size() ) {
             return *(m_vImages[idx]);
         }
         std::cerr << "error: Image index out of bounds." << std::endl;
@@ -141,13 +141,11 @@ public:
 
     void SelfUpdate()
     {
-        if( m_vImages.size() == 0 ) {
-            for( unsigned int ii = 0; ii < numImages(); ++ii ) {
-                m_vImages.push_back( new Image() );
-            }
+        while( m_vImages.size() < size() ) {
+            m_vImages.push_back( new Image() );
         }
 
-        for( unsigned int ii = 0; ii < numImages(); ++ii ) {
+        for( unsigned int ii = 0; ii < size(); ++ii ) {
             m_vImages[ii]->_UpdatePointer( m_Message.mutable_image(ii) );
         }
     }

@@ -108,23 +108,11 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     m_vFileList.resize( m_nNumChannels );
 
     for( unsigned int ii = 0; ii < m_nNumChannels; ii++ ) {
-        std::string sChannelRegex = ChannelRegex[ii];
-
-        // Split channel regex into directory and file components
-        size_t pos = sChannelRegex.rfind("/");
-        std::string sSubDirectory;
-
-        if(pos != string::npos)
-        {
-            sSubDirectory = sChannelRegex.substr(0,pos);
-            sChannelRegex = sChannelRegex.substr(pos+1);
-        }
-
         // Now generate the list of files for each channel
         std::vector< std::string >& vFiles = m_vFileList[ii];
 
-        if(hal::FindFiles(sSubDirectory, sChannelRegex, vFiles) == false){
-            throw VideoException("ERROR: No files found from regexp" );
+        if(hal::FindFiles(ChannelRegex[ii], vFiles) == false){
+            throw VideoException("No files found from regexp", ChannelRegex[ii] );
         }
     }
 
@@ -132,7 +120,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     m_nNumImages = m_vFileList[0].size();
     for( unsigned int ii = 1; ii < m_nNumChannels; ii++ ){
         if( m_vFileList[ii].size() != m_nNumImages ){
-            throw VideoException("ERROR: uneven number of files" );
+            throw VideoException("Uneven number of files" );
         }
     }
 

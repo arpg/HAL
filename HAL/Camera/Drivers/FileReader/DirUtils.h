@@ -154,15 +154,6 @@ namespace hal
             std::vector<std::string>& vFiles,
             bool bMatchCase = true 
             );
-    
-    // TEMPORAL !!!!!
-    // Recursively find all files in and below sDir
-    bool FindFiles( 
-                   const std::string& sDir,
-                   const std::string& sRegex, 
-                   std::vector<std::string>& vFiles,
-                   bool bMatchCase = true 
-                   );
 
     ////////////////////////////////////////////////////////////////////////////////////////
     // Recursively find all files in and below sDir

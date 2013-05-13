@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION 2.8)
 # Add to module path, so we can find our cmake modules
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH} )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ENDIF()
-
-OPTION (BUILD_SHARED_LIBS "Build shared libraries." OFF)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
 
 #############################################################################
 # Find required libraries
@@ -49,6 +47,21 @@ macro( add_to_hal_libraries libs )
     endforeach()
 endmacro()
 
+macro( add_to_hal_sources )
+    file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}/HAL" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach(_src ${ARGN})
+        if(_relPath)
+            set_property ( GLOBAL APPEND PROPERTY P_SRCS "${_relPath}/${_src}" )
+        else()
+            set_property ( GLOBAL APPEND PROPERTY P_SRCS "${_src}" )
+        endif()
+    endforeach()
+    if (_relPath)
+        # propagate SRCS to parent directory
+        set (SRCS ${SRCS} PARENT_SCOPE)
+    endif()
+endmacro()
+
 #############################################################################
 # Add Devices
 
@@ -57,7 +70,9 @@ add_subdirectory( Camera )
 #add_subdirectory( IMU )
 #add_subdirectory( Car )
 
-message(STATUS "${SRCS}")
+get_property( SRCS GLOBAL PROPERTY P_SRCS)
+add_library(hal ${SRCS})
+add_to_hal_libraries(hal)
 
 #############################################################################
 # Export library
