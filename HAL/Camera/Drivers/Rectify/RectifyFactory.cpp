@@ -10,11 +10,8 @@ public:
     RectifyFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        std::cout << "+FileReaderFactory" << std::endl;
+        std::cout << "+RectifyFactory" << std::endl;
         Params() = {
-            {"startframe", "0", "First frame to capture"},
-            {"loop", "false", "Play beginning once finished."},
-            {"buffer", "10", "Number of frames to cache in memory"},
         };
     }
     

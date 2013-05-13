@@ -124,14 +124,22 @@ void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
 class Image
 {
 public:
-    Image() {}
+    Image()
+        : m_pImage(nullptr)
+    {    
+    }
+    
+    Image(ImageMsg* Ptr)
+        : m_pImage(Ptr)
+    {
+    }
 
-    unsigned int width()
+    unsigned int Width()
     {
         return m_pImage->width();
     }
 
-    unsigned int height()
+    unsigned int Height()
     {
         return m_pImage->height();
     }
@@ -148,16 +156,7 @@ public:
     }
 #endif
 
-    friend class ImageArray;
-
-private:
-    void _UpdatePointer( ImageMsg* Ptr )
-    {
-        m_pImage = Ptr;
-    }
-
-
-private:
+protected:
     ImageMsg*       m_pImage;
 };
 
@@ -173,35 +172,24 @@ public:
         return m_Message;
     }
 
-    unsigned int size()
+    unsigned int Size()
     {
         return m_Message.image_size();
     }
 
     Image& operator[]( unsigned int idx  )
     {
-        if( idx < size() ) {
-            return *(m_vImages[idx]);
+        if( idx < Size() ) {
+            return Image(m_Message.mutable_image(ii));
         }
+        
+        // TODO: define ensure macro
         std::cerr << "error: Image index out of bounds." << std::endl;
         exit(1);
     }
 
-    void SelfUpdate()
-    {
-        while( m_vImages.size() < size() ) {
-            m_vImages.push_back( new Image() );
-        }
-
-        for( unsigned int ii = 0; ii < size(); ++ii ) {
-            m_vImages[ii]->_UpdatePointer( m_Message.mutable_image(ii) );
-        }
-    }
-
-
 private:
     CameraMsg                       m_Message;
-    std::vector< Image* >           m_vImages;
 };
 
 
