@@ -120,7 +120,7 @@ void ViewerGui::_RegisterCVars()
 void ViewerGui::_RegisterKeyboardCallbacks()
 {
     // no keyboard callbacks yet
-    // e.g. [pangolin::RegisterKeyPressCallback( 'h', boost::bind( &Gui::_KEYBOARD_H, this ) );]
+    // e.g. [pangolin::RegisterKeyPressCallback( 'h', std::bind( &Gui::_KEYBOARD_H, this ) );]
 }
 
 /////////////////////////////////////////////////////////////////////////

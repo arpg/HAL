@@ -1,33 +1,22 @@
-/*
-   \file IMUDevice.h
+#pragma once
 
-   Abstract device that represents a generic IMU.
-
- */
-
-#ifndef _IMU_DEVICE_H_
-#define _IMU_DEVICE_H_
-
-#include <HAL/Utils/PropertyMap.h>
+#include <HAL/Uri.h>
+#include <HAL/DeviceRegistry.h>
 #include <HAL/IMU/IMUDriverInterface.h>
-#include <HAL/IMU/Drivers/IMUDriverRegistery.h>
-
-// Driver Creation Factory
-extern IMUDriver* CreateIMUDriver( const std::string& sDriverName );
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU device
-class IMUDevice : public PropertyMap
+class IMU : public IMUDriverInterface
 {
     public:
         ///////////////////////////////////////////////////////////////
-        IMUDevice()
+        IMU()
             : m_pDriver(0)
         {
         }
 
         ///////////////////////////////////////////////////////////////
-        ~IMUDevice()
+        ~IMU()
         {
             DeinitDriver();
         }
@@ -89,5 +78,3 @@ class IMUDevice : public PropertyMap
         // A IMU device will create and initialize a particular driver:
         IMUDriver*          m_pDriver;
 };
-
-#endif

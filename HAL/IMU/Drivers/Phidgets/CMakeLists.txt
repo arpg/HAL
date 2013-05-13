@@ -11,7 +11,6 @@ set( HAL_LIBRARIES ${HAL_LIBRARIES} CACHE INTERNAL "" FORCE )
 add_to_hal_include_dirs( ${PHIDGETS_INCLUDE_DIR} )
 add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
 add_to_hal_libraries( PhidgetsDriver )
-add_to_hal_link_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # 3) And make sure we are able to install it correctly:
 install( TARGETS PhidgetsDriver

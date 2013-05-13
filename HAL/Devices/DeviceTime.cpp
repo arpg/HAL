@@ -1,12 +1,17 @@
-#include "VirtualDevice.h"
+#include "DeviceTime.h"
+
+// Hack to enable sleep_for (GCC < 4.8)
+#define _GLIBCXX_USE_NANOSLEEP
 
 #include <exception>
 #include <queue>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition.hpp>
+#include <chrono>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace hal {
-namespace VirtualDevice {
+namespace DeviceTime {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Queue of Virtual Devices
@@ -16,8 +21,8 @@ std::priority_queue< double,
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Mutex Lock
-boost::mutex                  MUTEX;
-boost::condition_variable     CONDVAR;
+std::mutex                  MUTEX;
+std::condition_variable     CONDVAR;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Wait for correct time to elapse if REALTIME is true
@@ -36,7 +41,7 @@ inline bool IsPaused()
 ////////////////////////////////////////////////////////////////////////////////
 void ResetTime()
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
     // clear queue
     QUEUE = std::priority_queue< double, std::vector<double>, std::greater<double> >();
 }
@@ -54,7 +59,7 @@ double NextTime()
 ////////////////////////////////////////////////////////////////////////////////
 void WaitForTime(double nextTime)
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::unique_lock<std::mutex> lock(MUTEX);
 
     // check if timestamp is the top of the queue
     while( NextTime() < nextTime ) {
@@ -63,7 +68,7 @@ void WaitForTime(double nextTime)
 
     // TODO: Sleep for appropriate amount of time.
     if(REALTIME) {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1E3/1000.0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -73,7 +78,7 @@ void PushTime( double T )
     // don't push in bad times
     // (0 is a special time when no timestamps are in use)
     if( T >= 0 ) {
-        boost::mutex::scoped_lock lock(MUTEX);
+        std::lock_guard<std::mutex> lock(MUTEX);
         QUEUE.push( T );
     }
 }
@@ -81,7 +86,7 @@ void PushTime( double T )
 ////////////////////////////////////////////////////////////////////////////////
 void PopAndPushTime( double T )
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::unique_lock<std::mutex> lock(MUTEX);
 
     // Hold up the device at the top of the queue whilst time is 'paused'
     while(IsPaused()) {
@@ -107,7 +112,7 @@ void PopAndPushTime( double T )
 ////////////////////////////////////////////////////////////////////////////////
 void PopTime()
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
     QUEUE.pop();
 
     // notify waiting threads that a change in the QUEUE has occured
@@ -123,7 +128,7 @@ void SetRealtime(bool realtime)
 ////////////////////////////////////////////////////////////////////////////////
 void PauseTime()
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
 
     EVENTS_TO_QUEUE = 0;
 }
@@ -131,7 +136,7 @@ void PauseTime()
 ////////////////////////////////////////////////////////////////////////////////
 void UnpauseTime()
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
 
     EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
 
@@ -142,7 +147,7 @@ void UnpauseTime()
 ////////////////////////////////////////////////////////////////////////////////
 void TogglePauseTime()
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
 
     if(IsPaused()) {
         // unpause
@@ -157,7 +162,7 @@ void TogglePauseTime()
 ////////////////////////////////////////////////////////////////////////////////
 void StepTime(int numEvents)
 {
-    boost::mutex::scoped_lock lock(MUTEX);
+    std::lock_guard<std::mutex> lock(MUTEX);
     EVENTS_TO_QUEUE = numEvents;
     CONDVAR.notify_all();
 }

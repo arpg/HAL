@@ -7,11 +7,11 @@
 #include <PbMsgs/Messages.pb.h>
 
 #define HAVE_OPENCV
+
 #ifdef HAVE_OPENCV
+#pragma GCC system_header
 #include <opencv.hpp>
 #endif
-
-
 
 namespace pb {
 
@@ -44,7 +44,7 @@ void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
 
 cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
 {
-    int nCvType;
+    int nCvType = 0;
     if( pbImage->type() == pb::ImageMsg_Type_PB_BYTE || pbImage->type() == pb::ImageMsg_Type_PB_UNSIGNED_BYTE ) {
         if(pbImage->format() == pb::ImageMsg_Format_PB_LUMINANCE ) {
             nCvType = CV_8UC1;
@@ -142,7 +142,7 @@ public:
     }
 
 #ifdef HAVE_OPENCV
-    cv::Mat cvMat()
+    operator cv::Mat()
     {
         return WriteCvMat(m_pImage);
     }
@@ -173,14 +173,14 @@ public:
         return m_Message;
     }
 
-    unsigned int numImages()
+    unsigned int size()
     {
         return m_Message.image_size();
     }
 
-    Image& operator()( unsigned int idx = 0 )
+    Image& operator[]( unsigned int idx  )
     {
-        if( idx < numImages() ) {
+        if( idx < size() ) {
             return *(m_vImages[idx]);
         }
         std::cerr << "error: Image index out of bounds." << std::endl;
@@ -189,13 +189,11 @@ public:
 
     void SelfUpdate()
     {
-        if( m_vImages.size() == 0 ) {
-            for( unsigned int ii = 0; ii < numImages(); ++ii ) {
-                m_vImages.push_back( new Image() );
-            }
+        while( m_vImages.size() < size() ) {
+            m_vImages.push_back( new Image() );
         }
 
-        for( unsigned int ii = 0; ii < numImages(); ++ii ) {
+        for( unsigned int ii = 0; ii < size(); ++ii ) {
             m_vImages[ii]->_UpdatePointer( m_Message.mutable_image(ii) );
         }
     }

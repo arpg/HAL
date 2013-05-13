@@ -111,8 +111,7 @@ bool ToyotaReaderDriver::Init() {
     m_bReadTimestamps       = true;
 
     if( m_uNumChannels < 1 ) {
-        mvl::PrintError( "ERROR: No channels specified. Set property NumChannels.\n" );
-        exit(1);
+        throw VideoException( "ERROR: No channels specified." );
     }
 
     // Get data path
@@ -129,8 +128,7 @@ bool ToyotaReaderDriver::Init() {
         sFilename = sChannelPath + "/" + sChannelFileName + ".info.yml";
         cv::FileStorage fInfo( sFilename,  cv::FileStorage::READ );
         if( fInfo.isOpened() == false ) {
-            mvl::PrintError( "ERROR opening: %s\n", sFilename.c_str() );
-            return false;
+            throw VideoException( "ERROR opening " + sFilename);
         }
 
         CameraInfo* pCam = new CameraInfo;
@@ -305,7 +303,7 @@ bool ToyotaReaderDriver::_Read() {
             }
 
         } else {
-            mvl::PrintError( "ERROR file closed \n");
+            throw VideoException( "ERROR file closed" );
         }
 
     }

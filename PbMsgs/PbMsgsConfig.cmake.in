@@ -1,5 +1,5 @@
-SET( PBMSGS_INCLUDE_DIRS  @PBMSGS_INCLUDE_DIRS@ CACHE INTERNAL "PBMSGS include directories" FORCE )
-SET( PBMSGS_LIBRARIES  @PBMSGS_LIBRARIES@ CACHE INTERNAL "PBMSGS libraries" FORCE )
+SET( PbMsgs_INCLUDE_DIRS  @PbMsgs_INCLUDE_DIRS@ CACHE INTERNAL "PbMsgs include directories" FORCE )
+SET( PbMsgs_LIBRARIES  @PbMsgs_LIBRARIES@ CACHE INTERNAL "PbMsgs libraries" FORCE )
 
-mark_as_advanced( PBMSGS_INCLUDE_DIRS )
-mark_as_advanced( PBMSGS_LIBRARIES )
+mark_as_advanced( PbMsgs_INCLUDE_DIRS )
+mark_as_advanced( PbMsgs_LIBRARIES )

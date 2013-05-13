@@ -1,44 +1,35 @@
-#ifndef _FILE_READER_H_
-#define _FILE_READER_H_
+#pragma once
 
 #include <vector>
 #include <queue>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "HAL/Camera/CameraDriverInterface.h"
 
 namespace hal {
 
-class FileReaderDriver : public CameraDriver
+class FileReaderDriver : public CameraDriverInterface
 {
     public:
-        FileReaderDriver();
-        virtual ~FileReaderDriver();
+        FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame = 0, bool Loop = false, size_t BufferSize = 35, int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/);
+        ~FileReaderDriver();
         bool Capture( pb::CameraMsg& vImages );
-        void PrintInfo();
-        bool Init();
 
     private:
         static void _ThreadCaptureFunc( FileReaderDriver* pFR );
         bool _Read();
-        inline cv::Mat _ReadFile(
-                const std::string&              sImageFileName,
-                int                             nFlags
-                );
-        inline cv::Mat _ReadPDM(
-                const std::string&              FileName
-                );
         double _GetNextTime();
 
     private:
-        boost::thread*									m_CaptureThread;
+        volatile bool                                   m_bShouldRun;
+        std::thread*									m_CaptureThread;
 
         // vector of lists of files
-        boost::mutex                                      m_Mutex;
-        boost::condition_variable                         m_cBufferEmpty;
-        boost::condition_variable                         m_cBufferFull;
+        std::mutex                                      m_Mutex;
+        std::condition_variable                         m_cBufferEmpty;
+        std::condition_variable                         m_cBufferFull;
 
         std::vector< pb::CameraMsg >                    m_vBuffer;
         unsigned int                                    m_nHead;
@@ -46,16 +37,14 @@ class FileReaderDriver : public CameraDriver
 
         std::queue< pb::CameraMsg >                     m_qImageBuffer;
         std::vector< std::vector< std::string > >		m_vFileList;
-        unsigned int                                    m_nCurrentImageIndex;
+        unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nStartFrame;
+        unsigned int                                    m_nCurrentImageIndex;
         bool                                            m_bLoop;
         unsigned int                                    m_nNumImages;
-        unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nBufferSize;
         int                                             m_iCvImageReadFlags;
         std::string                                     m_sTimeKeeper;
 };
 
 }
-
-#endif

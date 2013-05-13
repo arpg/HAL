@@ -2,13 +2,12 @@
 
 #include <Eigen/Eigen>
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include "MIPSDK/mip_sdk.h"
 #include "MIPSDK/mip_gx3_35.h"
 #include "MIPSDK/byteswap_utilities.h"
 
-using namespace boost;
 using namespace std;
 using namespace Eigen;
 
@@ -275,7 +274,7 @@ bool MicroStrainDriver::Init()
     while(mip_base_cmd_resume(&mDeviceInterface) != MIP_INTERFACE_OK){ }
 
     mShouldRun = true;
-    mDeviceThread = boost::thread(boost::bind(&MicroStrainDriver::_ThreadCaptureFunc,this));
+    mDeviceThread = std::thread(std::bind(&MicroStrainDriver::_ThreadCaptureFunc,this));
 
     return true;
 }

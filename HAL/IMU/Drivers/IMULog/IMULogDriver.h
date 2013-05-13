@@ -4,9 +4,9 @@
 #include "HAL/IMU/IMUDriverInterface.h"
 
 #include <fstream>
-#include <boost/thread.hpp>
+#include <thread>
 
-class IMULogDriver : public IMUDriver
+class IMULogDriver : public IMUDriverInterface
 {
 
 public:
@@ -34,7 +34,7 @@ private:
     volatile bool           m_bShouldRun;
     double                  m_dNextTime;
     double                  m_dNextTimePPS;
-    boost::thread           m_DeviceThread;
+    std::thread             m_DeviceThread;
     IMUDriverDataCallback   m_IMUCallback;
     GPSDriverDataCallback   m_GPSCallback;
 
