@@ -10,8 +10,9 @@ macro(subdirlist result curdir)
 endmacro()
 
 #subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
-set(SUBDIRS "FileReader")
+#foreach(subdir ${SUBDIRS})
+#    add_subdirectory(${subdir})
+#endforeach()
 
-foreach(subdir ${SUBDIRS})
-    add_subdirectory(${subdir})
-endforeach()
+add_subdirectory(FileReader)
+add_subdirectory(Rectify)
