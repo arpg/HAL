@@ -19,7 +19,7 @@ find_package( PbMsgs REQUIRED )
 
 list( APPEND HAL_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/..
-    ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS} 
+    ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS}
 )
 list( APPEND HAL_LIBRARIES
     ${PbMsgs_LIBRARIES} ${OpenCV2_LIBRARIES}
@@ -29,7 +29,7 @@ include_directories( ${HAL_INCLUDE_DIRS} )
 link_libraries( ${HAL_LIBRARIES} )
 
 #############################################################################
-# RPG macros for driver writers.
+# HAL macros for driver writers.
 macro( add_to_hal_include_dirs dirs )
     list( APPEND HAL_INCLUDE_DIRS ${dirs} )
     set( HAL_INCLUDE_DIRS ${HAL_INCLUDE_DIRS} CACHE INTERNAL "" FORCE )

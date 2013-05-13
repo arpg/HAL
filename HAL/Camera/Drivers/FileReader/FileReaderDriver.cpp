@@ -19,6 +19,10 @@ FileReaderDriver::~FileReaderDriver()
 {
     m_bShouldRun = false;
     if( m_CaptureThread ) {
+        while( !m_qImageBuffer.empty() ) {
+            m_qImageBuffer.pop();
+        }
+        m_cBufferFull.notify_one();
         m_CaptureThread->join();
     }
 }
@@ -34,7 +38,7 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
     std::unique_lock<std::mutex> lock(m_Mutex);
 
     // Wait until the buffer has data to read
-    while(m_qImageBuffer.size() == 0){
+    while(m_qImageBuffer.size() == 0) {
         m_cBufferEmpty.wait(lock);
     }
 
@@ -100,7 +104,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
 {
     // clear variables if previously initialized
     m_vFileList.clear();
-    
+
     if(m_nNumChannels < 1) {
         throw CameraException( "ERROR: No channels specified." );
     }
@@ -141,8 +145,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
 // Producer
 void FileReaderDriver::_ThreadCaptureFunc( FileReaderDriver* pFR )
 {
-    while(pFR->m_bShouldRun){
-        if(!pFR->_Read()) {
+    while( pFR->m_bShouldRun ) {
+        if( !pFR->_Read() ) {
             break;
         }
     }

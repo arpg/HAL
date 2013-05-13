@@ -10,7 +10,7 @@ macro(subdirlist result curdir)
 endmacro()
 
 #subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
-set(SUBDIRS "FileReader")
+set(SUBDIRS FileReader OpenNI)
 
 foreach(subdir ${SUBDIRS})
     add_subdirectory(${subdir})
