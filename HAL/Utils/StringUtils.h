@@ -115,8 +115,14 @@ inline bool WildcardFileList(const std::string& wildcard, std::vector<std::strin
         sFileWc = wildcard;
     }
     
+    if(sPath.length() >0 && sPath[0] == '~') {
+        const char* sHomeDir = getenv("HOME");
+        sPath = std::string(sHomeDir) + sPath.substr(1,std::string::npos);
+    }
+    
     struct dirent **namelist;
-    int n = scandir(sPath.c_str(), &namelist, 0, alphasort );
+    int n = scandir(sPath.c_str(), &namelist, 0, alphasort ); // sort alpha-numeric
+//    int n = scandir(sPath.c_str(), &namelist, 0, versionsort ); // sort aa1 < aa10 < aa100 etc.
     if (n >= 0){
         std::list<std::string> file_list;
         while( n-- ){
