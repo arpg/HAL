@@ -2,6 +2,7 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
 
 namespace hal
 {

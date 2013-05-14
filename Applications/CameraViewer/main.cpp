@@ -14,12 +14,11 @@ int main( int argc, char* argv[] )
     camera.Capture(imgs);
 
     // N cameras, each w*h in dimension, greyscale
-    const int N = imgs.Size();
     const int w = imgs[0].Width();
     const int h = imgs[0].Height();
 
     // Setup OpenGL Display (based on GLUT)
-    pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
+    pangolin::CreateGlutWindowAndBind(__FILE__,imgs.Size()*w,h);
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -27,7 +26,7 @@ int main( int argc, char* argv[] )
 
     // Create Smart viewports for each camera image that preserve aspect
     pangolin::View& container = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
-    for(int i=0; i<N; ++i ) {
+    for(size_t i=0; i<imgs.Size(); ++i ) {
         container.AddDisplay(pangolin::CreateDisplay().SetAspect((double)w/h));
     }
 
@@ -61,11 +60,11 @@ int main( int argc, char* argv[] )
             }
         }
 
-        for(int i=0; i<N; ++i ) {
+        for(size_t i=0; i<imgs.Size(); ++i ) {
             container[i].Activate();
             tex.Upload(
                 imgs[i].data(),
-                        imgs[i].Format(), imgs[i].Type()
+                imgs[i].Format(), imgs[i].Type()
             );
             tex.RenderToViewportFlipY();
         }
