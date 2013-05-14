@@ -10,7 +10,6 @@ public:
     RectifyFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        std::cout << "+RectifyFactory" << std::endl;
         Params() = {
         };
     }

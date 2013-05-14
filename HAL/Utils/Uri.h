@@ -73,18 +73,18 @@ public:
                     if( str_uri[ns+1] == '[' && str_uri[nurl-1] == ']' )
                     {
                         std::string queries = str_uri.substr(ns+2, nurl-1 - (ns+2) );
-                        std::vector<std::string> params = split(queries, ',');
+                        std::vector<std::string> params = Split(queries, ',');
                         for(const std::string& p : params)
                         {
-                            std::vector<std::string> args = split(p, '=');
+                            std::vector<std::string> args = Split(p, '=');
                             std::string key = args[0];
                             std::string val = args.size() > 1 ? args[1] : "";
-                            trim(key);
-                            trim(val);
+                            Trim(key);
+                            Trim(val);
                             properties.Set(key, val);
                         }
                     }else{
-                        throw DeviceException("Bad video URI");
+                        throw DeviceException("Bad video URI", str_uri);
                     }
                 }
 
