@@ -58,6 +58,12 @@ public:
     {
         return Capture( Images.ref() );
     }
+    
+    ///////////////////////////////////////////////////////////////
+    std::string GetDeviceProperty(const std::string& sProperty)
+    {
+        return m_cam->GetDeviceProperty(sProperty);
+    }
 
 protected:
     hal::Uri m_uri;

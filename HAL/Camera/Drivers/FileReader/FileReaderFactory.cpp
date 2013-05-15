@@ -27,6 +27,10 @@ public:
         int cvFlags = Grey ? 0 : -1;
 
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');
+        
+        for(std::string& s : Channels) {
+            s = ExpandTildePath(s);
+        }
 
         FileReaderDriver* filereader = new FileReaderDriver(
                     Channels, StartFrame, Loop, BufferSize, cvFlags

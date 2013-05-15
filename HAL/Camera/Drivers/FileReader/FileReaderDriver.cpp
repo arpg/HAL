@@ -65,6 +65,15 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty)
+{
+    if(sProperty == hal::DeviceDirectory) {
+        return m_sBaseDir;
+    }
+    return std::string();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame, bool Loop, size_t BufferSize, int cvFlags)
     : m_bShouldRun(false),
       m_nNumChannels(ChannelRegex.size()),
@@ -80,6 +89,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     if(m_nNumChannels < 1) {
         throw DeviceException( "No channels specified." );
     }
+    
+    m_sBaseDir = DirUp(ChannelRegex[0]);
 
     m_vFileList.resize( m_nNumChannels );
 

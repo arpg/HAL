@@ -14,7 +14,9 @@ public:
      SplitDriver( std::shared_ptr<CameraDriverInterface> Input, std::vector<hal::ImageRoi>& vROIs, bool bCopy );
 
     bool Capture( pb::CameraMsg& vImages );
-
+    
+    std::string GetDeviceProperty(const std::string& sProperty);
+    
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
     std::vector<hal::ImageRoi>              m_vROIs;
