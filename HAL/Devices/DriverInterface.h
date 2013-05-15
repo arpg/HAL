@@ -4,7 +4,9 @@
 
 namespace hal {
 
-const std::string DeviceDirectory = "Directory";
+const std::string DeviceDirectory           = "Directory";
+const std::string DeviceDepthFocalLength    = "DepthFocalLength";
+const std::string DeviceDepthBaseline       = "DepthBaseline";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic device driver interface
@@ -15,7 +17,7 @@ public:
     inline virtual std::string GetDeviceProperty(const std::string& /*sProperty*/)
     {
         return std::string();
-    }   
+    }
 };
 
 }

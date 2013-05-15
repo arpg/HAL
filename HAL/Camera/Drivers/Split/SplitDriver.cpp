@@ -3,8 +3,8 @@
 namespace hal
 {
 
-SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vector<hal::ImageRoi>& vROIs, bool bCopy)
-    : m_Input(Input), m_vROIs(vROIs), m_bCopy( bCopy )
+SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vector<hal::ImageRoi>& vROIs )
+    : m_Input(Input), m_vROIs(vROIs)
 {
 
 }
@@ -54,5 +54,22 @@ std::string SplitDriver::GetDeviceProperty(const std::string& sProperty)
 {
     return m_Input->GetDeviceProperty(sProperty);
 }
+
+unsigned int SplitDriver::Width( unsigned int idx )
+{
+    if( idx < m_vROIs.size() ) {
+        return m_vROIs[idx].w;
+    }
+    return 0;
+}
+
+unsigned int SplitDriver::Height( unsigned int idx )
+{
+    if( idx < m_vROIs.size() ) {
+        return m_vROIs[idx].h;
+    }
+    return 0;
+}
+
 
 }

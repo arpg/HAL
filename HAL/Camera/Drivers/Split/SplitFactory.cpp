@@ -12,7 +12,6 @@ public:
     {
         Params() = {
             {"roiN", "0+0+1x1", "Nth ROI."},
-            {"copy", "false", "Do a deep copy of data instead of moving pointers."}
         };
     }
 
@@ -26,28 +25,50 @@ public:
 
         const ImageRoi default_roi(0,0,1,1);
 
-        while(true)
-        {
-            std::stringstream ss;
-            ss << "roi" << (vROI.size() + 1);
-            const std::string key = ss.str();
+        if( !uri.scheme.compare("split") ) {
 
-            if(!uri.properties.Contains(key)) {
-                break;
+            while(true)
+            {
+                std::stringstream ss;
+                ss << "roi" << (vROI.size() + 1);
+                const std::string key = ss.str();
+
+                if(!uri.properties.Contains(key)) {
+                    break;
+                }
+
+                vROI.push_back( uri.properties.Get<ImageRoi>( key, default_roi ) );
             }
-
-            vROI.push_back( uri.properties.Get<ImageRoi>( key, default_roi ) );
         }
 
-        bool bCopy = uri.properties.Get("copy", false);
+        if( !uri.scheme.compare("deinterlace") ) {
+
+            vROI.push_back( ImageRoi( 0, 0,  ) );
+            vROI.push_back( ImageRoi( key, default_roi ) );
+            const ImageRoi default_roi(0,0,1,1);
+            const ImageRoi default_roi(0,0,1,1);
+            while(true)
+            {
+                std::stringstream ss;
+                ss << "roi" << (vROI.size() + 1);
+                const std::string key = ss.str();
+
+                if(!uri.properties.Contains(key)) {
+                    break;
+                }
+
+                vROI.push_back( uri.properties.Get<ImageRoi>( key, default_roi ) );
+            }
+        }
 
 
-        SplitDriver* pDriver = new SplitDriver( InCam, vROI, bCopy );
+        SplitDriver* pDriver = new SplitDriver( InCam, vROI );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
 static SplitFactory g_SplitFactory("split");
+static SplitFactory g_DeinterlaceFactory("deinterlace");
 
 }

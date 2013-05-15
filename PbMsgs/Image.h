@@ -125,15 +125,13 @@ class Image
 {
 public:
     Image()
-        : m_pData(nullptr), m_nPitch(0), m_pImage(nullptr)
+        : m_pImage(nullptr)
     {
     }
 
     Image(ImageMsg* Ptr)
         : m_pImage(Ptr)
     {
-        m_nPitch = Ptr->pitch() == 0 ? Ptr->width() : Ptr->pitch();
-        m_pData = (unsigned char*)( &Ptr->mutable_data()->front() ) + Ptr->offset();
     }
 
     unsigned int Width() const
@@ -144,11 +142,6 @@ public:
     unsigned int Height() const
     {
         return m_pImage->height();
-    }
-
-    unsigned int Pitch() const
-    {
-        return m_nPitch;
     }
 
     int Type() const
@@ -173,12 +166,12 @@ public:
 
     unsigned char* data()
     {
-        return m_pData;
+        return (unsigned char*)( &m_pImage->mutable_data()->front() );
     }
 
-    unsigned char* RowPtr( unsigned int Idx = 0 )
+    unsigned char* RowPtr( unsigned int row = 0 )
     {
-        return m_pData + (Idx * m_nPitch);
+        return data() + (row * Width());
     }
 
 
@@ -197,13 +190,10 @@ public:
 
     unsigned char operator()( unsigned int row, unsigned int col  )
     {
-//        return *(data() + (row*Width()) + col);
         return *(RowPtr(row) + col);
     }
 
 protected:
-    unsigned char*  m_pData;
-    unsigned int    m_nPitch;
     ImageMsg*       m_pImage;
 };
 
