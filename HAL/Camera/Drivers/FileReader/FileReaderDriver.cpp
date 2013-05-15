@@ -73,6 +73,27 @@ std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty)
     return std::string();
 }
 
+unsigned int FileReaderDriver::Width( unsigned int idx )
+{
+    pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+    if( (int)idx < NextFrame.image_size() ) {
+        const pb::ImageMsg& NextImg = NextFrame.image(idx);
+        return NextImg.width();
+    }
+    return 0;
+}
+
+unsigned int FileReaderDriver::Height( unsigned int idx )
+{
+    pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+    if( (int)idx < NextFrame.image_size() ) {
+        const pb::ImageMsg& NextImg = NextFrame.image(idx);
+        return NextImg.height();
+    }
+    return 0;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame, bool Loop, size_t BufferSize, int cvFlags)
     : m_bShouldRun(false),
@@ -89,7 +110,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     if(m_nNumChannels < 1) {
         throw DeviceException( "No channels specified." );
     }
-    
+
     m_sBaseDir = DirUp(ChannelRegex[0]);
 
     m_vFileList.resize( m_nNumChannels );

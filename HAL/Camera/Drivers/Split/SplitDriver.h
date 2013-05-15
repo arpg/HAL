@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <PbMsgs/Camera.pb.h>
 #include <HAL/Utils/Uri.h>
 #include "HAL/Camera/CameraDriverInterface.h"
 
@@ -24,6 +25,7 @@ public:
 
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
+    pb::CameraMsg                           m_InMsg;
     std::vector<hal::ImageRoi>              m_vROIs;
 };
 

@@ -224,3 +224,26 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
 
     return true;
 }
+
+std::string OpenNIDriver::GetDeviceProperty(const std::string& sProperty)
+{
+    // TODO add property with suffix of camera (ie. DepthBaseline0, DepthBaseline1)
+    // and return correct vector info
+    if(sProperty == hal::DeviceDepthBaseline) {
+        return std::to_string( m_DepthBaselines[0] );
+    }
+    if(sProperty == hal::DeviceDepthFocalLength) {
+        return std::to_string( m_DepthFocalLengths[0] );
+    }
+    return std::string();
+}
+
+unsigned int OpenNIDriver::Width( unsigned int /*idx*/ )
+{
+    return m_nImgWidth;
+}
+
+unsigned int OpenNIDriver::Height( unsigned int /*idx*/ )
+{
+    return m_nImgHeight;
+}

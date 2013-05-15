@@ -12,17 +12,17 @@ SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vect
 bool SplitDriver::Capture( pb::CameraMsg& vImages )
 {
 
-    pb::CameraMsg pbIn;
-    if( m_Input->Capture( pbIn ) == false ) {
+    m_InMsg.Clear();
+    if( m_Input->Capture( m_InMsg ) == false ) {
         return false;
     }
 
-    if( pbIn.image_size() > 1 ) {
-        std::cerr << "error: Split is expecting 1 image but instead got " << pbIn.image_size() << "." << std::endl;
+    if( m_InMsg.image_size() > 1 ) {
+        std::cerr << "error: Split is expecting 1 image but instead got " << m_InMsg.image_size() << "." << std::endl;
         return false;
     }
 
-    const pb::ImageMsg& InImg = pbIn.image(0);
+    const pb::ImageMsg& InImg = m_InMsg.image(0);
 
     for( unsigned int ii = 0; ii < m_vROIs.size(); ++ii ) {
 
@@ -32,17 +32,31 @@ bool SplitDriver::Capture( pb::CameraMsg& vImages )
         pImg->set_type( InImg.type() );
         pImg->set_timestamp( InImg.timestamp() );
 
+        const unsigned int nChannels = InImg.format() == pb::PB_LUMINANCE ? 1 : 3;
+        unsigned int nDepth = 1;
+        if( InImg.type() == pb::PB_SHORT || InImg.type() == pb::PB_UNSIGNED_SHORT ) {
+            nDepth = 2;
+        } else if( InImg.type() == pb::PB_INT || InImg.type() == pb::PB_UNSIGNED_INT ) {
+            nDepth = 4;
+        } else if( InImg.type() == pb::PB_FLOAT ) {
+            nDepth = 4;
+        } else if( InImg.type() == pb::PB_DOUBLE ) {
+            nDepth = 8;
+        }
+
+        const unsigned int nBytesPerPixel = nChannels * nDepth;
+
         const ImageRoi& ROI = m_vROIs[ii];
-        const unsigned int nTotalBytes = ROI.w * ROI.h;
+        const unsigned int nBytesPerRow = ROI.w * nBytesPerPixel;
 
         pImg->set_width( ROI.w );
         pImg->set_height( ROI.h );
-        pImg->mutable_data()->resize( nTotalBytes );
+        pImg->mutable_data()->resize( ROI.h * nBytesPerRow );
 
         unsigned char* pS = (unsigned char*)&InImg.data().front();
         unsigned char* pD = (unsigned char*)&pImg->mutable_data()->front();
         for( unsigned int ii = 0; ii < ROI.h; ++ii ) {
-            memcpy( pD, pS + (InImg.width()*(ii+ROI.y)) + ROI.x, ROI.w );
+            memcpy( pD, pS + (InImg.width()*(ii+ROI.y)) + ROI.x, nBytesPerRow);
             pD = pD + ROI.w;
         }
     }

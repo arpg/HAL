@@ -20,8 +20,17 @@ class OpenNIDriver : public CameraDriverInterface
                 bool                    bCaptureIR,
                 bool                    bAlignDepth
                 );
+
         virtual ~OpenNIDriver();
+
         bool Capture( pb::CameraMsg& vImages );
+
+        std::string GetDeviceProperty(const std::string& sProperty);
+
+        unsigned int Width( unsigned int idx = 0 );
+
+        unsigned int Height( unsigned int idx = 0 );
+
 
     private:
         unsigned int                    m_nImgHeight;
