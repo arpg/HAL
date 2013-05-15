@@ -25,26 +25,15 @@ public:
         std::shared_ptr<CameraDriverInterface> input =
                 DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
         
-        std::string baseDir = input->GetDeviceProperty(hal::DeviceDirectory);
-        std::cout << baseDir << std::endl;
-        
         std::string filename = uri.properties.Get<std::string>("file", "cameras.xml");
         
         if(!FileExists(filename))
         {
-            // Try to search in sub device directory
-            const size_t fpos = uri.url.find("file://");
-            if(fpos != std::string::npos)
-            {
-                Uri fileuri( uri.url.substr(fpos, std::string::npos) );
-                const std::vector<std::string> expand = Expand(fileuri.url);            
-                
-                std::string dir = DirUp(ExpandTildePath(expand[0]));         
-                while(!dir.empty() && !FileExists(dir+"/"+filename)) {
-                    dir = DirUp(dir);
-                }
-                filename = (dir.empty() ? "" : dir + "/") + filename;
+            std::string dir = input->GetDeviceProperty(hal::DeviceDirectory);
+            while(!dir.empty() && !FileExists(dir+"/"+filename)) {
+                dir = DirUp(dir);
             }
+            filename = (dir.empty() ? "" : dir + "/") + filename;
         }
         
         calibu::CameraRig rig = calibu::ReadXmlRig(filename);

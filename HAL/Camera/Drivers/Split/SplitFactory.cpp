@@ -43,22 +43,8 @@ public:
 
         if( !uri.scheme.compare("deinterlace") ) {
 
-            vROI.push_back( ImageRoi( 0, 0,  ) );
-            vROI.push_back( ImageRoi( key, default_roi ) );
-            const ImageRoi default_roi(0,0,1,1);
-            const ImageRoi default_roi(0,0,1,1);
-            while(true)
-            {
-                std::stringstream ss;
-                ss << "roi" << (vROI.size() + 1);
-                const std::string key = ss.str();
-
-                if(!uri.properties.Contains(key)) {
-                    break;
-                }
-
-                vROI.push_back( uri.properties.Get<ImageRoi>( key, default_roi ) );
-            }
+            vROI.push_back( ImageRoi( 0, 0, 1, 1 ) );
+            vROI.push_back( ImageRoi( 1, 1, 1, 1 ) );
         }
 
 

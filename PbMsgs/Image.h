@@ -164,12 +164,12 @@ public:
         m_pImage->info();
     }
 
-    unsigned char* data()
+    unsigned char* data() const
     {
         return (unsigned char*)( &m_pImage->mutable_data()->front() );
     }
 
-    unsigned char* RowPtr( unsigned int row = 0 )
+    unsigned char* RowPtr( unsigned int row = 0 ) const
     {
         return data() + (row * Width());
     }
@@ -183,12 +183,23 @@ public:
 #endif
 
     template< typename T >
-    T at( unsigned int row, unsigned int col )
+    T at( unsigned int row, unsigned int col ) const
     {
         return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
     }
 
-    unsigned char operator()( unsigned int row, unsigned int col  )
+    template< typename T >
+    T& at( unsigned int row, unsigned int col )
+    {
+        return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
+    }
+
+    unsigned char operator()( unsigned int row, unsigned int col  ) const
+    {
+        return *(RowPtr(row) + col);
+    }
+
+    unsigned char& operator()( unsigned int row, unsigned int col  )
     {
         return *(RowPtr(row) + col);
     }
