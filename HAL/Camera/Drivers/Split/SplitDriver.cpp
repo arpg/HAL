@@ -1,7 +1,5 @@
 #include "SplitDriver.h"
 
-#include <unistd.h>
-
 namespace hal
 {
 
@@ -29,7 +27,6 @@ bool SplitDriver::Capture( pb::CameraMsg& vImages )
     for( unsigned int ii = 0; ii < m_vROIs.size(); ++ii ) {
 
         pb::ImageMsg* pImg = vImages.add_image();
-//        pImg->CopyFrom( InImg );
 
         pImg->set_format( InImg.format() );
         pImg->set_type( InImg.type() );
@@ -49,8 +46,6 @@ bool SplitDriver::Capture( pb::CameraMsg& vImages )
             pD = pD + ROI.w;
         }
     }
-
-//    sleep(1);
 
     return true;
 }
