@@ -11,7 +11,6 @@ public:
     SplitFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        std::cout << "+SplitFactory" << std::endl;
         Params() = {
             {"roiN", "0+0+1x1", "Nth ROI."},
             {"copy", "false", "Do a deep copy of data instead of moving pointers."}
