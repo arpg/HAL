@@ -45,31 +45,31 @@ inline Sophus::SE3d CreateScanlineRectifiedLookupAndT_rl(
     const Sophus::SO3d R_lr = R_rl.inverse();
     const Eigen::Vector3d l_r = T_rl.translation();
     const Eigen::Vector3d r_l = - (R_lr * l_r);
-    
+
     // Current up vector for each camera (in left FoR)
     const Eigen::Vector3d lup_l = Eigen::Vector3d(0,1,0);
     const Eigen::Vector3d rup_l = R_lr * Eigen::Vector3d(0,1,0);
-    
+
     // Hypothetical fwd vector for each camera, perpendicular to baseline (in left FoR)
     const Eigen::Vector3d lfwd = lup_l.cross(r_l);
     const Eigen::Vector3d rfwd = rup_l.cross(r_l);
-    
+
     // New fwd is average of left / right hypothetical baselines (also perpendicular to baseline)
     const Eigen::Vector3d new_fwd = (lfwd + rfwd).normalized();
-    
+
     // Define new basis (in left FoR);
     const Eigen::Vector3d x = r_l.normalized();
     const Eigen::Vector3d z = -new_fwd;
     const Eigen::Vector3d y  = z.cross(x).normalized();
-    
+
     // New orientation for both left and right cameras (expressed relative to original left)
     Eigen::Matrix3d mR_nl;
     mR_nl << x, y, z;
-    
+
     // By definition, the right camera now lies exactly on the x-axis with the same orientation
     // as the left camera.
     const Sophus::SE3d T_nr_nl = Sophus::SE3d(Eigen::Matrix3d::Identity(), Eigen::Vector3d(-r_l.norm(),0,0) );
-    
+
     // Homographies which should be applied to left and right images to scan-line rectify them
     const Eigen::Matrix3d Rl_nlKl = mR_nl.transpose() * cam_left.Kinv();
     const Eigen::Matrix3d Rr_nrKl = (mR_nl * R_lr.matrix()).transpose() * cam_left.Kinv();
@@ -104,7 +104,7 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const
         const calibu::CameraModel& cam = rig.cameras[i].camera;
         lookups[i] = Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>(cam.Height(), cam.Width());
     }
-    
+
     if(rig.cameras.size() == 2) {
         // Generate lookup tables for stereo rectify
         Sophus::SE3d T_nr_nl = CreateScanlineRectifiedLookupAndT_rl(
@@ -119,35 +119,34 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const
 bool RectifyDriver::Capture( pb::CameraMsg& vImages )
 {
     pb::CameraMsg vIn;
-    
+
     const bool success = m_input->Capture( vIn );
 
     if(success) {
         vImages.Clear();
-        
+
         pb::Image inimg[2] = { vIn.mutable_image(0), vIn.mutable_image(1)};
-        
+
         for(int k=0; k < 2; ++k) {
             pb::ImageMsg* pimg = vImages.add_image();
             pimg->set_width(inimg[k].Width());
             pimg->set_height(inimg[k].Height());
-            pimg->set_pitch(inimg[k].Pitch());
             pimg->set_type( (pb::Type)inimg[k].Type());
             pimg->set_format( (pb::Format)inimg[k].Format());
             pimg->mutable_data()->reserve(inimg[k].Width()*inimg[k].Height());
-            
+
             pb::Image img = pb::Image(pimg);
             Remap(lookups[k], inimg[k], img );
 //            cv::remap( (cv::Mat)img[k], rimg[k], rmap[k][0], rmap[k][1], CV_INTER_LINEAR);
         }
-        
+
 //        for(int i=0; i<2; ++i) {
 //            pb::ImageMsg* pImg = vImages.add_image();
 //            pb::ReadCvMat(rimg[i], pImg);
 //        }
 
     }
-    
+
     return success;
 }
 
