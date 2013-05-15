@@ -125,13 +125,15 @@ class Image
 {
 public:
     Image()
-        : m_pImage(nullptr)
+        : m_pData(nullptr), m_nPitch(0), m_pImage(nullptr)
     {
     }
 
     Image(ImageMsg* Ptr)
         : m_pImage(Ptr)
     {
+        m_nPitch = Ptr->pitch() == 0 ? Ptr->width() : Ptr->pitch();
+        m_pData = (unsigned char*)( &Ptr->mutable_data()->front() ) + Ptr->offset();
     }
 
     unsigned int Width() const
@@ -142,6 +144,11 @@ public:
     unsigned int Height() const
     {
         return m_pImage->height();
+    }
+
+    unsigned int Pitch() const
+    {
+        return m_nPitch;
     }
 
     int Type() const
@@ -164,10 +171,16 @@ public:
         m_pImage->info();
     }
 
-    char* data()
+    unsigned char* data()
     {
-        return &m_pImage->mutable_data()->front();
+        return m_pData;
     }
+
+    unsigned char* RowPtr( unsigned int Idx = 0 )
+    {
+        return m_pData + (Idx * m_nPitch);
+    }
+
 
 #ifdef HAVE_OPENCV
     operator cv::Mat()
@@ -177,6 +190,8 @@ public:
 #endif
 
 protected:
+    unsigned char*  m_pData;
+    unsigned int    m_nPitch;
     ImageMsg*       m_pImage;
 };
 

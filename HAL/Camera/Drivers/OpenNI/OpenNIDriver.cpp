@@ -42,7 +42,7 @@ OpenNIDriver::OpenNIDriver(
 
     XnStatus rc;
 
-    rc = m_Context.Init ();
+    rc = m_Context.Init();
     CHECK_XN_RETURN(rc);
 
     if( bCaptureRGB ) {
@@ -115,14 +115,16 @@ OpenNIDriver::OpenNIDriver(
             depthGen.GetRealProperty( "ZPPS", pixelSize );  // in mm
 
             // focal length in pixels
-//            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
+            double depth_focal_length_SXGA = depth_focal_length_SXGA_mm / pixelSize;
 
             XnDouble dBaselineRGBDepth;
             depthGen.GetRealProperty( "DCRCDIS", dBaselineRGBDepth );
 
-//            const int camn = m_DepthGenerators.size();
-//            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "FocalLength", depth_focal_length_SXGA / 2 );
-//            m_pPropertyMap->SetProperty( "Depth" +  boost::lexical_cast<std::string>(camn) + "Baseline", dBaselineRGBDepth );
+            m_DepthBaselines.push_back( dBaselineRGBDepth );
+            m_DepthFocalLengths.push_back( depth_focal_length_SXGA / 2 );
+
+            // --- END GETTING PARAMS ---
+
 
             m_DepthGenerators.push_back(depthGen);
         }
@@ -153,38 +155,6 @@ OpenNIDriver::OpenNIDriver(
         }
     }
 
-//    if(m_ImageNode.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT))
-//    {
-//        //Warp RGB to match depth
-//        AlternativeViewPointCapability avpx = m_ImageNode.GetAlternativeViewPointCap();
-//        rc = avpx.SetViewPoint(m_DepthNode);
-//        if (rc != XN_STATUS_OK) {
-//            errors.ToString(strError, 1024);
-//            printf("%s\n", strError);
-//        }
-//    }
-
-    // --- GET CAMERA PARAMS ---
-    // Details can be found in XnStreamParams.h
-
-    /*
-    max_depth = m_DepthNode.GetDeviceMaxDepth ();
-
-
-    XnUInt64 shadow_value_local;
-    depth.GetIntProperty ("ShadowValue", shadow_value_local);
-    shadow_value = (int)shadow_value_local;
-
-    XnUInt64 no_sample_value_local;
-    depth.GetIntProperty ("NoSampleValue", no_sample_value_local);
-    no_sample_value = (int)no_sample_value_local;
-
-    // baseline from cm -> mm
-    baseline = (float)(baseline_local * 10);
-    */
-
-    // --- END GETTING PARAMS ---
-
     rc = m_Context.StartGeneratingAll();
     CHECK_XN_RETURN(rc);
 }
@@ -214,7 +184,6 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
     }
 
     // prepare return images
-//    const unsigned int nNumImgs = m_DepthGenerators.size() + m_ImageGenerators.size() + m_IRGenerators.size();
 
     for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
         xn::ImageMetaData metaData;
@@ -237,6 +206,9 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_data( metaData.Data(), metaData.DataSize() );
         pbImg->set_type(pb::PB_UNSIGNED_SHORT);
         pbImg->set_format(pb::PB_LUMINANCE);
+        pb::ImageInfoMsg* pbImgInfo = pbImg->mutable_info();
+        pbImgInfo->set_baseline( m_DepthBaselines[i] );
+        pbImgInfo->set_focal_length( m_DepthFocalLengths[i] );
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;

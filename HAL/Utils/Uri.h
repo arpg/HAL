@@ -101,6 +101,7 @@ public:
     PropertyMap properties;
 };
 
+
 struct ImageDim
 {
     inline ImageDim() : x(0), y(0) {}
@@ -129,8 +130,6 @@ inline std::istream& operator>> (std::istream &is, ImageRoi &roi)
     is >> roi.w; is.get(); is >> roi.h;
     return is;
 }
-
-
 
 
 }
