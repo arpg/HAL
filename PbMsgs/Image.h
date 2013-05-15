@@ -176,7 +176,7 @@ public:
         return m_pData;
     }
 
-    unsigned char* RowPtr( unsigned int Idx = 0 )
+    unsigned char* RowPtr( unsigned int Idx = 0 ) const
     {
         return m_pData + (Idx * m_nPitch);
     }
@@ -190,17 +190,27 @@ public:
 #endif
 
     template< typename T >
-    T at( unsigned int row, unsigned int col )
+    T at( unsigned int row, unsigned int col ) const
     {
         return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
     }
 
-    unsigned char operator()( unsigned int row, unsigned int col  )
+    template< typename T >
+    T& at( unsigned int row, unsigned int col )
     {
-//        return *(data() + (row*Width()) + col);
+        return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
+    }
+
+    unsigned char operator()( unsigned int row, unsigned int col  ) const
+    {
         return *(RowPtr(row) + col);
     }
 
+    unsigned char& operator()( unsigned int row, unsigned int col  )
+    {
+        return *(RowPtr(row) + col);
+    }
+    
 protected:
     unsigned char*  m_pData;
     unsigned int    m_nPitch;
