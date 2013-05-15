@@ -189,6 +189,18 @@ public:
     }
 #endif
 
+    template< typename T >
+    T at( unsigned int row, unsigned int col )
+    {
+        return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
+    }
+
+    unsigned char operator()( unsigned int row, unsigned int col  )
+    {
+//        return *(data() + (row*Width()) + col);
+        return *(RowPtr(row) + col);
+    }
+
 protected:
     unsigned char*  m_pData;
     unsigned int    m_nPitch;
@@ -218,7 +230,7 @@ public:
             return Image(m_Message.mutable_image(idx));
         }
 
-        // TODO: define ensure macro
+        // TODO: define ensure macro or throw exception
         std::cerr << "error: Image index out of bounds." << std::endl;
         exit(1);
     }
