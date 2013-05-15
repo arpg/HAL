@@ -10,7 +10,6 @@ public:
     OpenNIFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        std::cout << "+OpenNIFactory" << std::endl;
         Params() = {
             {"size", "640x480", "Capture resolution."},
             {"fps", "30", "Capture framerate."},

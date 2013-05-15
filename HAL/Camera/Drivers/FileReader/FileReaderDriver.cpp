@@ -3,11 +3,11 @@
 
 #include <HAL/Devices/DeviceTime.h>
 #include <HAL/Devices/DeviceException.h>
+#include <HAL/Utils/StringUtils.h>
 
 #include <opencv2/opencv.hpp>
 
 #include "ReadImage.h"
-#include "DirUtils.h"
 
 using namespace std;
 
@@ -64,34 +64,6 @@ bool FileReaderDriver::Capture( pb::CameraMsg& vImages )
     return true;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////
-//void FileReaderDriver::PrintInfo() {
-
-//    std::cout <<
-//    "\nFILEREADER\n"
-//    "--------------------------------\n"
-//    "Reads images from the disk."
-//    "\n\n"
-//    "Options:\n"
-//    "   -sdir           <source directory for images and camera model files> [default '.']\n"
-//    "   -chanN          <regular expression for channel N>\n"
-//    "   -sf             <start frame> [default 0]\n"
-//    "   -buffsize       <size of buffer for image pre-read> [default 35]\n"
-//    "   -timekeeper     <name of variable holding image timestamps> [default 'SystemTime']\n"
-//    "\n"
-//    "Note:\n"
-//    "   -lfile & -rfile can be used as aliases to Channel-0 & Channel-1.\n"
-//    "\n"
-//    "Flags:\n"
-//    "   -greyscale      If the driver should return images in greyscale.\n"
-//    "   -loop           If the driver should restart once images are consumed.\n"
-//    "\n"
-//    "Examples:\n"
-//    "./Exec  -idev FileReader  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n"
-//    "./Exec  -idev FileReader  -chan0 \"left.*pgm\"  -chan1 \"right.*pgm\"   -chan2 \"depth.*pdm\"\n\n";
-//}
-
 ///////////////////////////////////////////////////////////////////////////////
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame, bool Loop, size_t BufferSize, int cvFlags)
     : m_bShouldRun(false),
@@ -115,7 +87,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
         // Now generate the list of files for each channel
         std::vector< std::string >& vFiles = m_vFileList[ii];
 
-        if(hal::FindFiles(ChannelRegex[ii], vFiles) == false){
+        if( !hal::WildcardFileList(ChannelRegex[ii], vFiles) ) {
+//        if( !hal::FindFiles(ChannelRegex[ii], vFiles) ){
             throw DeviceException("No files found from regexp", ChannelRegex[ii] );
         }
     }

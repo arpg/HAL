@@ -40,7 +40,6 @@ public:
             DeviceFactory<BaseDevice>* factory
             )
     {
-        std::cout << "RegisterFactory " << device_name << ", " << factory << std::endl;
         m_factories[device_name] = factory;
     }
 
