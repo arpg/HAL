@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dirent.h>
+#include <sys/stat.h>
 
 #include <sstream>
 #include <string>
@@ -64,6 +65,33 @@ inline std::vector<std::string> Expand(const std::string &s, char open='[', char
     return {s};
 }
 
+inline std::string DirUp(const std::string& dir)
+{
+    const size_t nLastSlash = dir.find_last_of('/');
+    
+    if(nLastSlash != std::string::npos) {
+        return dir.substr(0, nLastSlash);
+    }else{
+        return std::string();
+    }
+}
+
+inline bool FileExists(const std::string& filename)
+{
+    struct stat buf;
+    return stat(filename.c_str(), &buf) != -1;
+}
+
+inline std::string ExpandTildePath(const std::string& sPath)
+{
+    if(sPath.length() >0 && sPath[0] == '~') {
+        const char* sHomeDir = getenv("HOME");
+        return std::string(sHomeDir) + sPath.substr(1,std::string::npos);
+    }else{
+        return sPath;
+    }
+}
+
 // Based on http://www.codeproject.com/Articles/188256/A-Simple-Wildcard-Matching-Function
 inline bool WildcardMatch(const std::string& query, const std::string& wildcard)
 {
@@ -115,11 +143,8 @@ inline bool WildcardFileList(const std::string& wildcard, std::vector<std::strin
         sFileWc = wildcard;
     }
     
-    if(sPath.length() >0 && sPath[0] == '~') {
-        const char* sHomeDir = getenv("HOME");
-        sPath = std::string(sHomeDir) + sPath.substr(1,std::string::npos);
-    }
-    
+    sPath = ExpandTildePath(sPath);
+        
     struct dirent **namelist;
     int n = scandir(sPath.c_str(), &namelist, 0, alphasort ); // sort alpha-numeric
 //    int n = scandir(sPath.c_str(), &namelist, 0, versionsort ); // sort aa1 < aa10 < aa100 etc.

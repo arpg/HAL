@@ -3,7 +3,7 @@
 namespace hal
 {
 
-RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input)
+RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const calibu::CameraRig& /*rig*/)
     : m_input(input)
 {
     

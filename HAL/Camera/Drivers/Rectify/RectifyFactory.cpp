@@ -1,6 +1,8 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "RectifyDriver.h"
 
+#include <calibu/cam/CameraXml.h>
+
 namespace hal
 {
 
@@ -11,17 +13,38 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
+            {"file","","Cameras XML description"}
         };
     }
-    
+        
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
+        const Uri input_uri = Uri(uri.url);
+        
         // Create input camera
         std::shared_ptr<CameraDriverInterface> input =
-                DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri.url);
+                DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
+    
         
+        std::string filename = uri.properties.Get<std::string>("file", "");
         
-        RectifyDriver* rectify = new RectifyDriver(input);
+        if(filename.empty() && input_uri.scheme == "file") {
+            // Try to find from input uri path
+            const std::vector<std::string> expand = Expand(input_uri.url);            
+            std::string dir = DirUp(ExpandTildePath(expand[0]));
+            
+            while(!dir.empty() && !FileExists(dir+"/cameras.xml")) {
+                dir = DirUp(dir);
+            }
+            filename = (dir.empty() ? "" : dir + "/") + "cameras.xml";
+        }
+        
+        calibu::CameraRig rig = calibu::ReadXmlRig(filename);
+        if(rig.cameras.size() != 2) {
+            throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
+        }
+                
+        RectifyDriver* rectify = new RectifyDriver(input, rig);
         return std::shared_ptr<CameraDriverInterface>( rectify );
     }
 };
