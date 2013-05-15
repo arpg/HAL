@@ -19,6 +19,8 @@ public:
     RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const calibu::CameraRig& rig);
     
     bool Capture( pb::CameraMsg& vImages );
+    
+    std::string GetDeviceProperty(const std::string& sProperty);
 
 protected:
     std::shared_ptr<CameraDriverInterface> m_input;

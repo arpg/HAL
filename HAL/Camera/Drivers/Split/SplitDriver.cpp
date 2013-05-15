@@ -55,4 +55,9 @@ bool SplitDriver::Capture( pb::CameraMsg& vImages )
     return true;
 }
 
+std::string SplitDriver::GetDeviceProperty(const std::string& sProperty)
+{
+    return m_Input->GetDeviceProperty(sProperty);
+}
+
 }

@@ -15,7 +15,10 @@ class FileReaderDriver : public CameraDriverInterface
     public:
         FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame = 0, bool Loop = false, size_t BufferSize = 35, int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/);
         ~FileReaderDriver();
-        bool Capture( pb::CameraMsg& vImages );
+        
+        bool Capture( pb::CameraMsg& vImages );        
+        
+        std::string GetDeviceProperty(const std::string& sProperty);
 
     private:
         static void _ThreadCaptureFunc( FileReaderDriver* pFR );
@@ -37,6 +40,7 @@ class FileReaderDriver : public CameraDriverInterface
 
         std::queue< pb::CameraMsg >                     m_qImageBuffer;
         std::vector< std::vector< std::string > >		m_vFileList;
+        std::string                                     m_sBaseDir;
         unsigned int                                    m_nNumChannels;
         unsigned int                                    m_nStartFrame;
         unsigned int                                    m_nCurrentImageIndex;

@@ -110,7 +110,7 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const
     lookups.resize(rig.cameras.size());
     for(size_t i=0; i< rig.cameras.size(); ++i) {
         const calibu::CameraModel& cam = rig.cameras[i].camera;
-        lookups[i] = Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>(cam.Width(), cam.Height());
+        lookups[i] = Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>(cam.Height(), cam.Width());
     }
     
     if(rig.cameras.size() == 2) {
@@ -146,6 +146,11 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
     }
     
     return success;
+}
+
+std::string RectifyDriver::GetDeviceProperty(const std::string& sProperty)
+{
+    return m_input->GetDeviceProperty(sProperty);
 }
 
 }
