@@ -47,7 +47,9 @@ int main( int argc, char* argv[] )
 
         if(go) {
             if(frame>0) {
-                camera.Capture(imgs);
+                if( camera.Capture(imgs) == false ) {
+                    run = false;
+                }
             }
 
             frame++;

@@ -25,7 +25,7 @@ public:
         size_t BufferSize = uri.properties.Get("buffer", 10);
         bool Grey =         uri.properties.Get("grey", false);
         int cvFlags = Grey ? 0 : -1;
-        
+
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');
 
         FileReaderDriver* filereader = new FileReaderDriver(
@@ -37,5 +37,6 @@ public:
 
 // Register this factory by creating static instance of factory
 static FileReaderFactory g_FileReaderFactory("file");
+static FileReaderFactory g_FileReaderFactoryS("files");
 
 }

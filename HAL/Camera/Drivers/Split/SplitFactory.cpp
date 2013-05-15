@@ -1,6 +1,5 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "SplitDriver.h"
-//#include "VideoSplitter.h"
 
 namespace hal
 {
@@ -40,7 +39,6 @@ public:
             vROI.push_back( uri.properties.Get<ImageRoi>( key, default_roi ) );
         }
 
-//        video = new VideoSplitter(subvid,vROI);
         bool bCopy = uri.properties.Get("copy", false);
 
 
