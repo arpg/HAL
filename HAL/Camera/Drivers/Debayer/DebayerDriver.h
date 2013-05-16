@@ -13,10 +13,10 @@ namespace hal
 class DebayerDriver : public CameraDriverInterface
 {
 public:
-    DebayerDriver( std::shared_ptr<CameraDriverInterface>    Input,
-                   const std::string&                        sMethod,
-                   const std::string&                        sFilter,
-                   unsigned int                              nDepth
+    DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
+                   dc1394bayer_method_t                   Method,
+                   dc1394color_filter_t                   Filter,
+                   unsigned int                           nDepth
                  );
 
     bool Capture( pb::CameraMsg& vImages );

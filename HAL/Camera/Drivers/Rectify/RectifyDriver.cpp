@@ -51,8 +51,6 @@ inline Sophus::SE3d CreateScanlineRectifiedLookupAndT_rl(
     // Hypothetical fwd vector for each camera, perpendicular to baseline (in left FoR)
     const Eigen::Vector3d lfwd_l = (lup_l.cross(r_l)).normalized();
     const Eigen::Vector3d rfwd_l = (rup_l.cross(r_l)).normalized();
-//    const Eigen::Vector3d lfwd = r_l.cross(lup_l);
-//    const Eigen::Vector3d rfwd = r_l.cross(rup_l);
 
     // New fwd is average of left / right hypothetical baselines (also perpendicular to baseline)
     const Eigen::Vector3d avgfwd_l = lfwd_l + rfwd_l;
@@ -71,8 +69,8 @@ inline Sophus::SE3d CreateScanlineRectifiedLookupAndT_rl(
     const Sophus::SE3d T_nr_nl = Sophus::SE3d(Eigen::Matrix3d::Identity(), Eigen::Vector3d(-r_l.norm(),0,0) );
 
     // Homographies which should be applied to left and right images to scan-line rectify them
-    const Eigen::Matrix3d Rl_nlKl = mRl_nl.transpose() * cam_right.Kinv();
-    const Eigen::Matrix3d Rr_nrKl = (mRl_nl * R_lr.matrix()).transpose() * cam_right.Kinv();
+    const Eigen::Matrix3d Rl_nlKl = mRl_nl.transpose() * cam_left.Kinv();
+    const Eigen::Matrix3d Rr_nrKl = (mRl_nl * R_lr.matrix()).transpose() * cam_left.Kinv();
     
     
     CreateLookupTable(cam_left, Rl_nlKl, dlookup_left);
@@ -137,14 +135,7 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
 
             pb::Image img = pb::Image(pimg);
             Remap(lookups[k], inimg[k], img );
-//            cv::remap( (cv::Mat)img[k], rimg[k], rmap[k][0], rmap[k][1], CV_INTER_LINEAR);
         }
-
-//        for(int i=0; i<2; ++i) {
-//            pb::ImageMsg* pImg = vImages.add_image();
-//            pb::ReadCvMat(rimg[i], pImg);
-//        }
-
     }
 
     return success;
