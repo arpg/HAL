@@ -10,8 +10,14 @@ namespace hal {
 class DC1394Driver : public CameraDriverInterface
 {
     public:
+        const static int MAX_FR = -1;
+        const static int EXT_TRIG = -1;
 
-        DC1394Driver(unsigned int nCamId);
+        DC1394Driver(unsigned int nCamId, dc1394video_mode_t Mode,
+                     unsigned int nTop, unsigned int nLeft,
+                     unsigned int nWidth, unsigned int nHeight,
+                     float fFPS, dc1394speed_t ISO,
+                     unsigned int nDMA);
 
         bool Capture( pb::CameraMsg& vImages );
 
@@ -23,15 +29,16 @@ class DC1394Driver : public CameraDriverInterface
 
 
     private:
-        void _cleanup_and_exit( dc1394camera_t *pCam );
+        void _SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam );
+        inline int _NearestValue(int value, int step, int min, int max);
 
 
     private:
         // TODO set bus to static?
         dc1394_t*                   m_pBus;
         dc1394camera_t*             m_pCam;
-        dc1394video_mode_t          m_nVideoMode;
-        dc1394framerate_t           m_nFramerate;
+        pb::Type                    m_VideoType;
+        pb::Format                  m_VideoFormat;
         unsigned int                m_nImageWidth;
         unsigned int                m_nImageHeight;
 

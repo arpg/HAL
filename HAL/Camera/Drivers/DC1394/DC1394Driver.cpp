@@ -1,7 +1,13 @@
 //#include <inttypes.h>
 //#include <stdio.h>
 //#include <stdint.h>
+/*
+ * Format7 code extracted from Pangolin library.
+ *
+ */
 
+
+#include <iostream>
 #include <dc1394/conversions.h>
 
 #include <HAL/Devices/DeviceException.h>
@@ -13,7 +19,7 @@ using namespace hal;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void SetImageMetaDataFromCamera2( pb::ImageMsg* img, dc1394camera_t* pCam )
+void DC1394Driver::_SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam )
 {
     pb::ImageInfoMsg* info = img->mutable_info();
 
@@ -37,18 +43,38 @@ void SetImageMetaDataFromCamera2( pb::ImageMsg* img, dc1394camera_t* pCam )
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline void DC1394Driver::_cleanup_and_exit( dc1394camera_t *pCam )
+inline int DC1394Driver::_NearestValue(int value, int step, int min, int max)
 {
-    dc1394_video_set_transmission( pCam, DC1394_OFF );
-    dc1394_capture_stop( pCam );
-    dc1394_camera_free( pCam );
-    exit(-1);
+    int low, high;
+
+    low=value-(value%step);
+    high=value-(value%step)+step;
+    if (low<min)
+        low=min;
+    if (high>max)
+        high=max;
+
+    if (abs(low-value)<abs(high-value))
+        return low;
+    else
+        return high;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DC1394Driver::DC1394Driver( unsigned int nCamId )
+DC1394Driver::DC1394Driver(
+        unsigned int            nCamId,
+        dc1394video_mode_t      Mode,
+        unsigned int            nTop,
+        unsigned int            nLeft,
+        unsigned int            nWidth,
+        unsigned int            nHeight,
+        float                   fFPS,
+        dc1394speed_t           ISO,
+        unsigned int            nDMA
+    )
 {
     m_pBus = dc1394_new();
     dc1394error_t e;
@@ -65,201 +91,208 @@ DC1394Driver::DC1394Driver( unsigned int nCamId )
     // free the camera list
     dc1394_camera_free_list( pCameraList );
 
-    printf("Configuring camera with GUID %llu ... ", m_pCam[ii]->guid );
+    printf("Configuring camera with GUID %llu ... ", m_pCam->guid );
     fflush( stdout );
-    dc1394_camera_reset(m_pCam[ii]);
-    // TODO: allow people to modify these parameters through property map!!!
-    if( SetCameraProperties( m_pCam[ii], DC1394_VIDEO_MODE_640x480_MONO8, DC1394_FRAMERATE_30 ) == DC1394_SUCCESS ) {
-    if( SetCameraProperties_Format7( m_pCam[ii], DC1394_VIDEO_MODE_FORMAT7_0, DC1394_COLOR_CODING_MONO8,
-                                     9200, DC1394_ISO_SPEED_400, 2, 640, 480, 56, 0 ) == DC1394_SUCCESS ) {
-        printf("OK.\n");
+    dc1394_camera_reset(m_pCam);
+
+
+
+    //----- set ISO speed
+    if(ISO >= DC1394_ISO_SPEED_800)
+    {
+        e = dc1394_video_set_operation_mode( m_pCam, DC1394_OPERATION_MODE_1394B );
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set DC1394_OPERATION_MODE_1394B");
     }
+
+    e = dc1394_video_set_iso_speed( m_pCam, ISO);
+    if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not set iso speed");
+
+
+    //----- set framerate and mode
+    if( Mode < DC1394_VIDEO_MODE_FORMAT7_MIN ) {
+        // "regular" mode
+
+        e = dc1394_video_set_mode( m_pCam, Mode);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set video mode");
+
+        // get framerate
+        dc1394framerate_t FPS;
+        if( fFPS == 1.875 ) {
+            FPS = DC1394_FRAMERATE_1_875;
+        } else if( fFPS == 3.75 ) {
+            FPS = DC1394_FRAMERATE_3_75;
+        } else if( fFPS == 7.5 ) {
+            FPS = DC1394_FRAMERATE_7_5;
+        } else if( fFPS == 15 ) {
+            FPS = DC1394_FRAMERATE_15;
+        } else if( fFPS == 30 ) {
+            FPS = DC1394_FRAMERATE_30;
+        } else if( fFPS == 60 ) {
+            FPS = DC1394_FRAMERATE_60;
+        } else if( fFPS == 120 ) {
+            FPS = DC1394_FRAMERATE_120;
+        } else {
+            FPS = DC1394_FRAMERATE_240;
+        }
+
+        e = dc1394_video_set_framerate(m_pCam, FPS);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set frame rate");
+
+    } else {
+        // format 7 mode
+
+        // check that the required mode is actually supported
+        dc1394format7mode_t Info;
+
+        e = dc1394_format7_get_mode_info( m_pCam, Mode, &Info);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not get format7 mode info");
+
+        // safely set the video mode
+        e = dc1394_video_set_mode( m_pCam, Mode);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set format7 video mode");
+
+        // set position to 0,0 so that setting any size within min and max is a valid command
+        e = dc1394_format7_set_image_position(m_pCam, Mode, 0, 0);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set format7 image position");
+
+        // work out the desired image size
+        int Width = _NearestValue(nWidth, Info.unit_pos_x, 0, Info.max_size_x - nLeft);
+        int Height = _NearestValue(nHeight, Info.unit_pos_y, 0, Info.max_size_y - nTop);
+
+        // set size
+        e = dc1394_format7_set_image_size(m_pCam, Mode, Width, Height);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set format7 size");
+
+        // get the info again since many parameters depend on image size
+        e = dc1394_format7_get_mode_info(m_pCam, Mode, &Info);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not get format7 mode info");
+
+        // work out position of roi
+        int Left = _NearestValue(nLeft, Info.unit_size_x, Info.unit_size_x, Info.max_size_x - Width);
+        int Top = _NearestValue(nTop, Info.unit_size_y, Info.unit_size_y, Info.max_size_y - Height);
+
+        // set roi position
+        e = dc1394_format7_set_image_position(m_pCam, Mode, Left, Top);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set format7 size");
+
+        std::cout<<"roi: "<<Left<<" "<<Top<<" "<<Width<<" "<<Height<<"  ";
+
+
+        e = dc1394_format7_set_packet_size(m_pCam, Mode, Info.max_packet_size);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set format7 packet size");
+
+        if((fFPS != MAX_FR) && (fFPS != EXT_TRIG)){
+            //set the framerate by using the absolute feature as suggested by the
+            //folks at PointGrey
+            e = dc1394_feature_set_absolute_control(m_pCam,DC1394_FEATURE_FRAME_RATE,DC1394_ON);
+            if( e != DC1394_SUCCESS )
+                throw DeviceException("Could not turn on absolute frame rate control");
+
+            e = dc1394_feature_set_mode(m_pCam,DC1394_FEATURE_FRAME_RATE,DC1394_FEATURE_MODE_MANUAL);
+            if( e != DC1394_SUCCESS )
+                throw DeviceException("Could not make frame rate manual ");
+
+            e = dc1394_feature_set_absolute_value(m_pCam,DC1394_FEATURE_FRAME_RATE,fFPS);
+            if( e != DC1394_SUCCESS )
+                throw DeviceException("Could not set format7 framerate ");
+        }
+
+        // ask the camera what is the resulting framerate (this assume that such a rate is actually
+        // allowed by the shutter time)
+        float value;
+        e = dc1394_feature_get_absolute_value(m_pCam,DC1394_FEATURE_FRAME_RATE,&value);
+        if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not get framerate");
+
+        std::cout << " framerate(shutter permitting): " << value << std::endl;
+    }
+
+
+    //----- set DMA channels
+    e = dc1394_capture_setup(m_pCam, nDMA, DC1394_CAPTURE_FLAGS_DEFAULT);
+    if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not setup camera - check settings");
+
+    printf("OK.\n");
+
 
     // initiate transmission
     e = dc1394_video_set_transmission( m_pCam, DC1394_ON );
-    DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam),"Could not start camera iso transmission");
+    if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not start camera iso transmission");
 
     // capture one frame
     // note: If you are getting no captures, check that the ISO speed is OK!
     dc1394video_frame_t* pFrame;
     e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(m_pCam),"Could not capture a frame");
+    if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not capture a frame");
 
 
-    // print capture image information. this is RAW
+    // image information. this is RAW
     m_nImageWidth = pFrame->size[0];
     m_nImageHeight = pFrame->size[1];
 
+    if( pFrame->color_coding == DC1394_COLOR_CODING_MONO8  ) {
+        m_VideoFormat = pb::PB_LUMINANCE;
+        m_VideoType = pb::PB_UNSIGNED_BYTE;
+    } else if( pFrame->color_coding == DC1394_COLOR_CODING_MONO16  ) {
+        m_VideoFormat = pb::PB_LUMINANCE;
+        m_VideoType = pb::PB_UNSIGNED_SHORT;
+    } else if( pFrame->color_coding == DC1394_COLOR_CODING_RGB8  ) {
+        m_VideoFormat = pb::PB_RGB;
+        m_VideoType = pb::PB_UNSIGNED_BYTE;
+    } else {
+        std::cout << "RAWWW" << std::endl;
+        m_VideoFormat = pb::PB_RAW;
+        m_VideoType = pb::PB_UNSIGNED_BYTE;
+    }
+
     // release the frame
-    e = dc1394_capture_enqueue( m_pCam[0], pFrame );
+    e = dc1394_capture_enqueue( m_pCam, pFrame );
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-DC1394Driver::~DC1394Driver()
-{
-    dc1394_video_set_transmission( m_pCam, DC1394_OFF );
-    dc1394_capture_stop( m_pCam );
-    dc1394_camera_free( m_pCam );
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///  Less-than function for ordering dx1394 cameras on the bus.
-///  This allows cameras to be returned in a consistent order.
-bool dc1394CameraCompare(dc1394camera_t* c1, dc1394camera_t* c2) {
-    return c1->guid < c2->guid;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void ShowCameraProperties(
-        dc1394camera_t* camera
-    )
-{
-    dc1394featureset_t features;
-    dc1394_feature_get_all(camera, &features);
-    dc1394_feature_print_all( &features, stdout );
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dc1394error_t SetCameraProperties(
-        dc1394camera_t* camera,
-        dc1394video_mode_t mode,
-        dc1394framerate_t framerate = DC1394_FRAMERATE_30,
-        dc1394speed_t   iso_speed = DC1394_ISO_SPEED_400,
-        unsigned dma_channels = 4
-    )
-{
-    dc1394error_t e;
-
-    e = dc1394_video_set_operation_mode(camera, DC1394_OPERATION_MODE_1394B);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
-
-    e = dc1394_video_set_iso_speed(camera, iso_speed );
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
-
-    e = dc1394_video_set_mode(camera, mode);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set video mode");
-
-    e = dc1394_video_set_framerate(camera, framerate);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set framerate");
-
-    e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera.");
-
-    dc1394color_coding_t coding;
-    e = dc1394_get_color_coding_from_video_mode( camera, mode, &coding );
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not get color coding");
-//    std::cout << "Color Coding is: " << coding << std::endl;
-
-    return DC1394_SUCCESS;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dc1394error_t SetCameraProperties_Format7(
-        dc1394camera_t* camera,
-        dc1394video_mode_t mode,
-        dc1394color_coding_t coding,
-        int packet_size = 4095,
-        dc1394speed_t iso_speed = DC1394_ISO_SPEED_400,
-        unsigned dma_channels = 4,
-        unsigned int img_width = 640,
-        unsigned int img_height = 480,
-        unsigned int left = 0,
-        unsigned int top = 0
-    )
-{
-    dc1394error_t e;
-
-    e = dc1394_video_set_operation_mode(camera, DC1394_OPERATION_MODE_1394B);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set operation mode");
-
-    // set ISO speed
-    e = dc1394_video_set_iso_speed(camera, iso_speed);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set iso speed");
-
-    // set video mode
-    e = dc1394_video_set_mode(camera, mode);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set video mode");
-
-    // set image position
-    e = dc1394_format7_set_image_position( camera, mode, left, top );
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set image position.");
-
-    // set image size
-    e = dc1394_format7_set_image_size( camera, mode, img_width, img_height );
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set image size.");
-
-    // set color coding
-    e = dc1394_format7_set_color_coding( camera, mode, coding );
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set color coding.");
-
-    // set ROI
-    // FPS = 1 / ( ( img_width * img_height * bytes_per_pixel / packet_size ) * 0.000125 )
-    e = dc1394_format7_set_roi( camera, mode, coding, packet_size, left, top, img_width, img_height );
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not set ROI.");
-
-    // set some stuff
-//    e = dc1394_feature_set_mode(camera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set manual framerate");
-
-//    e = dc1394_feature_set_absolute_control(camera, DC1394_FEATURE_FRAME_RATE, DC1394_ON);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set absolute control for framerate");
-
-//    e = dc1394_feature_set_absolute_value(camera, DC1394_FEATURE_SHUTTER, framerate);
-    DC1394_ERR_CLN_RTN(e,_cleanup_and_exit(camera),"Could not set framerate value");
-
-
-    // set DMA channel
-    e = dc1394_capture_setup(camera, dma_channels, DC1394_CAPTURE_FLAGS_DEFAULT);
-    DC1394_ERR_CLN_RTN(e, _cleanup_and_exit(camera), "Could not setup camera. Make sure that the video mode and framerate are supported by your camera.");
-
-    return DC1394_SUCCESS;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool DC1394Driver::Capture( pb::CameraMsg& vImages )
 {
+    // clear protobuf
+    vImages.Clear();
+
     //  capture
     dc1394video_frame_t* pFrame;
     dc1394error_t e;
 
+    pb::ImageMsg* pbImg = vImages.add_image();
 
-    for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
+    e = dc1394_capture_dequeue( m_pCam, DC1394_CAPTURE_POLICY_WAIT, &pFrame );
+    if( e != DC1394_SUCCESS )
+        return false;
 
-        pb::ImageMsg* pbImg = vImages.add_image();
+    vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
 
-        e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
-        DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]), "Could not capture a frame" );
+    pbImg->set_width( m_nImageWidth );
+    pbImg->set_height( m_nImageHeight );
+    pbImg->set_data( pFrame->image, pFrame->image_bytes );
+    pbImg->set_type( m_VideoType );
+    pbImg->set_format( m_VideoFormat );
 
-        // Get capture time at ring buffer dequeue
-        vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
+    // add image properties: gain, gamma, etc
+    _SetImageMetaDataFromCamera( pbImg, m_pCam );
 
-        // TODO: this has to be modified if the parameters are changed in the Init (multiply by num channels)
-        cv::Mat cvImg( m_nImageHeight, m_nImageWidth, CV_8UC1 );
-        memcpy( cvImg.data, pFrame->image, m_nImageWidth * m_nImageHeight );
-
-        if(m_bOutputRectified) {
-            cv::Mat Tmp;
-            cv::Mat Intrinsics = (cv::Mat_<float>(3,3) <<    m_pCMod[ii]->warped.fx, 0, m_pCMod[ii]->warped.cx,
-                                                              0, m_pCMod[ii]->warped.fy, m_pCMod[ii]->warped.cy,
-                                                              0, 0, 1);
-            cv::Mat Distortion = (cv::Mat_<float>(1,5) <<   m_pCMod[ii]->warped.kappa1, m_pCMod[ii]->warped.kappa2, m_pCMod[ii]->warped.tau1,
-                                  m_pCMod[ii]->warped.tau2, m_pCMod[ii]->warped.kappa3);
-
-            cv::undistort( cvImg, Tmp, Intrinsics, Distortion );
-            cvImg = Tmp;
-        }
-
-        SetImageMetaDataFromCamera2( pbImg, m_pCam[ii] );
-        pbImg->set_data( cvImg.data, m_nImageHeight * m_nImageWidth );
-
-        e = dc1394_capture_enqueue( m_pCam[ii], pFrame );
-    }
+    e = dc1394_capture_enqueue( m_pCam, pFrame );
 
     return true;
 }
@@ -274,11 +307,11 @@ std::string DC1394Driver::GetDeviceProperty(const std::string& /*sProperty*/)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 unsigned int DC1394Driver::Width( unsigned int /*idx*/ )
 {
-    return m_nImgWidth;
+    return m_nImageWidth;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 unsigned int DC1394Driver::Height( unsigned int /*idx*/ )
 {
-    return m_nImgHeight;
+    return m_nImageHeight;
 }
