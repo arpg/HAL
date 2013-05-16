@@ -15,10 +15,6 @@ DebayerDriver::DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
       m_Filter(Filter),
       m_nDepth(nDepth)
 {
-    if(m_Method == DC1394_BAYER_METHOD_DOWNSAMPLE) {
-        m_nImgHeight = m_nImgHeight / 2;
-        m_nImgWidth = m_nImgWidth / 2;        
-    }
 }
 
 bool DebayerDriver::Capture( pb::CameraMsg& vImages )
@@ -31,8 +27,15 @@ bool DebayerDriver::Capture( pb::CameraMsg& vImages )
     pb::ImageMsg* pbImg = vImages.add_image();
     pbImg->set_format( pb::PB_RGB );
     pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-    pbImg->set_width( m_nImgWidth );
-    pbImg->set_height( m_nImgHeight );
+    if(m_Method == DC1394_BAYER_METHOD_DOWNSAMPLE) {
+        pbImg->set_width( m_nImgWidth / 2 );
+        pbImg->set_height( m_nImgHeight / 2 );
+        pbImg->mutable_data()->resize( 3 * m_nImgHeight * m_nImgWidth / 4);
+    } else {
+        pbImg->set_width( m_nImgWidth );
+        pbImg->set_height( m_nImgHeight );
+        pbImg->mutable_data()->resize( 3 * m_nImgHeight * m_nImgWidth );
+    }
     pbImg->set_timestamp( m_Message.mutable_image(0)->timestamp() );
     pbImg->mutable_data()->resize( 3 * m_nImgHeight * m_nImgWidth );
 

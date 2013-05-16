@@ -96,7 +96,6 @@ DC1394Driver::DC1394Driver(
     dc1394_camera_reset(m_pCam);
 
 
-
     //----- set ISO speed
     if(ISO >= DC1394_ISO_SPEED_800)
     {
@@ -152,8 +151,11 @@ DC1394Driver::DC1394Driver(
         if( e != DC1394_SUCCESS )
             throw DeviceException("Could not get format7 mode info");
 
+        if( Info.present == false )
+            throw DeviceException("Format7 mode info not present");
+
         // safely set the video mode
-        e = dc1394_video_set_mode( m_pCam, Mode);
+        e = dc1394_video_set_mode( m_pCam, Mode );
         if( e != DC1394_SUCCESS )
             throw DeviceException("Could not set format7 video mode");
 
@@ -163,11 +165,11 @@ DC1394Driver::DC1394Driver(
             throw DeviceException("Could not set format7 image position");
 
         // work out the desired image size
-        int Width = _NearestValue(nWidth, Info.unit_pos_x, 0, Info.max_size_x - nLeft);
-        int Height = _NearestValue(nHeight, Info.unit_pos_y, 0, Info.max_size_y - nTop);
+        nWidth = _NearestValue(nWidth, Info.unit_pos_x, 0, Info.max_size_x - nLeft);
+        nHeight = _NearestValue(nHeight, Info.unit_pos_y, 0, Info.max_size_y - nTop);
 
         // set size
-        e = dc1394_format7_set_image_size(m_pCam, Mode, Width, Height);
+        e = dc1394_format7_set_image_size(m_pCam, Mode, nWidth, nHeight);
         if( e != DC1394_SUCCESS )
             throw DeviceException("Could not set format7 size");
 
@@ -177,15 +179,15 @@ DC1394Driver::DC1394Driver(
             throw DeviceException("Could not get format7 mode info");
 
         // work out position of roi
-        int Left = _NearestValue(nLeft, Info.unit_size_x, Info.unit_size_x, Info.max_size_x - Width);
-        int Top = _NearestValue(nTop, Info.unit_size_y, Info.unit_size_y, Info.max_size_y - Height);
+        nLeft = _NearestValue(nLeft, Info.unit_size_x, Info.unit_size_x, Info.max_size_x - nWidth);
+        nTop = _NearestValue(nTop, Info.unit_size_y, Info.unit_size_y, Info.max_size_y - nHeight);
 
         // set roi position
-        e = dc1394_format7_set_image_position(m_pCam, Mode, Left, Top);
+        e = dc1394_format7_set_image_position(m_pCam, Mode, nLeft, nTop);
         if( e != DC1394_SUCCESS )
             throw DeviceException("Could not set format7 size");
 
-        std::cout<<"roi: "<<Left<<" "<<Top<<" "<<Width<<" "<<Height<<"  ";
+        std::cout<<"roi: "<<nLeft<<" "<<nTop<<" "<<nWidth<<" "<<nHeight<<"  ";
 
 
         e = dc1394_format7_set_packet_size(m_pCam, Mode, Info.max_packet_size);
@@ -254,7 +256,6 @@ DC1394Driver::DC1394Driver(
         m_VideoFormat = pb::PB_RGB;
         m_VideoType = pb::PB_UNSIGNED_BYTE;
     } else {
-        std::cout << "RAWWW" << std::endl;
         m_VideoFormat = pb::PB_RAW;
         m_VideoType = pb::PB_UNSIGNED_BYTE;
     }
