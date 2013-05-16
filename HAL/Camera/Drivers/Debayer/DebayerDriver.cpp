@@ -3,41 +3,22 @@
 namespace hal
 {
 
-DebayerDriver::DebayerDriver( std::shared_ptr<CameraDriverInterface>    Input,
-                              const std::string&                        sMethod,
-                              const std::string&                        sFilter,
-                              unsigned int                              nDepth
+DebayerDriver::DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
+                              dc1394bayer_method_t                   Method,
+                              dc1394color_filter_t                   Filter,
+                              unsigned int                           nDepth
                             )
-    : m_Input(Input)
+    : m_Input(Input),
+      m_nImgWidth(Input->Width()),
+      m_nImgHeight(Input->Height()),
+      m_Method(Method),
+      m_Filter(Filter),
+      m_nDepth(nDepth)
 {
-    m_nImgHeight = Input->Height();
-    m_nImgWidth = Input->Width();
-
-    if( sMethod == "nearest" ) {
-        m_Method = DC1394_BAYER_METHOD_NEAREST;
-    } else if( sMethod == "simple" ) {
-        m_Method = DC1394_BAYER_METHOD_SIMPLE;
-    } else if( sMethod == "bilinear" ) {
-        m_Method = DC1394_BAYER_METHOD_BILINEAR;
-    } else if( sMethod == "hqlinear" ) {
-        m_Method = DC1394_BAYER_METHOD_HQLINEAR;
-    } else {
-        m_Method = DC1394_BAYER_METHOD_DOWNSAMPLE;
+    if(m_Method == DC1394_BAYER_METHOD_DOWNSAMPLE) {
         m_nImgHeight = m_nImgHeight / 2;
-        m_nImgWidth = m_nImgWidth / 2;
+        m_nImgWidth = m_nImgWidth / 2;        
     }
-
-    if( sFilter == "rggb" ) {
-        m_Filter = DC1394_COLOR_FILTER_RGGB;
-    } else if( sFilter == "gbrg" ) {
-        m_Filter = DC1394_COLOR_FILTER_GBRG;
-    } else if( sFilter == "grbg" ) {
-        m_Filter = DC1394_COLOR_FILTER_GRBG;
-    } else {
-        m_Filter = DC1394_COLOR_FILTER_BGGR;
-    }
-
-    m_nDepth = nDepth;
 }
 
 bool DebayerDriver::Capture( pb::CameraMsg& vImages )
