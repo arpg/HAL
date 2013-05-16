@@ -25,6 +25,7 @@ enum Format {
     PB_LUMINANCE        = 0x1909;
     PB_RGB              = 0x1907;
     PB_RGBA             = 0x1908;
+    PB_RAW              = 0x0001;
 }
 
 message ImageMsg {

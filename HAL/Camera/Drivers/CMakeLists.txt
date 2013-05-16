@@ -11,7 +11,7 @@ endmacro()
 
 #subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(SUBDIRS FileReader OpenNI Rectify Split Debayer V4L)
+set(SUBDIRS FileReader OpenNI Rectify Split Debayer V4L DC1394)
 
 foreach(subdir ${SUBDIRS})
     add_subdirectory(${subdir})
