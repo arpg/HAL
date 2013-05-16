@@ -10,7 +10,6 @@ public:
     V4LFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        std::cout << "V4LFactory" << std::endl;
         Params() = {
         };
     }
