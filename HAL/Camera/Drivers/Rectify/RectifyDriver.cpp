@@ -79,6 +79,11 @@ inline Sophus::SE3d CreateScanlineRectifiedLookupAndT_rl(
     return T_nr_nl;
 }
 
+inline float lerp(unsigned char a, unsigned char b, float t)
+{
+    return (float)a + t*((float)b-(float)a);
+}
+
 void Remap(
         const Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>& lookup_warp,
         const pb::Image& in,
@@ -88,8 +93,22 @@ void Remap(
     for(size_t r=0; r<in.Height(); ++r) {
         for(size_t c=0; c<in.Width(); ++c) {
             const Eigen::Vector2f p = lookup_warp(r,c);
-            out(r,c) = in(p(1),p(0));
-//            out(r,c) = in(r,c);
+            
+            const float ix = floorf(p[0]);
+            const float iy = floorf(p[1]);
+            const float fx = p[0] - ix;
+            const float fy = p[1] - iy;
+            
+            const int pl = (int)ix;
+            const int pr = pl + 1;
+            const int pt = (int)iy;
+            const int pb = pt + 1;
+            
+            out(r,c) = lerp(
+                        lerp( in(pt,pl), in(pt,pr), fx ),
+                        lerp( in(pb,pl), in(pb,pr), fx ),
+                        fy
+                        );
         }
     }
 }
