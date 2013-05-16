@@ -1,5 +1,6 @@
 #pragma once
 
+#include <HAL/Devices/SharedLoad.h>
 #include <HAL/Utils/Uri.h>
 
 #include <memory>
