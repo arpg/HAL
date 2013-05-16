@@ -39,40 +39,40 @@ inline Sophus::SE3d CreateScanlineRectifiedLookupAndT_rl(
         Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>& dlookup_right
         )
 {
-    std::cout << T_rl.matrix3x4() << std::endl;
-    
     const Sophus::SO3d R_rl = T_rl.so3();
     const Sophus::SO3d R_lr = R_rl.inverse();
     const Eigen::Vector3d l_r = T_rl.translation();
     const Eigen::Vector3d r_l = - (R_lr * l_r);
 
     // Current up vector for each camera (in left FoR)
-    const Eigen::Vector3d lup_l = Eigen::Vector3d(0,1,0);
-    const Eigen::Vector3d rup_l = R_lr * Eigen::Vector3d(0,1,0);
+    const Eigen::Vector3d lup_l = Eigen::Vector3d(0,-1,0);
+    const Eigen::Vector3d rup_l = R_lr * Eigen::Vector3d(0,-1,0);
 
     // Hypothetical fwd vector for each camera, perpendicular to baseline (in left FoR)
-    const Eigen::Vector3d lfwd = lup_l.cross(r_l);
-    const Eigen::Vector3d rfwd = rup_l.cross(r_l);
+    const Eigen::Vector3d lfwd_l = (lup_l.cross(r_l)).normalized();
+    const Eigen::Vector3d rfwd_l = (rup_l.cross(r_l)).normalized();
+//    const Eigen::Vector3d lfwd = r_l.cross(lup_l);
+//    const Eigen::Vector3d rfwd = r_l.cross(rup_l);
 
     // New fwd is average of left / right hypothetical baselines (also perpendicular to baseline)
-    const Eigen::Vector3d new_fwd = (lfwd + rfwd).normalized();
+    const Eigen::Vector3d avgfwd_l = lfwd_l + rfwd_l;
 
     // Define new basis (in left FoR);
-    const Eigen::Vector3d x = r_l.normalized();
-    const Eigen::Vector3d z = -new_fwd;
-    const Eigen::Vector3d y  = z.cross(x).normalized();
+    const Eigen::Vector3d x_l = r_l.normalized();
+    const Eigen::Vector3d z_l = avgfwd_l.normalized();
+    const Eigen::Vector3d y_l = z_l.cross(x_l).normalized();
 
     // New orientation for both left and right cameras (expressed relative to original left)
-    Eigen::Matrix3d mR_nl;
-    mR_nl << x, y, z;
+    Eigen::Matrix3d mRl_nl;
+    mRl_nl << x_l, y_l, z_l;
 
     // By definition, the right camera now lies exactly on the x-axis with the same orientation
     // as the left camera.
     const Sophus::SE3d T_nr_nl = Sophus::SE3d(Eigen::Matrix3d::Identity(), Eigen::Vector3d(-r_l.norm(),0,0) );
 
     // Homographies which should be applied to left and right images to scan-line rectify them
-    const Eigen::Matrix3d Rl_nlKl = mR_nl.transpose() * cam_left.Kinv();
-    const Eigen::Matrix3d Rr_nrKl = (mR_nl * R_lr.matrix()).transpose() * cam_left.Kinv();
+    const Eigen::Matrix3d Rl_nlKl = mRl_nl.transpose() * cam_right.Kinv();
+    const Eigen::Matrix3d Rr_nrKl = (mRl_nl * R_lr.matrix()).transpose() * cam_right.Kinv();
     
     
     CreateLookupTable(cam_left, Rl_nlKl, dlookup_left);
