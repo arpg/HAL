@@ -1,2 +1,10 @@
-add_to_hal_sources( DriverInterface.h DeviceTime.cpp DeviceTime.h DeviceFactory.h DeviceRegistry.h )
+add_to_hal_sources(
+    DeviceException.h
+    DeviceFactory.h 
+    DeviceRegistry.h
+    DeviceTime.cpp
+    DeviceTime.h 
+    DriverInterface.h 
+    SharedLoad.h
+)
 
