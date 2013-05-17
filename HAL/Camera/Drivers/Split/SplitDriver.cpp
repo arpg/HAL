@@ -69,7 +69,12 @@ std::string SplitDriver::GetDeviceProperty(const std::string& sProperty)
     return m_Input->GetDeviceProperty(sProperty);
 }
 
-unsigned int SplitDriver::Width( unsigned int idx )
+size_t SplitDriver::NumChannels() const
+{
+    return m_vROIs.size();
+}
+
+size_t SplitDriver::Width( size_t idx ) const
 {
     if( idx < m_vROIs.size() ) {
         return m_vROIs[idx].w;
@@ -77,7 +82,7 @@ unsigned int SplitDriver::Width( unsigned int idx )
     return 0;
 }
 
-unsigned int SplitDriver::Height( unsigned int idx )
+size_t SplitDriver::Height( size_t idx ) const
 {
     if( idx < m_vROIs.size() ) {
         return m_vROIs[idx].h;

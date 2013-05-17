@@ -23,10 +23,9 @@ class DC1394Driver : public CameraDriverInterface
 
         std::string GetDeviceProperty(const std::string& sProperty);
 
-        unsigned int Width( unsigned int idx = 0 );
-
-        unsigned int Height( unsigned int idx = 0 );
-
+        size_t NumChannels() const;
+        size_t Width( size_t /*idx*/ = 0 ) const;
+        size_t Height( size_t /*idx*/ = 0 ) const;
 
     private:
         void _SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam );

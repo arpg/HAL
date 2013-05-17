@@ -238,12 +238,18 @@ std::string OpenNIDriver::GetDeviceProperty(const std::string& sProperty)
     return std::string();
 }
 
-unsigned int OpenNIDriver::Width( unsigned int /*idx*/ )
+size_t OpenNIDriver::NumChannels() const
+{
+    return m_ImageGenerators.size() +
+            m_DepthGenerators.size() +
+            m_IRGenerators.size();
+}
+size_t OpenNIDriver::Width( size_t /*idx*/ ) const
 {
     return m_nImgWidth;
 }
 
-unsigned int OpenNIDriver::Height( unsigned int /*idx*/ )
+size_t OpenNIDriver::Height( size_t /*idx*/ ) const
 {
     return m_nImgHeight;
 }

@@ -55,16 +55,19 @@ std::string DebayerDriver::GetDeviceProperty(const std::string& sProperty)
     return m_Input->GetDeviceProperty(sProperty);
 }
 
+size_t DebayerDriver::NumChannels() const
+{
+    return 1;
+}
 
-unsigned int DebayerDriver::Width( unsigned int /*idx*/ )
+size_t DebayerDriver::Width( size_t /*idx*/ ) const
 {
     return m_nImgWidth;
 }
 
-unsigned int DebayerDriver::Height( unsigned int /*idx*/ )
+size_t DebayerDriver::Height( size_t /*idx*/ ) const
 {
-    return m_nImgHeight;
+    return m_nImgHeight;    
 }
-
 
 } // namespace

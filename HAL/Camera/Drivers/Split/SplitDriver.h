@@ -18,9 +18,9 @@ public:
 
     std::string GetDeviceProperty(const std::string& sProperty);
 
-    unsigned int Width( unsigned int idx = 0 );
-
-    unsigned int Height( unsigned int idx = 0 );
+    size_t NumChannels() const;
+    size_t Width( size_t /*idx*/ = 0 ) const;
+    size_t Height( size_t /*idx*/ = 0 ) const;
 
 
 protected:

@@ -165,4 +165,19 @@ std::string RectifyDriver::GetDeviceProperty(const std::string& sProperty)
     return m_input->GetDeviceProperty(sProperty);
 }
 
+size_t RectifyDriver::NumChannels() const
+{
+    return 2;
+}
+
+size_t RectifyDriver::Width( size_t idx ) const
+{
+    return m_input->Width(idx);
+}
+
+size_t RectifyDriver::Height( size_t idx ) const
+{
+    return m_input->Height(idx);
+}
+
 }

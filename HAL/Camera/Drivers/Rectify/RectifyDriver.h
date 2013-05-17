@@ -17,6 +17,10 @@ public:
     
     bool Capture( pb::CameraMsg& vImages );
     
+    size_t NumChannels() const;
+    size_t Width( size_t /*idx*/ = 0 ) const;
+    size_t Height( size_t /*idx*/ = 0 ) const;    
+    
     std::string GetDeviceProperty(const std::string& sProperty);
 
 protected:

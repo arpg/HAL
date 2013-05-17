@@ -60,6 +60,24 @@ public:
     }
     
     ///////////////////////////////////////////////////////////////
+    size_t NumChannels() const
+    {
+        return m_cam->NumChannels();
+    }
+    
+    ///////////////////////////////////////////////////////////////
+    size_t Width( size_t idx = 0 ) const
+    {
+        return m_cam->Width(idx);
+    }
+    
+    ///////////////////////////////////////////////////////////////
+    size_t Height( size_t idx = 0 ) const
+    {
+        return m_cam->Height(idx);        
+    }
+    
+    ///////////////////////////////////////////////////////////////
     std::string GetDeviceProperty(const std::string& sProperty)
     {
         return m_cam->GetDeviceProperty(sProperty);

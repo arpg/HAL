@@ -11,14 +11,20 @@ int main( int argc, char* argv[] )
 
     // Capture first image
     pb::ImageArray imgs;
-    camera.Capture(imgs);
 
     // N cameras, each w*h in dimension, greyscale
-    const int w = imgs[0].Width();
-    const int h = imgs[0].Height();
+    const size_t N = camera.NumChannels();
+    const size_t w = camera.Width();
+    const size_t h = camera.Height();
+    
+    std::cout << "Opening camera with " << N << " channel(s)." << std::endl;
+    for(size_t i=0; i<N; ++i) {
+        std::cout << "  " << camera.Width(i) << "x" << camera.Height(i) << std::endl;
+    }
+    
 
     // Setup OpenGL Display (based on GLUT)
-    pangolin::CreateGlutWindowAndBind(__FILE__,imgs.Size()*w,h);
+    pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -26,7 +32,7 @@ int main( int argc, char* argv[] )
 
     // Create Smart viewports for each camera image that preserve aspect
     pangolin::View& container = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
-    for(size_t i=0; i<imgs.Size(); ++i ) {
+    for(size_t i=0; i < N; ++i ) {
         container.AddDisplay(pangolin::CreateDisplay().SetAspect((double)w/h));
     }
 

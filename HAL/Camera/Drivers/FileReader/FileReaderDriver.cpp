@@ -73,9 +73,15 @@ std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty)
     return std::string();
 }
 
-unsigned int FileReaderDriver::Width( unsigned int idx )
+size_t FileReaderDriver::NumChannels() const
 {
-    pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+    const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+    return NextFrame.image_size();
+}
+
+size_t FileReaderDriver::Width( size_t idx ) const
+{
+    const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
     if( (int)idx < NextFrame.image_size() ) {
         const pb::ImageMsg& NextImg = NextFrame.image(idx);
         return NextImg.width();
@@ -83,9 +89,9 @@ unsigned int FileReaderDriver::Width( unsigned int idx )
     return 0;
 }
 
-unsigned int FileReaderDriver::Height( unsigned int idx )
+size_t FileReaderDriver::Height( size_t idx ) const
 {
-    pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+    const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
     if( (int)idx < NextFrame.image_size() ) {
         const pb::ImageMsg& NextImg = NextFrame.image(idx);
         return NextImg.height();
