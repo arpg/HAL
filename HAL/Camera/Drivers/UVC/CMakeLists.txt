@@ -1,21 +1,19 @@
-find_library(LIBUSB_LIBRARY_NAMES usb-1.0
-	PATHS /opt/local/lib)
+find_package(USB1 QUIET)
 
-find_path(LIBUSB_INCLUDE_DIR libusb-1.0/libusb.h
-	PATHS /opt/local/include)
+if(USB1_FOUND)
+    add_to_hal_include_dirs(
+        ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
+        ${USB1_INCLUDE_DIRS}
+    )
 
-add_to_hal_include_dirs(
-    ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
-    ${LIBUSB_INCLUDE_DIR}
-)
+    add_to_hal_libraries(
+        ${USB1_LIBRARIES}
+    )
 
-add_to_hal_libraries(
-    ${LIBUSB_LIBRARY_NAMES}
-)
-
-add_to_hal_sources(
-    UvcDriver.h UvcDriver.cpp UvcFactory.cpp
-    libuvc/src/ctrl.c libuvc/src/device.c libuvc/src/diag.c
-    libuvc/src/frame.c libuvc/src/init.c libuvc/src/stream.c
-    libuvc/src/misc.c
-)
+    add_to_hal_sources(
+        UvcDriver.h UvcDriver.cpp UvcFactory.cpp
+        libuvc/src/ctrl.c libuvc/src/device.c libuvc/src/diag.c
+        libuvc/src/frame.c libuvc/src/init.c libuvc/src/stream.c
+        libuvc/src/misc.c
+    )
+endif()

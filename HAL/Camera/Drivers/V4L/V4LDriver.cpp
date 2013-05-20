@@ -601,14 +601,19 @@ bool V4LDriver::Capture( pb::CameraMsg& vImages )
 //{
 //}
 
-unsigned int V4LDriver::Width( unsigned int idx )
+size_t V4LDriver::Width( size_t idx ) const
 {
     return idx==0 ? width : 0;
 }
 
-unsigned int V4LDriver::Height( unsigned int idx )
+size_t V4LDriver::Height( size_t idx ) const
 {
     return idx==0 ? height : 0;
+}
+
+size_t V4LDriver::NumChannels() const
+{
+    return 1;
 }
 
 
