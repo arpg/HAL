@@ -74,6 +74,7 @@ target_link_libraries( hal ${HAL_LIBRARIES} )
 #############################################################################
 # Export library
 
+add_to_hal_libraries(${CMAKE_DL_LIBS})
 add_to_hal_libraries(hal)
 get_property( HAL_LIBRARIES GLOBAL PROPERTY P_LIBRARIES)
 
