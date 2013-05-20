@@ -27,8 +27,8 @@ if( Pangolin_FOUND AND SceneGraph_FOUND )
     include_directories( ${_INCLUDE_DIRS} )
     link_directories( ${_LINK_DIRS} )
 
-    add_executable( beaver ViewerGui.h GLThumbnailView.h Viewer.cpp )
+    add_executable( LogViewer ViewerGui.h GLThumbnailView.h Viewer.cpp )
 
-    target_link_libraries( beaver ${Pangolin_LIBRARIES} )
-    target_link_libraries( beaver ${SceneGraph_LIBRARIES} )
+    target_link_libraries( LogViewer ${Pangolin_LIBRARIES} )
+    target_link_libraries( LogViewer ${SceneGraph_LIBRARIES} )
 endif()

@@ -59,21 +59,22 @@ public:
     std::shared_ptr<BaseDevice> Create(const Uri& uri)
     {
         // Check for aliases
-        std::map<std::string,std::string>::const_iterator iAlias=
-                m_aliases.find(uri.scheme);
+        std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
         
-        if(iAlias != m_aliases.end()) {
+        if( iAlias != m_aliases.end() ){
             std::string sAlias = iAlias->second;
             std::ostringstream oss;
             oss << sAlias << uri.url;
             return Create(oss.str());
-        }else{
+        }
+        else{
             auto pf = m_factories.find(uri.scheme);
             if(pf != m_factories.end()) {
                 std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
 //                m_instances[uri.scheme].insert( dev );
                 return dev;
-            }else{
+            }
+            else{
                 throw DeviceException("Scheme '" + uri.scheme + "' not registered for factory");
             }
         }
