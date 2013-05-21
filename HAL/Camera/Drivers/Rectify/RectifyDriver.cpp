@@ -52,7 +52,7 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const
     if(rig.cameras.size() == 2) {
         // Generate lookup tables for stereo rectify
         m_cam = calibu::CreateScanlineRectifiedLookupAndCameras(
-                rig.cameras[1].T_cw* rig.cameras[0].T_cw.inverse(),
+                rig.cameras[1].T_wc.inverse()* rig.cameras[0].T_wc,
                 rig.cameras[0].camera, rig.cameras[1].camera,
                 m_T_nr_nl,
                 lookups[0], lookups[1]
