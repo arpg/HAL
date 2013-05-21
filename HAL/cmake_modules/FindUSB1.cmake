@@ -15,10 +15,10 @@
 #
 
 
-if (USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
+if(USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
   # in cache already
   set(USB1_FOUND TRUE)
-else (USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
+else(USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
   find_path(USB1_INCLUDE_DIR
     NAMES
       libusb.h
@@ -26,6 +26,7 @@ else (USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
       /usr/include
       /usr/include/libusb-1.0
       /usr/local/include
+      /opt/local/include/libusb-1.0/
       /opt/local/include
       /sw/include
   )
@@ -48,22 +49,22 @@ else (USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
     ${USB1_LIBRARY}
 )
 
-  if (USB1_INCLUDE_DIRS AND USB1_LIBRARIES)
+  if(USB1_INCLUDE_DIRS AND USB1_LIBRARIES)
      set(USB1_FOUND TRUE)
-  endif (USB1_INCLUDE_DIRS AND USB1_LIBRARIES)
+  endif(USB1_INCLUDE_DIRS AND USB1_LIBRARIES)
 
-  if (USB1_FOUND)
-    if (NOT USB1_FIND_QUIETLY)
+  if(USB1_FOUND)
+    if(NOT USB1_FIND_QUIETLY)
       message(STATUS "Found USB1: ${USB1_LIBRARIES}")
-    endif (NOT USB1_FIND_QUIETLY)
-  else (USB1_FOUND)
-    if (USB1_FIND_REQUIRED)
+    endif(NOT USB1_FIND_QUIETLY)
+  else(USB1_FOUND)
+    if(USB1_FIND_REQUIRED)
       message(FATAL_ERROR "Could not find USB1")
-    endif (USB1_FIND_REQUIRED)
-  endif (USB1_FOUND)
+    endif(USB1_FIND_REQUIRED)
+  endif(USB1_FOUND)
 
   # show the USB1_INCLUDE_DIRS and USB1_LIBRARIES variables only in the advanced view
   mark_as_advanced(USB1_INCLUDE_DIRS USB1_LIBRARIES)
 
-endif (USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
+endif(USB1_LIBRARIES AND USB1_INCLUDE_DIRS)
 
