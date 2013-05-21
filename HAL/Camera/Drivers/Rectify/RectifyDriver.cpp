@@ -12,7 +12,7 @@ inline float lerp(unsigned char a, unsigned char b, float t)
 }
 
 void Remap(
-        const Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>& lookup_warp,
+        const Lut& lookup_warp,
         const pb::Image& in,
         pb::Image& out
         )
@@ -46,7 +46,7 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const
     lookups.resize(rig.cameras.size());
     for(size_t i=0; i< rig.cameras.size(); ++i) {
         const calibu::CameraModel& cam = rig.cameras[i].camera;
-        lookups[i] = Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic>(cam.Height(), cam.Width());
+        lookups[i] = Lut(cam.Height(), cam.Width());
     }
 
     if(rig.cameras.size() == 2) {

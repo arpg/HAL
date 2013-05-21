@@ -8,7 +8,7 @@
 namespace hal
 {
 
-typedef Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic> lut;
+typedef Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic> Lut;
 
 class RectifyDriver : public CameraDriverInterface
 {
@@ -37,7 +37,7 @@ protected:
     Sophus::SE3d m_T_nr_nl;
     calibu::CameraModelT<calibu::Pinhole> m_cam;
     std::shared_ptr<CameraDriverInterface> m_input;
-    std::vector<Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic> > lookups;
+    std::vector<Lut> lookups;
     
 };
 
