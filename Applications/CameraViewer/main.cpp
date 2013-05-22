@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
     
     pb::Logger::GetInstance().OpenLogFile(logfile);
 
-    for(unsigned long frame=0; !pangolin::ShouldQuit();)
+    for(unsigned long frame=0; !pangolin::ShouldQuit(); frame++)
     {
         const bool go = run || pangolin::Pushed(step);
 
@@ -59,25 +59,13 @@ int main( int argc, char* argv[] )
         glColor3f(1,1,1);
 
         if(go) {
-            if(frame>0) {
-                if( camera.Capture(imgs) ) {
-                    if(log) {
-                        pb::Msg msg;
-                        msg.set_timestamp(frame);
-                        msg.mutable_camera()->CopyFrom(imgs.Ref());
-                        pb::Logger::GetInstance().LogMessage(msg);
-                    }
-                }else{
-                    run = false;
-                }
+            if( !camera.Capture(imgs) ) {
+                run = false;
             }
 
-            frame++;
-
             if(frame%30 == 0) {
-                std::cout << "FPS: " << frame / timer.Elapsed_s() << "\r";
+                std::cout << "FPS: " << 30.0 / timer.Elapsed_s() << "\r";
                 std::cout.flush();
-                frame = 0;
                 timer.Reset();
             }
         }
@@ -89,6 +77,13 @@ int main( int argc, char* argv[] )
                 imgs[i].Format(), imgs[i].Type()
             );
             tex.RenderToViewportFlipY();
+        }
+        
+        if(log && run) {
+            pb::Msg msg;
+            msg.set_timestamp(frame);                
+            msg.mutable_camera()->Swap(&imgs.Ref());
+            pb::Logger::GetInstance().LogMessage(msg);
         }
 
         pangolin::FinishGlutFrame();

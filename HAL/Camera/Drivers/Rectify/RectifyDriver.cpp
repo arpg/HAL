@@ -77,7 +77,7 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
             pimg->set_height(inimg[k].Height());
             pimg->set_type( (pb::Type)inimg[k].Type());
             pimg->set_format( (pb::Format)inimg[k].Format());
-            pimg->mutable_data()->reserve(inimg[k].Width()*inimg[k].Height());
+            pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
             pb::Image img = pb::Image(pimg);
             Remap(lookups[k], inimg[k], img );

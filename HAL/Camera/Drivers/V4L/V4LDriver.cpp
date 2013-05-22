@@ -591,7 +591,7 @@ bool V4LDriver::Capture( pb::CameraMsg& vImages )
     pb::ImageMsg* img = vImages.add_image();
     img->set_width(width);
     img->set_height(height);
-    img->mutable_data()->reserve(SizeBytes());
+    img->mutable_data()->resize(SizeBytes());
     GrabNext((unsigned char*)img->mutable_data()->data());
 
     return true;

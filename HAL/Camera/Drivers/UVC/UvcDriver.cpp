@@ -146,11 +146,10 @@ bool UvcDriver::Capture( pb::CameraMsg& vImages )
         if(frame) {
             pb::ImageMsg* pimg = vImages.add_image();
             pimg->set_type( (pb::Type) pbtype );
-            pimg->set_format( (pb::Format) pbformat );
-            pimg->mutable_data()->reserve(frame->data_bytes);
+            pimg->set_format( (pb::Format) pbformat );            
             pimg->set_width(frame->width);
             pimg->set_height(frame->height);
-            memcpy((char*)pimg->mutable_data()->data(), frame->data, width_ * height_ );
+            pimg->set_data(frame->data, width_ * height_);
             return true;
         }else{
             std::cout << "No data..." << std::endl;
