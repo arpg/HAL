@@ -50,11 +50,13 @@ set( PbMsgs_INCLUDE_DIRS ${_INCLUDE_DIRS}  CACHE INTERNAL "" FORCE )
 set( SRCS
     ${PROTO_SRCS}
     Logger.cpp
+    Reader.cpp
    )
 
 set( HDRS
     ${PROTO_HDRS}
     Logger.h
+    Reader.h
     Image.h
     Matrix.h
     Pose.h

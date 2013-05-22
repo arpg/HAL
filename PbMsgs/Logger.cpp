@@ -34,25 +34,14 @@ Logger::~Logger()
 void Logger::ThreadFunc()
 {
     std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(1){
+    while(!m_bClosing){
         //first wait for something to be added to the queue
         m_QueueCondition.wait(lock);
 
         while(m_qMessages.size() > 0 ){
             pb::Msg& msg = m_qMessages.back();
-            int byteSize = msg.ByteSize();
-
-            m_File << byteSize ; //write the size
-            char* array = new char[byteSize];
-            msg.SerializeToArray((void*)array, byteSize);
-            m_File.write(array, byteSize);
-            delete[] array;
-
+            msg.SerializeToOstream(&m_File);
             m_qMessages.pop_back();
-        }
-
-        if(m_bClosing) {
-            break;
         }
     }
 }
