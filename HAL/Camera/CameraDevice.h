@@ -82,6 +82,18 @@ public:
     {
         return m_cam->GetDeviceProperty(sProperty);
     }
+    
+    ///////////////////////////////////////////////////////////////
+    /// Return raw camera driver pointer, optionally dynamic_cast'd
+    /// to another type. Returns NULL if wrong type.
+    /// e.g. RectifyDriver* rectify = camera.GetDriver<RectifyDriver>();
+    ///      if(rectify) {...}
+    template<typename CameraDriverType = CameraDriverInterface>
+    CameraDriverType* GetDriver()
+    {
+        CameraDriverInterface* di = m_cam.get();
+        return dynamic_cast<CameraDriverType*>(di);
+    }
 
 protected:
     hal::Uri m_uri;
