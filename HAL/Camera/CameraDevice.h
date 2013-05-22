@@ -56,7 +56,7 @@ public:
     ///////////////////////////////////////////////////////////////
     bool Capture( pb::ImageArray& Images )
     {
-        return Capture( Images.ref() );
+        return Capture( Images.Ref() );
     }
     
     ///////////////////////////////////////////////////////////////

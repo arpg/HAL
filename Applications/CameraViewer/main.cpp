@@ -4,9 +4,13 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/Utils/GetPot>
 
+#include <PbMsgs/Logger.h>
+
 int main( int argc, char* argv[] )
 {
     GetPot cl(argc,argv);
+    const std::string logfile = cl.follow("proto.log", "-log");    
+    
     hal::Camera camera(cl.follow("", "-cam" ));
 
     // Capture first image
@@ -21,7 +25,6 @@ int main( int argc, char* argv[] )
     for(size_t i=0; i<N; ++i) {
         std::cout << "  " << camera.Width(i) << "x" << camera.Height(i) << std::endl;
     }
-    
 
     // Setup OpenGL Display (based on GLUT)
     pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
@@ -38,11 +41,15 @@ int main( int argc, char* argv[] )
 
     bool run = true;
     bool step = false;
+    bool log = false;
 
-    pangolin::RegisterKeyPressCallback(' ', [&run](){run = !run;} );
+    pangolin::RegisterKeyPressCallback(' ', [&](){run = !run;} );
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + GLUT_KEY_RIGHT, [&step](){step=true;} );
+    pangolin::RegisterKeyPressCallback('l', [&](){log = !log;} );
 
     pangolin::Timer timer;
+    
+    pb::Logger::GetInstance().OpenLogFile(logfile);
 
     for(unsigned long frame=0; !pangolin::ShouldQuit();)
     {
@@ -53,7 +60,14 @@ int main( int argc, char* argv[] )
 
         if(go) {
             if(frame>0) {
-                if( camera.Capture(imgs) == false ) {
+                if( camera.Capture(imgs) ) {
+                    if(log) {
+                        pb::Msg msg;
+                        msg.set_timestamp(frame);
+                        msg.mutable_camera()->CopyFrom(imgs.Ref());
+                        pb::Logger::GetInstance().LogMessage(msg);
+                    }
+                }else{
                     run = false;
                 }
             }

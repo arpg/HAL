@@ -9,7 +9,6 @@ message Msg {
     optional double timestamp = 1;
     optional CameraModelMsg cameraModel = 2;
     optional CameraMsg camera = 3;
-    optional ImageMsg image = 4;
-    optional ImuMsg imu = 5;
-    optional PoseSensorMsg poseSensor = 6;
+    optional ImuMsg imu = 4;
+    optional PoseSensorMsg poseSensor = 5;
 }

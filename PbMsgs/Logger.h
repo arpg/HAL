@@ -1,5 +1,4 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#pragma once
 
 #include <thread>
 #include <list>
@@ -9,10 +8,15 @@
 #include <condition_variable>
 #include <PbMsgs/Messages.pb.h>
 
+namespace pb
+{
+
 class Logger
 {
 public:
-    static Logger *GetInstance();
+    static Logger& GetInstance();
+
+    Logger();
     ~Logger();
 
     std::string OpenNewLogFile(const std::string &sLogDir, const std::string &sPrefix);
@@ -22,13 +26,12 @@ public:
     void LogMessage(const pb::Msg& message);
 
 private:
-    Logger();
-    std::thread m_WriteThread;
     std::list<pb::Msg> m_qMessages;
     std::mutex m_QueueMutex;
     std::condition_variable m_QueueCondition;
     std::ofstream m_File;
     bool m_bClosing;
+    std::thread m_WriteThread;
 };
 
-#endif // LOGGER_H
+}

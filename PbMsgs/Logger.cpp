@@ -1,20 +1,22 @@
 #include <iostream>
 
 #include "Logger.h"
+#include <functional>
 
-Logger *g_pLoggerInstance = NULL;
+namespace pb
+{
 
 /////////////////////////////////////////////////////////////////////////////////////////
-Logger *Logger::GetInstance()
+Logger& Logger::GetInstance()
 {
-    if(g_pLoggerInstance == NULL){
-        g_pLoggerInstance = new Logger();
-    }
-    return g_pLoggerInstance;
+    static Logger s_instance;
+    return s_instance;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-Logger::Logger() : m_bClosing(false)
+Logger::Logger() :
+    m_bClosing(false),
+    m_WriteThread( &Logger::ThreadFunc, this )
 {
 }
 
@@ -102,4 +104,6 @@ void Logger::CloseLogFile()
     if(m_File.is_open()){
         m_File.close();
     }
+}
+
 }

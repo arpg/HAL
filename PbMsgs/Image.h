@@ -215,7 +215,7 @@ class ImageArray
 public:
     ImageArray() {}
 
-    CameraMsg& ref()
+    CameraMsg& Ref()
     {
         return m_Message;
     }
