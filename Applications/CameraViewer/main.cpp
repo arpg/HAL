@@ -50,7 +50,7 @@ int main( int argc, char* argv[] )
 
     pangolin::Timer timer;
     
-    pb::Logger::GetInstance().OpenLogFile(logfile);
+    pb::Logger::GetInstance().LogToFile(logfile);
 
     for(unsigned long frame=0; !pangolin::ShouldQuit(); frame++)
     {

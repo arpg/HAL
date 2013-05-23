@@ -19,9 +19,9 @@ public:
     Logger();
     ~Logger();
 
-    std::string OpenNewLogFile(const std::string &sLogDir, const std::string &sPrefix);
-    void OpenLogFile(const std::string &fileName);
-    void CloseLogFile();
+    std::string LogToFile(const std::string &sLogDir, const std::string &sPrefix);
+    void LogToFile(const std::string &fileName);
+    void StopLogging();
     void ThreadFunc();
     void LogMessage(const pb::Msg& message);
 
@@ -29,8 +29,8 @@ private:
     std::list<pb::Msg> m_qMessages;
     std::mutex m_QueueMutex;
     std::condition_variable m_QueueCondition;
-    std::ofstream m_File;
-    bool m_bClosing;
+    std::string m_sFilename;
+    bool m_bShouldRun;
     std::thread m_WriteThread;
 };
 
