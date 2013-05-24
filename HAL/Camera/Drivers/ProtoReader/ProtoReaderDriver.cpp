@@ -8,17 +8,13 @@ namespace hal
 ProtoReaderDriver::ProtoReaderDriver(std::string filename)
     : m_reader(filename)
 {
-    std::cout << "Here1" << std::endl;
     ReadNextCameraMessage(m_nextMsg);
-    
-    std::cout << "Here2" << std::endl;
     
     m_numChannels = m_nextMsg.camera().image_size();
     for(size_t c=0; c < m_numChannels; ++c) {
         m_width.push_back(m_nextMsg.camera().image(c).width());
         m_height.push_back(m_nextMsg.camera().image(c).height());
     }
-    std::cout << "Here3" << std::endl;
 }
 
 bool ProtoReaderDriver::ReadNextCameraMessage(pb::Msg& msg)

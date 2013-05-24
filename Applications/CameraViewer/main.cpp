@@ -9,8 +9,7 @@
 int main( int argc, char* argv[] )
 {
     GetPot cl(argc,argv);
-    const std::string logfile = cl.follow("proto.log", "-log");    
-    
+
     hal::Camera camera(cl.follow("", "-cam" ));
 
     // Capture first image
@@ -50,8 +49,6 @@ int main( int argc, char* argv[] )
 
     pangolin::Timer timer;
     
-    pb::Logger::GetInstance().LogToFile(logfile);
-
     for(unsigned long frame=0; !pangolin::ShouldQuit(); frame++)
     {
         const bool go = run || pangolin::Pushed(step);

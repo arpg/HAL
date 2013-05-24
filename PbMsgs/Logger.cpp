@@ -22,6 +22,7 @@ Logger& Logger::GetInstance()
 
 /////////////////////////////////////////////////////////////////////////////////////////
 Logger::Logger() :
+    m_sFilename("proto.log"),
     m_bShouldRun(false)
 {
 }
@@ -35,9 +36,7 @@ Logger::~Logger()
 /////////////////////////////////////////////////////////////////////////////////////////
 void Logger::ThreadFunc()
 {
-    std::cout << "+ThreadFunc() " << m_sFilename << std::endl;
-    
-    int fd = open(m_sFilename.c_str(), O_WRONLY | O_CREAT | O_TRUNC);
+    int fd = open(m_sFilename.c_str(), O_RDWR | O_CREAT | O_TRUNC);
     
     if(fd==0) {
         std::cout << "Error opening file " << m_sFilename << std::endl;
@@ -58,6 +57,7 @@ void Logger::ThreadFunc()
         m_QueueCondition.wait(lock);
     }
     
+    int frames = 0;
     while(m_bShouldRun){
         pb::Msg& msg = m_qMessages.front();
         
@@ -68,7 +68,7 @@ void Logger::ThreadFunc()
             std::cout << "failed to serialize to coded stream" << std::endl;
         }
         m_qMessages.pop_front();
-        std::cout << "Wrote something: " << size_bytes << std::endl;
+        frames++;
         
         while(m_bShouldRun && m_qMessages.size() == 0) {
             m_QueueCondition.wait(lock);
@@ -76,7 +76,7 @@ void Logger::ThreadFunc()
         
     }
     
-    std::cout << "-ThreadFunc()" << std::endl;
+    std::cout << "-ThreadFunc(). Wrote " << frames << " frames." << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -85,10 +85,13 @@ void Logger::LogMessage(const pb::Msg &message)
     if(message.has_timestamp() == false){
         std::cout << "Attempted to log a message without a timestamp.";
     }
+    if(!m_WriteThread.joinable()) {
+        LogToFile(m_sFilename);
+    }
+    
     std::lock_guard<std::mutex> lock(m_QueueMutex);
     m_qMessages.push_back(message);
     m_QueueCondition.notify_one();
-    std::cout << "Pushed something" << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +138,12 @@ void Logger::StopLogging()
         m_QueueCondition.notify_all();
         m_WriteThread.join();
     }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+bool Logger::IsLogging()
+{
+    return m_WriteThread.joinable();  
 }
 
 }

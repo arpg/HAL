@@ -23,7 +23,7 @@ Reader& Reader::GetInstance()
 Reader::Reader(const std::string& filename) :
     m_bRunning(false),
     m_bShouldRun(false),
-    m_nMaxBufferSize(100)
+    m_nMaxBufferSize(10)
 {
     BufferFromFile(filename);
 }
@@ -39,23 +39,25 @@ void Reader::ThreadFunc()
 {
     int fd = open(m_sFilename.c_str(), O_RDONLY);
     google::protobuf::io::FileInputStream raw_input(fd);
-    google::protobuf::io::CodedInputStream coded_input(&raw_input);
     raw_input.SetCloseOnDelete(true);
 
-    raw_input.Skip(100);
-
-    
     uint32_t magic_number = 0;
-    coded_input.ReadLittleEndian32(&magic_number);
+
+    {
+        google::protobuf::io::CodedInputStream coded_input(&raw_input);    
+        coded_input.ReadLittleEndian32(&magic_number);
+    }
+    
     if (magic_number != 1234) {
-      std::cout << "File not in expected format." << std::endl;
+      std::cerr << "File not in expected format." << std::endl;
       return;
     }
     
-    std::cout << "ThreadFunc " << magic_number << std::endl;
     m_bRunning = true;
     
+    int frames = 0;
     while(m_bShouldRun ){
+        google::protobuf::io::CodedInputStream coded_input(&raw_input);
 
         int nCurrentSize;
         {
@@ -72,28 +74,23 @@ void Reader::ThreadFunc()
         
         uint32_t msg_size_bytes;
         if( !coded_input.ReadVarint32(&msg_size_bytes) ) {
-            std::cout << "Failed to parse msg_size_bytes" << std::endl;
-//            return;            
+            std::cerr << "Failed to parse msg_size_bytes" << std::endl;
+            break;    
         }
-        raw_input.Skip(4);
-        std::cout << "size: " << msg_size_bytes << std::endl;
         
-        
-//        if( !pMsg->ParseFromCodedStream(&coded_input) ) {
-//        }
-        
-        if( !pMsg->ParseFromBoundedZeroCopyStream(&raw_input, msg_size_bytes) ) {
-            std::cout << "Failed to parse pMsg" << std::endl;
-//            return;
+        google::protobuf::io::CodedInputStream::Limit lim =
+                coded_input.PushLimit(msg_size_bytes);        
+        if( !pMsg->ParseFromCodedStream(&coded_input) ) {
+            std::cerr << "Failed to parse pMsg #" << frames << std::endl;
+            break;
         }
-        std::cout << "pMsg: has_camera: " << pMsg->has_camera() << std::endl;
+        coded_input.PopLimit(lim);
+        frames++;
 
         std::lock_guard<std::mutex> lock(m_QueueMutex);
         m_qMessages.push_back(std::move(pMsg));
         m_QueueCondition.notify_one();
     }
-    
-    std::cout << "exit ThreadFunc" << std::endl;    
     
     m_bRunning = false;    
 }
@@ -104,12 +101,9 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage()
     std::unique_lock<std::mutex> lock(m_QueueMutex);
     while(m_qMessages.size() == 0 ){
         m_QueueCondition.wait(lock);
+        if(!m_bShouldRun) return nullptr;
     }
-    std::cout << "----------------------------------------------" << std::endl;
-    std::cout << m_qMessages.size() << std::endl;
-    std::cout << "has_camera: " << m_qMessages.front()->has_camera() << std::endl;
     std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
-    std::cout << "has_camera: " << pMessage->has_camera() << std::endl;
     m_qMessages.pop_front();
     
     return pMessage;

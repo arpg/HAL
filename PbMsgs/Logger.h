@@ -22,10 +22,12 @@ public:
     std::string LogToFile(const std::string &sLogDir, const std::string &sPrefix);
     void LogToFile(const std::string &fileName);
     void StopLogging();
-    void ThreadFunc();
-    void LogMessage(const pb::Msg& message);
+    bool IsLogging();
+    
+    void LogMessage(const pb::Msg& message);    
 
 private:
+    void ThreadFunc();
     std::list<pb::Msg> m_qMessages;
     std::mutex m_QueueMutex;
     std::condition_variable m_QueueCondition;
