@@ -21,7 +21,7 @@ Reader& Reader::GetInstance()
 
 /////////////////////////////////////////////////////////////////////////////////////////
 Reader::Reader(const std::string& filename) :
-    m_bRunning(false),
+    m_bRunning(true),
     m_bShouldRun(false),
     m_nMaxBufferSize(10)
 {
@@ -55,41 +55,31 @@ void Reader::ThreadFunc()
     
     m_bRunning = true;
     
-    int frames = 0;
-    while(m_bShouldRun ){
+    while( m_bShouldRun ){
         google::protobuf::io::CodedInputStream coded_input(&raw_input);
 
-        int nCurrentSize;
-        {
-            std::lock_guard<std::mutex> lock(m_QueueMutex);
-            nCurrentSize = m_qMessages.size();
-        }
-
-        if(nCurrentSize >= m_nMaxBufferSize){
-            usleep(100);
-            continue;
-        }
-
-        std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
-        
         uint32_t msg_size_bytes;
         if( !coded_input.ReadVarint32(&msg_size_bytes) ) {
-            std::cerr << "Failed to parse msg_size_bytes" << std::endl;
+            // Probably end of stream.
             break;    
         }
         
         google::protobuf::io::CodedInputStream::Limit lim =
                 coded_input.PushLimit(msg_size_bytes);        
+        std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
         if( !pMsg->ParseFromCodedStream(&coded_input) ) {
-            std::cerr << "Failed to parse pMsg #" << frames << std::endl;
+            std::cerr << "Failed to parse pMsg" << std::endl;
             break;
         }
         coded_input.PopLimit(lim);
-        frames++;
 
-        std::lock_guard<std::mutex> lock(m_QueueMutex);
+        // Wait if buffer is full, then add to queue
+        std::unique_lock<std::mutex> lock(m_QueueMutex);
+        while(m_bShouldRun && m_qMessages.size() >= m_nMaxBufferSize){
+            m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
+        }        
         m_qMessages.push_back(std::move(pMsg));
-        m_QueueCondition.notify_one();
+        m_ConditionQueued.notify_one();
     }
     
     m_bRunning = false;    
@@ -98,22 +88,27 @@ void Reader::ThreadFunc()
 /////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr<pb::Msg> Reader::ReadMessage()
 {
+    // Wait if buffer is empty
     std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(m_qMessages.size() == 0 ){
-        m_QueueCondition.wait(lock);
-        if(!m_bShouldRun) return nullptr;
+    while(m_bRunning && m_qMessages.size() == 0 ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
     }
-    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
-    m_qMessages.pop_front();
     
-    return pMessage;
+    if(m_qMessages.size()) {
+        std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+        m_qMessages.pop_front();
+        m_ConditionDequeued.notify_one();
+        return pMessage;
+    }else{
+        return nullptr;
+    }
+    
+    
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 bool Reader::BufferFromFile(const std::string& fileName)
 {
-    StopBuffering();
-
     m_sFilename = fileName;
     m_bShouldRun = true;
     m_WriteThread = std::thread( &Reader::ThreadFunc, this );
@@ -123,12 +118,12 @@ bool Reader::BufferFromFile(const std::string& fileName)
 /////////////////////////////////////////////////////////////////////////////////////////
 void Reader::StopBuffering()
 {
-    if(m_bRunning) {
+    if(m_bRunning)
+    {
         m_bShouldRun = false;
-        m_QueueCondition.notify_all();
-        m_WriteThread.join();    
+        m_ConditionQueued.notify_all();
     }
-    
+    m_WriteThread.join();    
 }
 
 }
