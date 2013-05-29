@@ -20,18 +20,20 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename)
 bool ProtoReaderDriver::ReadNextCameraMessage(pb::Msg& msg)
 {
     msg.Clear();
-//    while(!msg.has_camera()) {
-        std::unique_ptr<pb::Msg> readmsg = m_reader.ReadMessage();
+    std::unique_ptr<pb::Msg> readmsg = m_reader.ReadMessage();
+    if(readmsg) {
         msg.Swap(readmsg.get());
-//    }
-    return true;
+        return true;
+    }else{
+        return false;
+    }
 }
 
 bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages )
 {
     m_nextMsg.mutable_camera()->Swap(&vImages);
     ReadNextCameraMessage(m_nextMsg);
-    return true;
+    return vImages.image_size() > 0;
 }
 
 size_t ProtoReaderDriver::NumChannels() const
