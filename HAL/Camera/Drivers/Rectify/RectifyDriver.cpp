@@ -1,3 +1,8 @@
+/*
+   not sure a rectification "driver" makes sense.  Esp one just for stereo
+   cameras... GTS
+ */
+
 #include "RectifyDriver.h"
 
 #include <PbMsgs/Image.h>
@@ -40,7 +45,11 @@ void Remap(
     }
 }
 
-RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const calibu::CameraRig& rig)
+RectifyDriver::RectifyDriver(
+        std::shared_ptr<CameraDriverInterface> input, 
+        const calibu::CameraRig& rig,
+        const std::string& sCamFile
+        )
     : m_input(input)
 {
     lookups.resize(rig.cameras.size());

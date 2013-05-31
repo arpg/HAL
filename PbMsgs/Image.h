@@ -225,6 +225,11 @@ public:
         return m_Message.image_size();
     }
 
+    double Timestamp()
+    {
+        return Image(m_Message.mutable_image(0)).Timestamp();
+    }
+
     Image operator[]( unsigned int idx  )
     {
         if( idx < Size() ) {
