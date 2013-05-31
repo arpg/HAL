@@ -9,6 +9,7 @@
 #include <functional>
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
 
 namespace pb
 {
@@ -46,7 +47,7 @@ void Logger::ThreadFunc()
     google::protobuf::io::FileOutputStream raw_output(fd);
     raw_output.SetCloseOnDelete(true);
     google::protobuf::io::CodedOutputStream coded_output(&raw_output);
-    
+
     const int magic_number = 1234;
     coded_output.WriteLittleEndian32(magic_number);
     

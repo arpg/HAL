@@ -10,8 +10,9 @@
 
 #include <sys/time.h>
 
-namespace hal
+namespace  hal 
 {
+
 ////////////////////////////////////////////////////////////////////////////////
 // Aux Time Functions
 inline double Tic()

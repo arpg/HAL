@@ -28,8 +28,8 @@ public:
 
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
-    int& GetMaxBufferSize() { return m_nMaxBufferSize; }
-    int GetMaxBufferSize() const { return m_nMaxBufferSize; }
+    size_t& GetMaxBufferSize() { return m_nMaxBufferSize; }
+    size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
 
 private:
     void ThreadFunc();
@@ -39,9 +39,10 @@ private:
     bool m_bShouldRun;
     std::list<std::unique_ptr<pb::Msg> > m_qMessages;
     std::mutex m_QueueMutex;
-    std::condition_variable m_QueueCondition;
+    std::condition_variable m_ConditionQueued;
+    std::condition_variable m_ConditionDequeued;
     std::thread m_WriteThread;
-    int m_nMaxBufferSize;
+    size_t m_nMaxBufferSize;
 };
 }
 

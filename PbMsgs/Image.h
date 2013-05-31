@@ -10,7 +10,7 @@
 
 #ifdef HAVE_OPENCV
 #pragma GCC system_header
-#include <opencv.hpp>
+#include <opencv2/opencv.hpp>
 #endif
 
 namespace pb {
