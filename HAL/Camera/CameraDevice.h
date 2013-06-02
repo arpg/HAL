@@ -58,7 +58,35 @@ public:
     {
         return Capture( Images.Ref() );
     }
-    
+
+    ///////////////////////////////////////////////////////////////
+    bool Capture(
+            std::vector<cv::Mat>& vImages
+            )
+    {
+        std::vector<pb::ImageInfoMsg> vImageInfo;
+        return Capture( vImages, vImageInfo );
+    }
+
+    ///////////////////////////////////////////////////////////////
+    bool Capture(
+            std::vector<cv::Mat>& vImages,
+            std::vector<pb::ImageInfoMsg>& vImageInfo
+            )
+    {
+        static pb::ImageArray pbImages;
+        bool bRes = Capture( pbImages.Ref() );
+        vImages.resize( pbImages.Size() );
+        vImageInfo.resize( pbImages.Size() );
+        if( bRes ){
+            for( size_t ii = 0; ii < pbImages.Size(); ii++ ){
+                vImages[ii] = cv::Mat( pbImages[ii] );
+                vImageInfo[ii] = pbImages[ii].GetInfo();
+            }
+        }
+        return bRes;
+    }
+
     ///////////////////////////////////////////////////////////////
     size_t NumChannels() const
     {
