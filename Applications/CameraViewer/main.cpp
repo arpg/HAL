@@ -9,8 +9,7 @@
 int main( int argc, char* argv[] )
 {
     GetPot cl(argc,argv);
-    const std::string logfile = cl.follow("proto.log", "-log");    
-    
+
     hal::Camera camera(cl.follow("", "-cam" ));
 
     // Capture first image
@@ -43,14 +42,13 @@ int main( int argc, char* argv[] )
     bool step = false;
     bool log = false;
 
-    pangolin::RegisterKeyPressCallback(' ', [&](){run = !run;} );
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + GLUT_KEY_RIGHT, [&step](){step=true;} );
+    pangolin::RegisterKeyPressCallback(' ', [&](){run = !run;} );
+    
     pangolin::RegisterKeyPressCallback('l', [&](){log = !log;} );
 
     pangolin::Timer timer;
     
-    pb::Logger::GetInstance().OpenLogFile(logfile);
-
     for(unsigned long frame=0; !pangolin::ShouldQuit(); frame++)
     {
         const bool go = run || pangolin::Pushed(step);
@@ -64,8 +62,9 @@ int main( int argc, char* argv[] )
             }
 
             if(frame%30 == 0) {
-                std::cout << "FPS: " << 30.0 / timer.Elapsed_s() << "\r";
-                std::cout.flush();
+                char buffer[1024];
+                sprintf(buffer,"CameraViewer (FPS: %f)", 30.0 / timer.Elapsed_s() );
+                glutSetWindowTitle(buffer);
                 timer.Reset();
             }
         }

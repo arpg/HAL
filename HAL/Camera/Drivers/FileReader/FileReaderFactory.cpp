@@ -15,15 +15,17 @@ public:
             {"loop", "false", "Play beginning once finished."},
             {"grey", "false", "Convert internally to greyscale."},
             {"buffer", "10", "Number of frames to cache in memory"},
+            {"frequency", "30", "Capture frequency to emulate if needed"}
         };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        size_t StartFrame = uri.properties.Get("startframe", 0);
-        bool Loop =         uri.properties.Get("loop", false);
-        size_t BufferSize = uri.properties.Get("buffer", 10);
-        bool Grey =         uri.properties.Get("grey", false);
+        size_t StartFrame  = uri.properties.Get("startframe", 0);
+        bool Loop          = uri.properties.Get("loop", false);
+        size_t BufferSize  = uri.properties.Get("buffer", 10);
+        bool Grey          = uri.properties.Get("grey", false);
+        double Frequencey  = uri.properties.Get("frequency", 30.0); // default if not in files
         int cvFlags = Grey ? 0 : -1;
 
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');

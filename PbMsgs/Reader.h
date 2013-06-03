@@ -1,14 +1,16 @@
 #ifndef READER_H
 #define READER_H
 
-#include <thread>
-#include <list>
-#include <mutex>
 #include <fstream>
-#include <sstream>
+
+#include <thread>
+#include <mutex>
 #include <condition_variable>
-#include <PbMsgs/Messages.pb.h>
+
+#include <list>
 #include <memory>
+
+#include <PbMsgs/Messages.pb.h>
 
 namespace pb
 {
@@ -17,27 +19,30 @@ class Reader
 public:
     static Reader& GetInstance();
 
-    Reader();
+    Reader(const std::string& filename);
     ~Reader();
 
-    void OpenLogFile(const std::string &fileName);
-    void CloseLogFile();
-    void ThreadFunc();
-    void ReadMessage(std::unique_ptr<pb::Msg> pMessage);
+    bool BufferFromFile(const std::string &fileName);
+    void StopBuffering();
+    std::unique_ptr<pb::Msg> ReadMessage();
 
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
-    int& GetMaxBufferSize() { return m_nMaxBufferSize; }
-    int GetMaxBufferSize() const { return m_nMaxBufferSize; }
+    size_t& GetMaxBufferSize() { return m_nMaxBufferSize; }
+    size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
 
 private:
+    void ThreadFunc();
+
+    std::string m_sFilename;
+    bool m_bRunning;
+    bool m_bShouldRun;
     std::list<std::unique_ptr<pb::Msg> > m_qMessages;
     std::mutex m_QueueMutex;
-    std::condition_variable m_QueueCondition;
-    std::ifstream m_File;
-    bool m_bClosing;
+    std::condition_variable m_ConditionQueued;
+    std::condition_variable m_ConditionDequeued;
     std::thread m_WriteThread;
-    int m_nMaxBufferSize;
+    size_t m_nMaxBufferSize;
 };
 }
 

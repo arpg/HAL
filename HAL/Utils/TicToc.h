@@ -10,6 +10,9 @@
 
 #include <sys/time.h>
 
+namespace  hal 
+{
+
 ////////////////////////////////////////////////////////////////////////////////
 // Aux Time Functions
 inline double Tic()
@@ -36,7 +39,7 @@ inline double TocMS( double  dTic )
 {
     return ( Tic() - dTic )*1000.;
 }
-
+}
 
 #endif	/* TICTOC_H */
 

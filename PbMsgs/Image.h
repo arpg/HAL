@@ -10,7 +10,7 @@
 
 #ifdef HAVE_OPENCV
 #pragma GCC system_header
-#include <opencv.hpp>
+#include <opencv2/opencv.hpp>
 #endif
 
 namespace pb {
@@ -223,6 +223,11 @@ public:
     unsigned int Size()
     {
         return m_Message.image_size();
+    }
+
+    double Timestamp()
+    {
+        return Image(m_Message.mutable_image(0)).Timestamp();
     }
 
     Image operator[]( unsigned int idx  )

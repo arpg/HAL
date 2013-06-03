@@ -24,9 +24,9 @@ public:
         // Create input camera
         std::shared_ptr<CameraDriverInterface> input =
                 DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
-        
+ 
         std::string filename = uri.properties.Get<std::string>("file", "cameras.xml");
-        
+ 
         if(!FileExists(filename))
         {
             std::string dir = input->GetDeviceProperty(hal::DeviceDirectory);
@@ -35,13 +35,13 @@ public:
             }
             filename = (dir.empty() ? "" : dir + "/") + filename;
         }
-        
-        calibu::CameraRig rig = calibu::ReadXmlRig(filename);
+
+        calibu::CameraRig rig = calibu::ReadXmlRig( filename );
         if(rig.cameras.size() != 2) {
             throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
         }
-                
-        RectifyDriver* rectify = new RectifyDriver(input, rig);
+
+        RectifyDriver* rectify = new RectifyDriver( input, rig, filename );
         return std::shared_ptr<CameraDriverInterface>( rectify );
     }
 };
