@@ -40,13 +40,16 @@ ELSE(WIN32)
 	)
 ENDIF(WIN32)
 
-
 # select exactly ONE OpenCV 2 base directory
 # to avoid mixing different version headers and libs
-FIND_PATH(OpenCV2_ROOT_DIR
-          NAMES include/opencv2/opencv.hpp
+FIND_PATH(OpenCV2_ROOT_INC_DIR
+          NAMES opencv2/opencv.hpp
           PATHS ${OpenCV2_POSSIBLE_ROOT_DIRS}
           )
+
+# Get parent of OpenCV2_ROOT_INC_DIR. We do this as it is more
+# reliable than finding include/opencv2/opencv.hpp directly.
+GET_FILENAME_COMPONENT(OpenCV2_ROOT_DIR ${OpenCV2_ROOT_INC_DIR} PATH)
 
 FIND_PATH(OpenCV2_CORE_INCLUDE_DIR
           NAMES core_c.h core.hpp wimage.hpp eigen.hpp internal.hpp
@@ -137,10 +140,6 @@ IF(WIN32)
     FIND_LIBRARY(OpenCV2_TS_LIBRARY
                  NAMES opencv_ts230 opencv_ts220
                  PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
-    FIND_PATH(OpenCV2_NONFREE_INCLUDE_DIR
-                 NAMES features2d.hpp nonfree.hpp
-                 PATHS "${OpenCV2_ROOT_DIR}/include/opencv2/nonfree")
-
 ELSE(WIN32)
     FIND_LIBRARY(OpenCV2_CORE_LIBRARY       NAMES opencv_core       PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
     FIND_LIBRARY(OpenCV2_IMGPROC_LIBRARY    NAMES opencv_imgproc    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
@@ -154,8 +153,11 @@ ELSE(WIN32)
     FIND_LIBRARY(OpenCV2_ML_LIBRARY         NAMES opencv_ml         PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
     FIND_LIBRARY(OpenCV2_VIDEO_LIBRARY      NAMES opencv_video      PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
     FIND_LIBRARY(OpenCV2_GPU_LIBRARY        NAMES opencv_gpu        PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
-    FIND_LIBRARY(OpenCV2_NONFREE_LIBRARY    NAMES opencv_nonfree    PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
 ENDIF(WIN32)
+
+IF(ANDROID)
+    FIND_LIBRARY(OpenCV2_JAVA_LIBRARY       NAMES opencv_java       PATHS ${OPENCV2_LIBRARY_SEARCH_PATHS})
+ENDIF(ANDROID)
 
 SET(OpenCV2_INCLUDE_DIRS
     ${OpenCV2_ROOT_DIR}/include
@@ -171,9 +173,11 @@ SET(OpenCV2_INCLUDE_DIRS
     ${OpenCV2_HIGHGUI_INCLUDE_DIR}
     ${OpenCV2_ML_INCLUDE_DIR}
     ${OpenCV2_VIDEO_INCLUDE_DIR}
-    ${OpenCV2_GPU_INCLUDE_DIR}
-    ${OpenCV2_NONFREE_INCLUDE_DIR}
     )
+
+IF(NOT ANDROID)
+    LIST(APPEND OpenCV2_INCLUDE_DIRS ${OpenCV2_GPU_INCLUDE_DIR})
+ENDIF()
 
 SET(OpenCV2_LIBRARIES
     ${OpenCV2_CORE_LIBRARY}
@@ -187,9 +191,15 @@ SET(OpenCV2_LIBRARIES
     ${OpenCV2_HIGHGUI_LIBRARY}
     ${OpenCV2_ML_LIBRARY}
     ${OpenCV2_VIDEO_LIBRARY}
-    ${OpenCV2_GPU_LIBRARY}
-    ${OpenCV2_NONFREE_LIBRARY}
     )
+
+IF(NOT ANDROID)
+    LIST(APPEND OpenCV2_LIBRARIES ${OpenCV2_GPU_LIBRARY})
+else()
+    LIST(APPEND OpenCV2_LIBRARIES ${OpenCV2_JAVA_LIBRARY})
+ENDIF()
+
+
 IF(WIN32)
     SET(OpenCV2_INCLUDE_DIRS
         ${OpenCV2_ROOT_DIR}/include
@@ -240,7 +250,6 @@ MARK_AS_ADVANCED(FORCE
                  OpenCV2_ML_LIBRARY
                  OpenCV2_VIDEO_LIBRARY
                  OpenCV2_GPU_LIBRARY
-		 OpenCV2_NONFREE_LIBRARY
                  )
 IF(WIN32)
     MARK_AS_ADVANCED(FORCE

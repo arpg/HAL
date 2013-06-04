@@ -83,4 +83,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/HALConfig.cmake.in
             ${CMAKE_CURRENT_BINARY_DIR}/HALConfig.cmake @ONLY IMMEDIATE )
 
 # Add module to CMake package registery.
-export( PACKAGE HAL )
+if(NOT ANDROID)
+        # Add package to CMake package registery for use from the build tree
+        export( PACKAGE HAL )
+endif()

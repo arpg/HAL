@@ -18,6 +18,9 @@
 using namespace hal;
 
 
+//dc1394_t* DC1394Driver::m_pBus = nullptr;
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void DC1394Driver::_SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam )
 {
@@ -76,8 +79,11 @@ DC1394Driver::DC1394Driver(
         unsigned int            nDMA
     )
 {
-    m_pBus = dc1394_new();
     dc1394error_t e;
+
+//    if( m_pBus == nullptr ) {
+        m_pBus = dc1394_new();
+//    }
 
     dc1394camera_list_t*  pCameraList = NULL;
     e = dc1394_camera_enumerate( m_pBus, &pCameraList );
@@ -307,7 +313,7 @@ std::string DC1394Driver::GetDeviceProperty(const std::string& /*sProperty*/)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t DC1394Driver::NumChannels() const
 {
-    return 1;    
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

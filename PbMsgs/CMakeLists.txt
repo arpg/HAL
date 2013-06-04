@@ -74,4 +74,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/PbMsgsConfig.cmake.in
             ${CMAKE_CURRENT_BINARY_DIR}/PbMsgsConfig.cmake @ONLY IMMEDIATE )
 
 # Add module to CMake package registery.
-export( PACKAGE PbMsgs )
+if(NOT ANDROID)
+            # Add package to CMake package registery for use from the build tree
+            export( PACKAGE PbMsgs )
+endif()

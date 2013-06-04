@@ -34,7 +34,7 @@ class DC1394Driver : public CameraDriverInterface
 
     private:
         // TODO set bus to static?
-        dc1394_t*                   m_pBus;
+        dc1394_t*            m_pBus;
         dc1394camera_t*             m_pCam;
         pb::Type                    m_VideoType;
         pb::Format                  m_VideoFormat;
