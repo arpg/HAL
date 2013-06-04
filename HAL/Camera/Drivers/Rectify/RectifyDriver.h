@@ -4,11 +4,11 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 
 #include <calibu/cam/CameraRig.h>
+#include <calibu/cam/Rectify.h>
+#include <calibu/cam/StereoRectify.h>
 
 namespace hal
 {
-
-typedef Eigen::Matrix<Eigen::Vector2f, Eigen::Dynamic, Eigen::Dynamic> Lut;
 
 class RectifyDriver : public CameraDriverInterface
 {
@@ -41,7 +41,7 @@ protected:
     Sophus::SE3d                            m_T_nr_nl;
     calibu::CameraModelT<calibu::Pinhole>   m_cam;
     std::shared_ptr<CameraDriverInterface>  m_input;
-    std::vector<Lut>                        lookups;
+    std::vector<calibu::LookupTable>        m_vLuts;
  
 };
 

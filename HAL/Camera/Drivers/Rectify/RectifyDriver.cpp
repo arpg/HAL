@@ -1,8 +1,3 @@
-/*
-   not sure a rectification "driver" makes sense.  Esp one just for stereo
-   cameras... GTS
- */
-
 #include "RectifyDriver.h"
 
 #include <PbMsgs/Image.h>
@@ -16,35 +11,6 @@ inline float lerp(unsigned char a, unsigned char b, float t)
     return (float)a + t*((float)b-(float)a);
 }
 
-void Remap(
-        const Lut& lookup_warp,
-        const pb::Image& in,
-        pb::Image& out
-        )
-{
-    for(size_t r=0; r<in.Height(); ++r) {
-        for(size_t c=0; c<in.Width(); ++c) {
-            const Eigen::Vector2f p = lookup_warp(r,c);
-            
-            const float ix = floorf(p[0]);
-            const float iy = floorf(p[1]);
-            const float fx = p[0] - ix;
-            const float fy = p[1] - iy;
-            
-            const int pl = (int)ix;
-            const int pr = pl + 1;
-            const int pt = (int)iy;
-            const int pb = pt + 1;
-            
-            out(r,c) = lerp(
-                        lerp( in(pt,pl), in(pt,pr), fx ),
-                        lerp( in(pb,pl), in(pb,pr), fx ),
-                        fy
-                        );
-        }
-    }
-}
-
 RectifyDriver::RectifyDriver(
         std::shared_ptr<CameraDriverInterface> input, 
         const calibu::CameraRig& rig,
@@ -52,10 +18,10 @@ RectifyDriver::RectifyDriver(
         )
     : m_input(input)
 {
-    lookups.resize(rig.cameras.size());
+    m_vLuts.resize(rig.cameras.size());
     for(size_t i=0; i< rig.cameras.size(); ++i) {
         const calibu::CameraModel& cam = rig.cameras[i].camera;
-        lookups[i] = Lut(cam.Height(), cam.Width());
+        m_vLuts[i] = calibu::LookupTable(cam.Height(), cam.Width());
     }
 
     if(rig.cameras.size() == 2) {
@@ -64,7 +30,7 @@ RectifyDriver::RectifyDriver(
                 rig.cameras[1].T_wc.inverse()* rig.cameras[0].T_wc,
                 rig.cameras[0].camera, rig.cameras[1].camera,
                 m_T_nr_nl,
-                lookups[0], lookups[1]
+                m_vLuts[0], m_vLuts[1]
                 );
     }
 }
@@ -89,7 +55,8 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
             pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
             pb::Image img = pb::Image(pimg);
-            Remap(lookups[k], inimg[k], img );
+            calibu::Rectify( m_vLuts[k], inimg[k].data(), 
+                    img.data(), img.Width(), img.Height() );
         }
     }
 
