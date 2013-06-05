@@ -21,7 +21,7 @@ RectifyDriver::RectifyDriver(
     m_vLuts.resize(rig.cameras.size());
     for(size_t i=0; i< rig.cameras.size(); ++i) {
         const calibu::CameraModel& cam = rig.cameras[i].camera;
-        m_vLuts[i] = calibu::LookupTable(cam.Height(), cam.Width());
+        m_vLuts[i] = calibu::LookupTable(cam.Width(), cam.Height());
     }
 
     if(rig.cameras.size() == 2) {
