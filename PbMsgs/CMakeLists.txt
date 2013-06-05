@@ -67,7 +67,9 @@ target_link_libraries(PbMsgs ${PROTOBUF_LIBRARIES})
 
 get_target_property( _LIBRARY PbMsgs LOCATION )
 set( PbMsgs_LIBRARIES ${_LIBRARY} ${PROTOBUF_LIBRARIES} CACHE INTERNAL "" FORCE )
-
+if( ANDROID )
+    set( PbMsgs_LIBRARIES ${PbMsgs_LIBRARIES} -lz CACHE INTERNAL "" FORCE )
+endif()
 
 # Create the *Config.cmake file for the build tree.
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/PbMsgsConfig.cmake.in

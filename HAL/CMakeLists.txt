@@ -67,6 +67,10 @@ get_property( HAL_INCLUDE_DIRS GLOBAL PROPERTY P_INCLUDE_DIRS)
 get_property( HAL_LIBRARIES GLOBAL PROPERTY P_LIBRARIES)
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES)
 
+if( ANDROID )
+    set_source_files_properties( Camera/Drivers/Android/CameraListener.cpp PROPERTIES COMPILE_FLAGS -fno-rtti )
+endif()
+
 include_directories( ${HAL_INCLUDE_DIRS} )
 add_library(hal ${HAL_SOURCES})
 target_link_libraries( hal ${HAL_LIBRARIES} )
