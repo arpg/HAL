@@ -68,7 +68,10 @@ get_property( HAL_LIBRARIES GLOBAL PROPERTY P_LIBRARIES)
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES)
 
 if( ANDROID )
-    set_source_files_properties( Camera/Drivers/Android/CameraListener.cpp PROPERTIES COMPILE_FLAGS -fno-rtti )
+    # TODO: Figure out how to set these from sub-dirs.
+    set_source_files_properties( Camera/Drivers/Android/CameraListener.cpp PROPERTIES COMPILE_FLAGS "-fno-rtti -fpermissive" )
+    set_source_files_properties( Camera/Drivers/Android/AndroidDriver.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
+    set_source_files_properties( Camera/Drivers/Android/AndroidFactory.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
 endif()
 
 include_directories( ${HAL_INCLUDE_DIRS} )

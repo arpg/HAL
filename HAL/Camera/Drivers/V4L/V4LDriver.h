@@ -32,6 +32,10 @@ public:
     bool Capture( pb::CameraMsg& vImages );
 
 //    std::string GetDeviceProperty(const std::string& sProperty);
+    
+    inline std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+        return std::shared_ptr<CameraDriverInterface>();
+    }    
 
     size_t Width( size_t idx = 0 ) const;
 

@@ -59,8 +59,8 @@ AndroidDriver::AndroidDriver()
     // Wait until frame data becomes available.
     android::sp<android::GraphicBuffer> gbuf;
     while(!gbuf.get()) {
-        mySurfaceTexture->updateTexImage();
-        gbuf = mySurfaceTexture->getCurrentBuffer();
+        m_SurfaceTexture->updateTexImage();
+        gbuf = m_SurfaceTexture->getCurrentBuffer();
     }
 
     // Get width and height

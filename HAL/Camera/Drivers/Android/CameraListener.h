@@ -1,13 +1,6 @@
 #pragma once
 
 #include <camera/Camera.h>
-#include <utils/StrongPointer.h>
-#include <utils/String8.h>
-
-#include <gui/SurfaceTexture.h>
-#include <gui/SurfaceTextureClient.h>
-
-#include <movidius-validation/validation-suite.h>
 
 namespace hal {
 
@@ -26,7 +19,6 @@ public:
 
 private:
     bool                m_bValidate;
-    ValidationSuite     m_Validator;
     int                 m_nPrevFrameIdx;
     double              m_dTimestamp;
     unsigned char*      m_pBuffer;

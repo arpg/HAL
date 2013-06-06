@@ -1,5 +1,8 @@
 #include "CameraListener.h"
 
+#include <utils/StrongPointer.h>
+#include <utils/String8.h>
+
 namespace hal {
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,  "HAL", __VA_ARGS__))
