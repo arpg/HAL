@@ -55,6 +55,17 @@ AndroidDriver::AndroidDriver()
       LOGE("Camera could not start preview.");
     }
     LOGI("------------- Android camera started.");
+    
+    // Wait until frame data becomes available.
+    android::sp<android::GraphicBuffer> gbuf;
+    while(!gbuf.get()) {
+        mySurfaceTexture->updateTexImage();
+        gbuf = mySurfaceTexture->getCurrentBuffer();
+    }
+
+    // Get width and height
+    m_nWidth  = gbuf->getWidth();
+    m_nHeight = gbuf->getHeight();
 }
 
 AndroidDriver::~AndroidDriver()
@@ -83,12 +94,12 @@ size_t AndroidDriver::NumChannels() const
 
 size_t AndroidDriver::Width( size_t ) const
 {
-    return 1280;
+    return m_nWidth;
 }
 
 size_t AndroidDriver::Height( size_t ) const
 {
-    return 508;
+    return m_nHeight;
 }
 
 } /* namespace */

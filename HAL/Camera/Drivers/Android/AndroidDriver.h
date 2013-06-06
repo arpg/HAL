@@ -26,7 +26,8 @@ protected:
     android::sp<android::SurfaceTexture>        m_SurfaceTexture ;
     android::sp<android::SurfaceTextureClient>  m_SurfaceTextureClient ;
     GLuint                                      m_Texture;
-
+    size_t                                      m_nWidth;
+    size_t                                      m_nHeight;
 };
 
 }
