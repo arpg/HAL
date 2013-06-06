@@ -4,9 +4,11 @@ elseif()
     set( Build_Android false CACHE BOOL force )
 endif()
 
-if( Build_Android )
-    set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
+find_package( AndroidKernel QUIET )
 
+if( Build_Android AND AndroidKernel_FOUND)
+    add_to_hal_include_dirs( ${AndroidKernel_INCLUDE_DIRS} )
     add_to_hal_sources(
         AndroidDriver.h AndroidDriver.cpp
         CameraListener.h CameraListener.cpp
