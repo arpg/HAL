@@ -20,6 +20,7 @@ public:
             );
  
     bool Capture( pb::CameraMsg& vImages );
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }
  
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;

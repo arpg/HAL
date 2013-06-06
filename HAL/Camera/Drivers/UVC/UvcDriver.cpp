@@ -37,6 +37,17 @@ size_t UvcDriver::Height( size_t /*idx*/) const
     return height_;
 }
 
+bool UvcDriver::SetExposure(int nExposure)
+{
+    uvc_error_t err = uvc_set_exposure_abs(devh_,nExposure);
+    if (err != UVC_SUCCESS) {
+        return false;
+    }else{
+        return true;
+    }
+}
+
+
 void UvcDriver::Start(int vid, int pid, char* sn)
 {
     width_ = 640*2;
@@ -67,6 +78,9 @@ void UvcDriver::Start(int vid, int pid, char* sn)
         uvc_unref_device(dev_);
         throw DeviceException("Unable to open device");
     }
+
+
+
     
 //    uvc_set_status_callback(devh_, &CameraDriver::AutoControlsCallbackAdapter, this);
     

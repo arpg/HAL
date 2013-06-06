@@ -47,6 +47,12 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
+    std::shared_ptr<CameraDriverInterface> GetInputDevice()
+    {
+        return m_cam->GetInputDevice();
+    }
+
+    ///////////////////////////////////////////////////////////////
     bool Capture( pb::CameraMsg& Images )
     {
         Images.Clear();

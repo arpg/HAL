@@ -15,6 +15,8 @@ public:
     ~UvcDriver();
     
     bool Capture( pb::CameraMsg& vImages );
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+    bool SetExposure(int nExposure);
     
     void Start(int vid, int pid, char* sn);
     void Stop();
@@ -36,6 +38,8 @@ public:
     int width_;
     int height_;
     int fps_;
+
+
 };
 
 }

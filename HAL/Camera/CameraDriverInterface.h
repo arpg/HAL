@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <PbMsgs/Camera.pb.h>
 #include <HAL/Devices/DriverInterface.h>
 
@@ -13,6 +14,7 @@ public:
     // Pure virtual functions driver writers must implement:
     virtual ~CameraDriverInterface() {}
     virtual bool Capture( pb::CameraMsg& vImages ) = 0;
+    virtual std::shared_ptr<CameraDriverInterface> GetInputDevice() = 0;
     
     virtual size_t NumChannels() const = 0;
     virtual size_t Width( size_t /*idx*/ = 0 ) const = 0;

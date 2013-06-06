@@ -24,6 +24,7 @@ class OpenNIDriver : public CameraDriverInterface
         virtual ~OpenNIDriver();
 
         bool Capture( pb::CameraMsg& vImages );
+        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
         std::string GetDeviceProperty(const std::string& sProperty);
 

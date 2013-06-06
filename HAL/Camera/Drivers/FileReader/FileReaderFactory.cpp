@@ -38,7 +38,7 @@ public:
                     Channels, StartFrame, Loop, BufferSize, cvFlags
                     );
         return std::shared_ptr<CameraDriverInterface>( filereader );
-    }
+    }    
 };
 
 // Register this factory by creating static instance of factory

@@ -12,6 +12,7 @@ public:
     ProtoReaderDriver(std::string filename);
     
     bool Capture( pb::CameraMsg& vImages );
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
     
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;
