@@ -7,8 +7,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
-find_package(Pangolin QUIET)
-find_package(HAL QUIET)
+find_package(Pangolin 0.1 QUIET)
+find_package(HAL 0.1 QUIET)
 
 if(Pangolin_FOUND AND HAL_FOUND)
     add_executable( CameraViewer main.cpp )

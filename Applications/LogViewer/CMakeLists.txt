@@ -8,7 +8,7 @@ IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 ENDIF()
 
 # Add to module path, so we can find our cmake modules 
-find_package( Pangolin QUIET )
+find_package( Pangolin 0.1 QUIET )
 find_package( SceneGraph QUIET )
 
 if( Pangolin_FOUND AND SceneGraph_FOUND )
