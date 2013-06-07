@@ -74,7 +74,7 @@ target_link_libraries(${LIBRARY_NAME} ${PROTOBUF_LIBRARIES})
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/${LIBRARY_NAME}/config.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
 )
 
 #######################################################
@@ -109,12 +109,12 @@ export( PACKAGE ${PROJECT_NAME} )
 #######################################################
 ## Install headers / targets
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/${LIBRARY_NAME}/config.h"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
 )
-#install(DIRECTORY ${INCDIR}
-#  DESTINATION ${CMAKE_INSTALL_PREFIX}/include
-#)
+install(FILES ${HDRS}
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
+)
 install(TARGETS ${LIBRARY_NAME}
   EXPORT "${PROJECT_NAME}Targets"
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

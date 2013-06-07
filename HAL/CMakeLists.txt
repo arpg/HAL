@@ -125,12 +125,9 @@ export( PACKAGE ${PROJECT_NAME} )
 #######################################################
 ## Install headers / targets
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/${LIBRARY_NAME}/config.h"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
 )
-#install(DIRECTORY ${INCDIR}
-#  DESTINATION ${CMAKE_INSTALL_PREFIX}/include
-#)
 install(TARGETS ${LIBRARY_NAME}
   EXPORT "${PROJECT_NAME}Targets"
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
