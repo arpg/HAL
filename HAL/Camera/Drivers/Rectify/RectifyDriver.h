@@ -13,11 +13,8 @@ namespace hal
 class RectifyDriver : public CameraDriverInterface
 {
 public:
-    RectifyDriver(
-            std::shared_ptr<CameraDriverInterface> input,
-            const calibu::CameraRig& rig, 
-            const std::string& sCamFile = ""
-            );
+    RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
+            const calibu::CameraRig& rig);
  
     bool Capture( pb::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }

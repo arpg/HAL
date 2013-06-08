@@ -13,8 +13,7 @@ inline float lerp(unsigned char a, unsigned char b, float t)
 
 RectifyDriver::RectifyDriver(
         std::shared_ptr<CameraDriverInterface> input, 
-        const calibu::CameraRig& rig,
-        const std::string& sCamFile
+        const calibu::CameraRig& rig
         )
     : m_input(input)
 {

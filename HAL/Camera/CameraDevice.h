@@ -1,5 +1,7 @@
 #pragma once
 
+#include <HAL/Devices/SharedLoad.h>
+
 #include <PbMsgs/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>

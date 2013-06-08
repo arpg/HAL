@@ -41,7 +41,7 @@ public:
             throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
         }
 
-        RectifyDriver* rectify = new RectifyDriver( input, rig, filename );
+        RectifyDriver* rectify = new RectifyDriver( input, rig );
         return std::shared_ptr<CameraDriverInterface>( rectify );
     }
 };

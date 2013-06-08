@@ -14,7 +14,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& /*uri*/)
     {
         AndroidDriver* driver = new AndroidDriver();
         return std::shared_ptr<CameraDriverInterface>( driver );

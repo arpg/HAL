@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <PbMsgs/Reader.h>
 

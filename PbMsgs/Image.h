@@ -18,7 +18,7 @@ namespace pb {
 
 #ifdef HAVE_OPENCV
 
-void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
+inline void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
 {
     pbImage->set_data( (const char*)cvImage.data );
     pbImage->set_height( cvImage.rows );
@@ -42,7 +42,7 @@ void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
     }
 }
 
-cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
+inline cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
 {
     int nCvType = 0;
     if( pbImage->type() == pb::PB_BYTE || pbImage->type() == pb::PB_UNSIGNED_BYTE ) {
@@ -73,7 +73,7 @@ cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
     return cv::Mat( pbImage->height(), pbImage->width(), nCvType, (void*)pbImage->mutable_data()->data() );
 }
 
-void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
+inline void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
 {
     cv::Mat Image;
 

@@ -64,6 +64,7 @@ add_subdirectory( Devices )
 add_subdirectory( Camera )
 #add_subdirectory( IMU )
 #add_subdirectory( Car )
+add_subdirectory( Utils )
 
 #############################################################################
 # Setup libraries
@@ -81,6 +82,7 @@ if( ANDROID )
     list(APPEND INTERNAL_LIBS "zlib")
 endif()
 
+include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 add_library(hal ${HAL_SOURCES})
 target_link_libraries( hal ${INTERNAL_LIBS} )

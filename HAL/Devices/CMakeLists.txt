@@ -8,9 +8,9 @@ set(HDRS
 )
 
 add_to_hal_sources(
-    ${HDRS} DeviceTime.cpp
+    ${HDRS} DeviceTime.cpp DeviceRegistry.cpp
 )
 
 install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}/Devices
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/Devices
 )

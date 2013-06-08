@@ -25,7 +25,7 @@ public:
         bool Loop          = uri.properties.Get("loop", false);
         size_t BufferSize  = uri.properties.Get("buffer", 10);
         bool Grey          = uri.properties.Get("grey", false);
-        double Frequencey  = uri.properties.Get("frequency", 30.0); // default if not in files
+//        double Frequency  = uri.properties.Get("frequency", 30.0); // default if not in files
         int cvFlags = Grey ? 0 : -1;
 
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');

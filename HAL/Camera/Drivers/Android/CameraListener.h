@@ -6,7 +6,7 @@ namespace hal {
 
 class HALCameraListener :  public android::CameraListener {
 public:
-    HALCameraListener( bool bValidate = true );
+    HALCameraListener();
     ~HALCameraListener();
 
     double GetTimestamp() { return m_dTimestamp; }
@@ -18,7 +18,6 @@ public:
     void postDataTimestamp(nsecs_t timestamp, int32_t msgType, const android::sp<android::IMemory>& dataPtr);
 
 private:
-    bool                m_bValidate;
     int                 m_nPrevFrameIdx;
     double              m_dTimestamp;
     unsigned char*      m_pBuffer;
