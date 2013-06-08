@@ -7,7 +7,7 @@ add_subdirectory( PbMsgs )
 add_subdirectory( HAL )
 
 
-set( Build_Applications true CACHE BOOL force )
-if( Build_Applications AND NOT ANDROID )
+set( BUILD_APPLICATIONS true CACHE BOOL force )
+if( BUILD_APPLICATIONS AND NOT ANDROID )
     add_subdirectory( Applications )
 endif()
