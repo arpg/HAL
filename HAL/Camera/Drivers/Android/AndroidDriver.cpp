@@ -83,7 +83,10 @@ AndroidDriver::AndroidDriver()
         m_SurfaceTexture->updateTexImage();
         gbuf = m_SurfaceTexture->getCurrentBuffer();
     }
-
+    
+    // Hack which seems to help camera to start reliably.
+    std::this_thread::sleep_for( std::chrono::milliseconds(500) );
+    
     // Get width and height
     m_nWidth  = gbuf->getWidth();
     m_nHeight = gbuf->getHeight();
@@ -99,8 +102,8 @@ bool AndroidDriver::Capture( pb::CameraMsg& vImages )
 {
     pb::ImageMsg* pbImg = vImages.add_image();
 
-    pbImg->set_width(m_nWidth);
-    pbImg->set_height(m_nHeight);
+    pbImg->set_width(Width());
+    pbImg->set_height(Height());
     pbImg->set_type( pb::PB_BYTE );
     pbImg->set_format( pb::PB_LUMINANCE );
     pbImg->set_timestamp( m_CamListener->GetTimestamp() );
