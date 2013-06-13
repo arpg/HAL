@@ -7,6 +7,9 @@ if( NOT TARGET @LIBRARY_NAME@ AND NOT @PROJECT_NAME@_BINARY_DIR )
   include( "${PROJECT_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake" )
 endif()
 
-find_package( PbMsgs REQUIRED )
-
 SET( @PROJECT_NAME@_LIBRARIES "@LIBRARY_NAME@;${PbMsgs_LIBRARIES}" )
+
+# Find PbMsgs and add to include / libs
+find_package( PbMsgs REQUIRED )
+list(APPEND @PROJECT_NAME@_INCLUDE_DIRS ${PbMsgs_INCLUDE_DIRS} )
+list(APPEND @PROJECT_NAME@_LIBRARIES ${PbMsgs_LIBRARIES} )

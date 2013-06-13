@@ -106,8 +106,9 @@ file( RELATIVE_PATH REL_INCLUDE_DIR
     "${CMAKE_INSTALL_PREFIX}/include" )
 
 # Export library for easy inclusion from other cmake projects.
-export( TARGETS ${LIBRARY_NAME} pbmsgs
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
+file( REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
+export( TARGETS ${LIBRARY_NAME} 
+        APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
 
 # Version information
 configure_file("${PROJECT_NAME}ConfigVersion.cmake.in"
