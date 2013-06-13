@@ -29,6 +29,8 @@ set_property( GLOBAL PROPERTY P_LIBRARIES
 
 #############################################################################
 # HAL macros for driver writers.
+set( HAL_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+
 macro( add_to_hal_include_dirs )
     foreach( dir ${ARGN} )
         set_property( GLOBAL APPEND PROPERTY P_INCLUDE_DIRS "${dir}" )
@@ -47,7 +49,7 @@ macro( add_to_hal_libraries )
 endmacro()
 
 macro( add_to_hal_sources )
-    file(RELATIVE_PATH _relPath "${CMAKE_SOURCE_DIR}/HAL" "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(RELATIVE_PATH _relPath "${HAL_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
     foreach(_src ${ARGN})
         if(_relPath)
             set_property( GLOBAL APPEND PROPERTY P_SOURCES "${_relPath}/${_src}" )
