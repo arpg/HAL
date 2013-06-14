@@ -31,10 +31,10 @@ public:
 
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
-    UvcDriver* m_pUvcDriver;
-    float m_fLastError;
-    int m_nExposure;
     int m_nTarget;
+    int m_nExposure;
+    float m_fLastError;
+    UvcDriver* m_pUvcDriver;
 };
 
 }

@@ -17,4 +17,7 @@ if(Pangolin_FOUND AND HAL_FOUND)
     include_directories( ${Pangolin_INCLUDE_DIRS} )
     target_link_libraries(CameraViewer ${HAL_LIBRARIES} )
     target_link_libraries(CameraViewer ${Pangolin_LIBRARIES} )
+
+    add_dependencies( CameraViewer hal )                                              
+    add_dependencies( CameraViewer PbMsgs )   
 endif()
