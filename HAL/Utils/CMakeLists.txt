@@ -9,6 +9,6 @@ set(HDRS
 add_to_hal_sources( ${HDRS} )
 
 install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}/Utils
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Utils
 )
 

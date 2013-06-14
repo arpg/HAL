@@ -81,7 +81,7 @@ if( ANDROID )
     set_source_files_properties( Camera/Drivers/Android/CameraListener.cpp PROPERTIES COMPILE_FLAGS "-fno-rtti -fpermissive" )
     set_source_files_properties( Camera/Drivers/Android/AndroidDriver.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
     set_source_files_properties( Camera/Drivers/Android/AndroidFactory.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    list(APPEND INTERNAL_LIBS "zlib")
+    list(APPEND INTERNAL_LIBS "z")
 endif()
 
 include_directories( ${LIB_INC_DIR} )
