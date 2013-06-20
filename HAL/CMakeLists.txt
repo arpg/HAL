@@ -18,7 +18,7 @@ endif()
 # Find required libraries
 
 find_package( OpenCV2 REQUIRED )
-find_package( PbMsgs REQUIRED )
+find_package( PbMsgs 0.1 REQUIRED )
 
 set_property( GLOBAL PROPERTY P_INCLUDE_DIRS
     ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS}
@@ -64,7 +64,7 @@ endmacro()
 
 add_subdirectory( Devices )
 add_subdirectory( Camera )
-#add_subdirectory( IMU )
+add_subdirectory( IMU )
 #add_subdirectory( Car )
 add_subdirectory( Utils )
 
@@ -107,7 +107,7 @@ file( RELATIVE_PATH REL_INCLUDE_DIR
 
 # Export library for easy inclusion from other cmake projects.
 file( REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
-export( TARGETS ${LIBRARY_NAME} 
+export( TARGETS ${LIBRARY_NAME}
         APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
 
 # Version information

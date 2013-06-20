@@ -1,6 +1,7 @@
 #include "DeviceRegistry.h"
 
-#include <hal/Camera/CameraDevice.h>
+#include <HAL/Camera/CameraDevice.h>
+#include <HAL/IMU/IMUDevice.h>
 
 namespace hal
 {
@@ -47,7 +48,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(const Uri& uri)
 {
     // Check for aliases
     std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
-    
+
     if( iAlias != m_aliases.end() ){
         std::string sAlias = iAlias->second;
         std::ostringstream oss;
@@ -79,5 +80,6 @@ void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)
 
 // Explicitly instantiate desired registries.
 template class DeviceRegistry<hal::CameraDriverInterface>;
+template class DeviceRegistry<hal::IMUDriverInterface>;
 
 }

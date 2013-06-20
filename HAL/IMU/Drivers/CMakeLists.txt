@@ -9,7 +9,9 @@ macro(subdirlist result curdir)
   set(${result} ${dirlist})
 endmacro()
 
-subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+#subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(SUBDIRS Phidgets)
 
 foreach(subdir ${SUBDIRS})
     add_subdirectory(${subdir})

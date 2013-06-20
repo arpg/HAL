@@ -1,24 +1,14 @@
-include_directories(${PHIDGETS_INCLUDE_DIR})
-set( PHIDGETS_DRIVER_SOURCES PhidgetsDriver.cpp )
-set( PHIDGETS_DRIVER_HEADERS PhidgetsDriver.h )
-add_library( PhidgetsDriver ${PHIDGETS_DRIVER_SOURCES} ${PHIDGETS_DRIVER_HEADERS} )
-target_link_libraries( PhidgetsDriver ${PHIDGETS_LIBRARIES} )
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
-list( APPEND HAL_LIBRARIES ${PHIDGETS_LIBRARIES} )
-set( HAL_LIBRARIES ${HAL_LIBRARIES} CACHE INTERNAL "" FORCE )
+find_package( PHIDGETS QUIET )
 
-# 2) Tell HAL about this library:
-add_to_hal_include_dirs( ${PHIDGETS_INCLUDE_DIR} )
-add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR} )
-add_to_hal_libraries( PhidgetsDriver )
+set( BUILD_Phidgets false CACHE BOOL force )
 
-# 3) And make sure we are able to install it correctly:
-install( TARGETS PhidgetsDriver
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
+message( STATUS "Phidgets INCS: ${PHIDGETS_INCLUDE_DIR}" )
+message( STATUS "Phidgets LIBS: ${PHIDGETS_LIBRARIES}" )
 
-install( FILES ${PHIDGETS_DRIVER_HEADERS}
-         DESTINATION
-         ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/IMU/Drivers/Phidgets )
+if( PHIDGETS_FOUND AND BUILD_Phidgets )
+    add_to_hal_include_dirs( ${PHIDGETS_INCLUDE_DIR} )
+    add_to_hal_libraries( ${PHIDGETS_LIBRARIES} )
+    add_to_hal_sources( PhidgetsDriver.h PhidgetsDriver.cpp PhidgetsFactory.cpp )
+endif()
