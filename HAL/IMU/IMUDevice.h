@@ -1,8 +1,12 @@
 #pragma once
 
-#include <HAL/Uri.h>
-#include <HAL/DeviceRegistry.h>
+#include <HAL/Devices/SharedLoad.h>
+
 #include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Utils/Uri.h>
+
+namespace hal {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU device
@@ -11,52 +15,33 @@ class IMU : public IMUDriverInterface
     public:
         ///////////////////////////////////////////////////////////////
         IMU()
-            : m_pDriver(0)
         {
+        }
+
+        ///////////////////////////////////////////////////////////////
+        IMU(const std::string& uri)
+            : m_URI(uri)
+        {
+            m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI);
         }
 
         ///////////////////////////////////////////////////////////////
         ~IMU()
         {
-            DeinitDriver();
+            Clear();
         }
 
         ///////////////////////////////////////////////////////////////
-        void DeinitDriver()
+        void Clear()
         {
-            if(m_pDriver) {
-                delete m_pDriver;
-                m_pDriver = 0;
-            }
+            m_IMU = nullptr;
         }
 
-        ///////////////////////////////////////////////////////////////
-        bool InitDriver( const std::string& sDriver )
-        {
-            DeinitDriver();
-
-            m_pDriver = CreateIMUDriver( sDriver );
-            if( m_pDriver ){
-                m_pDriver->SetPropertyMap( this );
-                const bool success = m_pDriver->Init();
-                if(!success) DeinitDriver();
-                return success;
-            }
-
-            return false;
-        }
-        
-        ///////////////////////////////////////////////////////////////
-        bool IsInitialized()
-        {
-            return m_pDriver;
-        }        
-        
         ///////////////////////////////////////////////////////////////
         void RegisterIMUDataCallback(IMUDriverDataCallback callback)
         {
-            if( m_pDriver ){
-                m_pDriver->RegisterDataCallback( callback );
+            if( m_IMU ){
+                m_IMU->RegisterDataCallback( callback );
             }else{
                 std::cerr << "ERROR: no driver initialized!\n";
             }
@@ -66,15 +51,25 @@ class IMU : public IMUDriverInterface
         ///////////////////////////////////////////////////////////////
         void RegisterGPSDataCallback(GPSDriverDataCallback callback)
         {
-            if( m_pDriver ){
-                m_pDriver->RegisterDataCallback( callback );
+            if( m_IMU ){
+                m_IMU->RegisterDataCallback( callback );
             }else{
                 std::cerr << "ERROR: no driver initialized!\n";
             }
             return;
-        }        
+        }
 
-    private:
-        // A IMU device will create and initialize a particular driver:
-        IMUDriver*          m_pDriver;
+        ///////////////////////////////////////////////////////////////
+        std::string GetDeviceProperty(const std::string& sProperty)
+        {
+            return m_IMU->GetDeviceProperty(sProperty);
+        }
+
+
+protected:
+    hal::Uri                                m_URI;
+    std::shared_ptr<IMUDriverInterface>     m_IMU;
+
 };
+
+} /* namespace */

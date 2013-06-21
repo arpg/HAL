@@ -2,13 +2,15 @@
 
 #include <sys/time.h>
 
+
+namespace hal {
+
 inline double Tic()
 {
     struct timeval tv;
     gettimeofday(&tv, 0);
     return tv.tv_sec + 1e-6 * (tv.tv_usec);
 }
-
 
 //callback that will run if the Spatial is attached to the computer
 int CCONV AttachHandler(CPhidgetHandle spatial, void *userptr)
@@ -39,6 +41,11 @@ int CCONV SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhid
     ((PhidgetsDriver *)userptr)->_SpatialDataHandler(spatial,data,count);
     return 0;
 }
+
+} /* namespace */
+
+using namespace hal;
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 PhidgetsDriver::PhidgetsDriver() : m_hSpatial(0)
@@ -106,7 +113,7 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhi
         imuData.timestamp_system = Tic();
         imuData.data_present =     IMU_AHRS_TIMESTAMP_PPS | IMU_AHRS_ACCEL | IMU_AHRS_GYRO | IMU_AHRS_MAG;
         imuData.timestamp_pps =  data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6;
-        if(m_ImuCallback.empty() == false){
+        if( m_ImuCallback ) {
             m_ImuCallback(imuData);
         }
     }

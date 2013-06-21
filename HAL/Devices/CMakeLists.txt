@@ -1,9 +1,9 @@
 set(HDRS
     DeviceException.h
-    DeviceFactory.h 
+    DeviceFactory.h
     DeviceRegistry.h
-    DeviceTime.h 
-    DriverInterface.h 
+    DeviceTime.h
+    DriverInterface.h
     SharedLoad.h
 )
 
@@ -12,5 +12,5 @@ add_to_hal_sources(
 )
 
 install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/Devices
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Devices
 )

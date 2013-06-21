@@ -1,12 +1,16 @@
 #pragma once
 
 #include <Eigen/Eigen>
-#include <function>
+#include <functional>
+
+#include <HAL/Devices/DriverInterface.h>
 
 namespace Eigen
 {
     typedef Matrix<double,6,1> Vector6d;
-}
+} /* namespace */
+
+namespace hal {
 
 enum IMUDataType
 {
@@ -57,7 +61,7 @@ typedef std::function<void (const GPSData&)> GPSDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic IMU driver interface
-class IMUDriverInterface
+class IMUDriverInterface : public DriverInterface
 {
     public:
         // Pure virtual functions driver writers must implement:
@@ -66,3 +70,4 @@ class IMUDriverInterface
         virtual void RegisterDataCallback(GPSDriverDataCallback callback) = 0;
 };
 
+} /* namespace */

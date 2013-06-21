@@ -5,7 +5,6 @@
 #include <PbMsgs/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <HAL/Devices/DeviceRegistry.h>
 #include <HAL/Devices/DeviceFactory.h>
 #include <HAL/Utils/Uri.h>
 
@@ -100,25 +99,25 @@ public:
     {
         return m_cam->NumChannels();
     }
-    
+
     ///////////////////////////////////////////////////////////////
     size_t Width( size_t idx = 0 ) const
     {
         return m_cam->Width(idx);
     }
-    
+
     ///////////////////////////////////////////////////////////////
     size_t Height( size_t idx = 0 ) const
     {
-        return m_cam->Height(idx);        
+        return m_cam->Height(idx);
     }
-    
+
     ///////////////////////////////////////////////////////////////
     std::string GetDeviceProperty(const std::string& sProperty)
     {
         return m_cam->GetDeviceProperty(sProperty);
     }
-    
+
     ///////////////////////////////////////////////////////////////
     /// Return raw camera driver pointer, optionally dynamic_cast'd
     /// to another type. Returns NULL if wrong type.
@@ -136,4 +135,4 @@ protected:
     std::shared_ptr<CameraDriverInterface> m_cam;
 };
 
-}
+} /* namespace */
