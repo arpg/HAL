@@ -142,7 +142,7 @@ bool PhidgetsDriver::Init()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PhidgetsDriver::RegisterDataCallback(IMUDriverDataCallback callback)
+void PhidgetsDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     m_ImuCallback = callback;
 }

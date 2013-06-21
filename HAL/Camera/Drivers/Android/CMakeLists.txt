@@ -1,12 +1,12 @@
 if( ANDROID )
-    set( BUILD_ANDROID true )
+    set( BUILD_Android true CACHE BOOL force )
 elseif()
-    set( BUILD_ANDROID false CACHE BOOL force )
+    set( BUILD_Android false )
 endif()
 
-if( BUILD_ANDROID)
+if( BUILD_Android )
     set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
-    
+
     find_package( AndroidKernel REQUIRED )
     add_to_hal_include_dirs( ${AndroidKernel_INCLUDE_DIRS} )
     add_to_hal_libraries( ${AndroidKernel_LIBRARIES} )

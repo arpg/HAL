@@ -18,7 +18,6 @@ public:
     void postDataTimestamp(nsecs_t timestamp, int32_t msgType, const android::sp<android::IMemory>& dataPtr);
 
 private:
-    int                 m_nPrevFrameIdx;
     double              m_dTimestamp;
     unsigned char*      m_pBuffer;
 };

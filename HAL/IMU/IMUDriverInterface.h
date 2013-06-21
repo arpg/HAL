@@ -66,8 +66,8 @@ class IMUDriverInterface : public DriverInterface
     public:
         // Pure virtual functions driver writers must implement:
         virtual ~IMUDriverInterface() {}
-        virtual void RegisterDataCallback(IMUDriverDataCallback callback) = 0;
-        virtual void RegisterDataCallback(GPSDriverDataCallback callback) = 0;
+        virtual void RegisterIMUDataCallback(IMUDriverDataCallback callback) = 0;
+        virtual void RegisterGPSDataCallback(GPSDriverDataCallback callback) = 0;
 };
 
 } /* namespace */

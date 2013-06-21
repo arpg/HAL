@@ -15,7 +15,7 @@ namespace hal {
 
 
 HALCameraListener::HALCameraListener()
-    : m_nPrevFrameIdx(0), m_pBuffer(0)
+    : m_pBuffer(nullptr)
 {
 }
 
@@ -36,15 +36,14 @@ void HALCameraListener::postData(int32_t /*msgType*/, const android::sp<android:
 {
     LOGV("HAL::postData");
 
-    // from RaisinRunner
     ssize_t offset;
     size_t size;
     android::sp<android::IMemoryHeap> Heap = dataPtr->getMemory( &offset, &size);
-    
+
     if(!m_pBuffer) {
         m_pBuffer = new unsigned char[size];
-    }    
-    
+    }
+
     memcpy(m_pBuffer, ((unsigned char *)Heap->base()) + offset, size);
 }
 

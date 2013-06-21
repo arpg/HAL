@@ -41,7 +41,7 @@ class IMU : public IMUDriverInterface
         void RegisterIMUDataCallback(IMUDriverDataCallback callback)
         {
             if( m_IMU ){
-                m_IMU->RegisterDataCallback( callback );
+                m_IMU->RegisterIMUDataCallback( callback );
             }else{
                 std::cerr << "ERROR: no driver initialized!\n";
             }
@@ -52,7 +52,7 @@ class IMU : public IMUDriverInterface
         void RegisterGPSDataCallback(GPSDriverDataCallback callback)
         {
             if( m_IMU ){
-                m_IMU->RegisterDataCallback( callback );
+                m_IMU->RegisterGPSDataCallback( callback );
             }else{
                 std::cerr << "ERROR: no driver initialized!\n";
             }
