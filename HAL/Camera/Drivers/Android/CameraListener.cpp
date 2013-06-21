@@ -36,7 +36,6 @@ void HALCameraListener::postData(int32_t /*msgType*/, const android::sp<android:
 {
     LOGV("HAL::postData");
 
-    // from RaisinRunner
     ssize_t offset;
     size_t size;
     android::sp<android::IMemoryHeap> Heap = dataPtr->getMemory( &offset, &size);
