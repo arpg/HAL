@@ -1,3 +1,4 @@
+if(0)
 # 1) Build the library
 set( WEBCAM_DRIVER_SOURCES WebcamDriver.cpp )
 set( WEBCAM_DRIVER_HEADERS WebcamDriver.h )
@@ -16,3 +17,4 @@ install( TARGETS WebcamDriver
 install( FILES ${WEBCAM_DRIVER_HEADERS}
          DESTINATION
      ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/Webcam )
+endif()

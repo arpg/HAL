@@ -1,3 +1,4 @@
+if(0)
 set( IMULOG_DRIVER_SOURCES IMULogDriver.cpp ../../../VirtualDevice.cpp )
 set( IMULOG_DRIVER_HEADERS IMULogDriver.h )
 add_library( IMULogDriver ${IMULOG_DRIVER_SOURCES} ${IMULOG_DRIVER_HEADERS} )
@@ -20,3 +21,4 @@ install( TARGETS IMULogDriver
 install( FILES ${IMULOG_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/IMU/Drivers/IMULog )
+endif()

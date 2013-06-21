@@ -9,9 +9,9 @@ macro(subdirlist result curdir)
   set(${result} ${dirlist})
 endmacro()
 
-#subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(SUBDIRS FileReader OpenNI Rectify Split Debayer V4L DC1394 UVC ProtoReader Android AutoExposure)
+#set(SUBDIRS FileReader OpenNI Rectify Split Debayer V4L DC1394 UVC ProtoReader Android AutoExposure)
 
 foreach(subdir ${SUBDIRS})
     add_subdirectory(${subdir})

@@ -1,4 +1,5 @@
 # 1) Build the library
+if(0)
 include_directories( SDK/includes )
 set( DVI2PCI_DRIVER_HEADERS Dvi2PciDriver.h )
 set( DVI2PCI_DRIVER_SOURCES Dvi2PciDriver.cpp )
@@ -110,4 +111,4 @@ install( TARGETS Dvi2PciDriver
 install( FILES ${DVI2PCI_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/Dvi2Pci )
-
+endif()

@@ -1,3 +1,4 @@
+if(0)
 # 1) Build the library
 set( TOYOTAREADER_DRIVER_SOURCES ToyotaReaderDriver.cpp )
 set( TOYOTAREADER_DRIVER_HEADERS ToyotaReaderDriver.h )
@@ -16,3 +17,4 @@ install( TARGETS ToyotaReaderDriver
 install( FILES ${TOYOTAREADER_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/ToyotaReader )
+endif()

@@ -1,3 +1,4 @@
+if(0)
 PROTOBUF_GENERATE_CPP( PROTO_HDRS PROTO_SRCS Message.proto )
 
 # include dirs
@@ -23,3 +24,4 @@ install( TARGETS NodeCamDriver
 install( FILES ${DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/NodeCam )
+endif()

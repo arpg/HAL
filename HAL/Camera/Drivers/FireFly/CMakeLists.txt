@@ -1,3 +1,4 @@
+if(0)
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
 find_package( DC1394_2 QUIET )
@@ -27,4 +28,4 @@ if( DC1394_2_FOUND )
              DESTINATION
              ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/FireFly )
 endif()
-
+endif()

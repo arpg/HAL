@@ -1,3 +1,4 @@
+if(0)
 # Build NodeCam driver
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 find_package( ZeroMQ QUIET )
@@ -29,4 +30,5 @@ if( ZeroMQ_FOUND )
     install( FILES ${DRIVER_HEADERS}
              DESTINATION
              ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/NodeCam )
+endif()
 endif()

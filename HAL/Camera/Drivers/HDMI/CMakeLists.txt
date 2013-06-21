@@ -1,3 +1,4 @@
+if(0)
 # 1) Build the library
 include_directories( Blackmagic )
 set( HDMI_DRIVER_SOURCES HDMIDriver.cpp Blackmagic/DeckLinkAPIDispatch.cpp CaptureDelegate.cpp)
@@ -17,3 +18,4 @@ install( TARGETS HDMIDriver
 install( FILES ${HDMI_DRIVER_HEADERS}
          DESTINATION
          ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/HDMI )
+endif()
