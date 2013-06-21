@@ -10,6 +10,8 @@ endif()
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
 
+find_package( OpenCV2 QUIET )
+
 if(Pangolin_FOUND AND HAL_FOUND)
     add_executable( CameraViewer main.cpp )
 
