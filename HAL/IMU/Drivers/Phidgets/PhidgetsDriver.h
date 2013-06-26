@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HAL/IMU/IMUDriverInterface.h"
+#include <HAL/IMU/IMUDriverInterface.h>
 
 #include <phidget21.h>
 

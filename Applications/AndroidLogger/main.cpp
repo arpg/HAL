@@ -16,7 +16,7 @@ pb::Logger& g_Logger = pb::Logger::GetInstance();
 void HandleIMU(const hal::IMUData& IMUdata)
 {
     pb::Msg msg;
-    msg.set_timestamp(0);
+    msg.set_timestamp( IMUdata.timestamp_system );
     pb::ImuMsg* pIMU = msg.mutable_imu();
 
     if( IMUdata.data_present & hal::IMU_AHRS_ACCEL ) {
@@ -36,8 +36,6 @@ int main( int /*argc*/, char** /*argv*/ )
 
     ////////////////////////////////////////////////////////////////////
 
-//    const std::string video_uri = "split:[roi1=0+0+640x480,roi2=640+0+640x480]//android://";
-//    const std::string video_uri = "split:[roi1=0+0+640x480,roi2=640+0+640x480]//raisin://";
     const std::string video_uri = "raisin://";
     const std::string imu_uri = "raisin://";
     hal::Camera camera(video_uri);
@@ -49,9 +47,6 @@ int main( int /*argc*/, char** /*argv*/ )
     const size_t N = camera.NumChannels();
     const size_t w = camera.Width();
     const size_t h = camera.Height();
-//    const size_t N = 2;
-//    const size_t w = 640;
-//    const size_t h = 512;
 
     LOGI("Preview video: %d x %d x %d\n", N, w, h);
 
