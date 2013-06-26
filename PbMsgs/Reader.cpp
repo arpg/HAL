@@ -78,7 +78,6 @@ void Reader::_ThreadFunc()
                 coded_input.PushLimit(msg_size_bytes);
         std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
         if( !pMsg->ParseFromCodedStream(&coded_input) ) {
-            std::cerr << "Failed to parse pMsg" << std::endl;
             break;
         }
         coded_input.PopLimit(lim);
@@ -121,9 +120,8 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage()
 std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
 {
     if( !ReadCamera ) {
-        std::cerr << "warning: ReadCameraMsg was called but ReadCamera variable is set to false!" << std::endl;
-        std::cerr << "This means the reader is NOT queueing camera messages. Please set Reader::ReadCamera" << std::endl;
-        std::cerr << "to true if you wish to read camera messages." << std::endl;
+        std::cerr << "warning: ReadCameraMsg was called but ReadCamera variable is set to false! " << std::endl;
+        std::cerr << "This means the reader is NOT queueing camera messages. Please set Reader::ReadCamera to true if you wish to read camera messages." << std::endl;
         return nullptr;
     }
 
@@ -141,7 +139,40 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
         m_qMessages.pop_front();
         m_ConditionDequeued.notify_one();
 
-        return std::unique_ptr<pb::CameraMsg>(pMessage->mutable_camera());
+        std::unique_ptr<pb::CameraMsg> pCameraMsg( new pb::CameraMsg );
+        pCameraMsg->Swap( pMessage->mutable_camera() );
+        return pCameraMsg;
+    } else {
+        return nullptr;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
+{
+    if( !ReadIMU ) {
+        std::cerr << "warning: ReadImuMsg was called but ReadIMU variable is set to false! " << std::endl;
+        std::cerr << "This means the reader is NOT queueing IMU messages. Please set Reader::ReadIMU to true if you wish to read IMU messages." << std::endl;
+        return nullptr;
+    }
+
+    // Wait if buffer is empty
+    std::unique_lock<std::mutex> lock(m_QueueMutex);
+    while(m_bRunning && m_qMessages.size() == 0 ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+    }
+
+    if(m_qMessages.size()) {
+        while( m_qMessages.front()->has_imu() == false ) {
+            m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
+        }
+        std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+        m_qMessages.pop_front();
+        m_ConditionDequeued.notify_one();
+
+        std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
+        pImuMsg->Swap( pMessage->mutable_imu() );
+        return pImuMsg;
     } else {
         return nullptr;
     }

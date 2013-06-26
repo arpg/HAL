@@ -11,7 +11,7 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename)
     pb::Reader::ReadCamera = true;
 
     if( !ReadNextCameraMessage(m_nextMsg) ) {
-        std::cerr << "Error reading next message!" << std::endl;
+        std::cerr << "HAL: Error reading initial message!" << std::endl;
     }
 
     m_numChannels = m_nextMsg.image_size();
@@ -36,9 +36,7 @@ bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg)
 bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages )
 {
     m_nextMsg.Swap(&vImages);
-    if( !ReadNextCameraMessage(m_nextMsg) ) {
-        std::cerr << "Error reading next message!" << std::endl;
-    }
+    ReadNextCameraMessage(m_nextMsg);
     return vImages.image_size() > 0;
 }
 
