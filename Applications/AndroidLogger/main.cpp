@@ -1,5 +1,3 @@
-//#include <memory>
-
 #include <pangolin/pangolin.h>
 #include <pangolin/gldraw.h>
 
@@ -66,7 +64,7 @@ int main( int /*argc*/, char** /*argv*/ )
     localtime_r(&g_t, &tm_result);
     char prefix[256];
     strftime(prefix, sizeof(prefix), "%Y%b%d_%H%M%S", &tm_result);
-    std::string fullPath = g_Logger.LogToFile( "/data/data/hal.apps.android/files/", prefix );
+    std::string fullPath = g_Logger.LogToFile( "/data/data/edu.gwu.robotics.AndroidLogger/files/", prefix );
     LOGI("Logger started at: %s",fullPath.c_str());
 
     ////////////////////////////////////////////////////////////////////

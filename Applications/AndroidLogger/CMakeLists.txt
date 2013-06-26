@@ -32,9 +32,6 @@ message( STATUS "LIB: ${HAL_LIBRARIES}" )
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-if(ANDROID)
-    target_link_libraries(${PROJECT_NAME} log android )
-endif()
 
 target_link_libraries(${PROJECT_NAME} ${Pangolin_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${SceneGraph_LIBRARIES})

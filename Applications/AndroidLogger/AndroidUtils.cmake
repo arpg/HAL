@@ -57,16 +57,20 @@ if(ANDROID)
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libs/${ANDROID_NDK_ABI_NAME})
         add_library( ${prog_name} SHARED ${ARGN} )
 
-        set(ANDROID_PACKAGE_NAME "edu.gw.robotics.${prog_name}")
+        # Add required link libs for android
+        target_link_libraries(${prog_name} log android )
+
+        # Create manifest required for APK
+        set(ANDROID_PACKAGE_NAME "edu.gwu.robotics.${prog_name}")
         create_android_manifest_xml(
             "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml" ${prog_name}
             "${ANDROID_PACKAGE_NAME}" "${prog_name}"
         )
 
-        # Generate ant build system for apk
+        # Generate ant build system for APK
         android_update( ${prog_name} )
 
-        # Target to invoke ant build system for apk
+        # Target to invoke ant build system for APK
         set( APK_FILE "${CMAKE_CURRENT_BINARY_DIR}/bin/${prog_name}-debug.apk" )
         add_custom_command(
             OUTPUT ${APK_FILE}
@@ -94,48 +98,4 @@ if(ANDROID)
         )
     endmacro()
 
-    
-    ## clean generated files
-    #add_custom_target( clean-src
-    #    COMMAND rm -rf bin
-    #    COMMAND rm -rf libs
-    #    COMMAND rm build.xml
-    #    COMMAND rm local.properties
-    #    COMMAND rm project.properties
-    #    COMMAND rm proguard-project.txt
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    #)
-    
-    #set(APK_NAME "${PROJECT_NAME}-debug.apk")
-    
-    ## Package APK
-    ## ant release
-    #add_custom_command(
-    #    OUTPUT ${PROJECT_SOURCE_DIR}/bin/${APK_NAME}
-    #    COMMAND ant debug
-    #    DEPENDS native-activity
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    #)
-    
-    ## Install to device
-    ## adb install -r bin/native-activity-debug.apk
-    #add_custom_target( push
-    #    COMMAND adb install -r bin/${APK_NAME}
-    #    DEPENDS ${PROJECT_SOURCE_DIR}/bin/${APK_NAME}
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    #)
-    
-    ## install and run on device
-    #add_custom_target( run
-    #    COMMAND adb shell am start -n com.example.native_activity/android.app.NativeActivity
-    #    DEPENDS push
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    #)
-    
-    ## install and run on device, piping logcat to terminal
-    #add_custom_target( debug
-    #    COMMAND adb logcat -c && adb shell am start -n com.example.native_activity/android.app.NativeActivity && adb logcat
-    #    DEPENDS push
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    #)
 endif()
