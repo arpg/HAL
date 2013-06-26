@@ -23,17 +23,19 @@ public:
     void LogToFile(const std::string &fileName);
     void StopLogging();
     bool IsLogging();
-    
-    void LogMessage(const pb::Msg& message);    
+
+    void LogMessage(const pb::Msg& message);
 
 private:
     void ThreadFunc();
-    std::list<pb::Msg> m_qMessages;
-    std::mutex m_QueueMutex;
-    std::condition_variable m_QueueCondition;
-    std::string m_sFilename;
-    bool m_bShouldRun;
-    std::thread m_WriteThread;
+
+private:
+    std::list<pb::Msg>          m_qMessages;
+    std::mutex                  m_QueueMutex;
+    std::condition_variable     m_QueueCondition;
+    std::string                 m_sFilename;
+    bool                        m_bShouldRun;
+    std::thread                 m_WriteThread;
 };
 
-}
+} /* namespace */

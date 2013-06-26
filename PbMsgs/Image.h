@@ -1,5 +1,4 @@
-#ifndef IMAGE_H
-#define IMAGE_H
+#pragma once
 
 #include <fstream>
 
@@ -247,7 +246,4 @@ private:
 
 
 
-}
-
-
-#endif // IMAGE_H
+} /* namespace */

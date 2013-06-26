@@ -8,10 +8,27 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 
+#include <PbMsgs/Logger.h>
+#include <PbMsgs/Matrix.h>
+
+// global logger
+pb::Logger& g_Logger = pb::Logger::GetInstance();
+
 
 void HandleIMU(const hal::IMUData& IMUdata)
 {
-    LOGI("----------------------------------------- GOT IMU!!!!\n");
+    pb::Msg msg;
+    msg.set_timestamp(0);
+    pb::ImuMsg* pIMU = msg.mutable_imu();
+
+    if( IMUdata.data_present & hal::IMU_AHRS_ACCEL ) {
+        pb::WriteVector( IMUdata.accel.cast<double>(), *(pIMU->mutable_accel()) );
+    }
+    if( IMUdata.data_present & hal::IMU_AHRS_GYRO ) {
+        pb::WriteVector( IMUdata.gyro.cast<double>(), *(pIMU->mutable_gyro()) );
+    }
+
+    g_Logger.LogMessage(msg);
 }
 
 
@@ -39,6 +56,18 @@ int main( int /*argc*/, char** /*argv*/ )
 //    const size_t h = 512;
 
     LOGI("Preview video: %d x %d x %d\n", N, w, h);
+
+
+    ///---------------------------
+
+    // prepare logger
+    time_t g_t = time(NULL);
+    struct tm tm_result;
+    localtime_r(&g_t, &tm_result);
+    char prefix[256];
+    strftime(prefix, sizeof(prefix), "%Y%b%d_%H%M%S", &tm_result);
+    std::string fullPath = g_Logger.LogToFile( "/data/data/hal.apps.android/files/", prefix );
+    LOGI("Logger started at: %s",fullPath.c_str());
 
     ////////////////////////////////////////////////////////////////////
     // Setup GUI
@@ -86,13 +115,14 @@ int main( int /*argc*/, char** /*argv*/ )
     ////////////////////////////////////////////////////////////////////
     // Display Variables
 
-    pangolin::Var<bool> run("ui.Play video", false, false);
+    pangolin::Var<bool> log("ui.LOG", false, true);
+    pangolin::Var<bool> run("ui.PLAY", false, false);
 
 
     //********************************************************************
 
 
-    for( int frame=0; !pangolin::ShouldQuit(); )
+    for( unsigned int nFrame = 0; !pangolin::ShouldQuit(); nFrame++ )
     {
         if( Pushed(run) ) {
             pangolin::Quit();
@@ -128,6 +158,14 @@ int main( int /*argc*/, char** /*argv*/ )
             v3D.ActivateAndScissor(stacks);
         }
         */
+
+//        if( log && (nFrame % 2 == 0) ) {
+        if( log ) {
+            pb::Msg msg;
+            msg.set_timestamp(nFrame);
+            msg.mutable_camera()->Swap(&images.Ref());
+            g_Logger.LogMessage(msg);
+        }
 
         // Process window events via GLUT
         pangolin::FinishFrame();

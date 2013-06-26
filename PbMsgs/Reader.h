@@ -1,5 +1,4 @@
-#ifndef READER_H
-#define READER_H
+#pragma once
 
 #include <fstream>
 
@@ -14,36 +13,53 @@
 
 namespace pb
 {
+
 class Reader
 {
 public:
-    static Reader& GetInstance();
+    static Reader* Instance(const std::string& filename);
 
-    Reader(const std::string& filename);
     ~Reader();
 
-    bool BufferFromFile(const std::string &fileName);
-    void StopBuffering();
+    /// Reads message regardless of type. This allows the user to handle the message list directly.
+    /// This will block if no messages are in the queue.
     std::unique_ptr<pb::Msg> ReadMessage();
+
+    /// Reads the next camera message from the message queue. If the next message is NOT a camera message,
+    /// or the message queue is empty, the function will block. Mostly used for camera specific driver implementations.
+    /// The "ReadCamera" static variable must be set to true if the reader is to queue camera messages.
+    std::unique_ptr<pb::CameraMsg> ReadCameraMsg();
+
+    /// Reads the next IMU message from the message queue. If the next message is NOT an IMU message,
+    /// or the message queue is empty, the function will block. Mostly used for IMU specific driver implementations.
+    /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
+    std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
-    size_t& GetMaxBufferSize() { return m_nMaxBufferSize; }
     size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
 
 private:
-    void ThreadFunc();
+    Reader(const std::string& filename);
+    bool _BufferFromFile(const std::string &fileName);
+    void _StopBuffering();
+    void _ThreadFunc();
 
-    std::string m_sFilename;
-    bool m_bRunning;
-    bool m_bShouldRun;
-    std::list<std::unique_ptr<pb::Msg> > m_qMessages;
-    std::mutex m_QueueMutex;
-    std::condition_variable m_ConditionQueued;
-    std::condition_variable m_ConditionDequeued;
-    std::thread m_WriteThread;
-    size_t m_nMaxBufferSize;
+public:
+    static bool                             ReadCamera;
+    static bool                             ReadIMU;
+
+private:
+    static Reader*                          m_pInstance;
+    std::string                             m_sFilename;
+    bool                                    m_bRunning;
+    bool                                    m_bShouldRun;
+    std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
+    std::mutex                              m_QueueMutex;
+    std::condition_variable                 m_ConditionQueued;
+    std::condition_variable                 m_ConditionDequeued;
+    std::thread                             m_WriteThread;
+    size_t                                  m_nMaxBufferSize;
 };
-}
 
-#endif // READER_H
+} /* namespace */

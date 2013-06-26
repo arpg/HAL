@@ -1,8 +1,7 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#pragma once
 
 #include <Eigen/Eigen>
-#include <Messages/Messages.pb.h>
+#include <PbMsgs/Messages.pb.h>
 
 namespace pb {
 
@@ -48,6 +47,4 @@ void WriteVector(const Eigen::VectorXd &mat, VectorMsg &msg)
     }
 }
 
-}
-
-#endif // MATRIX_H
+} /* namespace */
