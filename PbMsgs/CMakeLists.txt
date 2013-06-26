@@ -34,10 +34,16 @@ list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIR} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
+list( APPEND LINK_LIBS  ${PROTOBUF_LIBRARIES} )
 
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${USER_INC} )
-#include_directories( ${INTERNAL_INC} )
+
+if(ANDROID)
+    # Override to use hosts protoc compiler
+    unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
+    find_host_package( Protobuf REQUIRED)
+endif()
 
 #######################################################
 ## Sources
@@ -70,7 +76,7 @@ set( HDRS
    )
 
 add_library( ${LIBRARY_NAME} ${SRCS} ${HDRS} )
-target_link_libraries(${LIBRARY_NAME} ${PROTOBUF_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} ${LINK_LIBS})
 
 #######################################################
 ## Create configure file for inclusion in library
