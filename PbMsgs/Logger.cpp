@@ -38,46 +38,48 @@ Logger::~Logger()
 void Logger::ThreadFunc()
 {
     int fd = open(m_sFilename.c_str(), O_RDWR | O_CREAT | O_TRUNC);
-    
+
     if(fd==0) {
         std::cout << "Error opening file " << m_sFilename << std::endl;
         return;
     }
-    
+
     google::protobuf::io::FileOutputStream raw_output(fd);
     raw_output.SetCloseOnDelete(true);
     google::protobuf::io::CodedOutputStream coded_output(&raw_output);
 
     const int magic_number = 1234;
     coded_output.WriteLittleEndian32(magic_number);
-    
-    std::unique_lock<std::mutex> lock(m_QueueMutex);
 
-    // wait for first message
-    while(m_bShouldRun && m_qMessages.size() == 0) {
-        m_QueueCondition.wait(lock);
-    }
-    
     int frames = 0;
-    while(m_bShouldRun){
+    while( m_bShouldRun ){
+
+        {
+            std::unique_lock<std::mutex> lock(m_QueueMutex);
+
+            m_QueueCondition.wait(lock); // unlock lock, wait to be signaled
+            // at this point lock is locked
+            if( m_bShouldRun && m_qMessages.empty() ) {
+                continue;
+            }
+        }
+
         pb::Msg& msg = m_qMessages.front();
-        
         const size_t size_bytes = msg.ByteSize();
         coded_output.WriteVarint32( size_bytes );
-        
+
         if(!msg.SerializeToCodedStream(&coded_output)) {
             std::cout << "failed to serialize to coded stream" << std::endl;
         }
-        m_qMessages.pop_front();
-        frames++;
-        
-        while(m_bShouldRun && m_qMessages.size() == 0) {
-            m_QueueCondition.wait(lock);
+
+        {
+            std::unique_lock<std::mutex> lock(m_QueueMutex);
+            m_qMessages.pop_front();
+            frames++;
         }
-        
     }
-    
-    std::cout << "-ThreadFunc(). Wrote " << frames << " frames." << std::endl;
+
+    std::cout << "Logger thread stopped. Wrote " << frames << " frames." << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +91,7 @@ void Logger::LogMessage(const pb::Msg &message)
     if(!m_WriteThread.joinable()) {
         LogToFile(m_sFilename);
     }
-    
+
     std::lock_guard<std::mutex> lock(m_QueueMutex);
     m_qMessages.push_back(message);
     m_QueueCondition.notify_one();
@@ -98,8 +100,9 @@ void Logger::LogMessage(const pb::Msg &message)
 /////////////////////////////////////////////////////////////////////////////////////////
 void Logger::LogToFile(const std::string& filename)
 {
+    std::cout << "Logger thread started..." << std::endl;
     StopLogging();
-    
+
     m_sFilename = filename;
     m_bShouldRun = true;
     m_WriteThread = std::thread( &Logger::ThreadFunc, this );
@@ -131,10 +134,7 @@ std::string Logger::LogToFile(const std::string& sLogDir,
 /////////////////////////////////////////////////////////////////////////////////////////
 void Logger::StopLogging()
 {
-    std::cout << "StopLogging()" << std::endl;
-    
     if(m_WriteThread.joinable()) {
-        std::cout << "StopLogging() join" << std::endl;
         m_bShouldRun = false;
         m_QueueCondition.notify_all();
         m_WriteThread.join();
@@ -144,7 +144,7 @@ void Logger::StopLogging()
 /////////////////////////////////////////////////////////////////////////////////////////
 bool Logger::IsLogging()
 {
-    return m_WriteThread.joinable();  
+    return m_WriteThread.joinable();
 }
 
 }

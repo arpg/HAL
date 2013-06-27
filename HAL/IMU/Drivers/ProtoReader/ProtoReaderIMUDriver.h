@@ -18,7 +18,7 @@ private:
     void _ThreadFunc();
 
 private:
-    pb::Reader*             m_reader;
+    pb::Reader&             m_reader;
     bool                    m_running;
     std::thread             m_callbackThread;
     IMUDriverDataCallback   m_callback;
