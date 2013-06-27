@@ -21,8 +21,6 @@ bool Reader::ReadIMU        = false;
 /////////////////////////////////////////////////////////////////////////////////////////
 Reader* Reader::Instance( const std::string& filename )
 {
-    // pass parameter specifying type?
-    // set static variable which enables to call ReadCamera otherwise return error/false??
     if(!m_pInstance) {
         m_pInstance = new Reader(filename);
     }
@@ -39,9 +37,19 @@ Reader::Reader(const std::string& filename) :
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
+bool Reader::_AmINext(MessageType eMsgType)
+{
+    if( m_qMessageTypes.empty() ) {
+        return false;
+    }
+
+    return m_qMessageTypes.front() == eMsgType;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 Reader::~Reader()
 {
-    _StopBuffering();
+    StopBuffering();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +97,16 @@ void Reader::_ThreadFunc()
         }
         if( (pMsg->has_camera() && ReadCamera)
             || (pMsg->has_imu() && ReadIMU) ) {
+
+            if( pMsg->has_camera() ) {
+                m_qMessageTypes.push_back( Msg_Type_Camera );
+            }
+            if( pMsg->has_imu() ) {
+                m_qMessageTypes.push_back( Msg_Type_IMU );
+            }
+
             m_qMessages.push_back(std::move(pMsg));
+
             m_ConditionQueued.notify_one();
         }
     }
@@ -127,24 +144,22 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
 
     // Wait if buffer is empty
     std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(m_bRunning && m_qMessages.size() == 0 ){
+    while(m_bRunning && !_AmINext( Msg_Type_Camera ) ){
         m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
     }
 
-    if(m_qMessages.size()) {
-        while( m_qMessages.front()->has_camera() == false ) {
-            m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
-        }
-        std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
-        m_qMessages.pop_front();
-        m_ConditionDequeued.notify_one();
-
-        std::unique_ptr<pb::CameraMsg> pCameraMsg( new pb::CameraMsg );
-        pCameraMsg->Swap( pMessage->mutable_camera() );
-        return pCameraMsg;
-    } else {
+    if(!m_bRunning) {
         return nullptr;
     }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::CameraMsg> pCameraMsg( new pb::CameraMsg );
+    pCameraMsg->Swap( pMessage->mutable_camera() );
+    return pCameraMsg;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -158,24 +173,22 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
 
     // Wait if buffer is empty
     std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(m_bRunning && m_qMessages.size() == 0 ){
+    while(m_bRunning && !_AmINext( Msg_Type_IMU ) ){
         m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
     }
 
-    if(m_qMessages.size()) {
-        while( m_qMessages.front()->has_imu() == false ) {
-            m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
-        }
-        std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
-        m_qMessages.pop_front();
-        m_ConditionDequeued.notify_one();
-
-        std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
-        pImuMsg->Swap( pMessage->mutable_imu() );
-        return pImuMsg;
-    } else {
+    if(!m_bRunning) {
         return nullptr;
     }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
+    pImuMsg->Swap( pMessage->mutable_imu() );
+    return pImuMsg;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -188,14 +201,15 @@ bool Reader::_BufferFromFile(const std::string& fileName)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void Reader::_StopBuffering()
+void Reader::StopBuffering()
 {
     if(m_bRunning)
     {
         m_bShouldRun = false;
-        m_ConditionQueued.notify_all();
+        m_ConditionDequeued.notify_one();
+        m_WriteThread.join();
     }
-    m_WriteThread.join();
+    m_ConditionQueued.notify_all();
 }
 
 }

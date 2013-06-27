@@ -14,6 +14,11 @@
 namespace pb
 {
 
+enum MessageType {
+    Msg_Type_Camera,
+    Msg_Type_IMU
+};
+
 class Reader
 {
 public:
@@ -35,14 +40,17 @@ public:
     /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
     std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
+    /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
+    void StopBuffering();
+
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
     size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
-
 private:
     Reader(const std::string& filename);
+    bool _AmINext( MessageType eMsgType );
     bool _BufferFromFile(const std::string &fileName);
-    void _StopBuffering();
+
     void _ThreadFunc();
 
 public:
@@ -55,6 +63,7 @@ private:
     bool                                    m_bRunning;
     bool                                    m_bShouldRun;
     std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
+    std::list<MessageType >                 m_qMessageTypes;
     std::mutex                              m_QueueMutex;
     std::condition_variable                 m_ConditionQueued;
     std::condition_variable                 m_ConditionDequeued;

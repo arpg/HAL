@@ -10,6 +10,7 @@ class ProtoReaderDriver : public CameraDriverInterface
 {
 public:
     ProtoReaderDriver(std::string filename);
+    ~ProtoReaderDriver();
 
     bool Capture( pb::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
@@ -23,6 +24,7 @@ protected:
 
     pb::Reader*             m_reader;
     pb::CameraMsg           m_nextMsg;
+    bool                    m_first;
 
     std::vector<size_t>     m_width;
     std::vector<size_t>     m_height;
