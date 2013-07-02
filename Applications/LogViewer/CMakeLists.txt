@@ -9,7 +9,7 @@ ENDIF()
 
 # Add to module path, so we can find our cmake modules 
 find_package( Pangolin 0.1 QUIET )
-find_package( SceneGraph QUIET )
+find_package( SceneGraph 0.1 QUIET )
 
 if( Pangolin_FOUND AND SceneGraph_FOUND )
     set( _INCLUDE_DIRS 
