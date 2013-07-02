@@ -10,23 +10,27 @@
 #include <PbMsgs/Matrix.h>
 
 // global logger
+bool        g_Log = false;
 pb::Logger& g_Logger = pb::Logger::GetInstance();
 
 
 void HandleIMU(const hal::IMUData& IMUdata)
 {
-    pb::Msg msg;
-    msg.set_timestamp( IMUdata.timestamp_system );
-    pb::ImuMsg* pIMU = msg.mutable_imu();
+    if( g_Log ) {
+        pb::Msg msg;
+        msg.set_timestamp( IMUdata.timestamp_system );
+        pb::ImuMsg* pIMU = msg.mutable_imu();
+        pIMU->set_devicetime( IMUdata.timestamp_pps );
 
-    if( IMUdata.data_present & hal::IMU_AHRS_ACCEL ) {
-        pb::WriteVector( IMUdata.accel.cast<double>(), *(pIMU->mutable_accel()) );
-    }
-    if( IMUdata.data_present & hal::IMU_AHRS_GYRO ) {
-        pb::WriteVector( IMUdata.gyro.cast<double>(), *(pIMU->mutable_gyro()) );
-    }
+        if( IMUdata.data_present & hal::IMU_AHRS_ACCEL ) {
+            pb::WriteVector( IMUdata.accel.cast<double>(), *(pIMU->mutable_accel()) );
+        }
+        if( IMUdata.data_present & hal::IMU_AHRS_GYRO ) {
+            pb::WriteVector( IMUdata.gyro.cast<double>(), *(pIMU->mutable_gyro()) );
+        }
 
-    g_Logger.LogMessage(msg);
+        g_Logger.LogMessage(msg);
+    }
 }
 
 
@@ -59,7 +63,8 @@ int main( int /*argc*/, char** /*argv*/ )
     localtime_r(&g_t, &tm_result);
     char prefix[256];
     strftime(prefix, sizeof(prefix), "%Y%b%d_%H%M%S", &tm_result);
-    std::string fullPath = g_Logger.LogToFile( "/data/data/edu.gwu.robotics.AndroidLogger/files/", prefix );
+//    std::string fullPath = g_Logger.LogToFile( "/data/data/edu.gwu.robotics.AndroidLogger/files/", prefix );
+    std::string fullPath = g_Logger.LogToFile( "/sdcard/", prefix );
     LOGI("Logger started at: %s",fullPath.c_str());
 
     ////////////////////////////////////////////////////////////////////
@@ -153,7 +158,9 @@ int main( int /*argc*/, char** /*argv*/ )
         */
 
 //        if( log && (nFrame % 2 == 0) ) {
+        g_Log = log;
         if( log ) {
+            g_Log = true;
             pb::Msg msg;
             msg.set_timestamp(nFrame);
             msg.mutable_camera()->Swap(&images.Ref());

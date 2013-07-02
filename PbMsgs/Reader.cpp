@@ -120,13 +120,14 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage()
 {
     // Wait if buffer is empty
     std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(m_bRunning && m_qMessages.size() == 0 ){
+    while( m_bRunning && m_qMessages.empty() ){
         m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
     }
 
     if(m_qMessages.size()) {
         std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
         m_qMessages.pop_front();
+        m_qMessageTypes.pop_front();
         m_ConditionDequeued.notify_one();
         return pMessage;
     }else{

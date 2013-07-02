@@ -11,6 +11,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
 
+
 namespace pb
 {
 
@@ -57,13 +58,19 @@ void Logger::ThreadFunc()
         {
             std::unique_lock<std::mutex> lock(m_QueueMutex);
 
-            m_QueueCondition.wait(lock); // unlock lock, wait to be signaled
             // at this point lock is locked
-            if( m_bShouldRun && m_qMessages.empty() ) {
-                continue;
+            while( m_bShouldRun && m_qMessages.empty() ) {
+                m_QueueCondition.wait(lock); // unlock lock, wait to be signaled
+            }
+
+            if( !m_bShouldRun ) {
+                break;
             }
         }
 
+        // TODO(jmf): I am not sure if this reference could be invalidated if an insertion occurs at this point
+        // (the lock is free here), then the reference could change? Perhaps use iterator instead since std::list
+        // guarantees its validity?
         pb::Msg& msg = m_qMessages.front();
         const size_t size_bytes = msg.ByteSize();
         coded_output.WriteVarint32( size_bytes );
