@@ -22,9 +22,9 @@ public:
 protected:
     bool ReadNextCameraMessage(pb::CameraMsg& msg);
 
-    pb::Reader*             m_reader;
-    pb::CameraMsg           m_nextMsg;
     bool                    m_first;
+    pb::Reader&             m_reader;
+    pb::CameraMsg           m_nextMsg;
 
     std::vector<size_t>     m_width;
     std::vector<size_t>     m_height;

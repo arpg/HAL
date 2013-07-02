@@ -13,27 +13,28 @@
 namespace pb
 {
 
-Reader* Reader::m_pInstance = nullptr;
-
-bool Reader::ReadCamera     = false;
-bool Reader::ReadIMU        = false;
-
 /////////////////////////////////////////////////////////////////////////////////////////
-Reader* Reader::Instance( const std::string& filename )
+Reader& Reader::Instance( const std::string& filename, MessageType eType )
 {
-    if(!m_pInstance) {
-        m_pInstance = new Reader(filename);
+    static Reader m_Instance(filename);
+    if( eType == Msg_Type_Camera ) {
+        m_Instance.m_bReadCamera = true;
     }
-    return m_pInstance;
+    if( eType == Msg_Type_IMU ) {
+        m_Instance.m_bReadIMU = true;
+    }
+    return m_Instance;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 Reader::Reader(const std::string& filename) :
     m_bRunning(true),
     m_bShouldRun(false),
+    m_bReadCamera(false),
+    m_bReadIMU(false),
     m_nMaxBufferSize(10)
 {
-    _BufferFromFile(filename);
+    BufferFromFile(filename);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -95,8 +96,8 @@ void Reader::_ThreadFunc()
         while(m_bShouldRun && m_qMessages.size() >= m_nMaxBufferSize){
             m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
         }
-        if( (pMsg->has_camera() && ReadCamera)
-            || (pMsg->has_imu() && ReadIMU) ) {
+        if( (pMsg->has_camera() && m_bReadCamera)
+            || (pMsg->has_imu() && m_bReadIMU) ) {
 
             if( pMsg->has_camera() ) {
                 m_qMessageTypes.push_back( Msg_Type_Camera );
@@ -136,9 +137,8 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage()
 /////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
 {
-    if( !ReadCamera ) {
+    if( !m_bReadCamera ) {
         std::cerr << "warning: ReadCameraMsg was called but ReadCamera variable is set to false! " << std::endl;
-        std::cerr << "This means the reader is NOT queueing camera messages. Please set Reader::ReadCamera to true if you wish to read camera messages." << std::endl;
         return nullptr;
     }
 
@@ -165,9 +165,8 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
 /////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
 {
-    if( !ReadIMU ) {
+    if( !m_bReadIMU ) {
         std::cerr << "warning: ReadImuMsg was called but ReadIMU variable is set to false! " << std::endl;
-        std::cerr << "This means the reader is NOT queueing IMU messages. Please set Reader::ReadIMU to true if you wish to read IMU messages." << std::endl;
         return nullptr;
     }
 
@@ -192,7 +191,7 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-bool Reader::_BufferFromFile(const std::string& fileName)
+bool Reader::BufferFromFile(const std::string& fileName)
 {
     m_sFilename = fileName;
     m_bShouldRun = true;
@@ -207,8 +206,12 @@ void Reader::StopBuffering()
     {
         m_bShouldRun = false;
         m_ConditionDequeued.notify_one();
+    }
+
+    if(m_WriteThread.joinable()) {
         m_WriteThread.join();
     }
+
     m_ConditionQueued.notify_all();
 }
 

@@ -22,8 +22,9 @@ enum MessageType {
 class Reader
 {
 public:
-    static Reader* Instance(const std::string& filename);
+    static Reader& Instance(const std::string& filename, MessageType eType);
 
+    Reader(const std::string& filename);
     ~Reader();
 
     /// Reads message regardless of type. This allows the user to handle the message list directly.
@@ -40,6 +41,9 @@ public:
     /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
     std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
+    /// Buffer from file.
+    bool BufferFromFile(const std::string &fileName);
+
     /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
     void StopBuffering();
 
@@ -47,21 +51,15 @@ public:
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
     size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
 private:
-    Reader(const std::string& filename);
     bool _AmINext( MessageType eMsgType );
-    bool _BufferFromFile(const std::string &fileName);
-
     void _ThreadFunc();
 
-public:
-    static bool                             ReadCamera;
-    static bool                             ReadIMU;
-
 private:
-    static Reader*                          m_pInstance;
     std::string                             m_sFilename;
     bool                                    m_bRunning;
     bool                                    m_bShouldRun;
+    bool                                    m_bReadCamera;
+    bool                                    m_bReadIMU;
     std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
     std::list<MessageType >                 m_qMessageTypes;
     std::mutex                              m_QueueMutex;

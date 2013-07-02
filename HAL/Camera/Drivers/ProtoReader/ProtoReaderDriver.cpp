@@ -6,11 +6,9 @@ namespace hal
 {
 
 ProtoReaderDriver::ProtoReaderDriver(std::string filename)
-    : m_first(true)
+    : m_first(true),
+      m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) )
 {
-    pb::Reader::ReadCamera = true;
-    m_reader = pb::Reader::Instance(filename);
-
     if( !ReadNextCameraMessage(m_nextMsg) ) {
         std::cerr << "HAL: Error reading initial message!" << std::endl;
     }
@@ -24,13 +22,13 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename)
 
 ProtoReaderDriver::~ProtoReaderDriver()
 {
-    m_reader->StopBuffering();
+    m_reader.StopBuffering();
 }
 
 bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg)
 {
     msg.Clear();
-    std::unique_ptr<pb::CameraMsg> readmsg = m_reader->ReadCameraMsg();
+    std::unique_ptr<pb::CameraMsg> readmsg = m_reader.ReadCameraMsg();
     if(readmsg) {
         msg.Swap(readmsg.get());
         return true;
