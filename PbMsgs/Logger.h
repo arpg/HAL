@@ -23,8 +23,9 @@ public:
     void LogToFile(const std::string &fileName);
     void StopLogging();
     bool IsLogging();
+    void SetMaxBufferSize( unsigned int nBufferSize );
 
-    void LogMessage(const pb::Msg& message);
+    bool LogMessage(const pb::Msg& message);
 
 private:
     void ThreadFunc();
@@ -35,6 +36,7 @@ private:
     std::condition_variable     m_QueueCondition;
     std::string                 m_sFilename;
     bool                        m_bShouldRun;
+    unsigned int                m_nMaxBufferSize;
     std::thread                 m_WriteThread;
 };
 

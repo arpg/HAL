@@ -54,6 +54,7 @@ int main( int /*argc*/, char** /*argv*/ )
 
     LOGI("Preview video: %d x %d x %d\n", N, w, h);
 
+    g_Logger.SetMaxBufferSize( 2000 );
 
     ///---------------------------
 
@@ -164,7 +165,10 @@ int main( int /*argc*/, char** /*argv*/ )
             pb::Msg msg;
             msg.set_timestamp(nFrame);
             msg.mutable_camera()->Swap(&images.Ref());
-            g_Logger.LogMessage(msg);
+            if( g_Logger.LogMessage(msg) == false ) {
+                log = false;
+                LOGI("LOGGER WAS STOPPED!");
+            }
         }
 
         // Process window events via GLUT

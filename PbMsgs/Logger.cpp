@@ -25,7 +25,8 @@ Logger& Logger::GetInstance()
 /////////////////////////////////////////////////////////////////////////////////////////
 Logger::Logger() :
     m_sFilename("proto.log"),
-    m_bShouldRun(false)
+    m_bShouldRun(false),
+    m_nMaxBufferSize(100)
 {
 }
 
@@ -90,18 +91,24 @@ void Logger::ThreadFunc()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void Logger::LogMessage(const pb::Msg &message)
+bool Logger::LogMessage(const pb::Msg &message)
 {
     if(message.has_timestamp() == false){
-        std::cout << "Attempted to log a message without a timestamp.";
+        std::cerr << "warning: Logging a message without a timestamp." << std::endl;
     }
     if(!m_WriteThread.joinable()) {
         LogToFile(m_sFilename);
     }
 
+    if( m_qMessages.size() >= m_nMaxBufferSize ) {
+        std::cerr << "error: Could not log message. Buffer is already at maximum size!" << std::endl;
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(m_QueueMutex);
     m_qMessages.push_back(message);
     m_QueueCondition.notify_one();
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -152,6 +159,12 @@ void Logger::StopLogging()
 bool Logger::IsLogging()
 {
     return m_WriteThread.joinable();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+void Logger::SetMaxBufferSize(unsigned int nBufferSize)
+{
+    m_nMaxBufferSize = nBufferSize;
 }
 
 }
