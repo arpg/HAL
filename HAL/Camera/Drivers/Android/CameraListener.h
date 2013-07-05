@@ -1,6 +1,8 @@
 #pragma once
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <camera/Camera.h>
+#pragma GCC diagnostic pop
 
 namespace hal {
 
