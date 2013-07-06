@@ -26,11 +26,11 @@ int main( int argc, char* argv[] )
     }
 
     // Setup OpenGL Display (based on GLUT)
-    pangolin::CreateGlutWindowAndBind(__FILE__,N*w,h);
+    pangolin::CreateWindowAndBind(__FILE__,N*w,h);
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-    pangolin::GlTexture tex(w,h,GL_RGB8);
+    pangolin::GlTexture tex(w,h,GL_RGB);
 
     // Create Smart viewports for each camera image that preserve aspect
     pangolin::View& container = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
@@ -42,7 +42,7 @@ int main( int argc, char* argv[] )
     bool step = false;
     bool log = false;
 
-    pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + GLUT_KEY_RIGHT, [&step](){step=true;} );
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + pangolin::PANGO_KEY_RIGHT, [&step](){step=true;} );
     pangolin::RegisterKeyPressCallback(' ', [&](){run = !run;} );
     
     pangolin::RegisterKeyPressCallback('l', [&](){log = !log;} );
@@ -61,12 +61,14 @@ int main( int argc, char* argv[] )
                 run = false;
             }
 
+#ifdef HAVE_GLUT
             if(frame%30 == 0) {
                 char buffer[1024];
                 sprintf(buffer,"CameraViewer (FPS: %f)", 30.0 / timer.Elapsed_s() );
                 glutSetWindowTitle(buffer);
                 timer.Reset();
             }
+#endif
         }
 
         for(size_t i=0; i<imgs.Size(); ++i ) {
@@ -85,6 +87,6 @@ int main( int argc, char* argv[] )
             pb::Logger::GetInstance().LogMessage(msg);
         }
 
-        pangolin::FinishGlutFrame();
+        pangolin::FinishFrame();
     }
 }
