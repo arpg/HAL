@@ -30,7 +30,7 @@ int main( int argc, char* argv[] )
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-    pangolin::GlTexture tex(w,h,GL_RGB);
+    pangolin::GlTexture tex;
 
     // Create Smart viewports for each camera image that preserve aspect
     pangolin::View& container = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
         const bool go = run || pangolin::Pushed(step);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glColor3f(1,1,1);
+        glColor4f(1.0f,1.0f,1.0f,1.0f);
 
         if(go) {
             if( !camera.Capture(imgs) ) {
@@ -70,13 +70,18 @@ int main( int argc, char* argv[] )
             }
 #endif
         }
+        
+        if(!tex.tid) {
+            // Only initialise now we know format.
+            tex.Reinitialise( 
+                w, h, imgs[0].Format(), true, 0,
+                imgs[0].Format(),imgs[0].Type(), 0
+            );
+        }
 
         for(size_t i=0; i<imgs.Size(); ++i ) {
             container[i].Activate();
-            tex.Upload(
-                imgs[i].data(),
-                imgs[i].Format(), imgs[i].Type()
-            );
+            tex.Upload( imgs[i].data(), imgs[i].Format(), imgs[i].Type() );
             tex.RenderToViewportFlipY();
         }
         
