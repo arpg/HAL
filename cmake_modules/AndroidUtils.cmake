@@ -109,7 +109,6 @@ void ANativeActivity_onCreate(ANativeActivity * app, void * ud, size_t udsize) {
         target_link_libraries(${prog_name} log android )
 
         # Create manifest required for APK
-        set(ANDROID_PACKAGE_NAME "edu.gwu.robotics.hal.${prog_name}")
         create_android_manifest_xml(
             "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml" "${prog_name}"
             "${ANDROID_PACKAGE_NAME}" "${prog_name}"
