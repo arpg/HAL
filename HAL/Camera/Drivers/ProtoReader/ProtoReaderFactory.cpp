@@ -16,7 +16,8 @@ public:
         
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {               
-        ProtoReaderDriver* driver = new ProtoReaderDriver(uri.url);
+        const std::string file = ExpandTildePath(uri.url);
+        ProtoReaderDriver* driver = new ProtoReaderDriver(file);
         return std::shared_ptr<CameraDriverInterface>( driver );
     }
 };
