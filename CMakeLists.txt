@@ -4,7 +4,10 @@ project( RPG )
 # Add to module path, so we can find our cmake modules
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH} )
 
-include(AndroidUtils)
+if(ANDROID)
+    set(ANDROID_PACKAGE_NAME "edu.gwu.robotics.hal")
+    include(AndroidUtils)
+endif()
 
 ################################################################################
 

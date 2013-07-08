@@ -1,7 +1,9 @@
-# Configure build environment to automatically generate APK's instead of executables.
-if(ANDROID)
-    include(GetPrerequisites)
+if(NOT ANDROID_PACKAGE_NAME)
+  set(ANDROID_PACKAGE_NAME "edu.gwu.robotics")
+endif()
 
+# Configure build environment to automatically generate APK's instead of executables.
+if(ANDROID AND NOT TARGET apk)
     # virtual targets which we'll add apks and push actions to.
     add_custom_target( apk )
     add_custom_target( push )
@@ -18,7 +20,7 @@ if(ANDROID)
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <!-- BEGIN_INCLUDE(manifest) -->
 <manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"
-        package=\"${package_name}\"
+        package=\"${package_name}.${prog_name}\"
         android:versionCode=\"1\"
         android:versionName=\"1.0\">
 
@@ -37,7 +39,9 @@ if(ANDROID)
         <activity android:name=\"android.app.NativeActivity\"
                 android:label=\"${activity_name}\"
                 android:screenOrientation=\"landscape\"
-                android:configChanges=\"orientation|keyboardHidden\">
+                android:configChanges=\"orientation|keyboard|keyboardHidden\"
+                android:theme=\"@android:style/Theme.NoTitleBar.Fullscreen\"
+                >
             <!-- Tell NativeActivity the name of our .so -->
             <meta-data android:name=\"android.app.lib_name\"
                     android:value=\"${prog_name}_start\" />
@@ -63,7 +67,7 @@ if(ANDROID)
 #include <cstdio>
 
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, \"AndroidUtils.cmake\", __VA_ARGS__))
-#define LIB_PATH \"/data/data/${package_name}/lib/\"
+#define LIB_PATH \"/data/data/${package_name}.${prog_name}/lib/\"
 
 void * load_lib(const char * l) {
     void * handle = dlopen(l, RTLD_NOW | RTLD_GLOBAL);
@@ -141,7 +145,7 @@ void ANativeActivity_onCreate(ANativeActivity * app, void * ud, size_t udsize) {
 
         # install and run on device
         add_custom_target( ${prog_name}-run
-            COMMAND adb shell am start -n ${ANDROID_PACKAGE_NAME}/android.app.NativeActivity
+            COMMAND adb shell am start -n ${ANDROID_PACKAGE_NAME}.${prog_name}/android.app.NativeActivity
             DEPENDS ${prog_name}-push
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
