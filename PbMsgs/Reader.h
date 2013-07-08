@@ -41,16 +41,20 @@ public:
     /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
     std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
-    /// Buffer from file.
-    bool BufferFromFile(const std::string &fileName);
-
     /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
     void StopBuffering();
 
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
     size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
+    
+    /// Return the log's filename.
+    std::string GetFilename() const { return m_sFilename; }
+    
 private:
+    /// Buffer from file.
+    bool _BufferFromFile(const std::string &fileName);    
+    
     bool _AmINext( MessageType eMsgType );
     void _ThreadFunc();
 

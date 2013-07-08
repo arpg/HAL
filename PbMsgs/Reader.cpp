@@ -34,7 +34,7 @@ Reader::Reader(const std::string& filename) :
     m_bReadIMU(false),
     m_nMaxBufferSize(10)
 {
-    BufferFromFile(filename);
+    _BufferFromFile(filename);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -192,7 +192,7 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-bool Reader::BufferFromFile(const std::string& fileName)
+bool Reader::_BufferFromFile(const std::string& fileName)
 {
     m_sFilename = fileName;
     m_bShouldRun = true;

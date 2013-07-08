@@ -1,5 +1,7 @@
 #include "ProtoReaderDriver.h"
 
+#include <HAL/Utils/StringUtils.h>
+
 #include <iostream>
 
 namespace hal
@@ -46,6 +48,14 @@ bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages )
         ReadNextCameraMessage(vImages);
     }
     return vImages.image_size() > 0;
+}
+
+std::string ProtoReaderDriver::GetDeviceProperty(const std::string& sProperty)
+{
+    if(sProperty == hal::DeviceDirectory) {
+        return DirUp(m_reader.GetFilename());
+    }
+    return std::string();
 }
 
 size_t ProtoReaderDriver::NumChannels() const

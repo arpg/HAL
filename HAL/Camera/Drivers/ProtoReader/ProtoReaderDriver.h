@@ -13,8 +13,13 @@ public:
     ~ProtoReaderDriver();
 
     bool Capture( pb::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+    
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() { 
+        return std::shared_ptr<CameraDriverInterface>();
+    }
 
+    std::string GetDeviceProperty(const std::string& sProperty);    
+    
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;
     size_t Height( size_t /*idx*/ = 0 ) const;

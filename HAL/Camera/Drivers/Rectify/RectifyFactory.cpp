@@ -25,7 +25,9 @@ public:
         std::shared_ptr<CameraDriverInterface> input =
                 DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
  
-        std::string filename = uri.properties.Get<std::string>("file", "cameras.xml");
+        std::string filename = ExpandTildePath(
+                    uri.properties.Get<std::string>("file", "cameras.xml")
+                    );
  
         if(!FileExists(filename))
         {
