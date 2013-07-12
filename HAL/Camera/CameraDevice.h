@@ -88,7 +88,9 @@ public:
         if( bRes ){
             for( size_t ii = 0; ii < pbImages.Size(); ii++ ){
                 vImages[ii] = cv::Mat( pbImages[ii] );
-                vImageInfo[ii] = pbImages[ii].GetInfo();
+                if( pbImages[ii].HasInfo() ){
+                    vImageInfo[ii] = pbImages[ii].GetInfo();
+                }
             }
         }
         return bRes;

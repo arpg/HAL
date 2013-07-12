@@ -163,6 +163,11 @@ public:
         m_pImage->info();
     }
 
+    const bool HasInfo() const
+    {
+        return m_pImage->has_info();
+    }
+
     unsigned char* data() const
     {
         return (unsigned char*)( &m_pImage->mutable_data()->front() );
