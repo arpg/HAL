@@ -101,9 +101,11 @@ void Reader::_ThreadFunc()
 
             if( pMsg->has_camera() ) {
                 m_qMessageTypes.push_back( Msg_Type_Camera );
+//                std::cout << "Pushing CAM: " << pMsg->camera().image(0).timestamp() << std::endl;
             }
             if( pMsg->has_imu() ) {
                 m_qMessageTypes.push_back( Msg_Type_IMU );
+//                std::cout << "Pushing IMU: " << pMsg->imu().devicetime() << std::endl;
             }
 
             m_qMessages.push_back(std::move(pMsg));
