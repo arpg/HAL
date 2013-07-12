@@ -74,18 +74,18 @@ int main( int /*argc*/, char** /*argv*/ )
     const int PANEL_WIDTH=180;
 
     // Make things look prettier...
-    glEnable(GL_LINE_SMOOTH);
-    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
-    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+//    glEnable(GL_LINE_SMOOTH);
+//    glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
+//    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 //    glEnable (GL_BLEND); // Doesn't seem to work on Android
 //    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthFunc( GL_LEQUAL );
-    glEnable( GL_DEPTH_TEST );
-    glLineWidth(1.7);
+//    glDepthFunc( GL_LEQUAL );
+//    glEnable( GL_DEPTH_TEST );
+//    glLineWidth(1.7);
 
-    pangolin::OpenGlRenderState stacks;
-    stacks.SetProjectionMatrix(pangolin::ProjectionMatrixRDF_TopLeft(640,480,420,420,320,240,0.01,1E6));
-    stacks.SetModelViewMatrix(pangolin::ModelViewLookAtRDF(0,0,-0.5, 0,0,0, 0, -1, 0) );
+//    pangolin::OpenGlRenderState stacks;
+//    stacks.SetProjectionMatrix(pangolin::ProjectionMatrixRDF_TopLeft(640,480,420,420,320,240,0.01,1E6));
+//    stacks.SetModelViewMatrix(pangolin::ModelViewLookAtRDF(0,0,-0.5, 0,0,0, 0, -1, 0) );
 
     pangolin::Panel panel("ui");
     panel.SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(PANEL_WIDTH));
@@ -145,10 +145,10 @@ int main( int /*argc*/, char** /*argv*/ )
                 pangolin::glDrawTextureFlipY(GL_TEXTURE_2D,tex.tid);
 
                 // Setup orthographic pixel drawing
-                glMatrixMode(GL_PROJECTION);
-                glLoadIdentity();
-                glOrtho(-0.5,w-0.5,h-0.5,-0.5,0,1.0);
-                glMatrixMode(GL_MODELVIEW);
+            //    glMatrixMode(GL_PROJECTION);
+              //  glLoadIdentity();
+               // glOrtho(-0.5,w-0.5,h-0.5,-0.5,0,1.0);
+                //glMatrixMode(GL_MODELVIEW);
             }
         }
 
