@@ -11,7 +11,6 @@ SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vect
 
 bool SplitDriver::Capture( pb::CameraMsg& vImages )
 {
-
     m_InMsg.Clear();
     if( m_Input->Capture( m_InMsg ) == false ) {
         return false;

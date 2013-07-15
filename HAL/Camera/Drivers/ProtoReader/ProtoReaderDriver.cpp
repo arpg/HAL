@@ -24,7 +24,7 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename)
 
 ProtoReaderDriver::~ProtoReaderDriver()
 {
-    m_reader.StopBuffering();
+//    m_reader.StopBuffering();
 }
 
 bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg)
