@@ -1,5 +1,6 @@
 #pragma once
 
+#include <HAL/config.h>
 #include <HAL/Utils/Uri.h>
 
 #include <memory>
@@ -20,8 +21,8 @@ template<typename BaseDevice>
 class DeviceRegistry
 {
 public:
-    static DeviceRegistry<BaseDevice>& I();    
-    
+    static DeviceRegistry<BaseDevice>& I();
+
     DeviceRegistry();
     ~DeviceRegistry();
 
@@ -30,7 +31,7 @@ public:
             const std::string& device_name,
             DeviceFactory<BaseDevice>* factory
             );
-    
+
     // Register device 'name' as alias for 'alias'
     void RegisterAlias(
             const std::string& name,
@@ -47,10 +48,10 @@ protected:
         Uri uri;
         std::shared_ptr<BaseDevice> dev;
     };
-    
+
     // Map of device names to aliases.
     std::map<std::string,std::string> m_aliases;
-    
+
     // Map of device name -> factory instance
     std::map<std::string,DeviceFactory<BaseDevice>*> m_factories;
 
