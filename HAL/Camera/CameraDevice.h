@@ -28,6 +28,13 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
+    Camera(const hal::Uri& uri)
+        : m_uri(uri)
+    {
+        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri);
+    }
+
+    ///////////////////////////////////////////////////////////////
     ~Camera()
     {
         Clear();
