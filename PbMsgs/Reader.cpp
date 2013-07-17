@@ -68,7 +68,7 @@ void Reader::_ThreadFunc()
     }
 
     if (magic_number != 1234) {
-      std::cerr << "File not in expected format." << std::endl;
+        std::cerr << "PbMsgs/Reader.cpp: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
       return;
     }
 

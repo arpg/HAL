@@ -241,7 +241,7 @@ public:
         }
 
         // TODO: define ensure macro or throw exception
-        std::cerr << "error: Image index out of bounds." << std::endl;
+        std::cerr << "error: Channel index '" << idx << "' out of bounds: did you split the image stream?" << std::endl;
         exit(1);
     }
 
