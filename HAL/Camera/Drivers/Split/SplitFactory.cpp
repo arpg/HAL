@@ -19,9 +19,15 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
+        hal::Uri subUri(uri.url);
+
+        // pass through properties down the chain
+        subUri.SetProperties( uri.PrintProperties() );
+
         // Create input camera
         std::shared_ptr<CameraDriverInterface> InCam =
-                DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri.url);
+//                DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri.url);
+                DeviceRegistry<hal::CameraDriverInterface>::I().Create(subUri);
 
         std::vector<ImageRoi> vROI;
 

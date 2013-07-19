@@ -47,6 +47,10 @@ public:
 
     std::ostream& Print( std::ostream& os, char keyValDelim='=', char itemDelim=',' ) const
     {
+        if( params.empty() ) {
+            return os;
+        }
+
         std::map<std::string,std::string>::const_iterator i = params.begin();
 
         if(i!=params.end()) {
@@ -90,6 +94,8 @@ public:
                     if( str_uri[ns+1] == '[' && str_uri[nurl-1] == ']' )
                     {
                         std::string queries = str_uri.substr(ns+2, nurl-1 - (ns+2) );
+//                        SetProperties( queries );
+                        /* */
                         std::vector<std::string> params = Split(queries, ',');
                         for(const std::string& p : params)
                         {
@@ -100,6 +106,7 @@ public:
                             Trim(val);
                             properties.Set(key, val);
                         }
+                        /* */
                     }else{
                         throw DeviceException("Bad video URI", str_uri);
                     }
@@ -120,12 +127,34 @@ public:
         os << "]//" << url;
     }
 
+    std::string PrintProperties() const
+    {
+        std::ostringstream oss;
+        properties.Print(oss);
+        return oss.str();
+    }
+
     std::string ToString() const
     {
         std::ostringstream oss;
         Print(oss);
         return oss.str();
     }
+
+    void SetProperties( const std::string& props )
+    {
+        std::vector<std::string> params = Split(props, ',');
+        for(const std::string& p : params)
+        {
+            std::vector<std::string> args = Split(p, '=');
+            std::string key = args[0];
+            std::string val = args.size() > 1 ? args[1] : "";
+            Trim(key);
+            Trim(val);
+            properties.Set(key, val);
+        }
+    }
+
 
     std::string scheme;
     std::string url;
