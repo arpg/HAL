@@ -11,13 +11,16 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
+            {"startframe", "0", "First frame to capture."}
         };
     }
-        
+
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
-    {               
+    {
         const std::string file = ExpandTildePath(uri.url);
-        ProtoReaderDriver* driver = new ProtoReaderDriver(file);
+        size_t startframe  = uri.properties.Get("startframe", 0);
+
+        ProtoReaderDriver* driver = new ProtoReaderDriver(file,startframe);
         return std::shared_ptr<CameraDriverInterface>( driver );
     }
 };

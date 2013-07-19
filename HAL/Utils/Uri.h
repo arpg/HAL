@@ -44,15 +44,15 @@ public:
             return default_val;
         }
     }
-    
+
     std::ostream& Print( std::ostream& os, char keyValDelim='=', char itemDelim=',' ) const
     {
         std::map<std::string,std::string>::const_iterator i = params.begin();
-        
+
         if(i!=params.end()) {
             os << i->first << keyValDelim << i->second;
         }
-        
+
         for(++i; i!=params.end(); ++i)
         {
             os << itemDelim;
@@ -72,7 +72,7 @@ public:
     {
     }
 
-    Uri(std::string str_uri)
+    Uri(const std::string& str_uri)
     {
         // Find Scheme delimiter
         size_t ns = str_uri.find_first_of(':');
@@ -112,14 +112,14 @@ public:
             url = str_uri;
         }
     }
-    
+
     void Print( std::ostream& os ) const
     {
         os << scheme << ":[";
         properties.Print(os, '=', ',');
         os << "]//" << url;
     }
-    
+
     std::string ToString() const
     {
         std::ostringstream oss;

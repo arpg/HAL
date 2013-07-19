@@ -32,6 +32,7 @@ Reader::Reader(const std::string& filename) :
     m_bShouldRun(false),
     m_bReadCamera(false),
     m_bReadIMU(false),
+    m_nInitialImageID(0),
     m_nMaxBufferSize(10)
 {
     _BufferFromFile(filename);
@@ -72,6 +73,7 @@ void Reader::_ThreadFunc()
       return;
     }
 
+    size_t nImgID = 0;
     m_bRunning = true;
 
     while( m_bShouldRun ){
@@ -96,6 +98,12 @@ void Reader::_ThreadFunc()
         while(m_bShouldRun && m_qMessages.size() >= m_nMaxBufferSize){
             m_ConditionDequeued.wait_for(lock, std::chrono::milliseconds(10) );
         }
+
+        if( nImgID < m_nInitialImageID ) {
+            nImgID++;
+            continue;
+        }
+
         if( (pMsg->has_camera() && m_bReadCamera)
             || (pMsg->has_imu() && m_bReadIMU) ) {
 
@@ -216,6 +224,28 @@ void Reader::StopBuffering()
     }
 
     m_ConditionQueued.notify_all();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+bool Reader::SetInitialImage(size_t nImgID)
+{
+    if( m_sFilename.empty() ) {
+        return false;
+    }
+
+    // kill reading thread if alive
+    if( m_WriteThread.joinable() ) {
+        m_bShouldRun = false;
+        m_WriteThread.join();
+        m_qMessages.clear();
+        m_qMessageTypes.clear();
+    }
+
+    m_nInitialImageID = nImgID;
+    m_bReadCamera = true;
+    m_bShouldRun = true;
+    m_WriteThread = std::thread( &Reader::_ThreadFunc, this );
+    return true;
 }
 
 }

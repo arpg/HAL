@@ -140,8 +140,8 @@ public:
     }
 
 protected:
-    hal::Uri m_uri;
-    std::shared_ptr<CameraDriverInterface> m_cam;
+    hal::Uri                                m_uri;
+    std::shared_ptr<CameraDriverInterface>  m_cam;
 };
 
 } /* namespace */

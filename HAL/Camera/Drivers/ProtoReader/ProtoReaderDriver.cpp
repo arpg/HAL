@@ -3,16 +3,19 @@
 #include <HAL/Utils/StringUtils.h>
 
 #include <iostream>
+#include <unistd.h>
 
 namespace hal
 {
 
-ProtoReaderDriver::ProtoReaderDriver(std::string filename)
+ProtoReaderDriver::ProtoReaderDriver(std::string filename, size_t imageID)
     : m_first(true),
       m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) )
 {
-    if( !ReadNextCameraMessage(m_nextMsg) ) {
-        std::cerr << "HAL: Error reading initial message!" << std::endl;
+    m_reader.SetInitialImage(imageID);
+    while( !ReadNextCameraMessage(m_nextMsg) ) {
+        std::cout << "HAL: Initializing proto-reader..." << std::endl;
+        usleep(100);
     }
 
     m_numChannels = m_nextMsg.image_size();

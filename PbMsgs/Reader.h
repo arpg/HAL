@@ -44,17 +44,20 @@ public:
     /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
     void StopBuffering();
 
+    /// Reset reader to use specified initial image
+   bool SetInitialImage(size_t nImgID);
+
     /// Getters and setters for max buffer size
     void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
     size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
-    
+
     /// Return the log's filename.
     std::string GetFilename() const { return m_sFilename; }
-    
+
 private:
     /// Buffer from file.
-    bool _BufferFromFile(const std::string &fileName);    
-    
+    bool _BufferFromFile(const std::string &fileName);
+
     bool _AmINext( MessageType eMsgType );
     void _ThreadFunc();
 
@@ -70,6 +73,7 @@ private:
     std::condition_variable                 m_ConditionQueued;
     std::condition_variable                 m_ConditionDequeued;
     std::thread                             m_WriteThread;
+    size_t                                  m_nInitialImageID;
     size_t                                  m_nMaxBufferSize;
 };
 
