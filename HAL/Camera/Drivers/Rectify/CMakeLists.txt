@@ -1,4 +1,4 @@
-find_package( Calibu 0.1 REQUIRED )
+find_package( Calibu 0.1 QUIET )
 if(Calibu_FOUND)
     add_to_hal_libraries( ${Calibu_LIBRARIES} )
     add_to_hal_include_dirs( ${Calibu_INCLUDE_DIRS} )
