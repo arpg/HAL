@@ -8,7 +8,7 @@
 
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
-    #error "C++11 is required to use HAL. Please enable -std=c++11 flag on compiler options."
+    #error "C++11 is required to use HAL. Please enable -std=c++0x or -std=c++11 flag on compiler options."
 #endif
 
 namespace hal
