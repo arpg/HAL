@@ -40,13 +40,14 @@ int main( int /*argc*/, char** /*argv*/ )
 
     ////////////////////////////////////////////////////////////////////
 
-    const std::string video_uri = "raisin://";
-    const std::string imu_uri = "raisin://";
+    const std::string video_uri = "android://";
+//    const std::string video_uri = "raisin://";
+//    const std::string imu_uri = "raisin://";
     hal::Camera camera(video_uri);
     pb::ImageArray images;
 
-    hal::IMU imu(imu_uri);
-    imu.RegisterIMUDataCallback(HandleIMU);
+//    hal::IMU imu(imu_uri);
+//    imu.RegisterIMUDataCallback(HandleIMU);
 
     const size_t N = camera.NumChannels();
     const size_t w = camera.Width();
