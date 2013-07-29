@@ -1,9 +1,5 @@
-HAL         -- Hardware Abstraction Layer. Contains devices and associated device drivers.
-LogTools    -- Tools for logging and reading logs
-Messages    -- Standard messages used by sensors, loggers, etc.
-ModelGraph  -- Topological model used to represent robots, actors, etc.
-Node        -- Newotrking: provides server-less, pub-sub, RPC and named service discovery
-Devices     -- Node aware devices.
-Utils       -- Common functionality many find useful.
-
-
+HAL          -- Hardware Abstraction Layer. Contains devices and associated device drivers.
+PbMsgs       -- Standard messages used by sensors, loggers, etc.
+Applications -- Tools for logging and reading logs
+ModelGraph   -- Topological model used to represent robots, actors, etc.
+Node         -- Newotrking: provides server-less, pub-sub, RPC and named service discovery
