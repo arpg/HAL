@@ -1,17 +1,26 @@
 
 #include "WebcamDriver.h"
 
-#include <opencv.hpp>
-
 #include <HAL/Utils/TicToc.h>
 
 using namespace cv;
 using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
-WebcamDriver::WebcamDriver()
+WebcamDriver::WebcamDriver( unsigned int nCamId, bool bForceGrey )
 {
+    m_bForceGreyscale = bForceGrey;
+    if( m_Cam.open(nCamId) == false ) {
+        std::cerr << "HAL: Error opening webcam!" << std::endl;
+    }
 
+    cv::Mat         cvImg;
+    if( m_Cam.read(cvImg) == false ) {
+        std::cerr << "HAL: Error reading initial image!" << std::endl;
+    }
+
+    m_nImgHeight = cvImg.rows;
+    m_nImgWidth = cvImg.cols;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -23,6 +32,10 @@ WebcamDriver::~WebcamDriver()
 ///////////////////////////////////////////////////////////////////////////////
 bool WebcamDriver::Capture( pb::CameraMsg& vImages )
 {
+    if(m_Cam.isOpened() == false ) {
+            std::cerr << "HAL: Error reading from camera." << std::endl;
+            return false;
+    }
 
     cv::Mat         cvImg;
     pb::ImageMsg*   pbImg = vImages.add_image();
@@ -33,58 +46,44 @@ bool WebcamDriver::Capture( pb::CameraMsg& vImages )
 
     if(m_bForceGreyscale) {
         static Mat temp;
-        success = m_pCam.read(temp);
+        success = m_Cam.read(temp);
         systemTime = Tic();
         if(success) {
-            cvtColor(temp,cvImg, CV_RGB2GRAY);
+            cvtColor(temp, cvImg, CV_RGB2GRAY);
         }
-        pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
+        pbImg->set_format( pb::PB_LUMINANCE );
         numChans = 1;
     }else{
-        success = m_pCam.read(cvImg);
-        // TODO don't know why this is needed but it is =P
+        success = m_Cam.read(cvImg);
+        // TODO(jmf) don't know why this is needed but it is =P
         cv::transpose( cvImg, cvImg );
         cv::transpose( cvImg, cvImg );
         systemTime = Tic();
-        pbImg->set_format( pb::ImageMsg_Format_PB_RGB );
+        pbImg->set_format( pb::PB_RGB );
         numChans = 3;
     }
 
-    pbImg->set_type(pb::ImageMsg_Type_PB_BYTE);
-    pbImg->set_height( cvImg.rows );
-    pbImg->set_width( cvImg.cols );
-    pbImg->set_data( (const char*)cvImg.data, cvImg.rows * cvImg.cols * numChans );
+    pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+    pbImg->set_height( m_nImgHeight );
+    pbImg->set_width( m_nImgWidth );
+    pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth * numChans );
 
     vImages.set_devicetime( systemTime );
 
     return success;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-void WebcamDriver::PrintInfo() {
-
-    std::cout <<
-    "\nWEBCAM\n"
-    "--------------------------------\n"
-    "Opens a webcam either built-in or connected via USB."
-    "\n"
-    "Options:\n"
-    "   -camid          <id of webcam> [default 0]\n"
-    "\n"
-    "Flags:\n"
-    "   -greyscale      If the driver should return images in greyscale.\n"
-    "\n"
-    "Example:\n"
-    "./Exec  -idev Webcam   -greyscale\n\n";
+size_t WebcamDriver::NumChannels() const
+{
+    return 1;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-bool WebcamDriver::Init()
+size_t WebcamDriver::Width( size_t /*idx*/) const
 {
-    assert(m_pPropertyMap);
-    m_bForceGreyscale = m_pPropertyMap->GetProperty<bool>( "ForceGreyscale",  false );
-    const int camId = m_pPropertyMap->GetProperty<bool>( "CamId",  0 );
-    return m_pCam.open(camId);
+    return m_nImgWidth;
+}
+
+size_t WebcamDriver::Height( size_t /*idx*/) const
+{
+    return m_nImgHeight;
 }
