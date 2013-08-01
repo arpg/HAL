@@ -12,7 +12,6 @@ public:
     ProtoReaderIMUDriver(std::string filename);
     ~ProtoReaderIMUDriver();
     void RegisterIMUDataCallback(IMUDriverDataCallback callback);
-    void RegisterGPSDataCallback(GPSDriverDataCallback /*callback*/) { }
 
 private:
     void _ThreadFunc();

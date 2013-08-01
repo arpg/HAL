@@ -49,17 +49,6 @@ class IMU : public IMUDriverInterface
         }
 
         ///////////////////////////////////////////////////////////////
-        void RegisterGPSDataCallback(GPSDriverDataCallback callback)
-        {
-            if( m_IMU ){
-                m_IMU->RegisterGPSDataCallback( callback );
-            }else{
-                std::cerr << "ERROR: no driver initialized!\n";
-            }
-            return;
-        }
-
-        ///////////////////////////////////////////////////////////////
         std::string GetDeviceProperty(const std::string& sProperty)
         {
             return m_IMU->GetDeviceProperty(sProperty);

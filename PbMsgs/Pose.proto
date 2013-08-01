@@ -9,12 +9,10 @@ message PoseMsg {
         SO3         = 3;    // stored as a 4d vector [ijkw]
         SE3         = 4;    // stored as a 7d vector [ijkw|xyz]
         LatLongAlt  = 5;    // WGS84
+        Euler       = 6;    // stored as a 6d vector [pqr|xyz]
+        RAW         = 9;    // independent user specific format
     }
 
+    required Type type = 2;
     optional VectorMsg pose = 1;    // format dependent on type
-    optional Type type = 2 [default = SE3];
 }
-
-
-
-

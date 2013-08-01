@@ -18,20 +18,7 @@ void ProtoReaderIMUDriver::_ThreadFunc()
     while( m_running ) {
         std::unique_ptr<pb::ImuMsg> readmsg = m_reader.ReadImuMsg();
         if(readmsg) {
-            // fill callback structure
-            IMUData data;
-            if( readmsg->has_accel() ) {
-                Eigen::VectorXd accel = pb::ReadVector(readmsg->accel());
-                data.accel = accel.cast<float>();
-                data.data_present += IMU_AHRS_ACCEL;
-            }
-            if( readmsg->has_gyro() ) {
-                Eigen::VectorXd gyro = pb::ReadVector(readmsg->gyro());
-                data.gyro = gyro.cast<float>();
-                data.data_present += IMU_AHRS_GYRO;
-            }
-            data.timestamp_pps = readmsg->devicetime();
-            m_callback( data );
+            m_callback( *readmsg );
         } else {
             break;
         }
