@@ -106,13 +106,25 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhi
     */
 
     for(i = 0; i < count; i++){
-        IMUData imuData;
-        imuData.accel = Eigen::Vector3f(data[i]->acceleration[0], data[i]->acceleration[1], data[i]->acceleration[2]);
-        imuData.gyro = Eigen::Vector3f(data[i]->angularRate[0], data[i]->angularRate[1], data[i]->angularRate[2]);
-        imuData.mag = Eigen::Vector3f(data[i]->magneticField[0], data[i]->magneticField[1], data[i]->magneticField[2]);
-        imuData.timestamp_system = Tic();
-        imuData.data_present =     IMU_AHRS_TIMESTAMP_PPS | IMU_AHRS_ACCEL | IMU_AHRS_GYRO | IMU_AHRS_MAG;
-        imuData.timestamp_pps =  data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6;
+        pb::ImuMsg imuData;
+
+        pb::VectorMsg* pbVec = imuData.mutable_accel();
+        pbVec->add_data(data[i]->acceleration[0]);
+        pbVec->add_data(data[i]->acceleration[1]);
+        pbVec->add_data(data[i]->acceleration[2]);
+
+        pbVec = imuData.mutable_gyro();
+        pbVec->add_data(data[i]->angularRate[0]);
+        pbVec->add_data(data[i]->angularRate[1]);
+        pbVec->add_data(data[i]->angularRate[2]);
+
+        pbVec = imuData.mutable_mag();
+        pbVec->add_data(data[i]->magneticField[0]);
+        pbVec->add_data(data[i]->magneticField[1]);
+        pbVec->add_data(data[i]->magneticField[2]);
+
+        imuData.set_devicetime(data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6);
+
         if( m_ImuCallback ) {
             m_ImuCallback(imuData);
         }

@@ -14,7 +14,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& /*uri*/)
     {
         PhidgetsDriver* pDriver = new PhidgetsDriver();
         return std::shared_ptr<IMUDriverInterface>( pDriver );
