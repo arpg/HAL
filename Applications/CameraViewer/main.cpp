@@ -3,6 +3,7 @@
 
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
+#include <HAL/Posys/PosysDevice.h>
 
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
@@ -25,6 +26,27 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
         g_Logger.LogMessage(pbMsg);
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Posys_Handler(pb::PoseMsg& PoseData)
+{
+    std::cout << "Got at time: " << PoseData.devicetime() << std::endl;
+
+    pb::VectorMsg pbVec = PoseData.pose();
+
+    for( int ii = 0; ii < pbVec.data_size(); ++ii ) {
+        std::cout << "Data " << ii << ": " << pbVec.data(ii) << std::endl;
+    }
+
+    if( g_bLog ) {
+        pb::Msg pbMsg;
+        pbMsg.set_timestamp( hal::Tic() );
+        pbMsg.mutable_pose()->Swap(&PoseData);
+        g_Logger.LogMessage(pbMsg);
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,6 +81,19 @@ int main( int argc, char* argv[] )
         theIMU = hal::IMU(sIMU);
         theIMU.RegisterIMUDataCallback(IMU_Handler);
         std::cout << "- Registering IMU device." << std::endl;
+    }
+
+
+    ///-------------------- POSYS INIT (Optional)
+
+    std::string sPosys = clArgs.follow("", "-posys" );
+    const bool bHavePosys = !sPosys.empty();
+
+    hal::Posys thePosys;
+    if( bHavePosys ) {
+        thePosys = hal::Posys(sPosys);
+        thePosys.RegisterPosysDataCallback(Posys_Handler);
+        std::cout << "- Registering Posys device." << std::endl;
     }
 
 
