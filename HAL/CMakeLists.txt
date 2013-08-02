@@ -65,6 +65,7 @@ endmacro()
 add_subdirectory( Devices )
 add_subdirectory( Camera )
 add_subdirectory( IMU )
+add_subdirectory( Posys )
 #add_subdirectory( Car )
 add_subdirectory( Utils )
 

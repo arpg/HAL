@@ -23,6 +23,9 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType )
     if( eType == Msg_Type_IMU ) {
         m_Instance.m_bReadIMU = true;
     }
+    if( eType == Msg_Type_Posys ) {
+        m_Instance.m_bReadPosys = true;
+    }
     return m_Instance;
 }
 
@@ -32,6 +35,7 @@ Reader::Reader(const std::string& filename) :
     m_bShouldRun(false),
     m_bReadCamera(false),
     m_bReadIMU(false),
+    m_bReadPosys(false),
     m_nInitialImageID(0),
     m_nMaxBufferSize(10)
 {
@@ -105,7 +109,8 @@ void Reader::_ThreadFunc()
         }
 
         if( (pMsg->has_camera() && m_bReadCamera)
-            || (pMsg->has_imu() && m_bReadIMU) ) {
+            || (pMsg->has_imu() && m_bReadIMU)
+            || (pMsg->has_pose() && m_bReadPosys) ) {
 
             if( pMsg->has_camera() ) {
                 m_qMessageTypes.push_back( Msg_Type_Camera );
@@ -114,6 +119,10 @@ void Reader::_ThreadFunc()
             if( pMsg->has_imu() ) {
                 m_qMessageTypes.push_back( Msg_Type_IMU );
 //                std::cout << "Pushing IMU: " << pMsg->imu().devicetime() << std::endl;
+            }
+            if( pMsg->has_pose() ) {
+                m_qMessageTypes.push_back( Msg_Type_Posys );
+//                std::cout << "Pushing Pose: " << pMsg->pose().devicetime() << std::endl;
             }
 
             m_qMessages.push_back(std::move(pMsg));
@@ -200,6 +209,36 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
     pImuMsg->Swap( pMessage->mutable_imu() );
     return pImuMsg;
 }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg()
+{
+    if( !m_bReadPosys ) {
+        std::cerr << "warning: ReadImuMsg was called but ReadIMU variable is set to false! " << std::endl;
+        return nullptr;
+    }
+
+    // Wait if buffer is empty
+    std::unique_lock<std::mutex> lock(m_QueueMutex);
+    while(m_bRunning && !_AmINext( Msg_Type_Posys ) ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+    }
+
+    if(!m_bRunning) {
+        return nullptr;
+    }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::PoseMsg> pPoseMsg( new pb::PoseMsg );
+    pPoseMsg->Swap( pMessage->mutable_pose() );
+    return pPoseMsg;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 bool Reader::_BufferFromFile(const std::string& fileName)

@@ -2,7 +2,7 @@ package pb;
 
 import "Matrix.proto";
 
-message PoseMsg {
+message PoseMsg{
     enum Type {
         SO2         = 1;    // stored as a 1d vector [t]
         SE2         = 2;    // stored as a 3d vector [xy|t]
@@ -13,6 +13,8 @@ message PoseMsg {
         RAW         = 9;    // independent user specific format
     }
 
-    required Type type = 2;
-    optional VectorMsg pose = 1;    // format dependent on type
+    optional int32 id = 1;
+    optional double deviceTime = 2;
+    required Type type = 3;
+    optional VectorMsg pose = 4;    // format dependent on type
 }

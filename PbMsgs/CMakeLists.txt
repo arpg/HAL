@@ -53,9 +53,8 @@ set( _PROTO_SRCS
     Camera.proto
     Image.proto
     Imu.proto
-    Matrix.proto
-    PoseSensor.proto
     Pose.proto
+    Matrix.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )

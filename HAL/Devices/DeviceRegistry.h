@@ -59,6 +59,4 @@ protected:
 //    std::vector<DevInstance> m_instances;
 };
 
-// Instantiated for CameraDriverInterface
-
 }

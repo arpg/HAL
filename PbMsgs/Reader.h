@@ -16,7 +16,8 @@ namespace pb
 
 enum MessageType {
     Msg_Type_Camera,
-    Msg_Type_IMU
+    Msg_Type_IMU,
+    Msg_Type_Posys
 };
 
 class Reader
@@ -40,6 +41,11 @@ public:
     /// or the message queue is empty, the function will block. Mostly used for IMU specific driver implementations.
     /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
     std::unique_ptr<pb::ImuMsg> ReadImuMsg();
+
+    /// Reads the next POSE message from the message queue. If the next message is NOT a POSE message,
+    /// or the message queue is empty, the function will block. Mostly used for POSYS specific driver implementations.
+    /// The "ReadPose" static variable must be set to true if the reader is to queue POSE messages.
+    std::unique_ptr<pb::PoseMsg> ReadPoseMsg();
 
     /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
     void StopBuffering();
@@ -67,6 +73,7 @@ private:
     bool                                    m_bShouldRun;
     bool                                    m_bReadCamera;
     bool                                    m_bReadIMU;
+    bool                                    m_bReadPosys;
     std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
     std::list<MessageType >                 m_qMessageTypes;
     std::mutex                              m_QueueMutex;
