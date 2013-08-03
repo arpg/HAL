@@ -1,12 +1,15 @@
 package pb;
-
 import "Camera.proto";
+import "Image.proto";
 import "Pose.proto";
+import "PoseSensor.proto";
 import "Imu.proto";
 
 message Msg {
     optional double timestamp = 1;
-    optional CameraMsg camera = 2;
-    optional ImuMsg imu = 3;
-    optional PoseMsg pose = 4;
+    optional CameraModelMsg cameraModel = 2;
+    optional CameraMsg camera = 3;
+    optional ImuMsg imu = 4;
+    optional PoseSensorMsg poseSensor = 5;
+    optional PoseMsg pose = 6;
 }

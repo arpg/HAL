@@ -54,6 +54,7 @@ set( _PROTO_SRCS
     Image.proto
     Imu.proto
     Pose.proto
+    PoseSensor.proto
     Matrix.proto
 )
 

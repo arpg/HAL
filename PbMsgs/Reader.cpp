@@ -86,6 +86,7 @@ void Reader::_ThreadFunc()
         uint32_t msg_size_bytes;
         if( !coded_input.ReadVarint32(&msg_size_bytes) ) {
             // Probably end of stream.
+            std::cerr << "HAL: Error while reading message size." << std::endl;
             break;
         }
 
@@ -93,6 +94,7 @@ void Reader::_ThreadFunc()
                 coded_input.PushLimit(msg_size_bytes);
         std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
         if( !pMsg->ParseFromCodedStream(&coded_input) ) {
+            std::cerr << "HAL: Error while parsing from coded stream. Has the Proto file definitions changed?" << std::endl;
             break;
         }
         coded_input.PopLimit(lim);
@@ -169,6 +171,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
     }
 
     if(!m_bRunning) {
+        std::cout << "NULLING" << std::endl;
         return nullptr;
     }
 
