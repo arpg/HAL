@@ -175,7 +175,7 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
     // Read a new frame
     rc = m_Context.WaitAndUpdateAll();
     const double systemTime = Tic();
-    vImages.set_devicetime( systemTime );
+    vImages.set_device_time( systemTime );
 
     if (rc != XN_STATUS_OK)
     {

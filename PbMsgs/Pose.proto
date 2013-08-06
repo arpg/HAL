@@ -14,7 +14,7 @@ message PoseMsg{
     }
 
     optional int32 id = 1;
-    optional double deviceTime = 2;
+    optional double device_time = 2;
     required Type type = 3;
     optional VectorMsg pose = 4;    // format dependent on type
 }

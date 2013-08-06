@@ -288,7 +288,7 @@ bool DC1394Driver::Capture( pb::CameraMsg& vImages )
     if( e != DC1394_SUCCESS )
         return false;
 
-    vImages.set_devicetime( (double)pFrame->timestamp * 1E-6 );
+    vImages.set_device_time( (double)pFrame->timestamp * 1E-6 );
 
     pbImg->set_width( m_nImageWidth );
     pbImg->set_height( m_nImageHeight );

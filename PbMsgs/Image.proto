@@ -33,12 +33,10 @@ message ImageMsg {
     optional uint32 width = 1;
     optional uint32 height = 2;
     optional bytes data = 3;
-//    optional uint32 pitch = 4 [default = 0];
-//    optional uint32 offset = 5 [default = 0];
-    optional Type type = 6 [default = PB_UNSIGNED_BYTE];
-    optional Format format = 7 [default = PB_RGB];
-    optional double timestamp = 8;
-    optional ImageInfoMsg info = 9;
+    optional Type type = 4 [default = PB_UNSIGNED_BYTE];
+    optional Format format = 5 [default = PB_RGB];
+    optional double timestamp = 6;
+    optional ImageInfoMsg info = 7;
 }
 
 

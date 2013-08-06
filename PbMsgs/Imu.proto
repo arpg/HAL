@@ -4,7 +4,7 @@ import "Matrix.proto";
 
 message ImuMsg{
     optional int32 id = 1;
-    optional double deviceTime = 2;
+    optional double device_time = 2;
     optional VectorMsg accel = 3;
     optional VectorMsg gyro = 4;
     optional VectorMsg mag = 5;

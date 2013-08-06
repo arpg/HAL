@@ -1,0 +1,15 @@
+package pb;
+
+import "Pose.proto";
+
+message CameraModelMsg {
+    optional string name = 1;
+    optional int32 id = 2;
+    optional string serialNumber = 3;
+    optional uint32 version = 4;
+    optional uint32 width = 5;
+    optional uint32 height = 6;
+    optional PoseMsg poseLocalCamera = 7;
+    repeated double params = 8;
+    optional string paramType = 9;
+}

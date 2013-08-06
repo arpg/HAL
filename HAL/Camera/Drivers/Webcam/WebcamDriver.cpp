@@ -68,7 +68,7 @@ bool WebcamDriver::Capture( pb::CameraMsg& vImages )
     pbImg->set_width( m_nImgWidth );
     pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth * numChans );
 
-    vImages.set_devicetime( systemTime );
+    vImages.set_device_time( systemTime );
 
     return success;
 }

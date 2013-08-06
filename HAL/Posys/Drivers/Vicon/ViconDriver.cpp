@@ -47,7 +47,7 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
     pb::PoseMsg pbMsg;
 
     const double vicon_timestamp = tData.msg_time.tv_sec + (1e-6 * tData.msg_time.tv_usec);
-    pbMsg.set_devicetime( vicon_timestamp );
+    pbMsg.set_device_time( vicon_timestamp );
 
     pbMsg.set_id( tData.sensor );
 

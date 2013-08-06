@@ -18,6 +18,10 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename, size_t imageID)
         usleep(100);
     }
 
+    const pb::Header pbHdr = m_reader.GetHeader();
+    time_t log_date((long)pbHdr.date());
+    std::cout << "- Log dated " << ctime(&log_date);
+
     m_numChannels = m_nextMsg.image_size();
     for(size_t c=0; c < m_numChannels; ++c) {
         m_width.push_back(m_nextMsg.image(c).width());

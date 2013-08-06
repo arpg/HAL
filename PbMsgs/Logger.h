@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <condition_variable>
+#include <PbMsgs/Header.pb.h>
 #include <PbMsgs/Messages.pb.h>
 
 namespace pb

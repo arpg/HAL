@@ -22,7 +22,7 @@ bool DebayerDriver::Capture( pb::CameraMsg& vImages )
     m_Message.Clear();
     m_Input->Capture( m_Message );
 
-    vImages.set_devicetime( m_Message.devicetime() );
+    vImages.set_device_time( m_Message.device_time() );
 
     pb::ImageMsg* pbImg = vImages.add_image();
     pbImg->set_format( pb::PB_RGB );
@@ -67,7 +67,7 @@ size_t DebayerDriver::Width( size_t /*idx*/ ) const
 
 size_t DebayerDriver::Height( size_t /*idx*/ ) const
 {
-    return m_nImgHeight;    
+    return m_nImgHeight;
 }
 
 } // namespace

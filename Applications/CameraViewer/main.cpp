@@ -31,7 +31,7 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Posys_Handler(pb::PoseMsg& PoseData)
 {
-    std::cout << "Got at time: " << PoseData.devicetime() << std::endl;
+    std::cout << "Got at time: " << PoseData.device_time() << std::endl;
 
     pb::VectorMsg pbVec = PoseData.pose();
 

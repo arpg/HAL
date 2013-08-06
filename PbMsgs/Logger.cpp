@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "Logger.h"
 #include <functional>
@@ -50,9 +51,26 @@ void Logger::ThreadFunc()
     raw_output.SetCloseOnDelete(true);
     google::protobuf::io::CodedOutputStream coded_output(&raw_output);
 
-    const int magic_number = 1234;
-    coded_output.WriteLittleEndian32(magic_number);
 
+    ///-------------------- Write Magic Number %HAL
+    const char magic_number[] = { '%', 'H', 'A', 'L' };
+    coded_output.WriteRaw(magic_number,4);
+
+
+    ///-------------------- Write Header Msg
+    pb::Header hdr;
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    double now = tv.tv_sec + 1e-6 * (tv.tv_usec);
+    hdr.set_date( now );
+    hdr.set_description("HAL Log File.");
+    coded_output.WriteVarint32( hdr.ByteSize() );
+    if(!hdr.SerializeToCodedStream(&coded_output)) {
+        std::cerr << "HAL: Failed to serialize HEADER to coded stream." << std::endl;
+    }
+
+
+    ///-------------------- Run Logger
     int frames = 0;
     while( m_bShouldRun ){
 
@@ -77,7 +95,7 @@ void Logger::ThreadFunc()
         coded_output.WriteVarint32( size_bytes );
 
         if(!msg.SerializeToCodedStream(&coded_output)) {
-            std::cout << "failed to serialize to coded stream" << std::endl;
+            std::cerr << "HAL: Failed to serialize to coded stream." << std::endl;
         }
 
         {

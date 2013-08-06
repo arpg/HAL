@@ -9,6 +9,7 @@
 #include <list>
 #include <memory>
 
+#include <PbMsgs/Header.pb.h>
 #include <PbMsgs/Messages.pb.h>
 
 namespace pb
@@ -60,6 +61,9 @@ public:
     /// Return the log's filename.
     std::string GetFilename() const { return m_sFilename; }
 
+    /// Return Header protobuf.
+    const pb::Header& GetHeader() const { return m_Header; }
+
 private:
     /// Buffer from file.
     bool _BufferFromFile(const std::string &fileName);
@@ -69,6 +73,7 @@ private:
 
 private:
     std::string                             m_sFilename;
+    pb::Header                              m_Header;
     bool                                    m_bRunning;
     bool                                    m_bShouldRun;
     bool                                    m_bReadCamera;
@@ -79,7 +84,7 @@ private:
     std::mutex                              m_QueueMutex;
     std::condition_variable                 m_ConditionQueued;
     std::condition_variable                 m_ConditionDequeued;
-    std::thread                             m_WriteThread;
+    std::thread                             m_ReadThread;
     size_t                                  m_nInitialImageID;
     size_t                                  m_nMaxBufferSize;
 };

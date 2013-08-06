@@ -49,13 +49,20 @@ endif()
 ## Sources
 
 set( _PROTO_SRCS
+    # aux
+    Matrix.proto
+
+    # header files
+    Header.proto
+    CameraModel.proto
+
+    # message files
     Messages.proto
     Camera.proto
     Image.proto
     Imu.proto
     Pose.proto
-    PoseSensor.proto
-    Matrix.proto
+    Encoder.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )

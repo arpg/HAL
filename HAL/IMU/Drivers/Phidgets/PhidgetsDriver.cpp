@@ -123,7 +123,7 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhi
         pbVec->add_data(data[i]->magneticField[1]);
         pbVec->add_data(data[i]->magneticField[2]);
 
-        imuData.set_devicetime(data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6);
+        imuData.set_device_time(data[i]->timestamp.seconds + data[i]->timestamp.microseconds * 1E6);
 
         if( m_ImuCallback ) {
             m_ImuCallback(imuData);

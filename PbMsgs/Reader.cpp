@@ -65,18 +65,39 @@ void Reader::_ThreadFunc()
     google::protobuf::io::FileInputStream raw_input(fd);
     raw_input.SetCloseOnDelete(true);
 
-    uint32_t magic_number = 0;
+    ///-------------------- Read Magic Number
+    char magic_number[4];
 
     {
         google::protobuf::io::CodedInputStream coded_input(&raw_input);
-        coded_input.ReadLittleEndian32(&magic_number);
+        coded_input.ReadRaw(magic_number,4);
     }
 
-    if (magic_number != 1234) {
-        std::cerr << "PbMsgs/Reader.cpp: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
+    if( magic_number[0] != '%' || magic_number[1] != 'H' || magic_number[2] != 'A' || magic_number[3] != 'L' ) {
+        std::cerr << "HAL: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
       return;
     }
 
+
+    ///-------------------- Read Header Message
+    uint32_t hdr_size_bytes;
+    {
+        google::protobuf::io::CodedInputStream coded_input(&raw_input);
+        if( !coded_input.ReadVarint32(&hdr_size_bytes) ) {
+            std::cerr << "HAL: Error while reading HEADER message size." << std::endl;
+            return;
+        }
+
+        google::protobuf::io::CodedInputStream::Limit lim = coded_input.PushLimit(hdr_size_bytes);
+        if( !m_Header.ParseFromCodedStream(&coded_input) ) {
+            std::cerr << "HAL: Error while parsing from coded stream. Has the HEADER Proto file definitions changed?" << std::endl;
+            return;
+        }
+        coded_input.PopLimit(lim);
+    }
+
+
+    ///-------------------- Read Message Log
     size_t nImgID = 0;
     m_bRunning = true;
 
@@ -171,7 +192,6 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
     }
 
     if(!m_bRunning) {
-        std::cout << "NULLING" << std::endl;
         return nullptr;
     }
 
@@ -248,7 +268,7 @@ bool Reader::_BufferFromFile(const std::string& fileName)
 {
     m_sFilename = fileName;
     m_bShouldRun = true;
-    m_WriteThread = std::thread( &Reader::_ThreadFunc, this );
+    m_ReadThread = std::thread( &Reader::_ThreadFunc, this );
     return true;
 }
 
@@ -261,8 +281,8 @@ void Reader::StopBuffering()
         m_ConditionDequeued.notify_one();
     }
 
-    if(m_WriteThread.joinable()) {
-        m_WriteThread.join();
+    if(m_ReadThread.joinable()) {
+        m_ReadThread.join();
     }
 
     m_ConditionQueued.notify_all();
@@ -276,9 +296,9 @@ bool Reader::SetInitialImage(size_t nImgID)
     }
 
     // kill reading thread if alive
-    if( m_WriteThread.joinable() ) {
+    if( m_ReadThread.joinable() ) {
         m_bShouldRun = false;
-        m_WriteThread.join();
+        m_ReadThread.join();
         m_qMessages.clear();
         m_qMessageTypes.clear();
     }
@@ -286,7 +306,7 @@ bool Reader::SetInitialImage(size_t nImgID)
     m_nInitialImageID = nImgID;
     m_bReadCamera = true;
     m_bShouldRun = true;
-    m_WriteThread = std::thread( &Reader::_ThreadFunc, this );
+    m_ReadThread = std::thread( &Reader::_ThreadFunc, this );
     return true;
 }
 
