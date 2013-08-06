@@ -1,0 +1,3 @@
+#pragma once
+
+#define PBMSGS_VERSION @VERSION_MAJOR@

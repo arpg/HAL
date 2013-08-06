@@ -5,9 +5,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <functional>
 
 #include "Logger.h"
-#include <functional>
+
+#include <PbMsgs/config.h>
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -59,6 +61,7 @@ void Logger::ThreadFunc()
 
     ///-------------------- Write Header Msg
     pb::Header hdr;
+    hdr.set_version(PBMSGS_VERSION);
     struct timeval tv;
     gettimeofday(&tv, 0);
     double now = tv.tv_sec + 1e-6 * (tv.tv_usec);

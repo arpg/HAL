@@ -1,14 +1,16 @@
-#include "Reader.h"
 #include <unistd.h>
-
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/io/coded_stream.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include <iostream>
 #include <stdexcept>
+
+#include <PbMsgs/config.h>
+
+#include "Reader.h"
+
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
 
 namespace pb
 {
@@ -94,6 +96,12 @@ void Reader::_ThreadFunc()
             return;
         }
         coded_input.PopLimit(lim);
+    }
+
+    // check if version numbers match
+    if( m_Header.version() != PBMSGS_VERSION ) {
+        std::cerr << "HAL: Log was recorded using a different version and it is unreadable!" << std::endl;
+        return;
     }
 
 
