@@ -1,3 +1,4 @@
+if(0)
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
 find_package( FLYCAP QUIET )
@@ -27,4 +28,4 @@ if( FLYCAP_FOUND )
              DESTINATION
              ${CMAKE_INSTALL_PREFIX}/include/RPG/Devices/Camera/Drivers/Flycap )
 endif()
-
+endif()
