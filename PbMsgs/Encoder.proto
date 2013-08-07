@@ -5,5 +5,5 @@ import "Matrix.proto";
 message EncoderMsg {
     optional double device_time = 1;
     repeated string label = 2;
-    repeated int32 data = 3;
+    repeated uint32 data = 3;
 }

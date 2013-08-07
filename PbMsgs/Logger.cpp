@@ -42,7 +42,8 @@ Logger::~Logger()
 /////////////////////////////////////////////////////////////////////////////////////////
 void Logger::ThreadFunc()
 {
-    int fd = open(m_sFilename.c_str(), O_RDWR | O_CREAT | O_TRUNC);
+    mode_t OpenMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+    int fd = open(m_sFilename.c_str(), O_RDWR | O_CREAT | O_TRUNC, OpenMode);
 
     if(fd==0) {
         std::cout << "Error opening file " << m_sFilename << std::endl;
