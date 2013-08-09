@@ -420,6 +420,35 @@ namespace rpg
             }
         }
 
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        bool ReadBlocking(
+                const std::string& sTopic,          //< Input: Topic to read
+                google::protobuf::Message& Msg  	//< Output: Message read
+                )
+        {
+            std::map < std::string, zmq::socket_t* >::iterator it;
+
+            // check if socket is already open for this topic
+            it = m_mTopics.find( sTopic );
+            if( it == m_mTopics.end() ) {
+                // no socket found
+                return false;
+            } else {
+                zmq::socket_t* pSock = it->second;
+                zmq::message_t ZmqMsg;
+                if( pSock->recv( &ZmqMsg ) == false ) {
+                    // nothing to read
+                    return false;
+                }
+                if( !Msg.ParseFromArray( ZmqMsg.data(), ZmqMsg.size() ) ) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         bool Read(
                 const std::string& sTopic,          //< Input: Topic to read

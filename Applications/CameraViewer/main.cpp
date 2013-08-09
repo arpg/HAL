@@ -25,6 +25,8 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
         pbMsg.mutable_imu()->Swap(&IMUdata);
         g_Logger.LogMessage(pbMsg);
     }
+//    const pb::VectorMsg& pbVec = IMUdata.accel();
+//    printf("X: %5f    Y: %5f     Z: %5f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2));
 }
 
 
