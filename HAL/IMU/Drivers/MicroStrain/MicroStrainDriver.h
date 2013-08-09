@@ -1,24 +1,23 @@
-#ifndef _MICROSTRAINDRIVER_H_
-#define _MICROSTRAINDRIVER_H_
+#pragma once
 
 #include <thread>
 
-#include "HAL/IMU/IMUDriverInterface.h"
+#include <HAL/IMU/IMUDriverInterface.h>
 
 #include "MIPSDK/mip_sdk.h"
+
+namespace hal {
 
 class MicroStrainDriver : public IMUDriverInterface
 {
     public:
         MicroStrainDriver();
-        virtual ~MicroStrainDriver();
-
-        bool Init();
-        void RegisterDataCallback(IMUDriverDataCallback callback);
-        void RegisterDataCallback(GPSDriverDataCallback callback);
+        ~MicroStrainDriver();
+        void RegisterIMUDataCallback(IMUDriverDataCallback callback);
 
     private:
         static void ImuCallback(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type);
+        bool _Init();
         void _ThreadCaptureFunc();
         bool _ActivateAHRS();
         bool _ActivateGPS();
@@ -28,7 +27,6 @@ class MicroStrainDriver : public IMUDriverInterface
         std::thread mDeviceThread;
 
         IMUDriverDataCallback mIMUCallback;
-        GPSDriverDataCallback mGPSCallback;
 
         // properties
         bool m_bGetGPS;
@@ -43,7 +41,7 @@ class MicroStrainDriver : public IMUDriverInterface
         bool m_bGetMagnetometerAHRS;
         int  m_nHzGPS;
         int  m_nHzAHRS;
-        
+
 };
 
-#endif
+} /* namespace */

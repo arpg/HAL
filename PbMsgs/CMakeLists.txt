@@ -9,7 +9,7 @@ string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 # Add to module path, so we can find our cmake modules
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH} )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall  -Werror")
 IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 ENDIF()
