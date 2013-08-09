@@ -10,7 +10,7 @@ using namespace hal;
 NodeIMUDriver::NodeIMUDriver(const std::string& sHost)
     : m_host(sHost), m_running(false), m_callback(nullptr)
 {
-    if( m_Node.Subscribe("IMU", sHost) == false ) {
+    if( m_node.Subscribe("IMU", sHost) == false ) {
         std::cerr << "HAL: Error subscribing to remote node." << std::endl;
     }
 }
@@ -22,7 +22,7 @@ void NodeIMUDriver::_ThreadFunc()
     pb::ImuMsg pbMsg;
     while( m_running ) {
         pbMsg.Clear();
-        if( m_Node.ReadBlocking("IMU", pbMsg) == false ) {
+        if( m_node.ReadBlocking("IMU", pbMsg) == false ) {
             std::cerr << "HAL: Error reading node publisher." << std::endl;
             continue;
         }
