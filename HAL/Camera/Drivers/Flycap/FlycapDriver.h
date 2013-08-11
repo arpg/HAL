@@ -1,26 +1,31 @@
-/*
-   \file FlycapDriver.h
+#pragma once
 
- */
-
-#ifndef _FLYCAP_H_
-#define _FLYCAP_H_
+#include <HAL/Camera/CameraDriverInterface.h>
 
 #include <flycapture/FlyCapture2.h>
-#include "RPG/Devices/Camera/CameraDriverInterface.h"
 
-class FlycapDriver : public CameraDriver
+namespace hal {
+
+
+class FlycapDriver : public CameraDriverInterface
 {
     public:
         FlycapDriver();
-        virtual ~FlycapDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
-        void PrintInfo();
-        bool Init();
+        ~FlycapDriver();
+
+        bool Capture( pb::CameraMsg& vImages );
+        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+
+        std::string GetDeviceProperty(const std::string& sProperty);
+
+        size_t NumChannels() const;
+        size_t Width( size_t /*idx*/ = 0 ) const;
+        size_t Height( size_t /*idx*/ = 0 ) const;
+
     private:
-        void PrintError( FlyCapture2::Error error );
-        void CheckError( FlyCapture2::Error error );
-    private:
+        void _CheckError( FlyCapture2::Error error );
+
+private:
         FlyCapture2::Camera      m_Cam1;
         FlyCapture2::Camera      m_Cam2;
         unsigned int             m_nImgWidth;
@@ -28,4 +33,4 @@ class FlycapDriver : public CameraDriver
 
 };
 
-#endif
+} /* namespace */

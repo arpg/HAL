@@ -1,109 +1,23 @@
-/*
-   \file FlycapDriver.cpp
- */
+#include <iostream>
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdint.h>
 #include "FlycapDriver.h"
 
-using namespace std;
+using namespace hal;
 using namespace FlyCapture2;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void FlycapDriver::PrintError( Error error )
+inline void FlycapDriver::_CheckError( Error err )
 {
-    error.PrintErrorTrace();
+    if( err != PGRERROR_OK ) {
+       err.PrintErrorTrace();
+       exit(EXIT_FAILURE);
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline void FlycapDriver::CheckError( Error err )
-{
-    if( err != PGRERROR_OK ) {
-       PrintError(err);
-       exit(-1);
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//  Releases the cameras and exits
+///  Releases the cameras and exits
 FlycapDriver::FlycapDriver()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//  Releases the cameras and exits
-FlycapDriver::~FlycapDriver()
-{
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-bool FlycapDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
-{
-    Error error;
-
-    // allocate images if necessary
-    if( vImages.size() != 1 ){
-        vImages.resize( 1 );
-        // and setup images
-        vImages[0].Image = cv::Mat(m_nImgHeight, m_nImgWidth, CV_8UC1);
-//        vImages[1].Image = cv::Mat(m_nImgHeight, m_nImgWidth, CV_8UC1);
-    }
-
-    Image Image1, Image2;
-
-    error = m_Cam1.RetrieveBuffer( &Image1 );
-
-    if( error != PGRERROR_OK ) {
-        cerr << "Error grabbing camera 1 image." << endl;
-    } else {
-        memcpy( vImages[0].Image.data, Image1.GetData(), m_nImgWidth * m_nImgHeight );
-    }
-
-//    error = m_Cam2.RetrieveBuffer( &Image2 );
-
-    if( error != PGRERROR_OK ) {
-        cerr << "Error grabbing camera 2 image." << endl;
-    } else {
-//        memcpy( vImages[1].Image.data, Image2.GetData(), m_nImgWidth * m_nImgHeight );
-    }
-
-    return true;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-void FlycapDriver::PrintInfo() {
-
-    std::cout <<
-    "FILEREADER\n"
-    "Reads images from the disk."
-    "\n\n"
-    "Options:\n"
-    "   -sdir           <source directory for images and camera model files> [default '.']\n"
-    "   -lfile          <regular expression for left image channel>\n"
-    "   -rfile          <regular expression for right image channel>\n"
-    "   -lcmod          <left camera model xml file>\n"
-    "   -rcmod          <right camera model xml file>\n"
-    "   -sf             <start frame> [default 0]\n"
-    "   -numchan        <number of channels> [default 2]\n"
-    "   -buffsize       <size of buffer for image pre-read> [default 35]\n"
-    "   -timekeeper     <name of variable holding image timestamps> [default 'SystemTime]\n"
-    "\n"
-    "Flags:\n"
-    "   -greyscale      If the driver should return images in greyscale.\n"
-    "   -loop           If the driver should restart once images are consumed.\n"
-    "\n"
-    "Example:\n"
-    "./Exec  -idev FileReader  -lcmod lcmod.xml  -rcmod rcmod.xml  -lfile \"left.*pgm\"  -rfile \"right.*pgm\"\n\n";
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-bool FlycapDriver::Init()
 {
     /*
      * Camera Properties:
@@ -118,14 +32,11 @@ bool FlycapDriver::Init()
      *
      */
 
-    assert(m_pPropertyMap);
-    m_pPropertyMap->PrintPropertyMap();
-
     // initialize
     m_nImgWidth  = 640;
     m_nImgHeight = 480;
-    m_nImgWidth  = 1280;
-    m_nImgHeight = 960;
+//    m_nImgWidth  = 1280;
+//    m_nImgHeight = 960;
 
     Error error;
 
@@ -133,11 +44,11 @@ bool FlycapDriver::Init()
     unsigned int        nNumCams;
 
     error = BusMgr.GetNumOfCameras( &nNumCams );
-    CheckError(error);
+    _CheckError(error);
 
     if( nNumCams == 0 ) {
-       printf( "No camera found!\n" );
-       return false;
+       std::cerr << "HAL: No cameras found!" << std::endl;
+       return;
     }
 
     // prepare Format 7 config
@@ -191,13 +102,14 @@ bool FlycapDriver::Init()
 
     // look for camera 1
     error = BusMgr.GetCameraFromIndex(0, &GUID);
-    CheckError(error);
+    _CheckError(error);
 
     // connect to camera 1
     error = m_Cam1.Connect(&GUID);
-    CheckError(error);
+    _CheckError(error);
 
-    m_Cam1.SetVideoModeAndFrameRate(VIDEOMODE_1280x960Y8, FRAMERATE_60);
+//    m_Cam1.SetVideoModeAndFrameRate(VIDEOMODE_1280x960Y8, FRAMERATE_60);
+    m_Cam1.SetVideoModeAndFrameRate(VIDEOMODE_640x480Y8, FRAMERATE_60);
 
     /*
     // set video mode and framerate
@@ -282,10 +194,85 @@ bool FlycapDriver::Init()
 
     // initiate transmission
     error = m_Cam1.StartCapture();
-    CheckError(error);
+    _CheckError(error);
 
 //    error = m_Cam2.StartCapture();
 //    CheckError(error);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///  Releases the cameras and exits
+FlycapDriver::~FlycapDriver()
+{
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool FlycapDriver::Capture(  pb::CameraMsg& vImages )
+{
+    Error error;
+
+    Image Image1, Image2;
+
+    error = m_Cam1.RetrieveBuffer( &Image1 );
+
+    if( error != PGRERROR_OK ) {
+        std::cerr << "HAL: Error grabbing camera 1 image." << std::endl;
+        std::cerr << "Error was: " << error.GetDescription() << std::endl;
+        return false;
+    } else {
+
+        // set timestamp
+        vImages.set_device_time( Image1.GetMetadata().embeddedTimeStamp );
+
+        pb::ImageMsg* pbImg = vImages.add_image();
+        pbImg->set_width( Image1.GetCols() );
+        pbImg->set_height( Image1.GetRows() );
+        pbImg->set_data( Image1.GetData(), Image1.GetDataSize() );
+        pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+        pbImg->set_format( pb::PB_LUMINANCE );
+    }
+
+    /*
+    error = m_Cam2.RetrieveBuffer( &Image2 );
+
+    if( error != PGRERROR_OK ) {
+        std::cerr << "HAL: Error grabbing camera 2 image." << std::endl;
+        return false;
+    } else {
+        pb::ImageMsg* pbImg = vImages.add_image();
+        pbImg->set_width( Image2.GetCols() );
+        pbImg->set_height( Image2.GetRows() );
+        pbImg->set_data( Image2.GetData(), Image2.GetDataSize() );
+        pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+        pbImg->set_format( pb::PB_LUMINANCE );
+    }
+    */
 
     return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string FlycapDriver::GetDeviceProperty(const std::string& /*sProperty*/)
+{
+    return std::string();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t FlycapDriver::NumChannels() const
+{
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t FlycapDriver::Width( size_t /*idx*/ ) const
+{
+    return m_nImgWidth;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t FlycapDriver::Height( size_t /*idx*/ ) const
+{
+    return m_nImgHeight;
 }

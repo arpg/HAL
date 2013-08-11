@@ -1,6 +1,3 @@
-//#include <inttypes.h>
-//#include <stdio.h>
-//#include <stdint.h>
 /*
  * Format7 code extracted from Pangolin library.
  *
