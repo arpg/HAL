@@ -1,5 +1,5 @@
 
-set( BUILD_Epiphan true CACHE BOOL force )
+set( BUILD_Epiphan false CACHE BOOL force )
 
 if( BUILD_Epiphan )
 
@@ -82,8 +82,8 @@ if( BUILD_Epiphan )
         set_source_files_properties( ${SLAVA_FILES} ${V2U_FILES} PROPERTIES COMPILE_FLAGS " -w " )
     endif()
 
-    add_library( v2u ${V2U_FILES} )
-    add_library( slava ${SLAVA_FILES} )
+#    add_library( v2u STATIC ${V2U_FILES} )
+#    add_library( slava STATIC ${SLAVA_FILES} )
 
 
     # copy proprietary library frmgrab
@@ -97,19 +97,12 @@ if( BUILD_Epiphan )
     set_property( TARGET frmgrab PROPERTY LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libfrmgrab.a )
 
 
+    add_to_hal_include_dirs( ${CMAKE_CURRENT_SOURCE_DIR}/SDK/includes )
 
-    add_to_hal_libraries( slava frmgrab v2u )
+    add_to_hal_libraries( frmgrab )
+#    add_to_hal_libraries( frmgrab z "-L/opt/local/lib/" jpeg png xml2 )
     add_to_hal_sources(
-        EpiphanDriver.h EpiphanDriver.cpp EpiphanFactory.cpp
+        EpiphanDriver.h EpiphanDriver.cpp EpiphanFactory.cpp ${SLAVA_FILES} ${V2U_FILES}
     )
 endif()
-
-
-
-
-
-
-
-
-
 

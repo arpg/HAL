@@ -1,29 +1,19 @@
+#include <iostream>
 
-#include "Dvi2PciDriver.h"
+#include <HAL/Utils/TicToc.h>
+
+#include "EpiphanDriver.h"
 
 #ifndef V2U_COUNT
 #  define V2U_COUNT(array) (sizeof(array)/sizeof((array)[0]))
 #endif /* V2U_COUNT */
 
-///////////////////////////////////////////////////////////////////////////////
-Dvi2PciDriver::Dvi2PciDriver()
-{
-}
+using namespace hal;
 
-///////////////////////////////////////////////////////////////////////////////
-Dvi2PciDriver::~Dvi2PciDriver()
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EpiphanDriver::EpiphanDriver()
 {
-    FrmGrab_Close(m_pFrameGrabber);
-    FrmGrabNet_Deinit();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-bool Dvi2PciDriver::Init()
-{
-    assert(m_pPropertyMap);
-    m_pPropertyMap->PrintPropertyMap();
-
-    std::string     sRes        = m_pPropertyMap->GetProperty( "Resolution", "HD" );
+    std::string     sRes = "HD";
 
     if( sRes == "HD" ) {
         m_nImageWidth = 1280;
@@ -68,39 +58,49 @@ bool Dvi2PciDriver::Init()
 
 
     if( DetectVideoMode(m_pFrameGrabber, &vm, true) == -1 ) {
-        return false;
+        return;
     }
 
     /* Set up streaming (only necessary for network grabbers) */
     if( FrmGrab_SetMaxFps( m_pFrameGrabber, m_dFps ) == 0 ) {
-        printf("Could not set FPS.\n");
+        std::cerr << "HAL: Could not set FPS." << std::endl;
+        return;
     }
 
     FrmGrab_Start(m_pFrameGrabber);
-
-    return true;
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-bool Dvi2PciDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EpiphanDriver::~EpiphanDriver()
 {
-    // allocate images if necessary
-    if( vImages.size() != 1 ){
-        vImages.resize( 1 );
-    }
+    FrmGrab_Close(m_pFrameGrabber);
+    FrmGrabNet_Deinit();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool EpiphanDriver::Capture( pb::CameraMsg& vImages )
+{
 
     V2U_GrabFrame2* frame = FrmGrab_Frame( m_pFrameGrabber, V2U_GRABFRAME_FORMAT_BGR24, NULL );
 
     if (!frame || frame->imagelen <= 0)  {
-        printf("VGA2USB capture error. Skipping frame...\n");
+        std::cerr << "HAL: Epiphan capture error. Skipping frame..." << std::endl;
         return false;
     }
     //printf("Frame captured. Total %d bytes.\n", frame->imagelen);
 
-    vImages[0].Image = cv::Mat( m_nImageHeight, m_nImageWidth, CV_8UC3 );
+    // set timestamp
+    vImages.set_device_time( hal::Tic() );
 
-    memcpy( vImages[0].Image.data, frame->pixbuf, frame->imagelen );
+    pb::ImageMsg* pbImg = vImages.add_image();
+    pbImg->set_width( m_nImageWidth );
+    pbImg->set_height( m_nImageHeight );
+    pbImg->set_data( frame->pixbuf, frame->imagelen );
+    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+    pbImg->set_format( pb::PB_RGB );
+
 
     /* Release the frame */
     FrmGrab_Release(m_pFrameGrabber, frame);
@@ -109,15 +109,40 @@ bool Dvi2PciDriver::Capture( std::vector<rpg::ImageWrapper>& vImages )
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string EpiphanDriver::GetDeviceProperty(const std::string& /*sProperty*/)
+{
+    return std::string();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t EpiphanDriver::NumChannels() const
+{
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t EpiphanDriver::Width( size_t /*idx*/ ) const
+{
+    return m_nImageWidth;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t EpiphanDriver::Height( size_t /*idx*/ ) const
+{
+    return m_nImageHeight;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Prints video mode flags in human-readable form
  */
-void Dvi2PciDriver::DumpVgaModeFlags(V2U_UINT32 flags, V2U_UINT32 mask)
+void EpiphanDriver::DumpVgaModeFlags(V2U_UINT32 flags, V2U_UINT32 mask)
 {
     static struct v2u_vgamode_flags {
         V2U_UINT32 flag;
@@ -152,11 +177,11 @@ void Dvi2PciDriver::DumpVgaModeFlags(V2U_UINT32 flags, V2U_UINT32 mask)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * Detects and prints video mode
  */
-int Dvi2PciDriver::DetectVideoMode(FrmGrabber* fg, V2U_VideoMode* vm, V2U_BOOL details)
+int EpiphanDriver::DetectVideoMode(FrmGrabber* fg, V2U_VideoMode* vm, V2U_BOOL details)
 {
     if (FrmGrab_DetectVideoMode(fg, vm)) {
         if (vm->width || vm->height) {
@@ -205,12 +230,12 @@ int Dvi2PciDriver::DetectVideoMode(FrmGrabber* fg, V2U_VideoMode* vm, V2U_BOOL d
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * Opens the frame grabber with either the specified serial number or
  * the network address.
  */
-FrmGrabber* Dvi2PciDriver::OpenGrabber(const char* sn, const char* addr)
+FrmGrabber* EpiphanDriver::OpenGrabber(const char* sn, const char* addr)
 {
     FrmGrabber* fg;
     if (sn) {
