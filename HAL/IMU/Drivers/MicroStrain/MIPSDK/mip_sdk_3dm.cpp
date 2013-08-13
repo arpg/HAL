@@ -1042,7 +1042,7 @@ u16 mip_3dm_cmd_ahrs_signal_conditioning(mip_interface *device_interface, u8 fun
  u16 response_data_size;
  u16 return_code;
  u8  command_data[sizeof(u8) + sizeof(mip_ahrs_signal_settings)] = {0};
- u32 *word_ptr;
+// u32 *word_ptr;
  mip_field_header         *field_header_ptr;
  mip_ahrs_signal_settings *settings_ptr;
  

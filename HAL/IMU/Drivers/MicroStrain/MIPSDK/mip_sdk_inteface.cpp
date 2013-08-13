@@ -713,7 +713,7 @@ u16 __mip_interface_time_timeout(u32 initial_time, u32 timeout_ms)
 //!
 /////////////////////////////////////////////////////////////////////////////
 
-void __mip_interface_command_response_handler(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type)
+void __mip_interface_command_response_handler(void *user_ptr, u8 *packet, u16 /*packet_size*/, u8 callback_type)
 {
  u16                    payload_size;
  global_ack_nack_field *ack_nack_field_ptr;

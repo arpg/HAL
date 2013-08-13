@@ -115,7 +115,7 @@ int Purge(ComPortHandle comPortHandle){
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_sdk_port_open(void **port_handle, int port_num, int baudrate)
+u16 mip_sdk_port_open(void **port_handle, int port_num, int /*baudrate*/)
 {
     const std::string comPortPath = DeviceById(port_num);
     if( comPortPath.empty() ) {
@@ -242,7 +242,7 @@ u16 mip_sdk_port_close(void *port_handle)
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_written, u32 timeout_ms)
+u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_written, u32 /*timeout_ms*/)
 {
     ComPortHandle comPort = *(ComPortHandle*)port_handle;
     *bytes_written = write(comPort, buffer, num_bytes);
@@ -277,15 +277,17 @@ u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_sdk_port_read(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_read, u32 timeout_ms)
+u16 mip_sdk_port_read(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_read, u32 /*timeout_ms*/)
 {
     ComPortHandle comPort = *(ComPortHandle*)port_handle;
 
-    *bytes_read = read(comPort, buffer, num_bytes);
+    ssize_t b_read = read(comPort, buffer, num_bytes);
 
-    if(*bytes_read < 0 )
+    if(b_read < 0 )
         return MIP_USER_FUNCTION_ERROR;
 
+    *bytes_read = (u32) b_read;
+    
     return MIP_USER_FUNCTION_OK;
 }
 

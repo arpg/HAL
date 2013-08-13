@@ -714,7 +714,7 @@ u16 mip_nav_set_init_attitude(mip_interface *device_interface, float euler_angle
 
 u16 mip_nav_set_init_heading(mip_interface *device_interface, float heading)
 {
- u8 i;
+// u8 i;
  float local_heading;
  
  //Copy the angles to a local buffer
@@ -759,7 +759,7 @@ u16 mip_nav_set_init_heading(mip_interface *device_interface, float heading)
 
 u16 mip_nav_set_init_attitude_from_ahrs(mip_interface *device_interface, float declination)
 {
- u8 i;
+// u8 i;
  float local_declination;
  
  //Copy the angles to a local buffer
@@ -1381,7 +1381,7 @@ u16 mip_nav_external_gps_update(mip_interface *device_interface, mip_nav_externa
 
 u16 mip_nav_external_heading_update(mip_interface *device_interface, mip_nav_external_heading_update_command *command)
 {
- u8 i;
+// u8 i;
  mip_nav_external_heading_update_command local_command;
  
  //Copy the command to the local buffer

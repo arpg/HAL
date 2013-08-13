@@ -82,7 +82,7 @@ MicroStrainDriver::~MicroStrainDriver()
 ///////////////////////////////////////////////////////////////////////////////
 void MicroStrainDriver::ImuCallback(void *user_ptr, u8 *packet, u16 /*packet_size*/, u8 callback_type)
 {
-    const double dTimestamp = Tic();
+//    const double dTimestamp = Tic();
 
     MicroStrainDriver* self = static_cast<MicroStrainDriver*>(user_ptr);
 

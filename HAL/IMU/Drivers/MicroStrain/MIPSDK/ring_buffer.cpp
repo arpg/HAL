@@ -422,7 +422,7 @@ u16 ring_buffer_write_multi(ring_buffer *buffer, u8 *entry_buff, u32 num_entries
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 ring_buffer_read(ring_buffer *buffer, u8 *entry, u32 max_bytes)
+u16 ring_buffer_read(ring_buffer *buffer, u8 *entry, u32 /*max_bytes*/)
 {
  u32 i; 
   
