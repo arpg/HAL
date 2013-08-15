@@ -8,9 +8,9 @@ using namespace hal;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 NinjaIMUDriver::NinjaIMUDriver(const std::string& sCom)
-    : m_Callback(nullptr), m_Running(false)
+    : m_Callback(nullptr), m_FtdiListener(FtdiListener::GetInstance()), m_Running(false)
 {
-    m_FtdiDriver.Connect( sCom.c_str() );
+    m_FtdiListener.Connect( sCom.c_str() );
 }
 
 
@@ -18,7 +18,7 @@ NinjaIMUDriver::NinjaIMUDriver(const std::string& sCom)
 /////////////////////////////////////////////////////////////////////////////////////////
 NinjaIMUDriver::~NinjaIMUDriver()
 {
-    m_FtdiDriver.Disconnect();
+    m_FtdiListener.Disconnect();
     m_Running = false;
     if( m_CallbackThread.joinable() ) {
         m_CallbackThread.join();
@@ -43,7 +43,7 @@ void NinjaIMUDriver::_ThreadFunc()
     while( m_Running ) {
         pbMsg.Clear();
 
-        if( m_FtdiDriver.ReadSensorPacket(Pkt) == 0 ) {
+        if( m_FtdiListener.ReadSensorPacket(Pkt) == 0 ) {
             std::cerr << "HAL: Error reading FTDI com port." << std::endl;
             continue;
         }

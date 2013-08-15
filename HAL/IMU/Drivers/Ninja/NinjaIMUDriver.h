@@ -4,7 +4,7 @@
 
 #include <HAL/IMU/IMUDriverInterface.h>
 
-#include "FtdiDriver.h"
+#include "FtdiListener.h"
 
 namespace hal {
 
@@ -20,7 +20,7 @@ private:
 
 private:
     IMUDriverDataCallback   m_Callback;
-    FtdiDriver              m_FtdiDriver;
+    FtdiListener&           m_FtdiListener;
     bool                    m_Running;
     std::thread             m_CallbackThread;
 

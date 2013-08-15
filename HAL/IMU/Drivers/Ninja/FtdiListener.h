@@ -56,17 +56,25 @@ struct SensorPacket
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class FtdiDriver
+class FtdiListener
 {
 
 public:
     ///////////////////////////////////////////////////////////////////////////////
-    FtdiDriver() : m_bIsConnected(false)
+    static FtdiListener& GetInstance()
+    {
+        static FtdiListener s_Instance;
+        return s_Instance;
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////
+    FtdiListener() : m_bIsConnected(false)
     {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    ~FtdiDriver()
+    ~FtdiListener()
     {
         if(m_bIsConnected){
             _CloseComPort(m_PortHandle);
@@ -76,13 +84,15 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     bool Connect(const char *path)
     {
-        //open the given path
-        m_PortHandle = _OpenComPort(path,B115200);
+        if( m_bIsConnected == false ) {
+            //open the given path
+            m_PortHandle = _OpenComPort(path, B115200);
 
-        if(m_PortHandle <= 0){
-            printf("Failed to open at 115200bps, aborting...\n");
-        } else {
-            m_bIsConnected = true;
+            if(m_PortHandle <= 0){
+                printf("Failed to open at 115200bps, aborting...\n");
+            } else {
+                m_bIsConnected = true;
+            }
         }
         return m_bIsConnected;
     }
