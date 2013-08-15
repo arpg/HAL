@@ -28,6 +28,9 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType )
     if( eType == Msg_Type_Posys ) {
         m_Instance.m_bReadPosys = true;
     }
+    if( eType == Msg_Type_Encoder ) {
+        m_Instance.m_bReadEncoder = true;
+    }
     return m_Instance;
 }
 
@@ -141,7 +144,8 @@ void Reader::_ThreadFunc()
 
         if( (pMsg->has_camera() && m_bReadCamera)
             || (pMsg->has_imu() && m_bReadIMU)
-            || (pMsg->has_pose() && m_bReadPosys) ) {
+            || (pMsg->has_pose() && m_bReadPosys)
+            || (pMsg->has_encoder() && m_bReadEncoder) ) {
 
             if( pMsg->has_camera() ) {
                 m_qMessageTypes.push_back( Msg_Type_Camera );
@@ -149,11 +153,15 @@ void Reader::_ThreadFunc()
             }
             if( pMsg->has_imu() ) {
                 m_qMessageTypes.push_back( Msg_Type_IMU );
-//                std::cout << "Pushing IMU: " << pMsg->imu().devicetime() << std::endl;
+//                std::cout << "Pushing IMU: " << pMsg->imu().device_time() << std::endl;
             }
             if( pMsg->has_pose() ) {
                 m_qMessageTypes.push_back( Msg_Type_Posys );
-//                std::cout << "Pushing Pose: " << pMsg->pose().devicetime() << std::endl;
+//                std::cout << "Pushing Pose: " << pMsg->pose().device_time() << std::endl;
+            }
+            if( pMsg->has_encoder() ) {
+                m_qMessageTypes.push_back( Msg_Type_Encoder );
+//                std::cout << "Pushing Encoder: " << pMsg->encoder().device_time() << std::endl;
             }
 
             m_qMessages.push_back(std::move(pMsg));
@@ -268,6 +276,35 @@ std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg()
     std::unique_ptr<pb::PoseMsg> pPoseMsg( new pb::PoseMsg );
     pPoseMsg->Swap( pMessage->mutable_pose() );
     return pPoseMsg;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg()
+{
+    if( !m_bReadEncoder ) {
+        std::cerr << "warning: ReadEncoderMsg was called but ReadEncoder variable is set to false! " << std::endl;
+        return nullptr;
+    }
+
+    // Wait if buffer is empty
+    std::unique_lock<std::mutex> lock(m_QueueMutex);
+    while(m_bRunning && !_AmINext( Msg_Type_Encoder ) ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+    }
+
+    if(!m_bRunning) {
+        return nullptr;
+    }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::EncoderMsg> pEncoderMsg( new pb::EncoderMsg );
+    pEncoderMsg->Swap( pMessage->mutable_encoder() );
+    return pEncoderMsg;
 }
 
 

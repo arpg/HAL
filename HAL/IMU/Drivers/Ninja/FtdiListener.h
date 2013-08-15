@@ -12,6 +12,10 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Encoder/EncoderDriverInterface.h>
+
+
 typedef int ComPortHandle;
 
 #define FTDI_PACKET_DELIMITER1 0xD0
@@ -67,17 +71,35 @@ public:
         return s_Instance;
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////
-    FtdiListener() : m_bIsConnected(false)
+    FtdiListener() : m_bIsConnected(false), m_IMUCallback(nullptr), m_EncoderCallback(nullptr)
     {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     ~FtdiListener()
     {
-        if(m_bIsConnected){
-            _CloseComPort(m_PortHandle);
+        Disconnect();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    void RegisterIMUCallback(hal::IMUDriverDataCallback callback)
+    {
+        m_IMUCallback = callback;
+        if( m_Running == false ) {
+            m_Running = true;
+            m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////
+    void RegisterEncoderCallback(hal::EncoderDriverDataCallback callback)
+    {
+        m_EncoderCallback = callback;
+        if( m_Running == false ) {
+            m_Running = true;
+            m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
         }
     }
 
@@ -103,6 +125,10 @@ public:
     {
         if(m_bIsConnected) {
             _CloseComPort(m_PortHandle);
+        }
+        m_Running = false;
+        if( m_CallbackThread.joinable() ) {
+            m_CallbackThread.join();
         }
     }
 
@@ -243,7 +269,48 @@ private:
 
 
 private:
-    bool            m_bIsConnected;
-    ComPortHandle   m_PortHandle;
+    /////////////////////////////////////////////////////////////////////////////////////////
+    void _ThreadFunc()
+    {
+        pb::ImuMsg pbMsg;
+        SensorPacket Pkt;
+        while( m_Running ) {
+            pbMsg.Clear();
 
+            if( ReadSensorPacket(Pkt) == 0 ) {
+                std::cerr << "HAL: Error reading FTDI com port." << std::endl;
+                continue;
+            }
+
+            pbMsg.set_id(1);
+            pbMsg.set_device_time( 0.0 );
+
+            pb::VectorMsg* pbVec = pbMsg.mutable_accel();
+            pbVec->add_data(Pkt.Acc_x);
+            pbVec->add_data(Pkt.Acc_y);
+            pbVec->add_data(Pkt.Acc_z);
+
+            pbVec = pbMsg.mutable_gyro();
+            pbVec->add_data(Pkt.Gyro_x);
+            pbVec->add_data(Pkt.Gyro_y);
+            pbVec->add_data(Pkt.Gyro_z);
+
+            pbVec = pbMsg.mutable_mag();
+            pbVec->add_data(Pkt.Mag_x);
+            pbVec->add_data(Pkt.Mag_y);
+            pbVec->add_data(Pkt.Mag_z);
+
+            m_IMUCallback(pbMsg);
+        }
+    }
+
+
+private:
+    bool                            m_bIsConnected;
+    ComPortHandle                   m_PortHandle;
+
+    bool                            m_Running;
+    std::thread                     m_CallbackThread;
+    hal::IMUDriverDataCallback      m_IMUCallback;
+    hal::EncoderDriverDataCallback  m_EncoderCallback;
 };
