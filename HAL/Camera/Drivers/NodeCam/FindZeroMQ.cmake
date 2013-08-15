@@ -7,7 +7,7 @@
 
 include(LibFindMacros)
 
-IF (UNIX)
+IF(UNIX)
 # Use pkg-config to get hints about paths
 libfind_pkg_check_modules(ZeroMQ_PKGCONF libzmq)
 

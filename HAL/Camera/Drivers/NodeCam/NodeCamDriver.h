@@ -1,26 +1,24 @@
-/*
-   \file NodeCamDriver.h
+#pragma once
 
- */
+#include <thread>
 
-#ifndef _NODECAM_H_
-#define _NODECAM_H_
+#include <HAL/Utils/Node.h>
 
-#include "RPG/Devices/Camera/CameraDriverInterface.h"
+#include <HAL/Camera/CameraDriverInterface.h>
 
-#include "Node.h"
+namespace hal {
 
-class NodeCamDriver : public CameraDriver
+class NodeCamDriver : public CameraDriverInterface
 {
-    public:
-        NodeCamDriver();
-        virtual ~NodeCamDriver();
-        bool Capture( std::vector<rpg::ImageWrapper>& vImages );
-        void PrintInfo();
-        bool Init();
-    private:
-        unsigned int        m_nNumNodes;
-        rpg::Node           m_Node;
+public:
+    NodeCamDriver(const std::string& sHost);
+    ~NodeCamDriver();
+
+private:
+
+private:
+    rpg::Node               m_node;
+    std::string             m_host;
 };
 
-#endif
+} /* namespace */

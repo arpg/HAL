@@ -34,7 +34,9 @@ void NodeIMUDriver::_ThreadFunc()
 NodeIMUDriver::~NodeIMUDriver()
 {
     m_running = false;
-    m_callbackThread.join();
+    if( m_callbackThread.joinable() ) {
+        m_callbackThread.join();
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

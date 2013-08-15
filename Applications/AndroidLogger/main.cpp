@@ -1,8 +1,6 @@
 #include <pangolin/pangolin.h>
 #include <pangolin/gldraw.h>
 
-//#include <sophus/se3.hpp>
-
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 
@@ -14,21 +12,12 @@ bool        g_Log = false;
 pb::Logger& g_Logger = pb::Logger::GetInstance();
 
 
-void HandleIMU(const hal::IMUData& IMUdata)
+void HandleIMU(pb::ImuMsg& IMUdata)
 {
     if( g_Log ) {
         pb::Msg msg;
-        msg.set_timestamp( IMUdata.timestamp_system );
-        pb::ImuMsg* pIMU = msg.mutable_imu();
-        pIMU->set_devicetime( IMUdata.timestamp_pps );
-
-        if( IMUdata.data_present & hal::IMU_AHRS_ACCEL ) {
-            pb::WriteVector( IMUdata.accel.cast<double>(), *(pIMU->mutable_accel()) );
-        }
-        if( IMUdata.data_present & hal::IMU_AHRS_GYRO ) {
-            pb::WriteVector( IMUdata.gyro.cast<double>(), *(pIMU->mutable_gyro()) );
-        }
-
+        msg.set_timestamp( IMUdata.device_time() );
+        msg.mutable_imu()->Swap(&IMUdata);
         g_Logger.LogMessage(msg);
     }
 }
@@ -40,8 +29,8 @@ int main( int /*argc*/, char** /*argv*/ )
 
     ////////////////////////////////////////////////////////////////////
 
-    const std::string video_uri = "android://";
-//    const std::string video_uri = "raisin://";
+//    const std::string video_uri = "android://";
+    const std::string video_uri = "raisin://";
 //    const std::string imu_uri = "raisin://";
     hal::Camera camera(video_uri);
     pb::ImageArray images;

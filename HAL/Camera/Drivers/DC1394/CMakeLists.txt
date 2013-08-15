@@ -4,7 +4,7 @@ find_package( DC1394_2 QUIET )
 
 if( DC1394_2_FOUND )
 
-set( BUILD_DC1394 true CACHE BOOL force )
+    set( BUILD_DC1394 true CACHE BOOL force )
 
     if( BUILD_DC1394 )
         add_to_hal_libraries( ${DC1394_2_LIBRARIES} )
