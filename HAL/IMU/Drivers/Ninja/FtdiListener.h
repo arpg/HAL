@@ -13,6 +13,7 @@
 #include <time.h>
 
 #include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Utils/TicToc.h>
 #include <HAL/Encoder/EncoderDriverInterface.h>
 
 
@@ -175,9 +176,6 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
     int _ReadComPort(ComPortHandle comPort, unsigned char* bytes, size_t bytesToRead)
     {
-//
-        printf(".");
-//      fflush(stdout);
       int bytesRead = read(comPort, bytes, bytesToRead);
 
       // align
@@ -309,7 +307,7 @@ private:
                 pbIMU.Clear();
 
                 pbIMU.set_id(1);
-                pbIMU.set_device_time( 0.0 );
+                pbIMU.set_device_time( hal::Tic() );
 
                 pb::VectorMsg* pbVec = pbIMU.mutable_accel();
                 pbVec->add_data(Pkt.Acc_x);
@@ -333,11 +331,31 @@ private:
 
                 pbEncoder.Clear();
 
-                pbEncoder.set_device_time( 0.0 );
-                pbEncoder.set_label(0, "LEFT-BACK");
-                pbEncoder.set_data(0, Pkt.Enc_LB);
-                pbEncoder.set_label(1, "RIGHT-BACK");
-                pbEncoder.set_data(1, Pkt.Enc_RB);
+                pbEncoder.set_device_time( hal::Tic() );
+
+                // encoders
+                pbEncoder.set_label(0, "ENC_LF");
+                pbEncoder.set_data(0, Pkt.Enc_LF);
+                pbEncoder.set_label(1, "ENC_RF");
+                pbEncoder.set_data(1, Pkt.Enc_RF);
+                pbEncoder.set_label(2, "ENC_LB");
+                pbEncoder.set_data(2, Pkt.Enc_LB);
+                pbEncoder.set_label(3, "ENC_RB");
+                pbEncoder.set_data(3, Pkt.Enc_RB);
+
+                // adcs
+                pbEncoder.set_label(4, "ADC_LB");
+                pbEncoder.set_data(4, Pkt.ADC_LB);
+                pbEncoder.set_label(5, "ADC_LF_YAW");
+                pbEncoder.set_data(5, Pkt.ADC_LF_yaw);
+                pbEncoder.set_label(6, "ADC_LF_ROLL");
+                pbEncoder.set_data(6, Pkt.ADC_LF_rol);
+                pbEncoder.set_label(7, "ADC_RB");
+                pbEncoder.set_data(7, Pkt.ADC_RB);
+                pbEncoder.set_label(8, "ADC_RF_YAW");
+                pbEncoder.set_data(8, Pkt.ADC_RF_yaw);
+                pbEncoder.set_label(9, "ADC_RF_ROLL");
+                pbEncoder.set_data(9, Pkt.ADC_RF_rol);
 
                 m_EncoderCallback(pbEncoder);
             }
