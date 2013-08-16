@@ -1,0 +1,1 @@
+add_to_hal_sources( ProtoReaderEncoderDriver.h ProtoReaderEncoderDriver.cpp ProtoReaderEncoderFactory.cpp )

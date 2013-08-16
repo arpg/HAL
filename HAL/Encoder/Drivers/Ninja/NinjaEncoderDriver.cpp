@@ -1,13 +1,11 @@
-#include <HAL/Utils/TicToc.h>
-
-#include "NinjaIMUDriver.h"
+#include "NinjaEncoderDriver.h"
 
 
 using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-NinjaIMUDriver::NinjaIMUDriver(const std::string& sCom)
+NinjaEncoderDriver::NinjaEncoderDriver(const std::string& sCom)
     : m_FtdiListener(FtdiListener::GetInstance())
 {
     m_FtdiListener.Connect( sCom.c_str() );
@@ -15,14 +13,14 @@ NinjaIMUDriver::NinjaIMUDriver(const std::string& sCom)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-NinjaIMUDriver::~NinjaIMUDriver()
+NinjaEncoderDriver::~NinjaEncoderDriver()
 {
     m_FtdiListener.Disconnect();
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void NinjaIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback Callback)
+void NinjaEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
 {
-    m_FtdiListener.RegisterIMUCallback( Callback );
+    m_FtdiListener.RegisterEncoderCallback( Callback );
 }

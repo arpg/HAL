@@ -16,13 +16,7 @@ public:
     void RegisterIMUDataCallback(IMUDriverDataCallback Callback);
 
 private:
-    void _ThreadFunc();
-
-private:
-    IMUDriverDataCallback   m_Callback;
     FtdiListener&           m_FtdiListener;
-    bool                    m_Running;
-    std::thread             m_CallbackThread;
 
 };
 

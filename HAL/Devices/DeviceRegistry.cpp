@@ -3,6 +3,7 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/Posys/PosysDevice.h>
+#include <HAL/Encoder/EncoderDevice.h>
 
 namespace hal
 {
@@ -83,5 +84,6 @@ void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)
 template class DeviceRegistry<hal::CameraDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
+template class DeviceRegistry<hal::EncoderDriverInterface>;
 
 }

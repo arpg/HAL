@@ -12,6 +12,10 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Encoder/EncoderDriverInterface.h>
+
+
 typedef int ComPortHandle;
 
 #define FTDI_PACKET_DELIMITER1 0xD0
@@ -25,6 +29,7 @@ struct CommandPacket
     char m_cSize;
     int m_nSteering;
     int m_nSpeed;
+    unsigned short int CHECK_SUM;
 };
 
 #pragma pack(1)
@@ -52,6 +57,7 @@ struct SensorPacket
     short int   ADC_RB;
     short int   ADC_RF_yaw;
     short int   ADC_RF_rol;
+    unsigned short int CHECK_SUM;
 };
 
 
@@ -67,17 +73,35 @@ public:
         return s_Instance;
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////
-    FtdiListener() : m_bIsConnected(false)
+    FtdiListener() : m_bIsConnected(false), m_IMUCallback(nullptr), m_EncoderCallback(nullptr)
     {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     ~FtdiListener()
     {
-        if(m_bIsConnected){
-            _CloseComPort(m_PortHandle);
+        Disconnect();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    void RegisterIMUCallback(hal::IMUDriverDataCallback callback)
+    {
+        m_IMUCallback = callback;
+        if( m_Running == false ) {
+            m_Running = true;
+            m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////
+    void RegisterEncoderCallback(hal::EncoderDriverDataCallback callback)
+    {
+        m_EncoderCallback = callback;
+        if( m_Running == false ) {
+            m_Running = true;
+            m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
         }
     }
 
@@ -101,6 +125,10 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     void Disconnect()
     {
+        m_Running = false;
+        if( m_CallbackThread.joinable() ) {
+            m_CallbackThread.join();
+        }
         if(m_bIsConnected) {
             _CloseComPort(m_PortHandle);
         }
@@ -116,6 +144,13 @@ public:
         Pkt.m_cSize = sizeof(CommandPacket);
         Pkt.m_nSpeed = nSpeed;
         Pkt.m_nSteering = nSteering;
+
+        unsigned char* ptr = (unsigned char*)&Pkt.m_cDelimiter1;
+        Pkt.CHECK_SUM = 0;
+        for( size_t ii = 0; ii < sizeof(CommandPacket); ++ii ) {
+            Pkt.CHECK_SUM += ptr[ii];
+        }
+
         _WriteComPort(m_PortHandle,(unsigned char *)(&Pkt),sizeof(CommandPacket));
     }
 
@@ -138,8 +173,11 @@ private:
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    int _ReadComPort(ComPortHandle comPort, unsigned char* bytes, int bytesToRead)
+    int _ReadComPort(ComPortHandle comPort, unsigned char* bytes, size_t bytesToRead)
     {
+//
+        printf(".");
+//      fflush(stdout);
       int bytesRead = read(comPort, bytes, bytesToRead);
 
       // align
@@ -150,10 +188,20 @@ private:
       if( ii != 0 ) {
           std::cerr << "HAL: Lost a packet due to misalignment!" << std::endl;
           bytesRead = read(comPort, bytes, ii);
+          return 0;
+      }
+
+      unsigned short int sum = 0;
+      for( size_t ii = 0; ii < bytesToRead-2; ++ii ) {
+          sum += bytes[ii];
+      }
+      unsigned short int chksum = *(unsigned short int*)(bytes + bytesToRead - 2);
+      if( sum != chksum ) {
+          std::cerr << "HAL: Checksum failed!" << std::endl;
+          return 0;
       }
 
       return bytesRead;
-
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -243,7 +291,66 @@ private:
 
 
 private:
-    bool            m_bIsConnected;
-    ComPortHandle   m_PortHandle;
+    /////////////////////////////////////////////////////////////////////////////////////////
+    void _ThreadFunc()
+    {
+        pb::ImuMsg      pbIMU;
+        pb::EncoderMsg  pbEncoder;
+        SensorPacket    Pkt;
 
+        while( m_Running ) {
+
+            if( ReadSensorPacket(Pkt) != sizeof(SensorPacket) ) {
+                std::cerr << "HAL: Error reading FTDI com port." << std::endl;
+                continue;
+            }
+
+            if( m_IMUCallback ) {
+                pbIMU.Clear();
+
+                pbIMU.set_id(1);
+                pbIMU.set_device_time( 0.0 );
+
+                pb::VectorMsg* pbVec = pbIMU.mutable_accel();
+                pbVec->add_data(Pkt.Acc_x);
+                pbVec->add_data(Pkt.Acc_y);
+                pbVec->add_data(Pkt.Acc_z);
+
+                pbVec = pbIMU.mutable_gyro();
+                pbVec->add_data(Pkt.Gyro_x);
+                pbVec->add_data(Pkt.Gyro_y);
+                pbVec->add_data(Pkt.Gyro_z);
+
+                pbVec = pbIMU.mutable_mag();
+                pbVec->add_data(Pkt.Mag_x);
+                pbVec->add_data(Pkt.Mag_y);
+                pbVec->add_data(Pkt.Mag_z);
+
+                m_IMUCallback(pbIMU);
+            }
+
+            if( m_EncoderCallback ) {
+
+                pbEncoder.Clear();
+
+                pbEncoder.set_device_time( 0.0 );
+                pbEncoder.set_label(0, "LEFT-BACK");
+                pbEncoder.set_data(0, Pkt.Enc_LB);
+                pbEncoder.set_label(1, "RIGHT-BACK");
+                pbEncoder.set_data(1, Pkt.Enc_RB);
+
+                m_EncoderCallback(pbEncoder);
+            }
+        }
+    }
+
+
+private:
+    bool                            m_bIsConnected;
+    ComPortHandle                   m_PortHandle;
+
+    bool                            m_Running;
+    std::thread                     m_CallbackThread;
+    hal::IMUDriverDataCallback      m_IMUCallback;
+    hal::EncoderDriverDataCallback  m_EncoderCallback;
 };
