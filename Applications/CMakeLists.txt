@@ -1,2 +1,2 @@
-add_subdirectory( CameraViewer )
+add_subdirectory( SensorViewer )
 #add_subdirectory( LogViewer )

@@ -1,4 +1,4 @@
-project(CameraViewer)
+project(SensorViewer)
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -13,13 +13,13 @@ find_package(HAL 0.1 QUIET)
 find_package( OpenCV2 QUIET )
 
 if(Pangolin_FOUND AND HAL_FOUND)
-    add_executable( CameraViewer main.cpp )
+    add_executable( SensorViewer main.cpp )
 
     include_directories( ${HAL_INCLUDE_DIRS} )
     include_directories( ${Pangolin_INCLUDE_DIRS} )
-    target_link_libraries(CameraViewer ${HAL_LIBRARIES} )
-    target_link_libraries(CameraViewer ${Pangolin_LIBRARIES} )
+    target_link_libraries(SensorViewer ${HAL_LIBRARIES} )
+    target_link_libraries(SensorViewer ${Pangolin_LIBRARIES} )
 
-    add_dependencies( CameraViewer hal )                                              
-    add_dependencies( CameraViewer PbMsgs )   
+    add_dependencies( SensorViewer hal )                                              
+    add_dependencies( SensorViewer PbMsgs )   
 endif()

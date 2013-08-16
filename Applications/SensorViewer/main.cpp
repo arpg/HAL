@@ -147,7 +147,7 @@ int main( int argc, char* argv[] )
 #ifdef HAVE_GLUT
             if(nFrame%30 == 0) {
                 char buffer[1024];
-                sprintf(buffer,"CameraViewer (FPS: %f)", 30.0 / theTimer.Elapsed_s() );
+                sprintf(buffer,"SensorViewer (FPS: %f)", 30.0 / theTimer.Elapsed_s() );
                 glutSetWindowTitle(buffer);
                 theTimer.Reset();
             }
