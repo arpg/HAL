@@ -29,6 +29,7 @@ struct CommandPacket
     char m_cSize;
     int m_nSteering;
     int m_nSpeed;
+    unsigned short int CHECK_SUM;
 };
 
 #pragma pack(1)
@@ -143,6 +144,13 @@ public:
         Pkt.m_cSize = sizeof(CommandPacket);
         Pkt.m_nSpeed = nSpeed;
         Pkt.m_nSteering = nSteering;
+
+        unsigned char* ptr = (unsigned char*)&Pkt.m_cDelimiter1;
+        Pkt.CHECK_SUM = 0;
+        for( size_t ii = 0; ii < sizeof(CommandPacket); ++ii ) {
+            Pkt.CHECK_SUM += ptr[ii];
+        }
+
         _WriteComPort(m_PortHandle,(unsigned char *)(&Pkt),sizeof(CommandPacket));
     }
 
@@ -167,7 +175,8 @@ private:
     ///////////////////////////////////////////////////////////////////////////////
     int _ReadComPort(ComPortHandle comPort, unsigned char* bytes, size_t bytesToRead)
     {
-//      printf(".");
+//
+        printf(".");
 //      fflush(stdout);
       int bytesRead = read(comPort, bytes, bytesToRead);
 
