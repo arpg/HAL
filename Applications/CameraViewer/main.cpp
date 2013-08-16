@@ -57,20 +57,28 @@ int main( int argc, char* argv[] )
 {
     GetPot clArgs(argc,argv);
 
-    ///-------------------- CAMERA INIT
-    hal::Camera theCam(clArgs.follow("", "-cam" ));
+    ///-------------------- CAMERA INIT (Optional)
 
-    // Capture first image
-    pb::ImageArray vImgs;
-
+    std::string sCam = clArgs.follow("", "-cam" );
+    hal::Camera theCam;
+    
     // N cameras, each w*h in dimension, greyscale
-    const size_t nNumChannels = theCam.NumChannels();
-    const size_t nImgWidth = theCam.Width();
-    const size_t nImgHeight = theCam.Height();
+    size_t nNumChannels = 0;
+    size_t nImgWidth = 0;
+    size_t nImgHeight = 0;
 
-    std::cout << "- Opening camera with " << nNumChannels << " channel(s)." << std::endl;
-    for(size_t ii=0; ii<nNumChannels; ++ii) {
-        std::cout << "  " << theCam.Width(ii) << "x" << theCam.Height(ii) << std::endl;
+    pb::ImageArray vImgs;
+    
+    if(!sCam.empty()) {
+        theCam = hal::Camera(sCam);
+        nNumChannels = theCam.NumChannels();
+        nImgWidth = theCam.Width();
+        nImgHeight = theCam.Height();        
+
+        std::cout << "- Opening camera with " << nNumChannels << " channel(s)." << std::endl;
+        for(size_t ii=0; ii<nNumChannels; ++ii) {
+            std::cout << "  " << theCam.Width(ii) << "x" << theCam.Height(ii) << std::endl;
+        }
     }
 
     ///-------------------- IMU INIT (Optional)
@@ -131,7 +139,7 @@ int main( int argc, char* argv[] )
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glColor4f(1.0f,1.0f,1.0f,1.0f);
 
-        if(bGo) {
+        if(bGo && nNumChannels) {
             if( !theCam.Capture(vImgs) ) {
                 bRun = false;
             }
@@ -146,7 +154,7 @@ int main( int argc, char* argv[] )
 #endif
         }
 
-        if(!glTex.tid) {
+        if(!glTex.tid && nNumChannels) {
             // Only initialise now we know format.
             glTex.Reinitialise(
                 nImgWidth, nImgHeight, vImgs[0].Format(), true, 0,
