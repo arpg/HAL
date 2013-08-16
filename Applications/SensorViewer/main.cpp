@@ -11,10 +11,12 @@
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Matrix.h>
 
-
 bool        g_bLog      = false;
 pb::Logger& g_Logger    = pb::Logger::GetInstance();
 
+pangolin::DataLog g_PlotLogAccel;
+pangolin::DataLog g_PlotLogGryo;
+pangolin::DataLog g_PlotLogMag;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
@@ -27,6 +29,9 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
     }
 //    const pb::VectorMsg& pbVec = IMUdata.accel();
 //    printf("X: %5f    Y: %5f     Z: %5f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2));
+    g_PlotLogAccel.Log( IMUdata.accel().data(0), IMUdata.accel().data(1), IMUdata.accel().data(2) );
+    g_PlotLogGryo.Log( IMUdata.gyro().data(0), IMUdata.gyro().data(1), IMUdata.gyro().data(2) );
+    g_PlotLogMag.Log( IMUdata.mag().data(0), IMUdata.mag().data(1), IMUdata.mag().data(2) );
 }
 
 
@@ -60,16 +65,16 @@ int main( int argc, char* argv[] )
     ///-------------------- CAMERA INIT (Optional)
 
     std::string sCam = clArgs.follow("", "-cam" );
-    hal::Camera theCam;
+    const bool bHaveCam = !sCam.empty();
     
     // N cameras, each w*h in dimension, greyscale
     size_t nNumChannels = 0;
     size_t nImgWidth = 0;
     size_t nImgHeight = 0;
 
+    hal::Camera theCam;
     pb::ImageArray vImgs;
-    
-    if(!sCam.empty()) {
+    if(bHaveCam) {
         theCam = hal::Camera(sCam);
         nNumChannels = theCam.NumChannels();
         nImgWidth = theCam.Width();
@@ -110,29 +115,41 @@ int main( int argc, char* argv[] )
     ///-------------------- WINDOW INIT
 
     // Setup OpenGL Display (based on GLUT)
-    pangolin::CreateWindowAndBind(__FILE__,nNumChannels*nImgWidth,nImgHeight);
+    pangolin::CreateWindowAndBind(__FILE__,nNumChannels*nImgWidth,nImgHeight * (bHaveIMU ? 3.0/2.0 : 1.0) );
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     pangolin::GlTexture glTex;
 
     // Create Smart viewports for each camera image that preserve aspect
-    pangolin::View& ContainerView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
+    pangolin::View& cameraView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqual);
     for(size_t ii=0; ii < nNumChannels; ++ii ) {
-        ContainerView.AddDisplay(pangolin::CreateDisplay().SetAspect((double)nImgWidth/nImgHeight));
+        cameraView.AddDisplay(pangolin::CreateDisplay().SetAspect((double)nImgWidth/nImgHeight));
+    }
+    
+    if( bHaveIMU ) {
+        pangolin::View& imuView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqualVertical);        
+        imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel) );
+        imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo) );
+        imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag) );
+        
+        if(bHaveCam) {
+            cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
+            imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
+        }
     }
 
     bool bRun = true;
     bool bStep = false;
+    unsigned long nFrame=0;
 
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + pangolin::PANGO_KEY_RIGHT, [&bStep](){bStep=true;} );
     pangolin::RegisterKeyPressCallback(' ', [&](){bRun = !bRun;} );
-
-    pangolin::RegisterKeyPressCallback('l', [&](){ g_bLog = !g_bLog; } );
+    pangolin::RegisterKeyPressCallback('l', [&](){ g_bLog = !g_bLog; nFrame = 0; } );
 
     pangolin::Timer theTimer;
 
-    for(unsigned long nFrame=0; !pangolin::ShouldQuit(); nFrame++)
+    for(; !pangolin::ShouldQuit(); nFrame++)
     {
         const bool bGo = bRun || pangolin::Pushed(bStep);
 
@@ -163,7 +180,7 @@ int main( int argc, char* argv[] )
         }
 
         for(size_t ii=0; ii<nNumChannels; ++ii ) {
-            ContainerView[ii].Activate();
+            cameraView[ii].Activate();
             glTex.Upload( vImgs[ii].data(), vImgs[ii].Format(), vImgs[ii].Type() );
             glTex.RenderToViewportFlipY();
         }
@@ -175,13 +192,15 @@ int main( int argc, char* argv[] )
             g_Logger.LogMessage(pbMsg);
 
             // draw red circle on bottom left corner for visual cue
-            ContainerView.ActivatePixelOrthographic();
-            glPushAttrib(GL_ENABLE_BIT);
-            glDisable(GL_LIGHTING);
-            glDisable(GL_DEPTH_TEST);
-            glColor3ub( 255, 0, 0 );
-            pangolin::glDrawCircle(20,20,7);
-            glPopAttrib();
+            if( ! ((nFrame / 30) %2) ) {
+                cameraView.ActivatePixelOrthographic();
+                glPushAttrib(GL_ENABLE_BIT);
+                glDisable(GL_LIGHTING);
+                glDisable(GL_DEPTH_TEST);
+                glColor3ub( 255, 0, 0 );
+                pangolin::glDrawCircle(20,20,7);
+                glPopAttrib();
+            }
         }
 
         pangolin::FinishFrame();
