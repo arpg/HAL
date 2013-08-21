@@ -148,7 +148,7 @@ public:
 
         unsigned char* ptr = (unsigned char*)&Pkt.m_cDelimiter1;
         Pkt.CHECK_SUM = 0;
-        for( size_t ii = 0; ii < sizeof(CommandPacket); ++ii ) {
+        for( size_t ii = 0; ii < sizeof(CommandPacket)-2; ++ii ) {
             Pkt.CHECK_SUM += ptr[ii];
         }
 

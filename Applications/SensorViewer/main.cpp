@@ -29,9 +29,15 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
     }
 //    const pb::VectorMsg& pbVec = IMUdata.accel();
 //    printf("X: %5f    Y: %5f     Z: %5f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2));
-    g_PlotLogAccel.Log( IMUdata.accel().data(0), IMUdata.accel().data(1), IMUdata.accel().data(2) );
-    g_PlotLogGryo.Log( IMUdata.gyro().data(0), IMUdata.gyro().data(1), IMUdata.gyro().data(2) );
-    g_PlotLogMag.Log( IMUdata.mag().data(0), IMUdata.mag().data(1), IMUdata.mag().data(2) );
+    if( IMUdata.has_accel() ) {
+        g_PlotLogAccel.Log( IMUdata.accel().data(0), IMUdata.accel().data(1), IMUdata.accel().data(2) );
+    }
+    if( IMUdata.has_gyro() ) {
+        g_PlotLogGryo.Log( IMUdata.gyro().data(0), IMUdata.gyro().data(1), IMUdata.gyro().data(2) );
+    }
+    if( IMUdata.has_mag() ) {
+        g_PlotLogMag.Log( IMUdata.mag().data(0), IMUdata.mag().data(1), IMUdata.mag().data(2) );
+    }
 }
 
 
@@ -66,7 +72,7 @@ int main( int argc, char* argv[] )
 
     std::string sCam = clArgs.follow("", "-cam" );
     const bool bHaveCam = !sCam.empty();
-    
+
     // N cameras, each w*h in dimension, greyscale
     size_t nNumChannels = 0;
     size_t nImgWidth = 0;
@@ -78,7 +84,7 @@ int main( int argc, char* argv[] )
         theCam = hal::Camera(sCam);
         nNumChannels = theCam.NumChannels();
         nImgWidth = theCam.Width();
-        nImgHeight = theCam.Height();        
+        nImgHeight = theCam.Height();
 
         std::cout << "- Opening camera with " << nNumChannels << " channel(s)." << std::endl;
         for(size_t ii=0; ii<nNumChannels; ++ii) {
@@ -126,13 +132,13 @@ int main( int argc, char* argv[] )
     for(size_t ii=0; ii < nNumChannels; ++ii ) {
         cameraView.AddDisplay(pangolin::CreateDisplay().SetAspect((double)nImgWidth/nImgHeight));
     }
-    
+
     if( bHaveIMU ) {
-        pangolin::View& imuView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqualVertical);        
+        pangolin::View& imuView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqualVertical);
         imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel) );
         imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo) );
         imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag) );
-        
+
         if(bHaveCam) {
             cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
             imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
