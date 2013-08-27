@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+
 #include <vrpn_Tracker.h>
 
 #include <HAL/Posys/PosysDriverInterface.h>
@@ -15,6 +17,7 @@ public:
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
 
 private:
+    static void _ThreadFunction(ViconDriver *pVT);
     static void VRPN_CALLBACK _ViconHandler(void* uData, const vrpn_TRACKERCB tData);
 
 private:
@@ -29,6 +32,9 @@ private:
 
     std::map< std::string, TrackerObject >      m_mObjects;
     vrpn_Connection*                            m_pViconConnection;
+
+    bool                                        m_bRunning;
+    std::thread*                                m_pThread;
 
 };
 

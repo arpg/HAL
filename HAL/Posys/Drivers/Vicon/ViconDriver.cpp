@@ -1,5 +1,7 @@
 #include "ViconDriver.h"
 
+#include <unistd.h>
+
 #include <HAL/Utils/Uri.h>
 
 using namespace hal;
@@ -7,6 +9,7 @@ using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ViconDriver::ViconDriver(std::string sHost, std::string sTrackedObjs)
+    : m_bRunning(false), m_pThread(nullptr)
 {
     std::vector<std::string> vTrackedObjs = Expand(sTrackedObjs, '[', ']', ',');
 
@@ -28,6 +31,10 @@ ViconDriver::ViconDriver(std::string sHost, std::string sTrackedObjs)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ViconDriver::~ViconDriver()
 {
+    m_bRunning = false;
+    if( m_pThread->joinable() ) {
+        m_pThread->join();
+    }
 }
 
 
@@ -35,6 +42,23 @@ ViconDriver::~ViconDriver()
 void ViconDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
 {
     m_Callback = callback;
+    m_bRunning = true;
+    m_pThread = new std::thread(ViconDriver::_ThreadFunction, this);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void ViconDriver::_ThreadFunction(ViconDriver *pVT)
+{
+    while( pVT->m_bRunning ) {
+
+        for( auto it = pVT->m_mObjects.begin(); it != pVT->m_mObjects.end(); it++ ) {
+            it->second.m_pTracker->mainloop();
+        }
+
+        // small sleep to not eat up all the cpu
+        usleep(1000);
+    }
 }
 
 
@@ -55,13 +79,14 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
 
     pb::VectorMsg* pbVec = pbMsg.mutable_pose();
 
+    pbVec->add_data(tData.pos[0]);
+    pbVec->add_data(tData.pos[1]);
+    pbVec->add_data(tData.pos[2]);
+
     pbVec->add_data(tData.quat[0]);
     pbVec->add_data(tData.quat[1]);
     pbVec->add_data(tData.quat[2]);
     pbVec->add_data(tData.quat[3]);
-    pbVec->add_data(tData.pos[0]);
-    pbVec->add_data(tData.pos[1]);
-    pbVec->add_data(tData.pos[2]);
 
     pVicon->m_Callback(pbMsg);
 }

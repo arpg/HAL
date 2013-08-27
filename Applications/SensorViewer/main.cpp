@@ -44,13 +44,10 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Posys_Handler(pb::PoseMsg& PoseData)
 {
-    std::cout << "Got at time: " << PoseData.device_time() << std::endl;
-
     pb::VectorMsg pbVec = PoseData.pose();
 
-    for( int ii = 0; ii < pbVec.data_size(); ++ii ) {
-        std::cout << "Data " << ii << ": " << pbVec.data(ii) << std::endl;
-    }
+//    printf("%4f   %4f   %4f -- %4f   %4f   %4f   %4f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2),
+//           pbVec.data(3),pbVec.data(4),pbVec.data(5),pbVec.data(6));
 
     if( g_bLog ) {
         pb::Msg pbMsg;
