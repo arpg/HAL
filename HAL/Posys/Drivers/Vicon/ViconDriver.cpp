@@ -19,6 +19,7 @@ ViconDriver::ViconDriver(std::string sHost, std::string sTrackedObjs)
         TrackerObject* pObj = &m_mObjects[ vTrackedObjs[ii] ];
 
         pObj->m_sName = vTrackedObjs[ii];
+        pObj->m_nId = ii;
         pObj->m_pTracker = new vrpn_Tracker_Remote( sUri.c_str(), m_pViconConnection  );
         pObj->m_pViconDriver = this;
         pObj->m_pTracker->register_change_handler( pObj, _ViconHandler );
@@ -73,7 +74,7 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
     const double vicon_timestamp = tData.msg_time.tv_sec + (1e-6 * tData.msg_time.tv_usec);
     pbMsg.set_device_time( vicon_timestamp );
 
-    pbMsg.set_id( tData.sensor );
+    pbMsg.set_id( pObj->m_nId );
 
     pbMsg.set_type( pb::PoseMsg_Type_SE3 );
 

@@ -44,10 +44,14 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Posys_Handler(pb::PoseMsg& PoseData)
 {
+    /*
     pb::VectorMsg pbVec = PoseData.pose();
-
-//    printf("%4f   %4f   %4f -- %4f   %4f   %4f   %4f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2),
-//           pbVec.data(3),pbVec.data(4),pbVec.data(5),pbVec.data(6));
+    if( PoseData.id() == 0 ) {
+        printf("%4f   %4f   %4f -- %4f   %4f   %4f   %4f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2),
+           pbVec.data(3),pbVec.data(4),pbVec.data(5),pbVec.data(6));
+        fflush(stdout);
+    }
+    */
 
     if( g_bLog ) {
         pb::Msg pbMsg;

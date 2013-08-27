@@ -26,6 +26,7 @@ private:
     struct TrackerObject
     {
         std::string                             m_sName;
+        unsigned int                            m_nId;
         vrpn_Tracker_Remote*                    m_pTracker;
         ViconDriver*                            m_pViconDriver;
     };
