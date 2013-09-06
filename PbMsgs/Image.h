@@ -69,7 +69,12 @@ inline cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
         }
     }
 
-    return cv::Mat( pbImage->height(), pbImage->width(), nCvType, (void*)pbImage->mutable_data()->data() );
+    /**
+     * @note We need to clone the cv::Mat here because OpenCV will not
+     * copy the data we give it on its own! This _will_ cause problems otherwise.
+     */
+    return cv::Mat( pbImage->height(), pbImage->width(), nCvType,
+                    (void*)pbImage->mutable_data()->data() ).clone();
 }
 
 inline void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
