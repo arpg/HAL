@@ -18,13 +18,13 @@ ViconDriver::ViconDriver(std::string sHost, std::string sTrackedObjs)
 
         TrackerObject* pObj = &m_mObjects[ vTrackedObjs[ii] ];
 
+        m_pViconConnection = vrpn_get_connection_by_name( sHost.c_str() );
+
         pObj->m_sName = vTrackedObjs[ii];
         pObj->m_nId = ii;
         pObj->m_pTracker = new vrpn_Tracker_Remote( sUri.c_str(), m_pViconConnection  );
         pObj->m_pViconDriver = this;
         pObj->m_pTracker->register_change_handler( pObj, _ViconHandler );
-
-        m_pViconConnection = vrpn_get_connection_by_name( sHost.c_str() );
     }
 }
 
