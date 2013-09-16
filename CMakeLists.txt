@@ -15,7 +15,11 @@ option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 
 add_subdirectory( PbMsgs )
 add_subdirectory( HAL )
-add_subdirectory( Node )
+
+option(BUILD_NODE OFF "Build Node library")
+if (BUILD_NODE)
+  add_subdirectory(Node)
+endif()
 
 
 set( BUILD_APPLICATIONS true CACHE BOOL force )
