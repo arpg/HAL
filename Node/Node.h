@@ -979,7 +979,8 @@ namespace rpg
 
                             Rep->Clear();
 
-                            if( !Req->ParseFromArray( (char*)ZmqReq.data() + PbOffset, PbByteSize ) ) {
+                            if( !Req->ParseFromArray( (char*)(ZmqReq.data()) + PbOffset, PbByteSize ) )
+                            {
                                 continue;
                             }
 

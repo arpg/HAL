@@ -1,0 +1,68 @@
+/*
+   This node provides some RPC methods and also publishes some data.
+
+   Start this guy then try Node2.
+
+ */
+
+#include "ExampleMessage.pb.h"
+#include <Node/Node.h>
+
+#include <stdio.h>
+
+using namespace std;
+
+string gText = "Hello";
+
+///////////////////////////////////////////////////////////
+// nice simple remote procedure call
+int SimpleRpcMethod( const std::string& sStr )
+{
+    printf("int SimpleRpcPMethod( \"%s\" ) called\n", sStr.c_str() );
+    return 1;
+}
+
+///////////////////////////////////////////////////////////
+void RpcMethod( Msg& Req, Msg& Rep, void* )
+{
+    // print value we got from network
+    printf("\n--- Incoming message! The value within: %s ---\n", Req.value().c_str());
+
+    // do something
+    gText = Req.value();
+
+    // prepare reply message
+    Rep.set_value("Value set!");
+}
+
+///////////////////////////////////////////////////////////
+int main( int, char** )
+{
+    string sNodeName = "Node1";
+
+    // initialize node
+    rpg::node n;
+
+    n.set_verbocity(3); // be a bit noisy
+    n.init( sNodeName );
+
+    // set up a publisher
+    n.advertise( "Node1Topic" );
+    cout << "Node1Topic advertized." << endl;
+
+    // set up a remote procedure call
+    n.provide_rpc( "RpcMethod", &RpcMethod, NULL );
+
+    // easy api
+    n.provide_rpc( "SimpleRpcMethod", &SimpleRpcMethod );
+
+    while(1){
+        Msg PubMsg;
+        PubMsg.set_value( gText );
+        n.publish( "Node1Topic", PubMsg );
+        cout << "Sending '" << gText << "'" << endl;
+        sleep(1);
+    }
+
+    return 0;
+}
