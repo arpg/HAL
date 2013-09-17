@@ -56,7 +56,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/crc.hpp>  // for boost::crc_32_type
 
-#include <zmq.hpp>
+#include "zmq.hpp"
 #include <zmq.h>
 
 #include <google/protobuf/message.h>

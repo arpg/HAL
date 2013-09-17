@@ -10,7 +10,7 @@
 #include <thread>
 #include <chrono>
 
-#include <zmq.hpp>
+#include "zmq.hpp"
 
 #include <google/protobuf/message.h>
 
