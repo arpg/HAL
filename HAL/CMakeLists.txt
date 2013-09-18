@@ -19,6 +19,10 @@ endif()
 
 find_package( OpenCV2 REQUIRED )
 find_package( PbMsgs 0.1 REQUIRED )
+find_package( Sophus REQUIRED )
+
+include_directories(${Sophus_INCLUDE_DIR})
+
 
 set_property( GLOBAL PROPERTY P_INCLUDE_DIRS
     ${PbMsgs_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS}
