@@ -56,6 +56,8 @@ target_link_libraries(node ${PROJ_LIBRARIES})
 set(EXPORT_NODE_INC
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${PROTOBUF_INCLUDE_DIRS}
+  ${ZeroMQ_INCLUDE_DIRS}
   )
 
 configure_file( ${Node_SOURCE_DIR}/NODEConfig.cmake.in
