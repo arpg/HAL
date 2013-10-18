@@ -201,12 +201,11 @@ int main( int argc, char* argv[] )
             // draw red circle on bottom left corner for visual cue
             if( ! ((nFrame / 30) %2) ) {
                 cameraView.ActivatePixelOrthographic();
-                glPushAttrib(GL_ENABLE_BIT);
-                glDisable(GL_LIGHTING);
-                glDisable(GL_DEPTH_TEST);
-                glColor3ub( 255, 0, 0 );
+                pangolin::GlState state;
+                state.glDisable(GL_DEPTH_TEST);
+                state.glDisable(GL_LIGHTING);
+                glColor3f( 1.0, 0, 0 );
                 pangolin::glDrawCircle(20,20,7);
-                glPopAttrib();
             }
         }
 
