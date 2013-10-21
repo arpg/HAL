@@ -29,9 +29,7 @@ int main( int /*argc*/, char** /*argv*/ )
 
     ////////////////////////////////////////////////////////////////////
 
-//    const std::string video_uri = "android://";
-    const std::string video_uri = "raisin://";
-//    const std::string imu_uri = "raisin://";
+    const std::string video_uri = "android://";
     hal::Camera camera(video_uri);
     pb::ImageArray images;
 

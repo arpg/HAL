@@ -63,6 +63,11 @@ macro( add_to_hal_sources )
     endforeach()
 endmacro()
 
+macro( hal_set_compile_flags file flags )
+    set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_SOURCES "${file}" )
+    set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_FLAGS "${flags}" )
+endmacro()
+
 #############################################################################
 # Add Devices
 
@@ -82,16 +87,21 @@ get_property( INTERNAL_INC  GLOBAL PROPERTY P_INCLUDE_DIRS)
 get_property( INTERNAL_LIBS GLOBAL PROPERTY P_LIBRARIES)
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES)
 
+# this is a horrible hack in order to set compiler flag properties to individual files
+get_property( C_O_S GLOBAL PROPERTY COMPILER_OPTS_SOURCES)
+get_property( C_O_F GLOBAL PROPERTY COMPILER_OPTS_FLAGS)
+
+list(LENGTH C_O_S len_c_o_s)
+math(EXPR len_c_o_s "${len_c_o_s} - 1")
+
+foreach(val RANGE ${len_c_o_s})
+  list(GET C_O_S ${val} source)
+  list(GET C_O_F ${val} flag)
+    set_source_files_properties( ${source} PROPERTIES COMPILE_FLAGS ${flag} )
+endforeach()
+
+
 if( ANDROID )
-    # TODO: Figure out how to set these from sub-dirs.
-    set_source_files_properties( Camera/Drivers/Android/CameraListener.cpp PROPERTIES COMPILE_FLAGS "-fno-rtti -fpermissive" )
-    set_source_files_properties( Camera/Drivers/Android/AndroidDriver.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    set_source_files_properties( Camera/Drivers/Android/AndroidFactory.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    set_source_files_properties( Camera/Drivers/RaisinCam/Android/RaisinCameraListener.cpp PROPERTIES COMPILE_FLAGS "-fno-rtti -fpermissive" )
-    set_source_files_properties( Camera/Drivers/RaisinCam/Android/RaisinDriver.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    set_source_files_properties( Camera/Drivers/RaisinCam/Android/RaisinFactory.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    set_source_files_properties( IMU/Drivers/RaisinIMU/RaisinIMUDriver.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
-    set_source_files_properties( IMU/Drivers/RaisinIMU/RaisinIMUFactory.cpp PROPERTIES COMPILE_FLAGS "-fpermissive" )
     list(APPEND INTERNAL_LIBS "z")
 endif()
 

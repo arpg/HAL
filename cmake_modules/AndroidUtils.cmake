@@ -14,7 +14,7 @@ if(ANDROID AND NOT TARGET apk)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH_ROOT}/bin/${ANDROID_NDK_ABI_NAME})
-    
+
     macro( create_android_manifest_xml filename prog_name package_name activity_name)
         file( WRITE ${filename}
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>
@@ -27,17 +27,20 @@ if(ANDROID AND NOT TARGET apk)
     <!-- This is the platform API where NativeActivity was introduced. -->
     <uses-sdk android:minSdkVersion=\"14\" />
     <uses-feature android:name=\"android.hardware.camera\" />
+    <uses-feature android:name=\"android.hardware.usb.host\" />
     <uses-permission android:name=\"android.permission.CAMERA\"/>
     <uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>
     <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>
+    <uses-permission android:name=\"android.permission.INTERNET\"/>
 
     <!-- This .apk has no Java code itself, so set hasCode to false. -->
-    <application android:label=\"${activity_name}\" android:hasCode=\"false\">
+    <application android:label=\"${activity_name}\" android:largeHeap=\"true\" android:hasCode=\"false\">
 
         <!-- Our activity is the built-in NativeActivity framework class.
              This will take care of integrating with our NDK code. -->
         <activity android:name=\"android.app.NativeActivity\"
                 android:label=\"${activity_name}\"
+                android:keepScreenOn=\"true\"
                 android:screenOrientation=\"landscape\"
                 android:configChanges=\"orientation|keyboard|keyboardHidden\"
                 android:theme=\"@android:style/Theme.NoTitleBar.Fullscreen\"
@@ -47,13 +50,15 @@ if(ANDROID AND NOT TARGET apk)
                     android:value=\"${prog_name}_start\" />
             <intent-filter>
                 <action android:name=\"android.intent.action.MAIN\" />
+                <action android:name=\"android.hardware.usb.action.USB_DEVICE_ATTACHED\" />
+                <action android:name=\"android.hardware.usb.action.USB_DEVICE_DETACHED\" />
                 <category android:name=\"android.intent.category.LAUNCHER\" />
             </intent-filter>
         </activity>
     </application>
 
-</manifest> 
-<!-- END_INCLUDE(manifest) -->" )        
+</manifest>
+<!-- END_INCLUDE(manifest) -->" )
     endmacro()
 
     macro( create_bootstrap_library prog_name package_name)
@@ -151,7 +156,7 @@ void ANativeActivity_onCreate(ANativeActivity * app, void * ud, size_t udsize) {
         add_dependencies(run ${prog_name}-run)
 
         # Flag to package dependent libs
-        set_property(TARGET ${prog_name} APPEND PROPERTY MAKE_APK 1 )        
+        set_property(TARGET ${prog_name} APPEND PROPERTY MAKE_APK 1 )
 
         # Clear shared library loading header
         file( WRITE "${CMAKE_CURRENT_BINARY_DIR}/${prog_name}_shared_load.h" "")

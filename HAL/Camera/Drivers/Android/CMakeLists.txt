@@ -19,4 +19,7 @@ if( BUILD_Android )
         CameraListener.h CameraListener.cpp
         AndroidFactory.cpp
     )
+    hal_set_compile_flags(${CMAKE_CURRENT_SOURCE_DIR}/CameraListener.cpp "-fno-rtti -fpermissive")
+    hal_set_compile_flags(${CMAKE_CURRENT_SOURCE_DIR}/AndroidDriver.cpp "-fpermissive")
+    hal_set_compile_flags(${CMAKE_CURRENT_SOURCE_DIR}/AndroidFactory.cpp "-fpermissive")
 endif()
