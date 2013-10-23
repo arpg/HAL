@@ -180,7 +180,7 @@ bool FileReaderDriver::_Read()
     // loop over if we finished our files!
     if( m_nCurrentImageIndex == m_nNumImages ) {
         if(m_bLoop == true) {
-            m_nCurrentImageIndex = m_nStartFrame;
+          m_nCurrentImageIndex = 0;  // Just start at the beginning
         }else{
             return false;
         }
