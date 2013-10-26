@@ -10,7 +10,7 @@ namespace hal
 
 template<typename BaseDevice>
 DeviceRegistry<BaseDevice>::DeviceRegistry() {
-    RegisterAlias( "bumblebee", "debayer://dc1394:[]://" );
+    RegisterAlias( "bumblebee", "debayer://dc1394://" );
     RegisterAlias( "twizzler",  "deinterlace://v4l://" );
 }
 

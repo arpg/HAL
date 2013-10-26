@@ -192,12 +192,14 @@ int main( int argc, char* argv[] )
             glTex.RenderToViewportFlipY();
         }
 
-        if(g_bLog && bRun) {
+        if(g_bLog && bRun && bHaveCam) {
             pb::Msg pbMsg;
             pbMsg.set_timestamp( hal::Tic() );
             pbMsg.mutable_camera()->Swap(&vImgs.Ref());
             g_Logger.LogMessage(pbMsg);
+        }
 
+        if(g_bLog && bRun) {
             // draw red circle on bottom left corner for visual cue
             if( ! ((nFrame / 30) %2) ) {
                 cameraView.ActivatePixelOrthographic();
