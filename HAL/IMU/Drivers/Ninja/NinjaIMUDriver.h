@@ -17,7 +17,6 @@ public:
 
 private:
     FtdiListener&           m_FtdiListener;
-
 };
 
 } /* namespace */

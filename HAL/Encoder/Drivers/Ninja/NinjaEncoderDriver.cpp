@@ -22,5 +22,5 @@ NinjaEncoderDriver::~NinjaEncoderDriver()
 /////////////////////////////////////////////////////////////////////////////////////////
 void NinjaEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
 {
-    m_FtdiListener.RegisterEncoderCallback( Callback );
+  m_FtdiListener.RegisterEncoderCallback( *Callback.target<fPtr_Encoder>() );
 }
