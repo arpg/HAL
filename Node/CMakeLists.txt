@@ -67,5 +67,11 @@ configure_file( ${Node_SOURCE_DIR}/NODEConfig.cmake.in
 export( TARGETS node
   FILE "${CMAKE_CURRENT_BINARY_DIR}/NODETargets.cmake")
 
-export(PACKAGE NODE)
+option( EXPORT_NODE
+  "Should the NODE package be exported for use by other software" ON )
+
+if( EXPORT_NODE )
+  export(PACKAGE NODE)
+endif()
+
 add_subdirectory(Examples)
