@@ -1,6 +1,6 @@
 #include "AndroidDriver.h"
 
-#include <hal/Devices/DeviceException.h>
+#include <HAL/Devices/DeviceException.h>
 
 #include <thread>
 #include <sstream>
