@@ -3,29 +3,21 @@
 
 #include <Eigen/Eigen>
 #include <sophus/se3.hpp>
-#include <Messages/Messages.pb.h>
+#include "Messages.pb.h"
 #include "Matrix.h"
 
 namespace pb {
 
-namespace Eigen{
-    typedef Eigen::Matrix<double,7,1> Vector7d;
+template <typename Scalar>
+void WritePoseSE3(const Sophus::SE3Group<Scalar>& pose, PoseMsg* msg) {
+  msg->set_type(pb::PoseMsg_Type_SE3);
+  WriteVector(Sophus::Map<const Eigen::Matrix<Scalar, 7, 1> >(pose.data()),
+              msg->mutable_pose());
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-void WritePoseSE3(const Sophus::SE3d& pose, PoseMsg &msg)
-{
-    msg.set_type(pb::PoseMsg_Type_SE3);
-    Sophus::Map<Eigen::Matrix<double,7,1> > poseMap(pose.data());
-    WriteVector(poseMap,*msg.mutable_pose());
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-Sophus::SE3d ReadPoseSE3(PoseMsg &msg)
-{
-    Eigen::Vector7d vec = ReadVector(msg.pose());
-    Eigen::Map<Sophus::SE3d> pose(vec.data());
-    return pose;
+template <typename Scalar>
+void ReadPoseSE3(const PoseMsg &msg, Sophus::SE3Group<Scalar>* pose) {
+  *pose = Eigen::Map<const Sophus::SE3Group<Scalar> >(msg.pose().data().data());
 }
 
 }
