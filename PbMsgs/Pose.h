@@ -11,13 +11,16 @@ namespace pb {
 template <typename Scalar>
 void WritePoseSE3(const Sophus::SE3Group<Scalar>& pose, PoseMsg* msg) {
   msg->set_type(pb::PoseMsg_Type_SE3);
-  WriteVector(Sophus::Map<const Eigen::Matrix<Scalar, 7, 1> >(pose.data()),
-              msg->mutable_pose());
+
+  Eigen::Matrix<Scalar, 7, 1> vec(
+      Sophus::Map<const Eigen::Matrix<Scalar, 7, 1> >(pose.data()));
+  WriteVector(vec.template cast<double>(), msg->mutable_pose());
 }
 
 template <typename Scalar>
 void ReadPoseSE3(const PoseMsg &msg, Sophus::SE3Group<Scalar>* pose) {
-  *pose = Eigen::Map<const Sophus::SE3Group<Scalar> >(msg.pose().data().data());
+  *pose = Sophus::SE3d(Eigen::Map<const Sophus::SE3d>(
+      msg.pose().data().data())).template cast<Scalar>();
 }
 
 }
