@@ -281,8 +281,7 @@ class node {
       // lets connect using the socket
       try {
         pSock->connect(("tcp://"+sHostAndPort).c_str());
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         return false;
       }
       m_mRpcSockets[ sNode ] = TimedNodeSocket(pSock);
@@ -333,8 +332,7 @@ class node {
         // error sending request
         return false;
       }
-    }
-    catch(zmq::error_t error) {
+    } catch(const zmq::error_t& error) {
       std::string sErr = error.what();
       PrintError(" zmq->send() -- %s", sErr.c_str());
       return false;
@@ -363,8 +361,7 @@ class node {
           usleep(100); // wait a bit
         }
       }
-    }
-    catch(zmq::error_t error) {
+    } catch(const zmq::error_t& error) {
       std::string sErr = error.what();
       PrintError(" zmq->recv() -- %s", sErr.c_str());
       return false;
@@ -494,8 +491,7 @@ class node {
           //                                printf("[Node Publish] Publish zmq failed. used time %.2f ms. \n",_TocMS(dStartTime));
           return false;
         }
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         return false;
       }
     }
@@ -532,8 +528,7 @@ class node {
         try {
           pSock->setsockopt(ZMQ_SUBSCRIBE, NULL, 0);
           pSock->connect(("tcp://" + its->second).c_str());
-        }
-        catch(zmq::error_t error) {
+        } catch(const zmq::error_t& error) {
           return false;
         }
         m_mTopicSockets[ sTopicResource ] = pSock;
@@ -571,8 +566,7 @@ class node {
           //                                printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. \n",_TocMS(dStartTime));
           return false;
         }
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         return false;
       }
 
@@ -614,8 +608,7 @@ class node {
           //                                printf("[Node Receive] Receive zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
           return true;
         }
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         return false;
       }
     }
@@ -892,8 +885,7 @@ class node {
           PrintMessage(1, "[Node] WARNING! RPC listener was terminated.\n");
           exit(1);
         }
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         std::string sErr = error.what();
         PrintError(" zmq->recv() -- %s", sErr.c_str());
       }
@@ -959,7 +951,6 @@ class node {
   }
 
  private:
-
   /// Build a protobuf containing all the resources we know of, and the CRC.
   msg::ResourceTable _BuildResoruceTableMessage(
       msg::ResourceTable& t
@@ -1066,8 +1057,7 @@ class node {
         NodeSocket pSock = NodeSocket(new zmq::socket_t(*m_pContext,ZMQ_REQ));
         try {
           pSock->connect(sZmqAddr.c_str());
-        }
-        catch(zmq::error_t error) {
+        } catch(const zmq::error_t& error) {
           std::string sErr = error.what();
           PrintError("ERROR: zmq->connect() -- %s", sErr.c_str());
 
@@ -1145,8 +1135,7 @@ class node {
 
         pSock->bind(address.str().c_str());
         break;
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         address.str("");
         nPort++;
         address << "tcp://*:" << nPort;
@@ -1227,8 +1216,7 @@ class node {
       NodeSocket pSock = NodeSocket(new zmq::socket_t(*m_pContext,ZMQ_REQ));
       try {
         pSock->connect(sZmqAddr.c_str());
-      }
-      catch(zmq::error_t error) {
+      } catch(const zmq::error_t& error) {
         std::string sErr = error.what();
         PrintError("Error zmq->connect() -- %s", sErr.c_str());
       }
@@ -1300,10 +1288,7 @@ class node {
     nInt.set_value((*pFunc)(sStr.value()));
   }
 
-
-
  private:
-
   /// used to time socket communications
   struct TimedNodeSocket {
     TimedNodeSocket() {};
