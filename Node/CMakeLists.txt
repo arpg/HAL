@@ -72,6 +72,8 @@ option( EXPORT_NODE
 
 if( EXPORT_NODE )
   export(PACKAGE NODE)
+else()
+  set(NODE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 add_subdirectory(Examples)
