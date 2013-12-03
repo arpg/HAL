@@ -176,6 +176,12 @@ int main( int argc, char* argv[] )
                 theTimer.Reset();
             }
 #endif
+#if ANDROID
+            if(nFrame%30 == 0) {
+              LOGI("SensorViewer (FPS: %f)", 30.0 / theTimer.Elapsed_s());
+              theTimer.Reset();
+            }
+#endif
         }
 
         if(!glTex.tid && nNumChannels) {
