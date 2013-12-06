@@ -1,5 +1,5 @@
 
-#include "WebcamDriver.h"
+#include "OpenCVDriver.h"
 
 #include <HAL/Utils/TicToc.h>
 
@@ -7,7 +7,7 @@ using namespace cv;
 using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
-WebcamDriver::WebcamDriver( unsigned int nCamId, bool bForceGrey )
+OpenCVDriver::OpenCVDriver( unsigned int nCamId, bool bForceGrey )
 {
     m_bForceGreyscale = bForceGrey;
     if( m_Cam.open(nCamId) == false ) {
@@ -24,13 +24,13 @@ WebcamDriver::WebcamDriver( unsigned int nCamId, bool bForceGrey )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-WebcamDriver::~WebcamDriver()
+OpenCVDriver::~OpenCVDriver()
 {
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool WebcamDriver::Capture( pb::CameraMsg& vImages )
+bool OpenCVDriver::Capture( pb::CameraMsg& vImages )
 {
     if(m_Cam.isOpened() == false ) {
             std::cerr << "HAL: Error reading from camera." << std::endl;
@@ -73,17 +73,17 @@ bool WebcamDriver::Capture( pb::CameraMsg& vImages )
     return success;
 }
 
-size_t WebcamDriver::NumChannels() const
+size_t OpenCVDriver::NumChannels() const
 {
     return 1;
 }
 
-size_t WebcamDriver::Width( size_t /*idx*/) const
+size_t OpenCVDriver::Width( size_t /*idx*/) const
 {
     return m_nImgWidth;
 }
 
-size_t WebcamDriver::Height( size_t /*idx*/) const
+size_t OpenCVDriver::Height( size_t /*idx*/) const
 {
     return m_nImgHeight;
 }

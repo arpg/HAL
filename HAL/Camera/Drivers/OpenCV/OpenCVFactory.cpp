@@ -1,13 +1,13 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include "WebcamDriver.h"
+#include "OpenCVDriver.h"
 
 namespace hal
 {
 
-class WebcamFactory : public DeviceFactory<CameraDriverInterface>
+class OpenCVFactory : public DeviceFactory<CameraDriverInterface>
 {
 public:
-    WebcamFactory(const std::string& name)
+    OpenCVFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
@@ -19,12 +19,12 @@ public:
         unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
         bool bGrey              = uri.properties.Get<bool>("grey", false);
 
-        WebcamDriver* pDriver = new WebcamDriver( nCamId, bGrey );
+        OpenCVDriver* pDriver = new OpenCVDriver( nCamId, bGrey );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static WebcamFactory g_WebcamFactory("webcam");
+static OpenCVFactory g_OpenCVFactory("opencv");
 
 }

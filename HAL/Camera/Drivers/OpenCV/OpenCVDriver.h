@@ -6,11 +6,11 @@
 
 namespace hal {
 
-class WebcamDriver : public CameraDriverInterface
+class OpenCVDriver : public CameraDriverInterface
 {
     public:
-        WebcamDriver(unsigned int nCamId, bool bForceGrey);
-        ~WebcamDriver();
+        OpenCVDriver(unsigned int nCamId, bool bForceGrey);
+        ~OpenCVDriver();
 
         bool Capture( pb::CameraMsg& vImages );
         std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
