@@ -1,7 +1,6 @@
 #include "RectifyDriver.h"
 
 #include <PbMsgs/Image.h>
-#include <calibu/cam/StereoRectify.h>
 
 namespace hal
 {
@@ -12,7 +11,7 @@ inline float lerp(unsigned char a, unsigned char b, float t)
 }
 
 RectifyDriver::RectifyDriver(
-        std::shared_ptr<CameraDriverInterface> input, 
+        std::shared_ptr<CameraDriverInterface> input,
         const calibu::CameraRig& rig
         )
     : m_input(input)
@@ -54,7 +53,7 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
             pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
             pb::Image img = pb::Image(pimg);
-            calibu::Rectify( m_vLuts[k], inimg[k].data(), 
+            calibu::Rectify( m_vLuts[k], inimg[k].data(),
                     img.data(), img.Width(), img.Height() );
         }
     }
