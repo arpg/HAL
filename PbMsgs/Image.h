@@ -236,7 +236,7 @@ public:
 
     double Timestamp()
     {
-        return Image(m_Message.mutable_image(0)).Timestamp();
+        return m_Message.image(0).timestamp();
     }
 
     Image operator[]( unsigned int idx  )
