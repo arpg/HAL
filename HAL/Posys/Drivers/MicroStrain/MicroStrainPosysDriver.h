@@ -9,12 +9,9 @@ namespace hal {
 class MicroStrainPosysDriver : public PosysDriverInterface
 {
 public:
-    MicroStrainPosysDriver(std::string filename);
+    MicroStrainPosysDriver();
     ~MicroStrainPosysDriver();
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
-
-private:
-    PosysDriverDataCallback     m_callback;
 };
 
 } /* namespace */

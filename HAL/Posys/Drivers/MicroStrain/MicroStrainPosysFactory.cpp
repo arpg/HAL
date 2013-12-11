@@ -15,9 +15,9 @@ public:
         };
     }
 
-    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& /*uri*/)
     {
-        MicroStrainPosysDriver* pDriver = new MicroStrainPosysDriver(uri.url);
+        MicroStrainPosysDriver* pDriver = new MicroStrainPosysDriver();
         return std::shared_ptr<PosysDriverInterface>( pDriver );
     }
 };

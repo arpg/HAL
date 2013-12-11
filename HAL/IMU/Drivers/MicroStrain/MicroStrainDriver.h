@@ -17,10 +17,13 @@ class MicroStrainDriver : public IMUDriverInterface
         void RegisterIMUDataCallback(IMUDriverDataCallback callback);
 
         // Auxiliary non-standard methods for Posys integration.
-        void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+        static void RegisterPosysDataCallback(PosysDriverDataCallback callback);
 
     private:
+        static IMUDriverDataCallback   mIMUCallback;
+        static PosysDriverDataCallback mPosysCallback;
         static void CallbackFunc(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type);
+
         bool _Init();
         void _ThreadCaptureFunc();
         bool _ActivateAHRS();
@@ -29,9 +32,6 @@ class MicroStrainDriver : public IMUDriverInterface
         volatile bool mShouldRun;
         mip_interface mDeviceInterface;
         std::thread mDeviceThread;
-
-        IMUDriverDataCallback   mIMUCallback;
-        PosysDriverDataCallback mPosysCalback;
 
         // properties
         bool m_bGetGPS;

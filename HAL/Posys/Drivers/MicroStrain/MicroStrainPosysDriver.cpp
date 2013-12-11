@@ -6,8 +6,7 @@ using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-MicroStrainPosysDriver::MicroStrainPosysDriver(std::string filename)
-    : m_callback(nullptr)
+MicroStrainPosysDriver::MicroStrainPosysDriver()
 {
 }
 
@@ -19,7 +18,7 @@ MicroStrainPosysDriver::~MicroStrainPosysDriver()
 /////////////////////////////////////////////////////////////////////////////////////////
 void MicroStrainPosysDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
 {
-    m_callback = callback;
+  MicroStrainDriver::RegisterPosysDataCallback(callback);
 }
 
 

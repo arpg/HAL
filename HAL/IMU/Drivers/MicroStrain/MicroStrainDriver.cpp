@@ -13,6 +13,9 @@
 
 using namespace hal;
 
+IMUDriverDataCallback   MicroStrainDriver::mIMUCallback = nullptr;
+PosysDriverDataCallback MicroStrainDriver::mPosysCallback = nullptr;
+
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
 const double GRAVITY_MAGNITUDE = 9.80665;
 
@@ -80,10 +83,8 @@ MicroStrainDriver::~MicroStrainDriver()
 ///////////////////////////////////////////////////////////////////////////////
 // C callback function for MIP library
 ///////////////////////////////////////////////////////////////////////////////
-void MicroStrainDriver::CallbackFunc(void *user_ptr, u8 *packet, u16 /*packet_size*/, u8 callback_type)
+void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packet_size*/, u8 callback_type)
 {
-    MicroStrainDriver* self = static_cast<MicroStrainDriver*>(user_ptr);
-
     mip_field_header *field_header;
     u8               *field_data;
     u16              field_offset = 0;
@@ -203,17 +204,16 @@ void MicroStrainDriver::CallbackFunc(void *user_ptr, u8 *packet, u16 /*packet_si
                 }
             }
 
-            if(self->mIMUCallback){
+            if(mIMUCallback){
               if(pbImuMsg.has_accel() || pbImuMsg.has_gyro() || pbImuMsg.has_mag() ) {
-                self->mIMUCallback(pbImuMsg);
+                mIMUCallback(pbImuMsg);
               }
             }
-            /*
-            if(gpsData.data_present && !self->mGPSCallback.empty()){
-                gpsData.timestamp_system = dTimestamp;
-                self->mGPSCallback(gpsData);
+            if(mPosysCallback){
+              if(pbPoseMsg.has_pose() ) {
+                mPosysCallback(pbPoseMsg);
+              }
             }
-            */
         }break;
 
             //Handle checksum error packets
@@ -281,6 +281,16 @@ void MicroStrainDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     mIMUCallback = callback;
     _Init();
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+void MicroStrainDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
+{
+  // TODO(jmf) This was done in a rush (typical). If the user only wants GPS
+  // and the IMU is not initialized at some point, no GPS data will be received!
+  // Make this a singleton which can be initialized by either IMU or GPS driver.
+  mPosysCallback = callback;
 }
 
 
