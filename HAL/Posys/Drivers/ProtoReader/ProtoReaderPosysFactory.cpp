@@ -17,7 +17,9 @@ public:
 
     std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
     {
-        ProtoReaderPosysDriver* pDriver = new ProtoReaderPosysDriver(uri.url);
+        const std::string file = ExpandTildePath(uri.url);
+
+        ProtoReaderPosysDriver* pDriver = new ProtoReaderPosysDriver(file);
         return std::shared_ptr<PosysDriverInterface>( pDriver );
     }
 };

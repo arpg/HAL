@@ -16,7 +16,9 @@ public:
 
     std::shared_ptr<LIDARDriverInterface> GetDevice(const Uri& uri)
     {
-        ProtoReaderLIDARDriver* pDriver = new ProtoReaderLIDARDriver(uri.url);
+        const std::string file = ExpandTildePath(uri.url);
+
+        ProtoReaderLIDARDriver* pDriver = new ProtoReaderLIDARDriver(file);
         return std::shared_ptr<LIDARDriverInterface>( pDriver );
     }
 };

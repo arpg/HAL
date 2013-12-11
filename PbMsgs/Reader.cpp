@@ -168,7 +168,7 @@ void Reader::_ThreadFunc()
             }
             if( pMsg->has_lidar() ) {
                 m_qMessageTypes.push_back( Msg_Type_LIDAR );
-                std::cout << "Pushing LIDAR: " << pMsg->lidar().device_time() << std::endl;
+//                std::cout << "Pushing LIDAR: " << pMsg->lidar().device_time() << std::endl;
             }
             if( pMsg->has_pose() ) {
                 m_qMessageTypes.push_back( Msg_Type_Posys );

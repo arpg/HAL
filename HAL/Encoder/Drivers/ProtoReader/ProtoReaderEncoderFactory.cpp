@@ -16,7 +16,9 @@ public:
 
     std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
     {
-        ProtoReaderEncoderDriver* pDriver = new ProtoReaderEncoderDriver(uri.url);
+        const std::string file = ExpandTildePath(uri.url);
+
+        ProtoReaderEncoderDriver* pDriver = new ProtoReaderEncoderDriver(file);
         return std::shared_ptr<EncoderDriverInterface>( pDriver );
     }
 };
