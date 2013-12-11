@@ -72,6 +72,12 @@ Reader::~Reader()
 void Reader::_ThreadFunc()
 {
     int fd = open(m_sFilename.c_str(), O_RDONLY);
+
+    if(fd == -1) {
+      std::cerr << "HAL: File '"<< m_sFilename << "' could not be opened. Does it exist?" << std::endl;
+      return;
+    }
+
     google::protobuf::io::FileInputStream raw_input(fd);
     raw_input.SetCloseOnDelete(true);
 
