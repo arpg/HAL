@@ -3,6 +3,7 @@
 #include <thread>
 
 #include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Posys/PosysDriverInterface.h>
 
 #include "MIPSDK/mip_sdk.h"
 
@@ -15,8 +16,11 @@ class MicroStrainDriver : public IMUDriverInterface
         ~MicroStrainDriver();
         void RegisterIMUDataCallback(IMUDriverDataCallback callback);
 
+        // Auxiliary non-standard methods for Posys integration.
+        void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+
     private:
-        static void ImuCallback(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type);
+        static void CallbackFunc(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type);
         bool _Init();
         void _ThreadCaptureFunc();
         bool _ActivateAHRS();
@@ -26,7 +30,8 @@ class MicroStrainDriver : public IMUDriverInterface
         mip_interface mDeviceInterface;
         std::thread mDeviceThread;
 
-        IMUDriverDataCallback mIMUCallback;
+        IMUDriverDataCallback   mIMUCallback;
+        PosysDriverDataCallback mPosysCalback;
 
         // properties
         bool m_bGetGPS;
