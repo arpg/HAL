@@ -41,43 +41,44 @@ inline void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
     }
 }
 
-inline cv::Mat WriteCvMat( pb::ImageMsg* pbImage )
+inline cv::Mat WriteCvMat(const pb::ImageMsg& pbImage )
 {
     int nCvType = 0;
-    if( pbImage->type() == pb::PB_BYTE || pbImage->type() == pb::PB_UNSIGNED_BYTE ) {
-        if(pbImage->format() == pb::PB_LUMINANCE ) {
+    if( pbImage.type() == pb::PB_BYTE || pbImage.type() == pb::PB_UNSIGNED_BYTE ) {
+        if(pbImage.format() == pb::PB_LUMINANCE ) {
             nCvType = CV_8UC1;
         }
-        if(pbImage->format() == pb::PB_RGB ) {
+        if(pbImage.format() == pb::PB_RGB ) {
             nCvType = CV_8UC3;
         }
     }
-    if( pbImage->type() == pb::PB_UNSIGNED_SHORT || pbImage->type() == pb::PB_SHORT ) {
-        if(pbImage->format() == pb::PB_LUMINANCE ) {
+    if( pbImage.type() == pb::PB_UNSIGNED_SHORT || pbImage.type() == pb::PB_SHORT ) {
+        if(pbImage.format() == pb::PB_LUMINANCE ) {
             nCvType = CV_16UC1;
         }
-        if(pbImage->format() == pb::PB_RGB ) {
+        if(pbImage.format() == pb::PB_RGB ) {
             nCvType = CV_16UC3;
         }
     }
-    if( pbImage->type() == pb::PB_FLOAT ) {
-        if(pbImage->format() == pb::PB_LUMINANCE ) {
+    if( pbImage.type() == pb::PB_FLOAT ) {
+        if(pbImage.format() == pb::PB_LUMINANCE ) {
             nCvType = CV_32FC1;
         }
-        if(pbImage->format() == pb::PB_RGB ) {
+        if(pbImage.format() == pb::PB_RGB ) {
             nCvType = CV_32FC3;
         }
     }
 
     /**
      * @note We need to clone the cv::Mat here because OpenCV will not
-     * copy the data we give it on its own! This _will_ cause problems otherwise.
+     * copy the data we give it on its own! This _will_ cause problems
+     * otherwise.
      */
-    return cv::Mat( pbImage->height(), pbImage->width(), nCvType,
-                    (void*)pbImage->mutable_data()->data() ).clone();
+    return cv::Mat(pbImage.height(), pbImage.width(), nCvType,
+                   (void*)pbImage.data().data()).clone();
 }
 
-inline void ReadFile( const std::string sFileName, pb::ImageMsg* pbImage )
+inline void ReadFile( const std::string& sFileName, pb::ImageMsg* pbImage )
 {
     cv::Mat Image;
 
@@ -187,7 +188,7 @@ public:
 #ifdef HAVE_OPENCV
     operator cv::Mat()
     {
-        return WriteCvMat(m_pImage);
+      return WriteCvMat(*m_pImage);
     }
 #endif
 
