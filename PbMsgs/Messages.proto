@@ -4,6 +4,7 @@ import "Camera.proto";
 import "Imu.proto";
 import "Pose.proto";
 import "Encoder.proto";
+import "Lidar.proto";
 
 message Msg {
     optional double timestamp = 1;
@@ -11,4 +12,5 @@ message Msg {
     optional ImuMsg imu = 3;
     optional PoseMsg pose = 4;
     optional EncoderMsg encoder = 5;
+    optional LidarMsg lidar = 6;
 }

@@ -65,6 +65,7 @@ set( _PROTO_SRCS
     Imu.proto
     Pose.proto
     Encoder.proto
+    Lidar.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )
