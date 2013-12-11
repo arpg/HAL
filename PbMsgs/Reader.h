@@ -17,9 +17,10 @@ namespace pb
 
 enum MessageType {
     Msg_Type_Camera,
+    Msg_Type_Encoder,
     Msg_Type_IMU,
-    Msg_Type_Posys,
-    Msg_Type_Encoder
+    Msg_Type_LIDAR,
+    Msg_Type_Posys
 };
 
 class Reader
@@ -39,20 +40,25 @@ public:
     /// The "ReadCamera" static variable must be set to true if the reader is to queue camera messages.
     std::unique_ptr<pb::CameraMsg> ReadCameraMsg();
 
+    /// Reads the next ENCODER message from the message queue. If the next message is NOT a ENCODER message,
+    /// or the message queue is empty, the function will block. Mostly used for ENCODER specific driver implementations.
+    /// The "ReadEncoder" static variable must be set to true if the reader is to queue ENCODER messages.
+    std::unique_ptr<pb::EncoderMsg> ReadEncoderMsg();
+
     /// Reads the next IMU message from the message queue. If the next message is NOT an IMU message,
     /// or the message queue is empty, the function will block. Mostly used for IMU specific driver implementations.
     /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
     std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
+    /// Reads the next LIDAR message from the message queue. If the next message is NOT a LIDAR message,
+    /// or the message queue is empty, the function will block. Mostly used for LIDAR specific driver implementations.
+    /// The "ReadLidar" static variable must be set to true if the reader is to queue LIDAR messages.
+    std::unique_ptr<pb::LidarMsg> ReadLidarMsg();
+
     /// Reads the next POSE message from the message queue. If the next message is NOT a POSE message,
     /// or the message queue is empty, the function will block. Mostly used for POSYS specific driver implementations.
     /// The "ReadPose" static variable must be set to true if the reader is to queue POSE messages.
     std::unique_ptr<pb::PoseMsg> ReadPoseMsg();
-
-    /// Reads the next ENCODER message from the message queue. If the next message is NOT a ENCODER message,
-    /// or the message queue is empty, the function will block. Mostly used for ENCODER specific driver implementations.
-    /// The "ReadEncoder" static variable must be set to true if the reader is to queue ENCODER messages.
-    std::unique_ptr<pb::EncoderMsg> ReadEncoderMsg();
 
     /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
     void StopBuffering();
@@ -83,9 +89,10 @@ private:
     bool                                    m_bRunning;
     bool                                    m_bShouldRun;
     bool                                    m_bReadCamera;
-    bool                                    m_bReadIMU;
-    bool                                    m_bReadPosys;
     bool                                    m_bReadEncoder;
+    bool                                    m_bReadIMU;
+    bool                                    m_bReadLIDAR;
+    bool                                    m_bReadPosys;
     std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
     std::list<MessageType >                 m_qMessageTypes;
     std::mutex                              m_QueueMutex;

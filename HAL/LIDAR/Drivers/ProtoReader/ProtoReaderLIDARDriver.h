@@ -1,17 +1,17 @@
 #pragma once
 
-#include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/LIDAR/LIDARDriverInterface.h>
 
 #include <PbMsgs/Reader.h>
 
 namespace hal {
 
-class ProtoReaderIMUDriver : public IMUDriverInterface
+class ProtoReaderLIDARDriver : public LIDARDriverInterface
 {
 public:
-    ProtoReaderIMUDriver(std::string filename);
-    ~ProtoReaderIMUDriver();
-    void RegisterIMUDataCallback(IMUDriverDataCallback callback);
+    ProtoReaderLIDARDriver(std::string filename);
+    ~ProtoReaderLIDARDriver();
+    void RegisterLIDARDataCallback(LIDARDriverDataCallback callback);
 
 private:
     void _ThreadFunc();
@@ -20,7 +20,7 @@ private:
     pb::Reader&             m_reader;
     bool                    m_running;
     std::thread             m_callbackThread;
-    IMUDriverDataCallback   m_callback;
+    LIDARDriverDataCallback m_callback;
 };
 
 } /* namespace */

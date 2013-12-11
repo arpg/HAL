@@ -1,1 +1,1 @@
-#add_to_hal_sources( ProtoReaderIMUDriver.h ProtoReaderIMUDriver.cpp ProtoReaderIMUFactory.cpp )
+add_to_hal_sources( ProtoReaderLIDARDriver.h ProtoReaderLIDARDriver.cpp ProtoReaderLIDARFactory.cpp )

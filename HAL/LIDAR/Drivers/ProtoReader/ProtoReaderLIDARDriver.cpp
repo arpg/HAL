@@ -5,7 +5,7 @@ using namespace hal;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ProtoReaderLIDARDriver::ProtoReaderLIDARDriver(std::string filename)
-    : m_reader(pb::Reader::Instance(filename,pb::Msg_Type_LIDAR)), m_running(false), m_callback(nullptr)
+    : m_reader(pb::Reader::Instance(filename, pb::Msg_Type_LIDAR)), m_running(false), m_callback(nullptr)
 {
 }
 
@@ -14,7 +14,7 @@ ProtoReaderLIDARDriver::ProtoReaderLIDARDriver(std::string filename)
 void ProtoReaderLIDARDriver::_ThreadFunc()
 {
     while( m_running ) {
-        std::unique_ptr<pb::ImuMsg> readmsg = m_reader.ReadImuMsg();
+        std::unique_ptr<pb::LidarMsg> readmsg = m_reader.ReadLidarMsg();
         if(readmsg) {
             m_callback( *readmsg );
         } else {

@@ -22,14 +22,17 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType )
     if( eType == Msg_Type_Camera ) {
         m_Instance.m_bReadCamera = true;
     }
+    if( eType == Msg_Type_Encoder ) {
+        m_Instance.m_bReadEncoder = true;
+    }
     if( eType == Msg_Type_IMU ) {
         m_Instance.m_bReadIMU = true;
     }
+    if( eType == Msg_Type_LIDAR ) {
+        m_Instance.m_bReadLIDAR = true;
+    }
     if( eType == Msg_Type_Posys ) {
         m_Instance.m_bReadPosys = true;
-    }
-    if( eType == Msg_Type_Encoder ) {
-        m_Instance.m_bReadEncoder = true;
     }
     return m_Instance;
 }
@@ -39,7 +42,9 @@ Reader::Reader(const std::string& filename) :
     m_bRunning(true),
     m_bShouldRun(false),
     m_bReadCamera(false),
+    m_bReadEncoder(false),
     m_bReadIMU(false),
+    m_bReadLIDAR(false),
     m_bReadPosys(false),
     m_nInitialImageID(0),
     m_nMaxBufferSize(10)
@@ -75,11 +80,11 @@ void Reader::_ThreadFunc()
 
     {
         google::protobuf::io::CodedInputStream coded_input(&raw_input);
-        coded_input.ReadRaw(magic_number,4);
+        coded_input.ReadRaw(magic_number, 4);
     }
 
     if( magic_number[0] != '%' || magic_number[1] != 'H' || magic_number[2] != 'A' || magic_number[3] != 'L' ) {
-        std::cerr << "HAL: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
+      std::cerr << "HAL: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
       return;
     }
 
@@ -143,25 +148,31 @@ void Reader::_ThreadFunc()
         }
 
         if( (pMsg->has_camera() && m_bReadCamera)
+            || (pMsg->has_encoder() && m_bReadEncoder)
             || (pMsg->has_imu() && m_bReadIMU)
+            || (pMsg->has_lidar() && m_bReadLIDAR)
             || (pMsg->has_pose() && m_bReadPosys)
-            || (pMsg->has_encoder() && m_bReadEncoder) ) {
+            ) {
 
             if( pMsg->has_camera() ) {
                 m_qMessageTypes.push_back( Msg_Type_Camera );
 //                std::cout << "Pushing CAM: " << pMsg->camera().image(0).timestamp() << std::endl;
             }
+            if( pMsg->has_encoder() ) {
+                m_qMessageTypes.push_back( Msg_Type_Encoder );
+//                std::cout << "Pushing Encoder: " << pMsg->encoder().device_time() << std::endl;
+            }
             if( pMsg->has_imu() ) {
                 m_qMessageTypes.push_back( Msg_Type_IMU );
 //                std::cout << "Pushing IMU: " << pMsg->imu().device_time() << std::endl;
             }
+            if( pMsg->has_lidar() ) {
+                m_qMessageTypes.push_back( Msg_Type_LIDAR );
+                std::cout << "Pushing LIDAR: " << pMsg->lidar().device_time() << std::endl;
+            }
             if( pMsg->has_pose() ) {
                 m_qMessageTypes.push_back( Msg_Type_Posys );
 //                std::cout << "Pushing Pose: " << pMsg->pose().device_time() << std::endl;
-            }
-            if( pMsg->has_encoder() ) {
-                m_qMessageTypes.push_back( Msg_Type_Encoder );
-//                std::cout << "Pushing Encoder: " << pMsg->encoder().device_time() << std::endl;
             }
 
             m_qMessages.push_back(std::move(pMsg));
@@ -221,6 +232,36 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg()
     return pCameraMsg;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg()
+{
+    if( !m_bReadEncoder ) {
+        std::cerr << "warning: ReadEncoderMsg was called but ReadEncoder variable is set to false! " << std::endl;
+        return nullptr;
+    }
+
+    // Wait if buffer is empty
+    std::unique_lock<std::mutex> lock(m_QueueMutex);
+    while(m_bRunning && !_AmINext( Msg_Type_Encoder ) ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+    }
+
+    if(!m_bRunning) {
+        return nullptr;
+    }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::EncoderMsg> pEncoderMsg( new pb::EncoderMsg );
+    pEncoderMsg->Swap( pMessage->mutable_encoder() );
+    return pEncoderMsg;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
 {
@@ -247,6 +288,35 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg()
     std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
     pImuMsg->Swap( pMessage->mutable_imu() );
     return pImuMsg;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+std::unique_ptr<pb::LidarMsg> Reader::ReadLidarMsg()
+{
+    if( !m_bReadLIDAR ) {
+        std::cerr << "warning: ReadLidarMsg was called but ReadLIDAR variable is set to false! " << std::endl;
+        return nullptr;
+    }
+
+    // Wait if buffer is empty
+    std::unique_lock<std::mutex> lock(m_QueueMutex);
+    while(m_bRunning && !_AmINext( Msg_Type_LIDAR ) ){
+        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+    }
+
+    if(!m_bRunning) {
+        return nullptr;
+    }
+
+    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    m_qMessages.pop_front();
+    m_qMessageTypes.pop_front();
+    m_ConditionDequeued.notify_one();
+
+    std::unique_ptr<pb::LidarMsg> pLidarMsg( new pb::LidarMsg );
+    pLidarMsg->Swap( pMessage->mutable_lidar() );
+    return pLidarMsg;
 }
 
 
@@ -279,33 +349,6 @@ std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg()
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg()
-{
-    if( !m_bReadEncoder ) {
-        std::cerr << "warning: ReadEncoderMsg was called but ReadEncoder variable is set to false! " << std::endl;
-        return nullptr;
-    }
-
-    // Wait if buffer is empty
-    std::unique_lock<std::mutex> lock(m_QueueMutex);
-    while(m_bRunning && !_AmINext( Msg_Type_Encoder ) ){
-        m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
-    }
-
-    if(!m_bRunning) {
-        return nullptr;
-    }
-
-    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
-    m_qMessages.pop_front();
-    m_qMessageTypes.pop_front();
-    m_ConditionDequeued.notify_one();
-
-    std::unique_ptr<pb::EncoderMsg> pEncoderMsg( new pb::EncoderMsg );
-    pEncoderMsg->Swap( pMessage->mutable_encoder() );
-    return pEncoderMsg;
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////

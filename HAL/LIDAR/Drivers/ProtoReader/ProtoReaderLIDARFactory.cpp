@@ -1,28 +1,28 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include "ProtoReaderIMUDriver.h"
+#include "ProtoReaderLIDARDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderIMUFactory : public DeviceFactory<IMUDriverInterface>
+class ProtoReaderLIDARFactory : public DeviceFactory<LIDARDriverInterface>
 {
 public:
-    ProtoReaderIMUFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
+    ProtoReaderLIDARFactory(const std::string& name)
+        : DeviceFactory<LIDARDriverInterface>(name)
     {
         Params() = {
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<LIDARDriverInterface> GetDevice(const Uri& uri)
     {
-        ProtoReaderIMUDriver* pDriver = new ProtoReaderIMUDriver(uri.url);
-        return std::shared_ptr<IMUDriverInterface>( pDriver );
+        ProtoReaderLIDARDriver* pDriver = new ProtoReaderLIDARDriver(uri.url);
+        return std::shared_ptr<LIDARDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static ProtoReaderIMUFactory g_ProtoReaderIMUFactory1("proto");
-static ProtoReaderIMUFactory g_ProtoReaderIMUFactory2("log");
+static ProtoReaderLIDARFactory g_ProtoReaderLIDARFactory1("proto");
+static ProtoReaderLIDARFactory g_ProtoReaderLIDARFactory2("log");
 
 }
