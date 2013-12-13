@@ -19,7 +19,8 @@ namespace pb {
 
 inline void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
 {
-    pbImage->set_data( (const char*)cvImage.data );
+  pbImage->set_data((const char*)cvImage.data,
+                    cvImage.total() * cvImage.elemSize());
     pbImage->set_height( cvImage.rows );
     pbImage->set_width( cvImage.cols );
 
