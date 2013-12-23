@@ -330,7 +330,7 @@ std::unique_ptr<pb::LidarMsg> Reader::ReadLidarMsg()
 std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg()
 {
     if( !m_bReadPosys ) {
-        std::cerr << "warning: ReadImuMsg was called but ReadIMU variable is set to false! " << std::endl;
+        std::cerr << "warning: ReadPoseMsg was called but ReadPose variable is set to false! " << std::endl;
         return nullptr;
     }
 
