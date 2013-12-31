@@ -7,7 +7,9 @@ using namespace cv;
 using namespace hal;
 
 OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
-    : num_channels_(1), force_greyscale_(force_grey), cam_(cam_id) {
+    : num_channels_(1),
+      force_greyscale_(force_grey),
+      cam_(cam_id) {
   if (!cam_.isOpened()) abort();
 
   img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
@@ -29,29 +31,23 @@ bool OpenCVDriver::Capture(pb::CameraMsg& images_msg) {
   pbImg->set_type(pb::PB_UNSIGNED_BYTE);
   pbImg->set_height(img_height_);
   pbImg->set_width(img_width_);
+  pbImg->set_format(force_greyscale_ ? pb::PB_LUMINANCE : pb::PB_BGR);
 
   if (!success) return false;
-
-  if(force_greyscale_) {
-    cvtColor(temp, temp, CV_RGB2GRAY);
-    pbImg->set_format(pb::PB_LUMINANCE);
-    num_channels_ = 1;
-  } else {
-    pbImg->set_format(pb::PB_RGB);
-    num_channels_ = 3;
-  }
 
   // This may not store the image in contiguous memory which PbMsgs
   // requires, so we might need to copy it
   cv::Mat cv_image;
-  if (!cv_image.isContinuous()) {
+  if(force_greyscale_) {
+    cvtColor(temp, cv_image, CV_RGB2GRAY);
+  } else if (!cv_image.isContinuous()) {
     temp.copyTo(cv_image);
   } else {
     cv_image = temp;
   }
 
-  pbImg->set_data((const char*)cv_image.data,
-                  img_height_ * img_width_ * num_channels_);
+  pbImg->set_data(static_cast<const unsigned char*>(cv_image.data),
+                  cv_image.elemSize() * cv_image.total());
   return true;
 }
 

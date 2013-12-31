@@ -26,6 +26,8 @@ enum Format {
     PB_RGB              = 0x1907;
     PB_RGBA             = 0x1908;
     PB_RAW              = 0x0001;
+    PB_BGR              = 0x80E0;
+    PB_BGRA             = 0x80E1;
 }
 
 message ImageMsg {
@@ -38,5 +40,3 @@ message ImageMsg {
     optional double timestamp = 6;
     optional ImageInfoMsg info = 7;
 }
-
-

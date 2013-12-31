@@ -176,20 +176,18 @@ int main(int argc, char* argv[]) {
     }
 
     if (got_first_image) {
-      auto format = GL_BGR;
-      auto type = GL_UNSIGNED_BYTE;
-      
       for (size_t ii = 0; ii < nNumChannels; ++ii) {
         pb::Image img = images[ii];
         if (!glTex[ii].tid && nNumChannels) {
           // Only initialise now we know format.
-          glTex[ii].Reinitialise(img.Width(), img.Height(), GL_RGB8, true, 0,
-                                 format, type, 0);
+          glTex[ii].Reinitialise(img.Width(), img.Height(),
+                                 GL_RGBA, true, 0,
+                                 img.Format(), img.Type(), 0);
         }
 
         cameraView[ii].Activate();
         if (got_first_image && img.data()) {
-          glTex[ii].Upload(img.data(), format, type);
+          glTex[ii].Upload(img.data(), img.Format(), img.Type());
           glTex[ii].RenderToViewportFlipY();
         }
       }
