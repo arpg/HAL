@@ -1,28 +1,27 @@
 #pragma once
 
-#include "HAL/Camera/CameraDriverInterface.h"
-
-#include <opencv.hpp>
+#include <HAL/Camera/CameraDriverInterface.h>
+#include <opencv2/opencv.hpp>
 
 namespace hal {
 
 class OpenCVDriver : public CameraDriverInterface
 {
-    public:
-        OpenCVDriver(unsigned int nCamId, bool bForceGrey);
-        ~OpenCVDriver();
+ public:
+  OpenCVDriver(unsigned int nCamId, bool bForceGrey);
+  ~OpenCVDriver();
 
-        bool Capture( pb::CameraMsg& vImages );
-        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+  bool Capture( pb::CameraMsg& vImages );
+  std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
-        size_t NumChannels() const;
-        size_t Width( size_t /*idx*/ = 0 ) const;
-        size_t Height( size_t /*idx*/ = 0 ) const;
-private:
-        size_t              m_nImgHeight;
-        size_t              m_nImgWidth;
-        bool                m_bForceGreyscale;
-        cv::VideoCapture    m_Cam;
+  size_t NumChannels() const;
+  size_t Width( size_t /*idx*/ = 0 ) const;
+  size_t Height( size_t /*idx*/ = 0 ) const;
+ private:
+  size_t img_height_;
+  size_t img_width_;
+  int num_channels_;
+  bool force_greyscale_;
+  cv::VideoCapture cam_;
 };
-
-}
+}  // namespace hal

@@ -6,84 +6,63 @@
 using namespace cv;
 using namespace hal;
 
-///////////////////////////////////////////////////////////////////////////////
-OpenCVDriver::OpenCVDriver( unsigned int nCamId, bool bForceGrey )
-{
-    m_bForceGreyscale = bForceGrey;
-    if( m_Cam.open(nCamId) == false ) {
-        std::cerr << "HAL: Error opening webcam!" << std::endl;
-    }
+OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
+    : num_channels_(1), force_greyscale_(force_grey), cam_(cam_id) {
+  if (!cam_.isOpened()) abort();
 
-    cv::Mat         cvImg;
-    if( m_Cam.read(cvImg) == false ) {
-        std::cerr << "HAL: Error reading initial image!" << std::endl;
-    }
-
-    m_nImgHeight = cvImg.rows;
-    m_nImgWidth = cvImg.cols;
+  img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
+  img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-OpenCVDriver::~OpenCVDriver()
-{
+OpenCVDriver::~OpenCVDriver() {}
 
+bool OpenCVDriver::Capture(pb::CameraMsg& images_msg) {
+  if(!cam_.isOpened()) {
+    std::cerr << "HAL: Error reading from camera." << std::endl;
+    return false;
+  }
+  images_msg.set_device_time(Tic());
+
+  cv::Mat temp;
+  bool success = cam_.read(temp);
+  pb::ImageMsg* pbImg = images_msg.add_image();
+  pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+  pbImg->set_height(img_height_);
+  pbImg->set_width(img_width_);
+
+  if (!success) return false;
+
+  if(force_greyscale_) {
+    cvtColor(temp, temp, CV_RGB2GRAY);
+    pbImg->set_format(pb::PB_LUMINANCE);
+    num_channels_ = 1;
+  } else {
+    pbImg->set_format(pb::PB_RGB);
+    num_channels_ = 3;
+  }
+
+  // This may not store the image in contiguous memory which PbMsgs
+  // requires, so we might need to copy it
+  cv::Mat cv_image;
+  if (!cv_image.isContinuous()) {
+    temp.copyTo(cv_image);
+  } else {
+    cv_image = temp;
+  }
+
+  pbImg->set_data((const char*)cv_image.data,
+                  img_height_ * img_width_ * num_channels_);
+  return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-bool OpenCVDriver::Capture( pb::CameraMsg& vImages )
-{
-    if(m_Cam.isOpened() == false ) {
-            std::cerr << "HAL: Error reading from camera." << std::endl;
-            return false;
-    }
-
-    cv::Mat         cvImg;
-    pb::ImageMsg*   pbImg = vImages.add_image();
-
-    bool success = false;
-    double systemTime = 0;
-    int numChans = 0;
-
-    if(m_bForceGreyscale) {
-        static Mat temp;
-        success = m_Cam.read(temp);
-        systemTime = Tic();
-        if(success) {
-            cvtColor(temp, cvImg, CV_RGB2GRAY);
-        }
-        pbImg->set_format( pb::PB_LUMINANCE );
-        numChans = 1;
-    }else{
-        success = m_Cam.read(cvImg);
-        // TODO(jmf) don't know why this is needed but it is =P
-        cv::transpose( cvImg, cvImg );
-        cv::transpose( cvImg, cvImg );
-        systemTime = Tic();
-        pbImg->set_format( pb::PB_RGB );
-        numChans = 3;
-    }
-
-    pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-    pbImg->set_height( m_nImgHeight );
-    pbImg->set_width( m_nImgWidth );
-    pbImg->set_data( (const char*)cvImg.data, m_nImgHeight * m_nImgWidth * numChans );
-
-    vImages.set_device_time( systemTime );
-
-    return success;
+size_t OpenCVDriver::NumChannels() const {
+  return num_channels_;
 }
 
-size_t OpenCVDriver::NumChannels() const
-{
-    return 1;
+size_t OpenCVDriver::Width(size_t /*idx*/) const {
+  return img_width_;
 }
 
-size_t OpenCVDriver::Width( size_t /*idx*/) const
-{
-    return m_nImgWidth;
-}
-
-size_t OpenCVDriver::Height( size_t /*idx*/) const
-{
-    return m_nImgHeight;
+size_t OpenCVDriver::Height(size_t /*idx*/) const {
+  return img_height_;
 }
