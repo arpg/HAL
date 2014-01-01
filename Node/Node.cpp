@@ -506,9 +506,9 @@ std::string node::_GetHostIP(const std::string& sPreferredInterface) {
 
   std::string sIP = "127.0.0.1";
   std::string sIf;
-  for (size_t ii = 0; ii < vIfs.size(); ii++) {
+  for (size_t ii = 0; ii < vIfs.size(); ++ii) {
     std::string sPreferredIf = vIfs[ii];
-    for (size_t n = 0; n < vIfAndIP.size(); n++) {
+    for (size_t n = 0; n < vIfAndIP.size(); ++n) {
       sIf = vIfAndIP[n].first;
       if (sIf.find(sPreferredIf) != std::string::npos) { // found a prefered interface
         sIP = vIfAndIP[n].second;
@@ -558,7 +558,7 @@ void node::GetResourceTableFunc(
   pTable->set_version(m_uResourceTableVersion);
   pTable->set_checksum(_ResourceTableCRC());
   rep.set_sender_name(m_sNodeName);
-  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); it++) {
+  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); ++it) {
     msg::ResourceLocator* pMsg = pTable->add_urls();// add new url to end of table
     pMsg->set_resource(it->first);
     pMsg->set_address(it->second);
@@ -586,18 +586,18 @@ void node::DeleteFromResourceTableFunc(
   std::lock_guard<std::mutex> lock(m_Mutex); // careful
 
   PrintMessage(2, "[Node] DeleteFromResourceTableFunc() called by '%s'"
-               " to delete %d resources\n",  req.requesting_node_name().c_str(), (int)req.urls_to_delete_size());
-  //                            _PrintResourceLocatorTable();
-  for (int ii = 0; ii < req.urls_to_delete_size(); ii++) {
+               " to delete %d resources\n",
+               req.requesting_node_name().c_str(),
+               (int)req.urls_to_delete_size());
+  // _PrintResourceLocatorTable();
+  for (int ii = 0; ii < req.urls_to_delete_size(); ++ii) {
     const msg::ResourceLocator& m = req.urls_to_delete(ii);
-    std::map<std::string,std::string>::iterator it;
-    it = m_mResourceTable.find(m.resource());
-
+    std::map<std::string,std::string>::iterator it =
+        m_mResourceTable.find(m.resource());
     if (it != m_mResourceTable.end()) {
       // printf("Deleting %s\n", m.resource().c_str());
       m_mResourceTable.erase(it);
-    }
-    else{
+    } else{
       // printf("Resource %s not found\n", m.resource().c_str());
     }
   }
@@ -606,16 +606,17 @@ void node::DeleteFromResourceTableFunc(
   std::map<std::string,TimedNodeSocket>::iterator sockit;
   sockit = m_mRpcSockets.find(req.requesting_node_name());
   if (sockit != m_mRpcSockets.end()) {
-    m_mRpcSockets.erase(sockit); // this is ok, because no one else can touch this stuff right now...
+    // this is ok, because no one else can touch this stuff right now...
+    m_mRpcSockets.erase(sockit);
   }
 
   // also remove from m_mTopicSockets,
   std::map<std::string,NodeSocket > ::iterator topicit;
-  for (topicit=m_mTopicSockets.begin();topicit!=m_mTopicSockets.end();topicit++)
-  {
-    if (topicit->first.find(req.requesting_node_name()) != std::string::npos)
-    {
-      m_mTopicSockets.erase(topicit);
+  for (topicit = m_mTopicSockets.begin(); topicit != m_mTopicSockets.end(); ) {
+    if (topicit->first.find(req.requesting_node_name()) != std::string::npos) {
+      m_mTopicSockets.erase(topicit++);
+    } else {
+      ++topicit;
     }
   }
 
@@ -649,7 +650,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
   m_uResourceTableVersion = req.resource_table().version();
 
   //  update the rest of the table:
-  for (int ii = 0; ii < req.resource_table().urls_size(); ii++) {
+  for (int ii = 0; ii < req.resource_table().urls_size(); ++ii) {
     const msg::ResourceLocator& m = req.resource_table().urls(ii);
     m_mResourceTable[ m.resource() ] = m.address();
   }
@@ -672,7 +673,7 @@ void node::HeartbeatThreadFunc() {
     // ping all nodes we haven't heard from recently
     std::unique_lock<std::mutex> lock(m_Mutex);
     std::map<std::string,TimedNodeSocket>::iterator it;
-    for (it = m_mRpcSockets.begin() ; it != m_mRpcSockets.end(); it++) {
+    for (it = m_mRpcSockets.begin() ; it != m_mRpcSockets.end(); ++it) {
       double dElapsedTime = _Toc(it->second.m_dLastHeartbeatTime);
       if (dElapsedTime > m_dHeartbeatWaitTresh) { // haven't heard from this guy in a while
         PrintMessage(9, "[Node] sending heartbeat to '%s'\n", it->first.c_str());
@@ -692,7 +693,7 @@ void node::HeartbeatThreadFunc() {
         // if remote resource table is newer than ours...
         if (hbrep.version() > m_uResourceTableVersion) {
           // ...update resource table with data from remote node:
-          for (int ii = 0; ii < hbrep.resource_table().urls_size(); ii++) {
+          for (int ii = 0; ii < hbrep.resource_table().urls_size(); ++ii) {
             msg::ResourceLocator r = hbrep.resource_table().urls(ii);
             m_mResourceTable[ r.resource() ] = r.address();
           }
@@ -733,7 +734,7 @@ void node::RPCThreadFunc() {
     // wait for request
     zmq::message_t ZmqReq;
 
-    try{
+    try {
       if (m_pSocket->recv(&ZmqReq) == false) {
         // error receiving
         PrintMessage(1, "[Node] WARNING! RPC listener was terminated.\n");
@@ -746,7 +747,8 @@ void node::RPCThreadFunc() {
     // obtain "header" which contains function name
     unsigned char FuncNameSize;
     memcpy(&FuncNameSize, ZmqReq.data(), sizeof(FuncNameSize));
-    std::string FuncName((char*)(ZmqReq.data()) + sizeof(FuncNameSize), FuncNameSize);
+    std::string FuncName(
+        static_cast<char*>(ZmqReq.data()) + sizeof(FuncNameSize), FuncNameSize);
 
     // prepare reply message
     unsigned int PbOffset = sizeof(FuncNameSize) + FuncNameSize;
@@ -757,7 +759,6 @@ void node::RPCThreadFunc() {
 
     it = m_mRpcTable.find(FuncName);
     if (it != m_mRpcTable.end()) {
-
       RPC* pRPC = it->second;
       FuncPtr Func = pRPC->RpcFunc;
       google::protobuf::Message* Req = pRPC->ReqMsg;
@@ -765,13 +766,12 @@ void node::RPCThreadFunc() {
 
       Rep->Clear();
 
-      if (!Req->ParseFromArray((char*)(ZmqReq.data()) + PbOffset, PbByteSize))
-      {
+      if (!Req->ParseFromArray((char*)(ZmqReq.data()) + PbOffset, PbByteSize)) {
         continue;
       }
 
       // call function
-      (*Func)(*(Req),*(Rep), pRPC->UserData);
+      Func(*(Req),*(Rep), pRPC->UserData);
 
       // send reply
       zmq::message_t ZmqRep(Rep->ByteSize());
@@ -792,7 +792,7 @@ std::vector<std::string> node::GetSubscribeClientName() {
 
   std::vector<std::string> vClientNames;
   std::map<std::string,NodeSocket >::iterator it;
-  for (it=m_mTopicSockets.begin();it!=m_mTopicSockets.end();it++) {
+  for (it = m_mTopicSockets.begin(); it != m_mTopicSockets.end(); ++it) {
     if (it->first.find("StateKeeper")==std::string::npos) {
       std::string sSubString=it->first.substr(8,it->first.size());
       vClientNames.push_back(sSubString.substr(0,sSubString.find("/")));
@@ -803,7 +803,7 @@ std::vector<std::string> node::GetSubscribeClientName() {
 
 msg::ResourceTable node::_BuildResoruceTableMessage(msg::ResourceTable& t) {
   std::map<std::string,std::string>::iterator it;
-  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); it++) {
+  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); ++it) {
     msg::ResourceLocator* pMsg = t.add_urls();// add new url to end of table
     pMsg->set_resource(it->first);
     pMsg->set_address(it->second);
@@ -817,7 +817,7 @@ uint32_t node::_ResourceTableCRC() {
   boost::crc_32_type crc;
   std::string vNames;
   std::map<std::string,std::string>::iterator it;
-  for (it = m_mResourceTable.begin() ; it != m_mResourceTable.end(); it++) {
+  for (it = m_mResourceTable.begin() ; it != m_mResourceTable.end(); ++it) {
     vNames += it->first;
   }
   crc.process_bytes(vNames.c_str(), vNames.size());
@@ -833,7 +833,7 @@ void node::_PropagateResourceTable() {
   req.set_requesting_node_name(m_sNodeName);
   req.set_requesting_node_addr(_GetAddress());
 
-  for (it = m_mRpcSockets.begin(); it != m_mRpcSockets.end(); it++) {
+  for (it = m_mRpcSockets.begin(); it != m_mRpcSockets.end(); ++it) {
     if (it->second.m_pSocket == m_pSocket) {
       continue; // don't send to self
     }
@@ -857,18 +857,18 @@ void node::_UpdateNodeRegistery() {
 
   // Report all the nodes registered with Avahi:
   std::vector<ZeroConfURL> urls;
-  for (size_t ii = 0; ii < vRecords.size(); ii++) {
+  for (size_t ii = 0; ii < vRecords.size(); ++ii) {
     ZeroConfRecord r = vRecords[ii];
     std::vector<ZeroConfURL> new_urls
         = m_ZeroConf.ResolveService(r.m_sServiceName, r.m_sRegType);
-    for (size_t jj = 0; jj < new_urls.size(); jj++) {
+    for (size_t jj = 0; jj < new_urls.size(); ++jj) {
       urls.push_back(new_urls[jj]);
       ZeroConfURL url = new_urls[jj];
     }
   }
 
   PrintMessage(1, "[Node] found %d URLs for nodes\n", (int)urls.size());
-  for (size_t ii = 0; ii < urls.size(); ii++) {
+  for (size_t ii = 0; ii < urls.size(); ++ii) {
     ZeroConfURL url = urls[ii];
     std::string sAddr = _GetAddress(url.m_sHost, url.m_nPort);
     std::string sMyAddr = _GetAddress();
@@ -882,7 +882,7 @@ void node::_UpdateNodeRegistery() {
 
   unsigned int uLatestResourceTableVersion = 0;
 
-  for (size_t ii = 0; ii < urls.size(); ii++) {
+  for (size_t ii = 0; ii < urls.size(); ++ii) {
     ZeroConfURL url = urls[ii];
 
     std::string sAddr = _GetAddress(url.m_sHost, url.m_nPort);
@@ -921,7 +921,7 @@ void node::_UpdateNodeRegistery() {
       // ok, now we have the nodes name to record his socket
       m_mRpcSockets[ rep.sender_name() ] = TimedNodeSocket(pSock);
       // push these into our resource table:
-      for (int ii = 0; ii < rep.resource_table().urls_size(); ii++) {
+      for (int ii = 0; ii < rep.resource_table().urls_size(); ++ii) {
         msg::ResourceLocator r = rep.resource_table().urls(ii);
         m_mResourceTable[ r.resource() ] = r.address();
       }
@@ -945,7 +945,7 @@ void node::_PrintResourceLocatorTable() {
                m_uResourceTableVersion, _ResourceTableCRC());
   PrintMessage(1, "%-40sURL\n", "RESOURCE");
   std::map<std::string,std::string>::iterator it;
-  for (it = m_mResourceTable.begin() ; it != m_mResourceTable.end(); it++) {
+  for (it = m_mResourceTable.begin() ; it != m_mResourceTable.end(); ++it) {
     PrintMessage(1, "%-40s%s\n", it->first.c_str(), it->second.c_str());
   }
 
@@ -956,7 +956,7 @@ void node::_PrintResourceLocatorTable() {
 void node::_PrintRpcSockets() {
   PrintMessage(1, "----------- RPC SOCKETS OPEN ----------------\n");
   std::map<std::string,TimedNodeSocket>::iterator it;
-  for (it = m_mRpcSockets.begin() ; it != m_mRpcSockets.end(); it++) {
+  for (it = m_mRpcSockets.begin() ; it != m_mRpcSockets.end(); ++it) {
     PrintMessage(1, "%s\n", it->first.c_str());
   }
   PrintMessage(1, "\n\n");
@@ -975,7 +975,7 @@ int node::_BindRandomPort(NodeSocket& pSock) {
       break;
     } catch(const zmq::error_t& error) {
       address.str("");
-      nPort++;
+      ++nPort;
       address << "tcp://*:" << nPort;
     }
   }
@@ -1058,7 +1058,7 @@ void node::_ConnectRpcSocket(const std::string& sNodeName,
 }
 
 void node::NodeSignalHandler(int nSig) {
-  for (size_t ii = 0; ii < g_vNodes.size(); ii++) {
+  for (size_t ii = 0; ii < g_vNodes.size(); ++ii) {
     g_vNodes[ii]->_BroadcastExit();
   }
   switch(nSig) {
@@ -1084,7 +1084,7 @@ void node::_BroadcastExit() {
   req.set_requesting_node_name(m_sNodeName);
   req.set_requesting_node_addr(_GetAddress());
   std::map<std::string,std::string>::iterator it;
-  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); it++) {
+  for (it = m_mResourceTable.begin(); it != m_mResourceTable.end(); ++it) {
     if (it->first.find("rpc://"+m_sNodeName) != std::string::npos
         || it->first.find("topic://"+m_sNodeName) != std::string::npos) {
       msg::ResourceLocator* pMsg = req.add_urls_to_delete();
@@ -1098,7 +1098,7 @@ void node::_BroadcastExit() {
   // ask all known nodes to remove us:
   std::map<std::string,TimedNodeSocket> tmp = m_mRpcSockets;
   std::map<std::string,TimedNodeSocket>::iterator sockit;
-  for (sockit = tmp.begin(); sockit != tmp.end(); sockit++) {
+  for (sockit = tmp.begin(); sockit != tmp.end(); ++sockit) {
     if (sockit->second.m_pSocket == m_pSocket) {
       continue;
     }
