@@ -103,14 +103,14 @@ class node {
   /// Register a remote procedure call.
   template <class Req, class Rep>
   bool provide_rpc(const std::string& sName, //< Input: Function name
-                   void (*pFunc)(Req&,Rep&,void*),   //< Input: Function pointer
-                   void* pUserData  //< Input: User data passed to the function
+                   void (*pFunc)(Req&, Rep&, void*), //< Input: Function pointer
+                   void* pUserData //< Input: User data passed to the function
                    ) {
     std::lock_guard<std::mutex> lock(m_Mutex); // careful
 
     assert(m_bInitDone);
     // check if function with that name is already registered
-    std::map < std::string, RPC* >::iterator it;
+    std::map<std::string, RPC*>::iterator it;
     it = m_mRpcTable.find(sName);
     if (it != m_mRpcTable.end()) {
       return false;
@@ -185,7 +185,7 @@ class node {
                );
 
   /// Consume data form publisher
-  bool receive(const std::string& sResource,  //< Input: Node resource: "NodeName/Topic"
+  bool receive(const std::string& sResource, //< Input: Node resource: "NodeName/Topic"
                zmq::message_t& ZmqMsg //< Output: ZMQ Output message
                );
 
@@ -294,10 +294,9 @@ class node {
  private:
   /// used to time socket communications
   struct TimedNodeSocket {
-    TimedNodeSocket() {};
-    TimedNodeSocket(NodeSocket pSocket) : m_dLastHeartbeatTime(0.0) {
-      m_pSocket = pSocket;
-    }
+    TimedNodeSocket() {}
+    TimedNodeSocket(const NodeSocket& pSocket) : m_pSocket(pSocket),
+                                                 m_dLastHeartbeatTime(0.0) {}
 
     TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
       if (this == &RHS) {
@@ -307,12 +306,12 @@ class node {
       m_dLastHeartbeatTime = RHS.m_dLastHeartbeatTime;
       return *this;
     }
+
     NodeSocket  m_pSocket;
     double      m_dLastHeartbeatTime;
   };
 
   // NB a "resource" is a nodename, node/rpc or node/topic URL
-
   // resource to host:port map
   std::map<std::string, std::string> m_mResourceTable;
 

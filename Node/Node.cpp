@@ -384,7 +384,7 @@ bool node::subscribe(const std::string& sResource) {
     return false;
   } else {
     // lets find this node's IP
-    std::map < std::string, std::string >::iterator its;
+    std::map<std::string, std::string>::iterator its;
     its = m_mResourceTable.find(sTopicResource);
     if (its == m_mResourceTable.end()) {
       PrintMessage(1, "[Node] Resource '%s' not found on cache table.\n",
@@ -753,7 +753,7 @@ void node::RPCThreadFunc() {
     unsigned int PbByteSize = ZmqReq.size() - PbOffset;
 
     // look-up function
-    std::map < std::string, RPC* >::iterator it;
+    std::map<std::string, RPC*>::iterator it;
 
     it = m_mRpcTable.find(FuncName);
     if (it != m_mRpcTable.end()) {
