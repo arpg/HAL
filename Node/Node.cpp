@@ -93,8 +93,8 @@ bool node::init(std::string  sNodeName) {
                     &_DeleteFromResourceTableFunc, this);
 
   std::lock_guard<std::mutex> lock(m_Mutex); // careful
-  m_RPCThread = boost::thread(_RPCThreadFunc, this);// run RPC listener in his own thread.
-  m_HeartbeatThread = boost::thread(_HeartbeatThreadFunc, this);// run RPC listener in his own thread.
+  m_RPCThread = std::thread(_RPCThreadFunc, this);// run RPC listener in his own thread.
+  m_HeartbeatThread = std::thread(_HeartbeatThreadFunc, this);// run RPC listener in his own thread.
 
   // ask avahi who's around, and get their resource tables, also build our table
   _UpdateNodeRegistery();

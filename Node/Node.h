@@ -347,10 +347,10 @@ class node {
   bool m_bInitDone;
 
   // Thread for handling rpc
-  boost::thread m_RPCThread;
+  std::thread m_RPCThread;
 
   // Thread for handling heartbeats
-  boost::thread m_HeartbeatThread;
+  std::thread m_HeartbeatThread;
 
   // Max timeout wait
   double m_dGetResourceTableMaxWait;
