@@ -190,7 +190,7 @@ class node {
                );
 
   /// Figure out the network name of this machine
-  const char* _GetHostIP(const std::string& sPreferredInterface = "eth");
+  std::string _GetHostIP(const std::string& sPreferredInterface = "eth");
 
   /// Heartbeat, called by client _DoHeartbeat to check if he is up-to-date.
   static void _HeartbeatFunc(msg::HeartbeatRequest& req,

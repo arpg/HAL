@@ -1,4 +1,5 @@
 #include "Node.h"
+#include <HAL/Utils/TicToc.h>
 
 std::vector<rpg::node*> g_vNodes;
 
@@ -262,7 +263,7 @@ bool node::call_rpc(NodeSocket pSock,
 }
 
 bool node::advertise(const std::string& sTopic) {
-  std::lock_guard<std::mutex> lock(m_Mutex); // don't let anyone touch the shared resource table...
+  std::lock_guard<std::mutex> lock(m_Mutex);
 
   assert(m_bInitDone);
   std::string sTopicResource = "topic://" + m_sNodeName + "/" + sTopic;
@@ -283,9 +284,9 @@ bool node::advertise(const std::string& sTopic) {
     PrintMessage(1, "[Node] Publishing topic '%s' on %s\n",
                  sTopic.c_str(), sAddr.c_str());
 
-    // updae node table and socket table
-    //                       lock();
-    //                        std::lock_guard<std::mutex> lock(m_Mutex); // careful
+    // update node table and socket table
+    // lock();
+    // std::lock_guard<std::mutex> lock(m_Mutex); // careful
     m_mResourceTable[ sTopicResource ] = sAddr;
     m_mTopicSockets[ sTopicResource ] = pSock;
     //                        lock.unlock();
@@ -299,9 +300,8 @@ bool node::advertise(const std::string& sTopic) {
   }
 }
 
-bool node::publish(
-    const std::string&                                        sTopic,     //< Input: Topic to write to
-    const google::protobuf::Message&  Msg                     //< Input: Message to send
+bool node::publish(const std::string& sTopic, //< Input: Topic to write to
+                   const google::protobuf::Message& Msg //< Input: Message to send
                    ) {
   assert(m_bInitDone);
   std::string sTopicResource = "topic://" + m_sNodeName + "/" + sTopic;
@@ -320,32 +320,26 @@ bool node::publish(
       return false;
     }
 
-    pSock->setsockopt(ZMQ_SNDTIMEO,&m_dSendRecvMaxWait,sizeof(m_dSendRecvMaxWait));
-    //                            double dStartTime=_TicMS();
-    try
-    {
-      if (pSock->send(ZmqMsg)==true)
-      {
-        //                                    printf("[Node publish] Publish Protobuf success. used time %.2f ms\n",_TocMS(dStartTime));
+    pSock->setsockopt(ZMQ_SNDTIMEO,
+                      &m_dSendRecvMaxWait,
+                      sizeof(m_dSendRecvMaxWait));
+    // double dStartTime=_TicMS();
+    try {
+      if (pSock->send(ZmqMsg)==true) {
+        // printf("[Node publish] Publish Protobuf success. used time %.2f ms\n",
+        // _TocMS(dStartTime));
         return true;
-      }
-      else
-      {
-        //                                    printf("[Node publish] Publish Protobuf Fail. used time %.2f ms\n",_TocMS(dStartTime));
+      } else {
+        // printf("[Node publish] Publish Protobuf Fail. used time %.2f ms\n",_TocMS(dStartTime));
         return false;
       }
-    }
-    catch(zmq::error_t error)
-    {
+    } catch(const zmq::error_t& error) {
       return false;
     }
   }
 }
 
-bool node::publish(
-    const std::string&                                sTopic,                         //< Input: Topic to write to
-    zmq::message_t&                                   Msg                             //< Input: Message to send
-                   ) {
+bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
   assert(m_bInitDone);
   std::string sTopicResource = "topic://" + m_sNodeName + "/" + sTopic;
 
@@ -358,18 +352,17 @@ bool node::publish(
   } else {
     NodeSocket pSock = it->second;
 
-    pSock->setsockopt(ZMQ_SNDTIMEO,&m_dSendRecvMaxWait,sizeof(m_dSendRecvMaxWait));
-    //                        double dStartTime=_TicMS();
+    pSock->setsockopt(ZMQ_SNDTIMEO,
+                      &m_dSendRecvMaxWait,
+                      sizeof(m_dSendRecvMaxWait));
+    // double dStartTime=_TicMS();
 
     try {
-      if (pSock->send(Msg)==true)
-      {
-        //                                printf("[Node Publish] Publish zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
+      if (pSock->send(Msg)==true) {
+        // printf("[Node Publish] Publish zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
         return true;
-      }
-      else
-      {
-        //                                printf("[Node Publish] Publish zmq failed. used time %.2f ms. \n",_TocMS(dStartTime));
+      } else {
+        // printf("[Node Publish] Publish zmq failed. used time %.2f ms. \n",_TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -378,10 +371,8 @@ bool node::publish(
   }
 }
 
-bool node::subscribe(
-    const std::string&        sResource  //< Input: Node resource: "NodeName/Topic"
-                     ) {
-  std::lock_guard<std::mutex> lock(m_Mutex); // don't let anyone touch the shared resource table...
+bool node::subscribe(const std::string& sResource) {
+  std::lock_guard<std::mutex> lock(m_Mutex);
 
   std::string         sTopicResource = "topic://" + sResource;
   assert(m_bInitDone);
@@ -416,11 +407,9 @@ bool node::subscribe(
   }
 }
 
-bool node::receive(
-    const std::string& sResource, //< Input: Node resource: "NodeName/Topic"
-    google::protobuf::Message& Msg   //< Output: Message read
-                   ) {
-  std::string         sTopicResource = "topic://" + sResource;
+bool node::receive(const std::string& sResource,
+                   google::protobuf::Message& Msg) {
+  std::string sTopicResource = "topic://" + sResource;
   assert(m_bInitDone);
   // check if socket is already open for this topic
   std::map<std::string,NodeSocket>::iterator it;
@@ -433,15 +422,13 @@ bool node::receive(
     zmq::message_t ZmqMsg;
 
     pSock->setsockopt(ZMQ_RCVTIMEO,&m_dSendRecvMaxWait,sizeof(m_dSendRecvMaxWait));
-    //                        double dStartTime=_TicMS();
+    // double dStartTime=_TicMS();
     try {
       if (pSock->recv(&ZmqMsg) == true)
       {
-        //                                printf("[Node Receive] Receive Protobuf success. used time %.2f ms. \n",_TocMS(dStartTime));
-      }
-      else
-      {
-        //                                printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. \n",_TocMS(dStartTime));
+        // printf("[Node Receive] Receive Protobuf success. used time %.2f ms. \n",_TocMS(dStartTime));
+      } else {
+        // printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. \n",_TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -455,10 +442,7 @@ bool node::receive(
   }
 }
 
-bool node::receive(
-    const std::string& sResource,  //< Input: Node resource: "NodeName/Topic"
-    zmq::message_t&    ZmqMsg //< Output: ZMQ Output message
-                   ) {
+bool node::receive(const std::string& sResource, zmq::message_t& ZmqMsg) {
   std::string         sTopicResource = "topic://" + sResource;
   assert(m_bInitDone);
   // check if socket is already open for this topic
@@ -475,14 +459,11 @@ bool node::receive(
 
     pSock->setsockopt(ZMQ_RCVTIMEO,&m_dSendRecvMaxWait,sizeof(m_dSendRecvMaxWait));
     try {
-      if (pSock->recv(&ZmqMsg) == false)
-      {
-        //                              printf("[Node Receive] Receive zmq Fail. used time %.2f ms. \n",_TocMS(dStartTime));
+      if (pSock->recv(&ZmqMsg) == false) {
+        // printf("[Node Receive] Receive zmq Fail. used time %.2f ms. \n",_TocMS(dStartTime));
         return false;
-      }
-      else
-      {
-        //                                printf("[Node Receive] Receive zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
+      } else {
+        // printf("[Node Receive] Receive zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
         return true;
       }
     } catch(const zmq::error_t& error) {
@@ -491,7 +472,7 @@ bool node::receive(
   }
 }
 
-const char* node::_GetHostIP(const std::string& sPreferredInterface) {
+std::string node::_GetHostIP(const std::string& sPreferredInterface) {
   // orderd list of interfaces we perfer... all so
   // the interface matches what Zeroconf says.. this
   // is a hack. should instead re-map what zeroconf
@@ -534,16 +515,14 @@ const char* node::_GetHostIP(const std::string& sPreferredInterface) {
       }
     }
   }
-
-  return sIP.c_str();
-
+  return sIP;
 }
 
 void node::_HeartbeatFunc(
     msg::HeartbeatRequest& req,
     msg::HeartbeatResponse& rep, void* pUserData
                           ) {
-  ((node*)pUserData)->HeartbeatFunc(req, rep);
+  static_cast<node*>(pUserData)->HeartbeatFunc(req, rep);
 }
 
 void node::HeartbeatFunc(
@@ -566,7 +545,7 @@ void node::HeartbeatFunc(
 void node::_GetResourceTableFunc(
     msg::GetTableRequest& req,
     msg::GetTableResponse& rep, void* pUserData) {
-  ((node*)pUserData)->GetResourceTableFunc(req, rep);
+  static_cast<node*>(pUserData)->GetResourceTableFunc(req, rep);
 }
 
 void node::GetResourceTableFunc(
@@ -596,7 +575,7 @@ void node::_DeleteFromResourceTableFunc(
     msg::DeleteFromTableResponse& rep,
     void* pUserData
                                         ) {
-  ((node*)pUserData)->DeleteFromResourceTableFunc(req, rep);
+  static_cast<node*>(pUserData)->DeleteFromResourceTableFunc(req, rep);
 }
 
 void node::DeleteFromResourceTableFunc(
@@ -645,11 +624,13 @@ void node::DeleteFromResourceTableFunc(
   //_PrintRpcSockets();
 }
 
-void node::_SetResourceTableFunc(msg::SetTableRequest& req, msg::SetTableResponse& rep, void* pUserData) {
-  ((node*)pUserData)->SetResourceTableFunc(req, rep);
+void node::_SetResourceTableFunc(msg::SetTableRequest& req,
+                                 msg::SetTableResponse& rep, void* pUserData) {
+  static_cast<node*>(pUserData)->SetResourceTableFunc(req, rep);
 }
 
-void node::SetResourceTableFunc(msg::SetTableRequest& req, msg::SetTableResponse& rep) {
+void node::SetResourceTableFunc(msg::SetTableRequest& req,
+                                msg::SetTableResponse& rep) {
   std::lock_guard<std::mutex> lock(m_Mutex); // careful
 
   PrintMessage(1, "[Node] SetResourceTableFunc() called by '%s' to share %d resources\n",
@@ -749,7 +730,6 @@ void node::RPCThreadFunc() {
   PrintMessage(1, "[Node] Starting RPC server at %s\n", sAddr.c_str());
 
   while(1) {
-
     // wait for request
     zmq::message_t ZmqReq;
 
@@ -812,10 +792,8 @@ std::vector<std::string> node::GetSubscribeClientName() {
 
   std::vector<std::string> vClientNames;
   std::map<std::string,NodeSocket >::iterator it;
-  for (it=m_mTopicSockets.begin();it!=m_mTopicSockets.end();it++)
-  {
-    if (it->first.find("StateKeeper")==std::string::npos)
-    {
+  for (it=m_mTopicSockets.begin();it!=m_mTopicSockets.end();it++) {
+    if (it->first.find("StateKeeper")==std::string::npos) {
       std::string sSubString=it->first.substr(8,it->first.size());
       vClientNames.push_back(sSubString.substr(0,sSubString.find("/")));
     }
@@ -856,7 +834,6 @@ void node::_PropagateResourceTable() {
   req.set_requesting_node_addr(_GetAddress());
 
   for (it = m_mRpcSockets.begin(); it != m_mRpcSockets.end(); it++) {
-
     if (it->second.m_pSocket == m_pSocket) {
       continue; // don't send to self
     }
@@ -872,7 +849,7 @@ void node::_UpdateNodeRegistery() {
   std::vector<ZeroConfRecord> vRecords;
   vRecords = m_ZeroConf.BrowseForServiceType("_hermes._tcp");
   PrintMessage(1, "[Node] looking for hermes.tcp \n");
-  while(vRecords.size() == 0) {
+  while(vRecords.empty()) {
     PrintMessage(1, "[Node] waiting for _hermes._tcp to appear in ZeroConf registery\n");
     vRecords = m_ZeroConf.BrowseForServiceType("_hermes._tcp");
     usleep(1000);
@@ -1026,20 +1003,15 @@ std::string node::_ZmqAddress(const std::string& sHostIP, const int nPort) {
 }
 
 double node::_Tic() {
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return tv.tv_sec  + 1e-6 * (tv.tv_usec);
+  return hal::Tic();
 }
 
 double node::_Toc(double dSec) {
-  return _Tic() - dSec;
+  return hal::Toc(dSec);
 }
 
 double node::_TicMS() {
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  double dTSec = tv.tv_sec  + 1e-6 * (tv.tv_usec);
-  return dTSec*1e3;
+  return hal::Tic() * 1e3;
 }
 
 double node::_TocMS(double dMS) {
