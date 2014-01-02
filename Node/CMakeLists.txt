@@ -6,7 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-DOS_OBJECT_USE_OBJC=0")
 endif()
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -Wall -Wextra -Wno-unused-parameter")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
 
 # Add to module path, so we can find our cmake modules
