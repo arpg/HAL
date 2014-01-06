@@ -16,14 +16,14 @@ option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 add_subdirectory( PbMsgs )
 set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
 
-add_subdirectory( HAL )
-set(HAL_DIR ${HAL_BINARY_DIR})
-
 option(BUILD_NODE OFF "Build Node library")
 if (BUILD_NODE)
   add_subdirectory(Node)
   set(NODE_DIR ${NODE_BINARY_DIR})
 endif()
+
+add_subdirectory( HAL )
+set(HAL_DIR ${HAL_BINARY_DIR})
 
 
 set( BUILD_APPLICATIONS true CACHE BOOL force )

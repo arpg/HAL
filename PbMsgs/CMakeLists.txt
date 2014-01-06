@@ -66,6 +66,7 @@ set( _PROTO_SRCS
     Pose.proto
     Encoder.proto
     Lidar.proto
+    Node2CamMessage.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )
@@ -74,12 +75,14 @@ set( SRCS
     ${PROTO_SRCS}
     Logger.cpp
     Reader.cpp
+    #Lidar.cpp
    )
 
 set( HDRS
     ${PROTO_HDRS}
     Logger.h
     Reader.h
+    #Lidar.h
     Image.h
     Matrix.h
     Pose.h

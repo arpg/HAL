@@ -20,6 +20,7 @@ endif()
 find_package( OpenCV2 REQUIRED )
 find_package( PbMsgs 0.1 REQUIRED )
 find_package( Sophus REQUIRED )
+find_package( Boost REQUIRED )
 
 include_directories(${Sophus_INCLUDE_DIR})
 
@@ -110,6 +111,8 @@ include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 add_library(hal ${HAL_SOURCES})
 target_link_libraries( hal ${INTERNAL_LIBS} )
+target_link_libraries( hal ${Boost_SYSTEM_LIBRARY} )
+#message( "aasdf " ${Boost_LIBRARIES} )
 
 #######################################################
 ## Create configure file for inclusion in library

@@ -9,8 +9,7 @@ if(NODE_FOUND AND BUILD_Node2Cam)
     find_package( PbMsgs 0.1 REQUIRED )
 
     # include dirs
-    link_libraries( ${PROTOBUF_LIBRARIES} ${NODE_LIBRARIES} ${PbMsgs_LIBRARIES})
-    PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS Node2CamMessage.proto )
+    link_libraries( ${PROTOBUF_LIBRARIES} ${NODE_LIBRARIES} ${PbMsgs_LIBRARIES} )
 
     include_directories( ${NODE_INCLUDE_DIRS} )
     include_directories( ${PbMsgs_INCLUDE_DIRS}  )
