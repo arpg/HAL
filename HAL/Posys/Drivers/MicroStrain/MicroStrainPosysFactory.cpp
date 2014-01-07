@@ -23,7 +23,6 @@ public:
 };
 
 // Register this factory by creating static instance of factory
-static MicroStrainPosysFactory g_MicroStrainPosysFactory1("proto");
-static MicroStrainPosysFactory g_MicroStrainPosysFactory2("log");
+static MicroStrainPosysFactory g_MicroStrainPosysFactory2("microstrainposys");
 
 }
