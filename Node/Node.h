@@ -122,7 +122,7 @@ class node {
       pRPC->UserData = pUserData;
       rpc_table_[sName] = pRPC;
       std::string rpc_resource = "rpc://" + node_name_ + "/" + sName;
-      resource_table_[ rpc_resource ] = _GetAddress();
+      resource_table_[rpc_resource] = _GetAddress();
       return true;
     }
   }

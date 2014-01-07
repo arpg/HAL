@@ -67,7 +67,7 @@ class ZeroConf {
           0, // nFlags
           0, // interface index
           sServiceName.c_str(),
-          sRegType.c_str(),// example "_ftp._tcp.". must be an
+          sRegType.c_str(), // example "_ftp._tcp.". must be an
           //  underscore that is followed by 1 to 14 characters that
           // can be  letters, digits, or  hyphens.
           sDomain.c_str(), // null, or maybe "local"
@@ -185,12 +185,10 @@ class ZeroConf {
       uint32_t nInterface = 0) {
     DNSServiceRef ServiceRef;
     resolve_complete_ = false;
-    DNSServiceResolve(&ServiceRef, nFlags, nInterface, sName.c_str(), sRegType.c_str(), sDomain.c_str(),
+    DNSServiceResolve(&ServiceRef, nFlags, nInterface, sName.c_str(),
+                      sRegType.c_str(), sDomain.c_str(),
                       _ResolveReplyCallback, this);
-
-
     _HandleEvents(ServiceRef);
-
     DNSServiceRefDeallocate(ServiceRef);
 
     std::vector<ZeroConfURL> vRes = resolved_urls_;
@@ -225,21 +223,21 @@ class ZeroConf {
 
   const char* _GetHostIP() {
     char buf[128];
-    gethostname(buf,sizeof(buf));
+    gethostname(buf, sizeof(buf));
     struct hostent *hp = gethostbyname(buf);
     struct in_addr* in = (struct in_addr*)hp->h_addr;
     return inet_ntoa(*in);
   }
 
   void ResolveReplyCallback(
-      DNSServiceRef ,//client,
+      DNSServiceRef , //client,
       DNSServiceFlags nFlags,
-      uint32_t ,//ifIndex,
-      DNSServiceErrorType ,//errorCode,
-      const char* ,//fullname,
+      uint32_t , //ifIndex,
+      DNSServiceErrorType , //errorCode,
+      const char* , //fullname,
       const char* hosttarget,
       uint16_t opaqueport,
-      uint16_t ,//txtLen,
+      uint16_t , //txtLen,
       const unsigned char * //txtRecord
                             ) {
     //const char *src = (char*)txtRecord;

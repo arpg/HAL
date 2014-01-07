@@ -7,7 +7,7 @@ namespace rpg {
 
 zmq::context_t* _InitSingleton() {
   // not ideal! we should apparently port away from avahi-compat... ug
-  setenv("AVAHI_COMPAT_NOWARN","1",1);
+  setenv("AVAHI_COMPAT_NOWARN", "1", 1);
   static zmq::context_t* pContext = NULL;
   if( pContext == NULL ){
     pContext = new zmq::context_t(1);
@@ -24,21 +24,21 @@ node::node() : context_(nullptr), port_(0) {
   init_done_ = false;
 
   // maximum wait time for publish and recv method, millionsecond
-  send_recv_max_wait_=1;
+  send_recv_max_wait_ = 1;
 }
 
 node::~node() {
   _BroadcastExit();
 }
 
-void node::set_verbocity(int nLevel) {
-  rpg::PrintHandlerSetErrorLevel(nLevel);
+void node::set_verbocity(int level) {
+  rpg::PrintHandlerSetErrorLevel(level);
 }
 
 ///
 /// Input: Node identifier
-bool node::init(std::string  sNodeName) {
-  node_name_ = sNodeName;
+bool node::init(std::string node_name) {
+  node_name_ = node_name;
   host_ip_ = _GetHostIP();
   context_ = _InitSingleton();
 
@@ -115,111 +115,111 @@ bool node::init(std::string  sNodeName) {
   return true;
 }
 
-bool node::provide_rpc(const std::string& sName,
+bool node::provide_rpc(const std::string& name,
                        int (*pFunc)(const std::string&)) {
-  return provide_rpc(sName, _IntStringFunc, (void*)pFunc);
+  return provide_rpc(name, _IntStringFunc, (void*)pFunc);
 }
 
-bool node::call_rpc(const std::string& sRpcResource,
-                    const std::string& sInput,
+bool node::call_rpc(const std::string& rpc_resource,
+                    const std::string& input,
                     int& nResult) {
-  std::string sNode = _ParseNodeName(sRpcResource);
-  std::string sFuncName = _ParseRpcName(sRpcResource);
+  std::string node_name = _ParseNodeName(rpc_resource);
+  std::string function_name = _ParseRpcName(rpc_resource);
   msg::String req;
   msg::Int rep;
-  req.set_value(sInput);
-  bool bRes = call_rpc(sNode, sFuncName, req, rep);
+  req.set_value(input);
+  bool bRes = call_rpc(node_name, function_name, req, rep);
   nResult = rep.value();
   return bRes;
 }
 
-bool node::call_rpc(const std::string& sRpcResource,
-                    const google::protobuf::Message& MsgReq,
-                    google::protobuf::Message& MsgRep,
-                    unsigned int TimeOut) {
-  std::string sNode = _ParseNodeName(sRpcResource);
-  std::string sFuncName = _ParseRpcName(sRpcResource);
-  return call_rpc(sNode, sFuncName, MsgReq, MsgRep, TimeOut);
+bool node::call_rpc(const std::string& rpc_resource,
+                    const google::protobuf::Message& msg_req,
+                    google::protobuf::Message& msg_rep,
+                    unsigned int time_out) {
+  std::string node_name = _ParseNodeName(rpc_resource);
+  std::string function_name = _ParseRpcName(rpc_resource);
+  return call_rpc(node_name, function_name, msg_req, msg_rep, time_out);
 }
 
-bool node::call_rpc(const std::string& sNode,
-                    const std::string& sFuncName,
-                    const google::protobuf::Message&  MsgReq,
-                    google::protobuf::Message& MsgRep,
-                    unsigned int TimeOut) {
+bool node::call_rpc(const std::string& node_name,
+                    const std::string& function_name,
+                    const google::protobuf::Message&  msg_req,
+                    google::protobuf::Message& msg_rep,
+                    unsigned int time_out) {
   assert(init_done_);
-  std::map<std::string,std::string>::iterator it;
-  NodeSocket pSock;
+  std::map<std::string, std::string>::iterator it;
+  NodeSocket socket;
 
   std::unique_lock<std::mutex> lock(mutex_); // careful
 
   // make sure we know about this method
-  std::string sRpcResource =  "rpc://"+sNode+"/"+sFuncName;
-  it = resource_table_.find(sRpcResource);
+  std::string rpc_resource =  "rpc://" + node_name + "/" + function_name;
+  it = resource_table_.find(rpc_resource);
   if (it == resource_table_.end()) {
     // unknown method, fail
     return false;
   }
-  std::string sHostAndPort = resource_table_[ sRpcResource ];
+  std::string host_and_port = resource_table_[rpc_resource];
 
   // check if socket is already open for this host
-  std::map<std::string,TimedNodeSocket>::iterator sockit;
-  sockit = rpc_sockets_.find(sNode);
+  std::map<std::string, TimedNodeSocket>::iterator sockit;
+  sockit = rpc_sockets_.find(node_name);
   if (sockit != rpc_sockets_.end()) {
     // socket is already open, lets use it
-    pSock = sockit->second.socket;
+    socket = sockit->second.socket;
   }
   else {
-    pSock = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
+    socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
     // lets connect using the socket
     try {
-      pSock->connect(("tcp://"+sHostAndPort).c_str());
+      socket->connect(("tcp://" + host_and_port).c_str());
     } catch(const zmq::error_t& error) {
       return false;
     }
-    rpc_sockets_[ sNode ] = TimedNodeSocket(pSock);
+    rpc_sockets_[node_name] = TimedNodeSocket(socket);
   }
 
-  // once we have pSock, we can let the resource table change. yay
+  // once we have socket, we can let the resource table change. yay
   // smart pointers
   lock.unlock();
 
   // TODO: what happens if this client tries to Delete himself?
 
-  return call_rpc(pSock, sFuncName, MsgReq, MsgRep, TimeOut);
+  return call_rpc(socket, function_name, msg_req, msg_rep, time_out);
 }
 
-bool node::call_rpc(NodeSocket pSock,
-                    const std::string& sFuncName,
-                    const google::protobuf::Message& MsgReq,
-                    google::protobuf::Message& MsgRep,
+bool node::call_rpc(NodeSocket socket,
+                    const std::string& function_name,
+                    const google::protobuf::Message& msg_req,
+                    google::protobuf::Message& msg_rep,
                     unsigned int nTimeoutMS) {
   assert(init_done_);
 
   // prepare to append function information (clip function name size)
-  std::string sFName = sFuncName;
+  std::string sFName = function_name;
   if (sFName.size() > 254) {
     sFName.resize(254);
   }
   unsigned char n = sFName.size();
 
   // prepare message
-  zmq::message_t ZmqReq(sizeof(n) + n + MsgReq.ByteSize());
+  zmq::message_t ZmqReq(sizeof(n) + n + msg_req.ByteSize());
   std::memcpy(ZmqReq.data(), &n, sizeof(n));
   std::memcpy((char*)ZmqReq.data() + sizeof(n), sFName.c_str(), n);
-  if (!MsgReq.SerializeToArray((char*)ZmqReq.data() + sizeof(n) + n, MsgReq.ByteSize())) {
+  if (!msg_req.SerializeToArray((char*)ZmqReq.data() + sizeof(n) + n, msg_req.ByteSize())) {
     // error serializing protobuf to ZMQ message
     return false;
   }
 
   // send request
-  pSock->setsockopt(ZMQ_SNDTIMEO,
+  socket->setsockopt(ZMQ_SNDTIMEO,
                     &send_recv_max_wait_,
                     sizeof(send_recv_max_wait_));
 
   try {
-    if (pSock->send(ZmqReq) == false) {
-      //if (pSock->send(ZmqReq) != 0) {
+    if (socket->send(ZmqReq) == false) {
+      //if (socket->send(ZmqReq) != 0) {
       PrintError("Error: %s\n", strerror(errno));
       // error sending request
       return false;
@@ -234,16 +234,16 @@ bool node::call_rpc(NodeSocket pSock,
   zmq::message_t ZmqRep;
   double dStartTime = _TicMS();
 
-  pSock->setsockopt(ZMQ_RCVTIMEO,&send_recv_max_wait_,sizeof(send_recv_max_wait_));
+  socket->setsockopt(ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
 
   try{
     bool bStatus = false;
     while(bStatus == false) {
       if (nTimeoutMS == 0) { // block
-        bStatus = pSock->recv(&ZmqRep);
+        bStatus = socket->recv(&ZmqRep);
       }
       else{
-        bStatus = pSock->recv(&ZmqRep);
+        bStatus = socket->recv(&ZmqRep);
         double dTimeTaken = _TocMS(dStartTime);
         if (dTimeTaken >= nTimeoutMS) {
           // timeout... error receiving
@@ -259,7 +259,7 @@ bool node::call_rpc(NodeSocket pSock,
     return false;
   }
 
-  if (MsgRep.ParseFromArray(ZmqRep.data(), ZmqRep.size()) == false) {
+  if (msg_rep.ParseFromArray(ZmqRep.data(), ZmqRep.size()) == false) {
     // bad protobuf format
     return false;
   }
@@ -274,7 +274,7 @@ bool node::advertise(const std::string& sTopic) {
   std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket>::iterator it;
+  std::map<std::string, NodeSocket>::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it != topic_sockets_.end()) {
     PrintMessage(1, "[Node] ERROR: resource socket is already open, return false\n");
@@ -283,17 +283,17 @@ bool node::advertise(const std::string& sTopic) {
   else {
     // no socket open.. lets open a new one
     // check if port is already in use
-    NodeSocket pSock(new zmq::socket_t(*context_, ZMQ_PUB));
-    int nPort = _BindRandomPort(pSock);
-    std::string sAddr = _GetAddress(host_ip_, nPort);
+    NodeSocket socket(new zmq::socket_t(*context_, ZMQ_PUB));
+    int port = _BindRandomPort(socket);
+    std::string sAddr = _GetAddress(host_ip_, port);
     PrintMessage(1, "[Node] Publishing topic '%s' on %s\n",
                  sTopic.c_str(), sAddr.c_str());
 
     // update node table and socket table
     // lock();
     // std::lock_guard<std::mutex> lock(mutex_); // careful
-    resource_table_[ sTopicResource ] = sAddr;
-    topic_sockets_[ sTopicResource ] = pSock;
+    resource_table_[sTopicResource] = sAddr;
+    topic_sockets_[sTopicResource] = socket;
     //                        lock.unlock();
     //                        unlock();
 
@@ -312,30 +312,30 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
   std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket >::iterator it;
+  std::map<std::string, NodeSocket >::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
     // no socket found
     return false;
   } else {
-    NodeSocket pSock = it->second;
+    NodeSocket socket = it->second;
     zmq::message_t ZmqMsg(Msg.ByteSize());
     if (!Msg.SerializeToArray(ZmqMsg.data(), Msg.ByteSize())) {
       // error serializing protobuf to ZMQ message
       return false;
     }
 
-    pSock->setsockopt(ZMQ_SNDTIMEO,
+    socket->setsockopt(ZMQ_SNDTIMEO,
                       &send_recv_max_wait_,
                       sizeof(send_recv_max_wait_));
     // double dStartTime=_TicMS();
     try {
-      if (pSock->send(ZmqMsg)==true) {
+      if (socket->send(ZmqMsg) == true) {
         // printf("[Node publish] Publish Protobuf success. used time %.2f ms\n",
         // _TocMS(dStartTime));
         return true;
       } else {
-        // printf("[Node publish] Publish Protobuf Fail. used time %.2f ms\n",_TocMS(dStartTime));
+        // printf("[Node publish] Publish Protobuf Fail. used time %.2f ms\n", _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -349,25 +349,25 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
   std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket>::iterator it;
+  std::map<std::string, NodeSocket>::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
     // no socket found
     return false;
   } else {
-    NodeSocket pSock = it->second;
+    NodeSocket socket = it->second;
 
-    pSock->setsockopt(ZMQ_SNDTIMEO,
+    socket->setsockopt(ZMQ_SNDTIMEO,
                       &send_recv_max_wait_,
                       sizeof(send_recv_max_wait_));
-    // double dStartTime=_TicMS();
+    // double dStartTime =_TicMS();
 
     try {
-      if (pSock->send(Msg)==true) {
-        // printf("[Node Publish] Publish zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
+      if (socket->send(Msg) == true) {
+        // printf("[Node Publish] Publish zmq success. used time %.2f ms. \n", _TocMS(dStartTime));
         return true;
       } else {
-        // printf("[Node Publish] Publish zmq failed. used time %.2f ms. \n",_TocMS(dStartTime));
+        // printf("[Node Publish] Publish zmq failed. used time %.2f ms. \n", _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -376,13 +376,13 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
   }
 }
 
-bool node::subscribe(const std::string& sResource) {
+bool node::subscribe(const std::string& resource) {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  std::string         sTopicResource = "topic://" + sResource;
+  std::string         sTopicResource = "topic://" + resource;
   assert(init_done_);
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket>::iterator it;
+  std::map<std::string, NodeSocket>::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it != topic_sockets_.end()) {
     PrintMessage(1, "[Node] ERROR: subscription for that topic already exists\n");
@@ -398,42 +398,42 @@ bool node::subscribe(const std::string& sResource) {
     }
     else {
       // create socket
-      NodeSocket pSock(new zmq::socket_t(*context_, ZMQ_SUB));
+      NodeSocket socket(new zmq::socket_t(*context_, ZMQ_SUB));
       // lets connect using the socket
       try {
-        pSock->setsockopt(ZMQ_SUBSCRIBE, NULL, 0);
-        pSock->connect(("tcp://" + its->second).c_str());
+        socket->setsockopt(ZMQ_SUBSCRIBE, NULL, 0);
+        socket->connect(("tcp://" + its->second).c_str());
       } catch(const zmq::error_t& error) {
         return false;
       }
-      topic_sockets_[ sTopicResource ] = pSock;
+      topic_sockets_[sTopicResource] = socket;
       return true;
     }
   }
 }
 
-bool node::receive(const std::string& sResource,
+bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
-  std::string sTopicResource = "topic://" + sResource;
+  std::string sTopicResource = "topic://" + resource;
   assert(init_done_);
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket>::iterator it;
+  std::map<std::string, NodeSocket>::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
     // no socket found
     return false;
   } else {
-    NodeSocket pSock = it->second;
+    NodeSocket socket = it->second;
     zmq::message_t ZmqMsg;
 
-    pSock->setsockopt(ZMQ_RCVTIMEO,&send_recv_max_wait_,sizeof(send_recv_max_wait_));
+    socket->setsockopt(ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
     // double dStartTime=_TicMS();
     try {
-      if (pSock->recv(&ZmqMsg) == true)
+      if (socket->recv(&ZmqMsg) == true)
       {
-        // printf("[Node Receive] Receive Protobuf success. used time %.2f ms. \n",_TocMS(dStartTime));
+        // printf("[Node Receive] Receive Protobuf success. used time %.2f ms. \n", _TocMS(dStartTime));
       } else {
-        // printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. \n",_TocMS(dStartTime));
+        // printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. \n", _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -447,28 +447,28 @@ bool node::receive(const std::string& sResource,
   }
 }
 
-bool node::receive(const std::string& sResource, zmq::message_t& ZmqMsg) {
-  std::string         sTopicResource = "topic://" + sResource;
+bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
+  std::string         sTopicResource = "topic://" + resource;
   assert(init_done_);
   // check if socket is already open for this topic
-  std::map<std::string,NodeSocket>::iterator it;
+  std::map<std::string, NodeSocket>::iterator it;
   it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
     // no socket found
     return false;
   }
   else {
-    NodeSocket pSock = it->second;
+    NodeSocket socket = it->second;
 
     //                        double dStartTime=_TicMS();
 
-    pSock->setsockopt(ZMQ_RCVTIMEO,&send_recv_max_wait_,sizeof(send_recv_max_wait_));
+    socket->setsockopt(ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
     try {
-      if (pSock->recv(&ZmqMsg) == false) {
-        // printf("[Node Receive] Receive zmq Fail. used time %.2f ms. \n",_TocMS(dStartTime));
+      if (socket->recv(&ZmqMsg) == false) {
+        // printf("[Node Receive] Receive zmq Fail. used time %.2f ms. \n", _TocMS(dStartTime));
         return false;
       } else {
-        // printf("[Node Receive] Receive zmq success. used time %.2f ms. \n",_TocMS(dStartTime));
+        // printf("[Node Receive] Receive zmq success. used time %.2f ms. \n", _TocMS(dStartTime));
         return true;
       }
     } catch(const zmq::error_t& error) {
@@ -491,7 +491,7 @@ std::string node::_GetHostIP(const std::string& sPreferredInterface) {
   struct ifaddrs *ifaddr, *ifa;
   char host[NI_MAXHOST];
 
-  std::vector<std::pair<std::string,std::string> > vIfAndIP;
+  std::vector<std::pair<std::string, std::string> > vIfAndIP;
 
   if (getifaddrs(&ifaddr) == -1) {
     perror("getifaddrs");
@@ -504,7 +504,7 @@ std::string node::_GetHostIP(const std::string& sPreferredInterface) {
     int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
                         NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     if (s == 0 && ifa->ifa_addr->sa_family == AF_INET) {
-      vIfAndIP.push_back(std::pair<std::string,std::string>(ifa->ifa_name,host));
+      vIfAndIP.push_back(std::pair<std::string, std::string>(ifa->ifa_name, host));
     }
   }
   freeifaddrs(ifaddr);
@@ -554,7 +554,7 @@ void node::_GetResourceTableFunc(
 void node::GetResourceTableFunc(
     msg::GetTableRequest& req,
     msg::GetTableResponse& rep) {
-  std::map<std::string,std::string>::iterator it;
+  std::map<std::string, std::string>::iterator it;
   // printf("GetResourc rep.urls_size() = %d\n", (int)rep.urls_size());
   msg::ResourceTable* pTable = rep.mutable_resource_table(); // add the resource table to the message
   pTable->set_version(resource_table_version_);
@@ -589,7 +589,7 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
   // _PrintResourceLocatorTable();
   for (int ii = 0; ii < req.urls_to_delete_size(); ++ii) {
     const msg::ResourceLocator& m = req.urls_to_delete(ii);
-    std::map<std::string,std::string>::iterator it =
+    std::map<std::string, std::string>::iterator it =
         resource_table_.find(m.resource());
     if (it != resource_table_.end()) {
       // printf("Deleting %s\n", m.resource().c_str());
@@ -600,7 +600,7 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
   }
 
   // also remove from RPC socket map.
-  std::map<std::string,TimedNodeSocket>::iterator sockit;
+  std::map<std::string, TimedNodeSocket>::iterator sockit;
   sockit = rpc_sockets_.find(req.requesting_node_name());
   if (sockit != rpc_sockets_.end()) {
     // this is ok, because no one else can touch this stuff right now...
@@ -608,7 +608,7 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
   }
 
   // also remove from topic_sockets_,
-  std::map<std::string,NodeSocket > ::iterator topicit;
+  std::map<std::string, NodeSocket > ::iterator topicit;
   for (topicit = topic_sockets_.begin(); topicit != topic_sockets_.end(); ) {
     if (topicit->first.find(req.requesting_node_name()) != std::string::npos) {
       topic_sockets_.erase(topicit++);
@@ -649,7 +649,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
   //  update the rest of the table:
   for (int ii = 0; ii < req.resource_table().urls_size(); ++ii) {
     const msg::ResourceLocator& m = req.resource_table().urls(ii);
-    resource_table_[ m.resource() ] = m.address();
+    resource_table_[m.resource()] = m.address();
   }
 
   // set appropraite reply to the remote calling client
@@ -664,12 +664,12 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
 void node::_HeartbeatThreadFunc(node *pThis) { pThis->HeartbeatThreadFunc(); }
 
 void node::HeartbeatThreadFunc() {
-  std::string sAddr = _GetAddress(host_ip_,port_);
+  std::string sAddr = _GetAddress(host_ip_, port_);
   PrintMessage(9, "[Node] Starting Heartbeat Thread at %s\n", sAddr.c_str());
   while(1) {
     // ping all nodes we haven't heard from recently
     std::unique_lock<std::mutex> lock(mutex_);
-    std::map<std::string,TimedNodeSocket>::iterator it;
+    std::map<std::string, TimedNodeSocket>::iterator it;
     for (it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
       double dElapsedTime = _Toc(it->second.last_heartbeat_time);
       if (dElapsedTime > heartbeat_wait_thresh_) { // haven't heard from this guy in a while
@@ -692,7 +692,7 @@ void node::HeartbeatThreadFunc() {
           // ...update resource table with data from remote node:
           for (int ii = 0; ii < hbrep.resource_table().urls_size(); ++ii) {
             msg::ResourceLocator r = hbrep.resource_table().urls(ii);
-            resource_table_[ r.resource() ] = r.address();
+            resource_table_[r.resource()] = r.address();
           }
           resource_table_version_ = hbrep.version();
         }
@@ -724,7 +724,7 @@ void node::HeartbeatThreadFunc() {
 void node::_RPCThreadFunc(node *pThis) { pThis->RPCThreadFunc(); }
 
 void node::RPCThreadFunc() {
-  std::string sAddr = _GetAddress(host_ip_,port_);
+  std::string sAddr = _GetAddress(host_ip_, port_);
   PrintMessage(1, "[Node] Starting RPC server at %s\n", sAddr.c_str());
 
   while(1) {
@@ -768,7 +768,7 @@ void node::RPCThreadFunc() {
       }
 
       // call function
-      Func(*(Req),*(Rep), pRPC->UserData);
+      Func(*(Req), *(Rep), pRPC->UserData);
 
       // send reply
       zmq::message_t ZmqRep(Rep->ByteSize());
@@ -788,18 +788,18 @@ std::vector<std::string> node::GetSubscribeClientName() {
   std::lock_guard<std::mutex> lock(mutex_); // careful
 
   std::vector<std::string> vClientNames;
-  std::map<std::string,NodeSocket >::iterator it;
+  std::map<std::string, NodeSocket >::iterator it;
   for (it = topic_sockets_.begin(); it != topic_sockets_.end(); ++it) {
-    if (it->first.find("StateKeeper")==std::string::npos) {
-      std::string sSubString=it->first.substr(8,it->first.size());
-      vClientNames.push_back(sSubString.substr(0,sSubString.find("/")));
+    if (it->first.find("StateKeeper") == std::string::npos) {
+      std::string sSubString = it->first.substr(8, it->first.size());
+      vClientNames.push_back(sSubString.substr(0, sSubString.find("/")));
     }
   }
   return vClientNames;
 }
 
 msg::ResourceTable node::_BuildResoruceTableMessage(msg::ResourceTable& t) {
-  std::map<std::string,std::string>::iterator it;
+  std::map<std::string, std::string>::iterator it;
   for (it = resource_table_.begin(); it != resource_table_.end(); ++it) {
     msg::ResourceLocator* pMsg = t.add_urls();// add new url to end of table
     pMsg->set_resource(it->first);
@@ -813,7 +813,7 @@ msg::ResourceTable node::_BuildResoruceTableMessage(msg::ResourceTable& t) {
 uint32_t node::_ResourceTableCRC() {
   boost::crc_32_type crc;
   std::string vNames;
-  std::map<std::string,std::string>::iterator it;
+  std::map<std::string, std::string>::iterator it;
   for (it = resource_table_.begin() ; it != resource_table_.end(); ++it) {
     vNames += it->first;
   }
@@ -822,7 +822,7 @@ uint32_t node::_ResourceTableCRC() {
 }
 
 void node::_PropagateResourceTable() {
-  std::map<std::string,TimedNodeSocket>::iterator it;
+  std::map<std::string, TimedNodeSocket>::iterator it;
   msg::SetTableRequest req;
   msg::SetTableResponse rep;
 
@@ -889,12 +889,12 @@ void node::_UpdateNodeRegistery() {
     }
 
     // connect to the service, if we can
-    std::map<std::string,std::string>::iterator it = resource_table_.find(sAddr);
+    std::map<std::string, std::string>::iterator it = resource_table_.find(sAddr);
     if (it == resource_table_.end()) { // not in registery, connect to this node
       std::string sZmqAddr = _ZmqAddress(url.Host(), url.Port());
-      NodeSocket pSock = NodeSocket(new zmq::socket_t(*context_,ZMQ_REQ));
+      NodeSocket socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
       try {
-        pSock->connect(sZmqAddr.c_str());
+        socket->connect(sZmqAddr.c_str());
       } catch(const zmq::error_t& error) {
         std::string sErr = error.what();
         PrintError("ERROR: zmq->connect() -- %s", sErr.c_str());
@@ -909,18 +909,18 @@ void node::_UpdateNodeRegistery() {
       req.set_requesting_node_name(node_name_);
       req.set_requesting_node_addr(_GetAddress());
       double dTimeout = get_resource_table_max_wait_*1e3; // wait half a second, max
-      if (!call_rpc(pSock, "GetResourceTable", req, rep, dTimeout)) {
+      if (!call_rpc(socket, "GetResourceTable", req, rep, dTimeout)) {
         PrintError("Error: Failed when asking for remote node name\n");
       }
       PrintMessage(1, "[Node]    heard back from '%s' about %d resources\n",
                    rep.sender_name().c_str(), rep.resource_table().urls_size());
 
       // ok, now we have the nodes name to record his socket
-      rpc_sockets_[ rep.sender_name() ] = TimedNodeSocket(pSock);
+      rpc_sockets_[rep.sender_name()] = TimedNodeSocket(socket);
       // push these into our resource table:
       for (int ii = 0; ii < rep.resource_table().urls_size(); ++ii) {
         msg::ResourceLocator r = rep.resource_table().urls(ii);
-        resource_table_[ r.resource() ] = r.address();
+        resource_table_[r.resource()] = r.address();
       }
 
       // keep track of incoming resource table versions
@@ -941,7 +941,7 @@ void node::_PrintResourceLocatorTable() {
   PrintMessage(1, "--------------- RESOURCE TABLE (ver %d, crc %X) --------------\n",
                resource_table_version_, _ResourceTableCRC());
   PrintMessage(1, "%-40sURL\n", "RESOURCE");
-  std::map<std::string,std::string>::iterator it;
+  std::map<std::string, std::string>::iterator it;
   for (it = resource_table_.begin() ; it != resource_table_.end(); ++it) {
     PrintMessage(1, "%-40s%s\n", it->first.c_str(), it->second.c_str());
   }
@@ -952,40 +952,40 @@ void node::_PrintResourceLocatorTable() {
 
 void node::_PrintRpcSockets() {
   PrintMessage(1, "----------- RPC SOCKETS OPEN ----------------\n");
-  std::map<std::string,TimedNodeSocket>::iterator it;
+  std::map<std::string, TimedNodeSocket>::iterator it;
   for (it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
     PrintMessage(1, "%s\n", it->first.c_str());
   }
   PrintMessage(1, "\n\n");
 }
 
-int node::_BindRandomPort(NodeSocket& pSock) {
+int node::_BindRandomPort(NodeSocket& socket) {
   std::ostringstream address;
-  int nPort = 5555;
-  address << "tcp://*:" << nPort;
+  int port = 5555;
+  address << "tcp://*:" << port;
   while(1) {
     try {
-      // pSock->setsockopt(ZMQ_RCVTIMEO,&send_recv_max_wait_,sizeof(send_recv_max_wait_));
-      // pSock->setsockopt(ZMQ_SNDTIMEO,&send_recv_max_wait_,sizeof(send_recv_max_wait_));
+      // socket->setsockopt(ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
+      // socket->setsockopt(ZMQ_SNDTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
 
-      pSock->bind(address.str().c_str());
+      socket->bind(address.str().c_str());
       break;
     } catch(const zmq::error_t& error) {
       address.str("");
-      ++nPort;
-      address << "tcp://*:" << nPort;
+      ++port;
+      address << "tcp://*:" << port;
     }
   }
-  return nPort;
+  return port;
 }
 
 std::string node::_GetAddress() {
   return _GetAddress(host_ip_, port_);
 }
 
-std::string node::_GetAddress(const std::string& sHostIP, const int nPort) {
+std::string node::_GetAddress(const std::string& host_ip, const int port) {
   std::ostringstream address;
-  address << sHostIP << ":" << nPort;
+  address << host_ip << ":" << port;
   return address.str();
 }
 
@@ -993,9 +993,9 @@ std::string node::_ZmqAddress() {
   return _ZmqAddress(host_ip_, port_);
 }
 
-std::string node::_ZmqAddress(const std::string& sHostIP, const int nPort) {
+std::string node::_ZmqAddress(const std::string& host_ip, const int port) {
   std::ostringstream address;
-  address << "tcp://"<< sHostIP << ":" << nPort;
+  address << "tcp://"<< host_ip << ":" << port;
   return address.str();
 }
 
@@ -1015,34 +1015,34 @@ double node::_TocMS(double dMS) {
   return _TicMS() - dMS;
 }
 
-std::string node::_ParseNodeName(const std::string& sResource) {
-  std::string sNodeName;
-  size_t found = sResource.find_first_of('/');
+std::string node::_ParseNodeName(const std::string& resource) {
+  std::string node_name;
+  size_t found = resource.find_first_of('/');
   if (found != std::string::npos) {
-    sNodeName = sResource.substr(0,found);
+    node_name = resource.substr(0, found);
   }
-  return sNodeName;
+  return node_name;
 }
 
-std::string node::_ParseRpcName(const std::string& sResource) {
-  std::string sRpcName;
-  size_t found = sResource.find_first_of('/');
+std::string node::_ParseRpcName(const std::string& resource) {
+  std::string rpc_name;
+  size_t found = resource.find_first_of('/');
   if (found != std::string::npos) {
-    sRpcName = sResource.substr(found+1);
+    rpc_name = resource.substr(found + 1);
   }
-  return sRpcName;
+  return rpc_name;
 }
 
-void node::_ConnectRpcSocket(const std::string& sNodeName,
-                             const std::string& sNodeAddr) {
+void node::_ConnectRpcSocket(const std::string& node_name,
+                             const std::string& node_addr) {
   // open RPC socket if necessary:
-  std::map<std::string,TimedNodeSocket>::iterator sockit;
-  sockit = rpc_sockets_.find(sNodeName);
+  std::map<std::string, TimedNodeSocket>::iterator sockit;
+  sockit = rpc_sockets_.find(node_name);
   if (sockit == rpc_sockets_.end()) {
-    std::string sZmqAddr = "tcp://" + sNodeAddr;
-    NodeSocket pSock = NodeSocket(new zmq::socket_t(*context_,ZMQ_REQ));
+    std::string sZmqAddr = "tcp://" + node_addr;
+    NodeSocket socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
     try {
-      pSock->connect(sZmqAddr.c_str());
+      socket->connect(sZmqAddr.c_str());
     } catch(const zmq::error_t& error) {
       std::string sErr = error.what();
       PrintError("Error zmq->connect() -- %s", sErr.c_str());
@@ -1050,7 +1050,7 @@ void node::_ConnectRpcSocket(const std::string& sNodeName,
     // PrintMessage(1, "Connected to remote node: %s\n", sZmqAddr.c_str());
 
     // record the new connection
-    rpc_sockets_[ sNodeName ] = TimedNodeSocket(pSock);
+    rpc_sockets_[node_name] = TimedNodeSocket(socket);
   }
 }
 
@@ -1080,10 +1080,10 @@ void node::_BroadcastExit() {
 
   req.set_requesting_node_name(node_name_);
   req.set_requesting_node_addr(_GetAddress());
-  std::map<std::string,std::string>::iterator it;
+  std::map<std::string, std::string>::iterator it;
   for (it = resource_table_.begin(); it != resource_table_.end(); ++it) {
-    if (it->first.find("rpc://"+node_name_) != std::string::npos
-        || it->first.find("topic://"+node_name_) != std::string::npos) {
+    if (it->first.find("rpc://" + node_name_) != std::string::npos
+        || it->first.find("topic://" + node_name_) != std::string::npos) {
       msg::ResourceLocator* pMsg = req.add_urls_to_delete();
       pMsg->set_resource(it->first);
       pMsg->set_address(it->second);
@@ -1093,8 +1093,8 @@ void node::_BroadcastExit() {
   //_PrintRpcSockets();
 
   // ask all known nodes to remove us:
-  std::map<std::string,TimedNodeSocket> tmp = rpc_sockets_;
-  std::map<std::string,TimedNodeSocket>::iterator sockit;
+  std::map<std::string, TimedNodeSocket> tmp = rpc_sockets_;
+  std::map<std::string, TimedNodeSocket>::iterator sockit;
   for (sockit = tmp.begin(); sockit != tmp.end(); ++sockit) {
     if (sockit->second.socket == socket_) {
       continue;
