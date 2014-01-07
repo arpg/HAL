@@ -17,554 +17,432 @@
 #include <string>
 #include <vector>
 
-struct ZeroConfRecord
-{
-    std::string     m_sServiceName;    //  service name
-    std::string     m_sRegType; // _tcp or _udp
-    std::string     m_sDomain;  // e.g. local
+struct ZeroConfRecord {
+  std::string     service_name;    //  service name
+  std::string     reg_type; // _tcp or _udp
+  std::string     domain;  // e.g. local
 };
 
-struct ZeroConfURL
-{
-    const char*  Host()
-    {
-        return m_sHost.c_str();
-    }
-    uint32_t Port()
-    {
-        return m_nPort;
-    }
+struct ZeroConfURL {
+  const char* Host() {
+    return host.c_str();
+  }
 
-    std::string     m_sHost; // service host
-    uint32_t        m_nPort; // service port
+  uint32_t Port() {
+    return port;
+  }
+
+  std::string host; // service host
+  uint32_t port; // service port
 };
 
 /// This class provides a *sychronous* interface to the local mdns service using
 // Avahi's cross-platform Bounjour compatability API.
-class ZeroConf
-{
+class ZeroConf {
+ public:
+  ZeroConf() {
+    dns_service_ref_ = 0;
+  }
 
-    public:
-        ///////////////////////////////////////////////////////////////////////
-        ZeroConf()
-        {
-            m_DNSServiceRef = 0;
-        }
+  ~ZeroConf() {
+    listen_to_server_thread_.interrupt();
+    //            sleep(2);
+    //            listen_to_server_thread_.join();
+    //            printf("DNSServiceRefDeallocate(dns_service_ref_);\n");
+    //            DNSServiceRefDeallocate(dns_service_ref_);
+  }
 
-        ~ZeroConf()
-        {
-            m_ListenToServerThread.interrupt();
-//            sleep(2);
-//            m_ListenToServerThread.join();
-//            printf("DNSServiceRefDeallocate( m_DNSServiceRef );\n");
-//            DNSServiceRefDeallocate( m_DNSServiceRef );
-        }
+  /// Generic interface to just register a service and bail
+  bool RegisterService(
+      const std::string& sName, //<
+      const std::string& sRegType, //<
+      uint16_t nPort,
+      const std::string& sDomain = "local") {
+    DNSServiceErrorType err = kDNSServiceErr_NameConflict;
+    std::string sServiceName = sName;
+    //int nServiceCount = 0;
+    while (err == kDNSServiceErr_NameConflict) {
+      err = DNSServiceRegister(
+          &dns_service_ref_, // uninitialized DNSServiceRef, active till death
+          0, // nFlags
+          0, // interface index
+          sServiceName.c_str(),
+          sRegType.c_str(),// example "_ftp._tcp.". must be an
+          //  underscore that is followed by 1 to 14 characters that
+          // can be  letters, digits, or  hyphens.
+          sDomain.c_str(), // null, or maybe "local"
+          NULL, // host,  specifies the SRV target host name.
+          // Most applications  do  not  spefiy this
+          htons(nPort), // service port, in network byte order
+          0, // txtLen, length of txtRecord
+          NULL, // txtRecord, a properly  formatted  DNSTXT record
+          _RegisterServiceCallback, // DNSServiceServiceRegisterReply
+          &record_);
 
-        ///////////////////////////////////////////////////////////////////////
-        /// Generic interface to just register a service and bail
-        bool RegisterService(
-                const std::string& sName, //<
-                const std::string& sRegType, //<
-                uint16_t nPort,
-                const std::string& sDomain = "local" //<
-                )
-        {
-            DNSServiceErrorType err = kDNSServiceErr_NameConflict;
-            std::string sServiceName = sName;
-            //int nServiceCount = 0;
-            while( err == kDNSServiceErr_NameConflict ){
-                err = DNSServiceRegister(
-                        &m_DNSServiceRef, // uninitialized DNSServiceRef, active till death
-                        0, // nFlags
-                        0, // interface index
-                        sServiceName.c_str(),
-                        sRegType.c_str(),// example "_ftp._tcp.". must be an
-                        //  underscore that is followed by 1 to 14 characters that
-                        // can be  letters, digits, or  hyphens.
-                        sDomain.c_str(), // null, or maybe "local"
-                        NULL, // host,  specifies the SRV target host name.
-                        // Most applications  do  not  spefiy this
-                        htons(nPort), // service port, in network byte order
-                        0, // txtLen, length of txtRecord
-                        NULL, // txtRecord, a properly  formatted  DNSTXT record
-                        _RegisterServiceCallback, // DNSServiceServiceRegisterReply
-                        &m_Record //
-                        );
-
-                // do renaming manually (since it doesn't work on linux)
-                if( err == kDNSServiceErr_NameConflict) {
-                    return false;
-                    /*
-                    printf("%s in use!\n", sServiceName.c_str() );
-                    char buf[32];
-                    snprintf( buf, 32, "%d", ++nServiceCount );
-                    sServiceName = sName + "(" + buf + ")";
-                    */
-                }
-            }
-
-            if( err != kDNSServiceErr_NoError ){
-                printf("ERROR calling DNSServiceRegister() -- erro %d\n", err);
-                return false;
-            }
-
-            // ok now setup a thread that watches the avahi socket
-            m_ListenToServerThread = boost::thread( _HandleEvents2, this );
-
-            return true;
-        }
-
-        ///////////////////////////////////////////////////////////////////////
-        /// Browse for a particular service type, e.g.m "_ssh._tcp"
-        std::vector<ZeroConfRecord> BrowseForServiceType(
-                const std::string& sServiceType,
-                const std::string& sDomain = "local"
-                )
-        {
-            std::vector<ZeroConfRecord> vRecords;
-
-            DNSServiceRef ServiceRef;
-            DNSServiceErrorType nErr =
-                DNSServiceBrowse(
-                        &ServiceRef,
-                        0, // flags
-                        0,  // interface index
-                        sServiceType.c_str(), // service regtype
-                        sDomain.c_str(), // domain
-                        _BrowseReplyCallback,
-                        &vRecords // user data
-                        );
-            if( nErr != kDNSServiceErr_NoError ){
-                printf("error: BrowseForServiceType() -- %d\n", nErr );
-            }
-
-            // async interface:
-            int dns_sd_fd  = DNSServiceRefSockFD(ServiceRef);
-            //DNSServiceErrorType err;
-            int nfds = dns_sd_fd + 1;
-            fd_set readfds;
-            struct timeval tv;
-
-            // 1. Set up the fd_set as usual here.
-            // This example client has no file descriptors of its own,
-            // but a real application would call FD_SET to add them to the set here
-            FD_ZERO(&readfds);
-
-            // 2. Add the fd for our client(s) to the fd_set
-            FD_SET(dns_sd_fd , &readfds);
-
-            // 3. Set up the timeout.
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
-
-            while (true){
-                int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
-                if (result > 0){
-                    DNSServiceErrorType err = kDNSServiceErr_NoError;
-                    if( ServiceRef && 
-                            FD_ISSET(dns_sd_fd, &readfds)) err = DNSServiceProcessResult(ServiceRef);
-                    if( err != kDNSServiceErr_NoError) {
-                        printf( "error looping %d\n", err);
-                        return vRecords;
-                    }
-                } else if (result == 0)  {
-                    //myTimerCallBack();
-                    return vRecords;
-                }   else {
-                    if (errno != EINTR){
-                        printf( "error %s\n", strerror(errno) );
-                        return vRecords;
-                    }
-                }
-            }
-
+      // do renaming manually (since it doesn't work on linux)
+      if (err == kDNSServiceErr_NameConflict) {
+        return false;
         /*
-        // synchronous use of API requires we call ProcessResults now -- this will push results
-        // to our callback registered above
-        nErr = DNSServiceProcessResult( ServiceRef );
-        if (nErr) {
-        fprintf(stderr, "DNSServiceProcessResult returned %d\n", nErr );
+          printf("%s in use!\n", sServiceName.c_str());
+          char buf[32];
+          snprintf(buf, 32, "%d", ++nServiceCount);
+          sServiceName = sName + "(" + buf + ")";
+        */
+      }
+    }
+
+    if (err != kDNSServiceErr_NoError) {
+      printf("ERROR calling DNSServiceRegister() -- erro %d\n", err);
+      return false;
+    }
+
+    // ok now setup a thread that watches the avahi socket
+    listen_to_server_thread_ = boost::thread(_HandleEvents2, this);
+
+    return true;
+  }
+
+  /// Browse for a particular service type, e.g.m "_ssh._tcp"
+  std::vector<ZeroConfRecord> BrowseForServiceType(
+      const std::string& sServiceType,
+      const std::string& sDomain = "local") {
+    std::vector<ZeroConfRecord> vRecords;
+
+    DNSServiceRef ServiceRef;
+    DNSServiceErrorType nErr =
+        DNSServiceBrowse(
+            &ServiceRef,
+            0, // flags
+            0,  // interface index
+            sServiceType.c_str(), // service regtype
+            sDomain.c_str(), // domain
+            _BrowseReplyCallback,
+            &vRecords // user data
+                         );
+    if (nErr != kDNSServiceErr_NoError) {
+      printf("error: BrowseForServiceType() -- %d\n", nErr);
+    }
+
+    // async interface:
+    int dns_sd_fd  = DNSServiceRefSockFD(ServiceRef);
+    //DNSServiceErrorType err;
+    int nfds = dns_sd_fd + 1;
+    fd_set readfds;
+    struct timeval tv;
+
+    // 1. Set up the fd_set as usual here.
+    // This example client has no file descriptors of its own,
+    // but a real application would call FD_SET to add them to the set here
+    FD_ZERO(&readfds);
+
+    // 2. Add the fd for our client(s) to the fd_set
+    FD_SET(dns_sd_fd , &readfds);
+
+    // 3. Set up the timeout.
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+
+    while (true) {
+      int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+      if (result > 0) {
+        DNSServiceErrorType err = kDNSServiceErr_NoError;
+        if (ServiceRef &&
+            FD_ISSET(dns_sd_fd, &readfds)) err = DNSServiceProcessResult(ServiceRef);
+        if (err != kDNSServiceErr_NoError) {
+          printf("error looping %d\n", err);
+          return vRecords;
         }
-         */
-
-            DNSServiceRefDeallocate( ServiceRef );
-            return vRecords;
+      } else if (result == 0)  {
+        //myTimerCallBack();
+        return vRecords;
+      }   else {
+        if (errno != EINTR) {
+          printf("error %s\n", strerror(errno));
+          return vRecords;
         }
+      }
+    }
 
-        ///////////////////////////////////////////////////////////////////////
-        /// Ask how to contact a particular service
-        std::vector<ZeroConfURL> ResolveService(
-                const std::string& sName,
-                const std::string& sRegType,
-                const std::string& sDomain = "local" ,
-                uint32_t nFlags = 0,
-                uint32_t nInterface = 0
-                )
-        {
-            DNSServiceRef ServiceRef;
-            m_bResolveComplete = false;
-            DNSServiceResolve( &ServiceRef, nFlags, nInterface, sName.c_str(), sRegType.c_str(), sDomain.c_str(),
-                    _ResolveReplyCallback, this );
+    /*
+    // synchronous use of API requires we call ProcessResults now -- this will push results
+    // to our callback registered above
+    nErr = DNSServiceProcessResult(ServiceRef);
+    if (nErr) {
+    fprintf(stderr, "DNSServiceProcessResult returned %d\n", nErr);
+    }
+    */
+
+    DNSServiceRefDeallocate(ServiceRef);
+    return vRecords;
+  }
+
+  /// Ask how to contact a particular service
+  std::vector<ZeroConfURL> ResolveService(
+      const std::string& sName,
+      const std::string& sRegType,
+      const std::string& sDomain = "local" ,
+      uint32_t nFlags = 0,
+      uint32_t nInterface = 0) {
+    DNSServiceRef ServiceRef;
+    resolve_complete_ = false;
+    DNSServiceResolve(&ServiceRef, nFlags, nInterface, sName.c_str(), sRegType.c_str(), sDomain.c_str(),
+                      _ResolveReplyCallback, this);
 
 
-            _HandleEvents( ServiceRef );
+    _HandleEvents(ServiceRef);
 
-            DNSServiceRefDeallocate( ServiceRef );
+    DNSServiceRefDeallocate(ServiceRef);
 
-            std::vector<ZeroConfURL> vRes = m_vResolvedURLS;
-            m_vResolvedURLS.clear();
-            return vRes;
+    std::vector<ZeroConfURL> vRes = resolved_urls_;
+    resolved_urls_.clear();
+    return vRes;
+  }
+
+ private:
+  /// Callback to get the results of a ResolveService request.
+  static void DNSSD_API _ResolveReplyCallback(
+      DNSServiceRef client,
+      DNSServiceFlags nFlags,
+      uint32_t ifIndex,
+      DNSServiceErrorType errorCode,
+      const char *fullname,
+      const char *hosttarget,
+      uint16_t opaqueport,
+      uint16_t txtLen,
+      const unsigned char *txtRecord,
+      void *pThis) {
+    ((ZeroConf*)pThis)->ResolveReplyCallback(
+        client,
+        nFlags,
+        ifIndex,
+        errorCode,
+        fullname,
+        hosttarget,
+        opaqueport,
+        txtLen,
+        txtRecord);
+  }
+
+  const char* _GetHostIP() {
+    char buf[128];
+    gethostname(buf,sizeof(buf));
+    struct hostent *hp = gethostbyname(buf);
+    struct in_addr* in = (struct in_addr*)hp->h_addr;
+    return inet_ntoa(*in);
+  }
+
+  void ResolveReplyCallback(
+      DNSServiceRef ,//client,
+      DNSServiceFlags nFlags,
+      uint32_t ,//ifIndex,
+      DNSServiceErrorType ,//errorCode,
+      const char* ,//fullname,
+      const char* hosttarget,
+      uint16_t opaqueport,
+      uint16_t ,//txtLen,
+      const unsigned char * //txtRecord
+                            ) {
+    //const char *src = (char*)txtRecord;
+    union { uint16_t s; u_char b[2]; }
+    port = { opaqueport };
+    uint16_t PortAsNumber = ((uint16_t)port.b[0]) << 8 | port.b[1];
+
+    struct hostent *hp = gethostbyname(hosttarget);
+    struct in_addr* in = (struct in_addr*)hp->h_addr;
+
+    ZeroConfURL url;
+    url.host = inet_ntoa(*in);
+    url.port = PortAsNumber;
+
+    // add to list if not seen already
+    bool bInList = false;
+    for (size_t ii = 0; ii < resolved_urls_.size(); ii++) {
+      ZeroConfURL& a = resolved_urls_[ii];
+      if (a.host == url.host && a.port == url.port) {
+        bInList = true;
+      }
+    }
+    if (bInList == false) {
+      resolved_urls_.push_back(url);
+    }
+
+
+    if (!(nFlags & kDNSServiceFlagsMoreComing)) {
+      resolve_complete_ = true;
+    }
+  }
+
+  // Callback called with registration result
+  static void DNSSD_API  _RegisterServiceCallback(
+      DNSServiceRef /*sdRef*/,             //< Input:
+      DNSServiceFlags,                 //< NA currently unused
+      DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
+      const char *sName,               //< Input: service name
+      const char *sRegType,            //< Input: _tcp or _udp
+      const char *sDomain,             //< Input: e.g. local
+      void *pUserData                  //< Input: user supplied data
+                                                  ) {
+    ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
+    if (nErrorCode != kDNSServiceErr_NoError) {
+      printf("error in _RegisterServiceCallback\n");
+    }
+    else {
+      pRecord->service_name = sName;
+      pRecord->reg_type     = sRegType;
+      pRecord->domain      = sDomain ? sDomain : "local";
+    }
+  }
+
+  ///
+  static void DNSSD_API _BrowseReplyCallback(
+      DNSServiceRef,
+      DNSServiceFlags nFlags,
+      uint32_t,
+      DNSServiceErrorType nErrorCode,
+      const char *sServiceName,
+      const char * sRegType,
+      const char * sReplyDomain,
+      void *pUserData) {
+    std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
+
+    if (nErrorCode != kDNSServiceErr_NoError) {
+      printf("error _BrowseReplyCallback() -- %d\n", nErrorCode);
+      return;
+    }
+
+    /// kDNSServiceFlagsAdd  indicates that the service parameter contains the
+    //  name of a service that has been found; you should add it to your list of
+    //  available services.
+    if (nFlags & kDNSServiceFlagsAdd) {
+      ZeroConfRecord r;
+      r.service_name = sServiceName;
+      r.reg_type = sRegType;
+      r.domain = sReplyDomain;
+      // only record node if we haven't seen it yet -- else bail
+      for (size_t ii = 0; ii < vRecords.size(); ii++) {
+        if (vRecords[ii].service_name == sServiceName &&
+            vRecords[ii].reg_type == sRegType &&
+            vRecords[ii].domain == sReplyDomain) {
+          return;
         }
+      }
 
-    private:
+      vRecords.push_back(r);
+    }
 
-        ///////////////////////////////////////////////////////////////////////
-        /// Callback to get the results of a ResolveService request.
-        static void DNSSD_API _ResolveReplyCallback(
-                DNSServiceRef client,
-                DNSServiceFlags nFlags,
-                uint32_t ifIndex,
-                DNSServiceErrorType errorCode,
-                const char *fullname,
-                const char *hosttarget,
-                uint16_t opaqueport,
-                uint16_t txtLen,
-                const unsigned char *txtRecord,
-                void *pThis
-                )
-        {
-            ((ZeroConf*)pThis)->ResolveReplyCallback(
-                    client,
-                    nFlags,
-                    ifIndex,
-                    errorCode,
-                    fullname,
-                    hosttarget,
-                    opaqueport,
-                    txtLen,
-                    txtRecord
-                    );
+    /// done?
+    if (!(nFlags & kDNSServiceFlagsMoreComing)) {
+    }
+  }
+
+  /// sit on the DNSServiceRef file descriptor to wait for results
+  /// from the server
+  static void _HandleEvents2(void* pThis) {
+    ((ZeroConf*)pThis)->HandleEvents2();
+  }
+
+  void HandleEvents2() {
+    int dns_sd_fd =
+        dns_service_ref_ ? DNSServiceRefSockFD(dns_service_ref_) : -1;
+    int nfds = dns_sd_fd + 1;
+    fd_set readfds;
+    bool bStopNow = false;
+
+    while (!bStopNow)  {
+      if (listen_to_server_thread_.interruption_requested()) {
+        printf("exiting thread\n");
+        return;
+      }
+
+
+      // 1. Set up the fd_set as usual here.
+      // This example client has no file descriptors of its own,
+      // but a real application would call FD_SET to add them to the set here
+      FD_ZERO(&readfds);
+
+      // 2. Add the fd for our client(s) to the fd_set
+      if (dns_service_ref_) {
+        FD_SET(dns_sd_fd, &readfds);
+      }
+
+      struct timeval tv;
+      tv.tv_sec = 0;
+      tv.tv_usec = 50000;
+
+      int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+      if (result > 0) {
+        DNSServiceErrorType err = kDNSServiceErr_NoError;
+        if (dns_service_ref_ && FD_ISSET(dns_sd_fd , &readfds)) {
+          err = DNSServiceProcessResult(dns_service_ref_);
         }
-
-        const char* _GetHostIP()
-        {
-            char buf[128];
-            gethostname( buf,sizeof(buf) );
-            struct hostent *hp = gethostbyname( buf );
-            struct in_addr* in = (struct in_addr*)hp->h_addr;
-            return inet_ntoa( *in );
+        if (err) {
+          fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
+          bStopNow = true;
         }
-
-        void ResolveReplyCallback(
-                DNSServiceRef ,//client,
-                DNSServiceFlags nFlags,
-                uint32_t ,//ifIndex,
-                DNSServiceErrorType ,//errorCode,
-                const char* ,//fullname,
-                const char* hosttarget,
-                uint16_t opaqueport,
-                uint16_t ,//txtLen,
-                const unsigned char * //txtRecord
-                )
-        {
-            //const char *src = (char*)txtRecord;
-            union { uint16_t s; u_char b[2]; }
-            port = { opaqueport };
-            uint16_t PortAsNumber = ((uint16_t)port.b[0]) << 8 | port.b[1];
-
-            struct hostent *hp = gethostbyname( hosttarget );
-/*
-            // get the IP that matches the one returned by gethostname
-            std::string sIP;
-            unsigned int i=0;
-            while( hp->h_addr_list[i] != NULL) {
-                struct in_addr* in = (struct in_addr*)hp->h_addr_list[i];
-                 sIP = _GetHostIP();
-                if( sIP == std::string(inet_ntoa(*in))){
-                    printf( "using option: %s\n", sIP.c_str() );
-                }
-                i++;
-            }
-*/
-            struct in_addr* in = (struct in_addr*)hp->h_addr;
-//            printf( "first option: %s\n", inet_ntoa(*in) );
-
-            /*
-            std::string sIP = inet_ntoa( *in );
-            struct in_addr addr;
-            inet_aton( sIP.c_str(), &addr );
-            */
-//            char buf[128];
-//            gethostname( buf,sizeof(buf) );
-//            printf("hosttarget = %s, %s\n", hosttarget, buf );
-
-            ZeroConfURL url;
-            url.m_sHost = inet_ntoa(*in);
-            url.m_nPort = PortAsNumber;
-
-            // add to list if not seen already
-            bool bInList = false;
-            for( size_t ii = 0; ii < m_vResolvedURLS.size(); ii++ ){
-                ZeroConfURL& a = m_vResolvedURLS[ii];
-                if( a.m_sHost == url.m_sHost && a.m_nPort == url.m_nPort ){
-                    bInList = true;
-                }
-            }
-            if( bInList == false ){
-//                printf("%s can be reached at %s:%u\n", fullname, url.m_sHost.c_str(), PortAsNumber );
-                m_vResolvedURLS.push_back(url);
-            }
-
-
-            if( !(nFlags & kDNSServiceFlagsMoreComing) ){
-                m_bResolveComplete = true;
-            }
+      }
+      else if (result == 0 && resolve_complete_) {
+        // bStopNow = true;
+        //myTimerCallBack();
+      }
+      else{
+        if (errno != EINTR) {
+          //                        bStopNow = 1;
         }
+        return;
+      }
+    }
+  }
 
+  /// sit on the DNSServiceRef file descriptor to wait for results from the server
+  void _HandleEvents(DNSServiceRef ServiceRef) {
+    int dns_sd_fd = ServiceRef ? DNSServiceRefSockFD(ServiceRef) : -1;
+    int nfds = dns_sd_fd + 1;
+    fd_set readfds;
+    struct timeval tv;
+    bool bStopNow = false;
+    while (!bStopNow) {
+      // 1. Set up the fd_set as usual here.
+      // This example client has no file descriptors of its own,
+      // but a real application would call FD_SET to add them to the set here
+      FD_ZERO(&readfds);
 
-        ///////////////////////////////////////////////////////////////////////
-        // Callback called with registration result
-        static void DNSSD_API  _RegisterServiceCallback(
-                DNSServiceRef /*sdRef*/,             //< Input:
-                DNSServiceFlags,                 //< NA currently unused
-                DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
-                const char *sName,               //< Input: service name
-                const char *sRegType,            //< Input: _tcp or _udp
-                const char *sDomain,             //< Input: e.g. local
-                void *pUserData                  //< Input: user supplied data
-                )
-        {
-            ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
-            if( nErrorCode != kDNSServiceErr_NoError ){
-                printf("error in _RegisterServiceCallback\n");
-            }
-            else {
-                pRecord->m_sServiceName = sName;
-                pRecord->m_sRegType     = sRegType;
-                pRecord->m_sDomain      = sDomain ? sDomain : "local";
-            }
+      // 2. Add the fd for our client(s) to the fd_set
+      if (ServiceRef) {
+        FD_SET(dns_sd_fd, &readfds);
+      }
+
+      // 3. Set up the timeout.
+      tv.tv_sec = 0;
+      tv.tv_usec = 10000;
+
+      int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+      if (result > 0) {
+        DNSServiceErrorType err = kDNSServiceErr_NoError;
+        if (ServiceRef && FD_ISSET(dns_sd_fd , &readfds)) {
+          err = DNSServiceProcessResult(ServiceRef);
         }
-
-        ///////////////////////////////////////////////////////////////////////
-        ///
-        static void DNSSD_API _BrowseReplyCallback(
-                DNSServiceRef,
-                DNSServiceFlags nFlags,
-                uint32_t,
-                DNSServiceErrorType nErrorCode,
-                const char *sServiceName,
-                const char * sRegType,
-                const char * sReplyDomain,
-                void *pUserData
-                )
-        {
-            std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
-
-            if( nErrorCode != kDNSServiceErr_NoError ){
-                printf("error _BrowseReplyCallback() -- %d\n", nErrorCode );
-                return;
-            }
-
-//            static int ii = 0;
-//            printf( "_BrowseReplyCallback called %d times\n", ii++ );
-
-            /// kDNSServiceFlagsAdd  indicates that the service parameter contains the
-            //  name of a service that has been found; you should add it to your list of
-            //  available services.
-            if( nFlags & kDNSServiceFlagsAdd ){
-                ZeroConfRecord r;
-                r.m_sServiceName = sServiceName;
-                r.m_sRegType = sRegType;
-                r.m_sDomain = sReplyDomain;
-//                printf("adding %s.%s at %s\n", sServiceName, sRegType, sReplyDomain );
-                // only record node if we haven't seen it yet -- else bail
-                for( size_t ii = 0; ii < vRecords.size(); ii++ ){
-                    if( vRecords[ii].m_sServiceName == sServiceName &&
-                            vRecords[ii].m_sRegType == sRegType &&
-                            vRecords[ii].m_sDomain == sReplyDomain ){
-                        return;
-                    }
-                }
-
-                vRecords.push_back( r );
-            }
-
-            /// done?
-            if( !(nFlags & kDNSServiceFlagsMoreComing) ){
-                //printf("no more coming\n");
-            }
+        if (err) {
+          fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
+          bStopNow = true;
         }
-
-        /*
-        ///////////////////////////////////////////////////////////////////////
-        static void DNSSD_API _TestResolveReplyCallback(
-                DNSServiceRef client,
-                DNSServiceFlags nFlags,
-                uint32_t ifIndex,
-                DNSServiceErrorType errorCode,
-                const char *fullname,
-                const char *hosttarget,
-                uint16_t opaqueport,
-                uint16_t txtLen,
-                const unsigned char *txtRecord,
-                void *pThis
-                )
-        {
-            printf("_TestResolveReplyCallback()\n");
+      } else if (result == 0 && resolve_complete_) {
+        bStopNow = true;
+        //myTimerCallBack();
+      } else{
+        //                   printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
+        if (errno != EINTR) {
+          bStopNow = 1;
         }
+      }
+    }
+  }
 
-        ///////////////////////////////////////////////////////////////////////
-        static void DNSSD_API _TestBrowseReplyCallback(
-                DNSServiceRef,
-                DNSServiceFlags nFlags,
-                uint32_t,
-                DNSServiceErrorType nErrorCode,
-                const char *sServiceName,
-                const char * sRegType,
-                const char * sReplyDomain,
-                void *pUserData
-                )
-        {
-            printf("TestBrowseReplyCallback\n");
-        }
-
-        ///////////////////////////////////////////////////////////////////////
-        static void DNSSD_API  _TestRegisterServiceCallback(
-                DNSServiceRef, //sdRef,             //< Input:
-                DNSServiceFlags,                 //< NA currently unused
-                DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
-                const char *sName,               //< Input: service name
-                const char *sRegType,            //< Input: _tcp or _udp
-                const char *sDomain,             //< Input: e.g. local
-                void *pUserData                  //< Input: user supplied data
-                )
-        {
-            printf("_TestRegisterServiceCallback()\n");
-        }
-         */
-
-        ///////////////////////////////////////////////////////////////////////
-        /// sit on the DNSServiceRef file descriptor to wait for results from the server
-        static void _HandleEvents2( void* pThis ) { ((ZeroConf*)pThis)->HandleEvents2(); }
-        void HandleEvents2()
-        {
-            int dns_sd_fd = m_DNSServiceRef ? DNSServiceRefSockFD( m_DNSServiceRef ) : -1;
-            int nfds = dns_sd_fd + 1;
-            fd_set readfds;
-            int result;
-            bool bStopNow = false;
-
-//            printf("_HandleEvents2 -- heard from server: ");
-
-            while( !bStopNow )  {
-
-                if( m_ListenToServerThread.interruption_requested() ){
-                    printf("exiting thread\n");
-                    return;
-                }
-
-
-                // 1. Set up the fd_set as usual here.
-                // This example client has no file descriptors of its own,
-                // but a real application would call FD_SET to add them to the set here
-                FD_ZERO( &readfds );
-
-                // 2. Add the fd for our client(s) to the fd_set
-                if( m_DNSServiceRef ){
-                    FD_SET( dns_sd_fd, &readfds );
-                }
-
-                struct timeval tv;
-                tv.tv_sec = 0;
-                tv.tv_usec = 50000;
-
-                result = select( nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv );
-                if( result > 0 ){
-                    DNSServiceErrorType err = kDNSServiceErr_NoError;
-                    if( m_DNSServiceRef && FD_ISSET(dns_sd_fd , &readfds)){
-                        err = DNSServiceProcessResult( m_DNSServiceRef );
-                    }
-                    if (err) {
-                        fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-                        bStopNow = true;
-                    }
- //                   printf(" more...");
-                }
-                else if( result == 0 && m_bResolveComplete ){
-//                    printf("done hearing from server\n");
-//                    bStopNow = true;
-                    //myTimerCallBack();
-                }
-                else{
-//                    printf("select() returned %d errno %d %s\n", result, errno, strerror(errno) );
-                    if (errno != EINTR){
-//                        bStopNow = 1;
-                    }
-                    return;
-                }
-            }
-        }
-
-
-        ///////////////////////////////////////////////////////////////////////
-        /// sit on the DNSServiceRef file descriptor to wait for results from the server
-        void _HandleEvents( DNSServiceRef ServiceRef )
-        {
-            int dns_sd_fd = ServiceRef ? DNSServiceRefSockFD( ServiceRef ) : -1;
-            int nfds = dns_sd_fd + 1;
-            fd_set readfds;
-            struct timeval tv;
-            int result;
-            bool bStopNow = false;
-
-//            printf("ZeroConf::_HandleEvents()\n");
-
-            while( !bStopNow )  {
-                // 1. Set up the fd_set as usual here.
-                // This example client has no file descriptors of its own,
-                // but a real application would call FD_SET to add them to the set here
-                FD_ZERO( &readfds );
-
-                // 2. Add the fd for our client(s) to the fd_set
-                if( ServiceRef ){
-                    FD_SET( dns_sd_fd, &readfds );
-                }
-
-                // 3. Set up the timeout.
-                tv.tv_sec = 0;
-                tv.tv_usec = 10000;
-
-                result = select( nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv );
-                if( result > 0 ){
-                    DNSServiceErrorType err = kDNSServiceErr_NoError;
-                    if( ServiceRef && FD_ISSET(dns_sd_fd , &readfds)){
-                        err = DNSServiceProcessResult( ServiceRef );
-                    }
-                    if (err) {
-                        fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-                        bStopNow = true;
-                    }
-                }
-                else if( result == 0 && m_bResolveComplete ){
-                    bStopNow = true;
-                    //myTimerCallBack();
-                }
-                else{
- //                   printf("select() returned %d errno %d %s\n", result, errno, strerror(errno) );
-                    if (errno != EINTR){
-                        bStopNow = 1;
-                    }
-                }
-            }
-        }
-
-    private:
-        DNSServiceRef             m_DNSServiceRef; // only use for our registered service
-        std::vector<ZeroConfURL>  m_vResolvedURLS;
-        bool                      m_bResolveComplete;
-        ZeroConfRecord            m_Record;
-        boost::thread             m_ListenToServerThread;
+ private:
+  DNSServiceRef dns_service_ref_; // only use for our registered service
+  std::vector<ZeroConfURL>  resolved_urls_;
+  bool resolve_complete_;
+  ZeroConfRecord record_;
+  boost::thread listen_to_server_thread_;
 };
 
 #endif
-

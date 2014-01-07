@@ -92,7 +92,7 @@ class node {
 
   ///
   /// Input: Node identifier
-  bool init(std::string sNodeName);
+  bool init(std::string node_name);
 
   /// Specialization to register a remote procedure call for the
   // "int f(string)" signature.
@@ -106,13 +106,13 @@ class node {
                    void (*pFunc)(Req&, Rep&, void*), //< Input: Function pointer
                    void* pUserData //< Input: User data passed to the function
                    ) {
-    std::lock_guard<std::mutex> lock(m_Mutex); // careful
+    std::lock_guard<std::mutex> lock(mutex_); // careful
 
-    assert(m_bInitDone);
+    assert(init_done_);
     // check if function with that name is already registered
     std::map<std::string, RPC*>::iterator it;
-    it = m_mRpcTable.find(sName);
-    if (it != m_mRpcTable.end()) {
+    it = rpc_table_.find(sName);
+    if (it != rpc_table_.end()) {
       return false;
     } else {
       RPC* pRPC = new RPC;
@@ -120,9 +120,9 @@ class node {
       pRPC->ReqMsg = new Req;
       pRPC->RepMsg = new Rep;
       pRPC->UserData = pUserData;
-      m_mRpcTable[ sName ] = pRPC;
-      std::string sRpcResource = "rpc://" + m_sNodeName + "/" + sName;
-      m_mResourceTable[ sRpcResource ] = _GetAddress();
+      rpc_table_[sName] = pRPC;
+      std::string rpc_resource = "rpc://" + node_name_ + "/" + sName;
+      resource_table_[ rpc_resource ] = _GetAddress();
       return true;
     }
   }
@@ -130,34 +130,34 @@ class node {
   /// Make a remote procedure call like "node->func()".
   // This is a specialization for the "int f(string)" signature
   bool call_rpc(
-      const std::string& sRpcResource, //< Input: Remote node name and rpc method
-      const std::string& sInput,    //< Input: input to rpc method
-      int& nResult                  //< Output:
+      const std::string& rpc_resource, //< Input: Remote node name and rpc method
+      const std::string& input,    //< Input: input to rpc method
+      int& result                  //< Output:
                 );
 
   /// Make a remote procedure call like "node->func()".
   bool call_rpc(
-      const std::string&               sRpcResource,//< Input:  node/rpc
-      const google::protobuf::Message& MsgReq,   //< Input: Protobuf message request
-      google::protobuf::Message&       MsgRep,  //< Output: Protobuf message reply
-      unsigned int                     TimeOut = 0//< Input: ms to wait for reply
+      const std::string&               rpc_resource,//< Input:  node/rpc
+      const google::protobuf::Message& msg_req,   //< Input: Protobuf message request
+      google::protobuf::Message&       msg_rep,  //< Output: Protobuf message reply
+      unsigned int                     time_out = 0//< Input: ms to wait for reply
                 );
 
   /// Make a remote procedure call like "node->func()".
   bool call_rpc(
-      const std::string&                sNode,      //< Input: Remote node name
-      const std::string&                sFuncName,  //< Input: Remote function to call
-      const google::protobuf::Message&  MsgReq,     //< Input: Protobuf message request
-      google::protobuf::Message&        MsgRep,     //< Output: Protobuf message reply
-      unsigned int                      TimeOut = 0//< Input: ms to wait for reply
+      const std::string&                node_name,      //< Input: Remote node name
+      const std::string&                function,  //< Input: Remote function to call
+      const google::protobuf::Message&  msg_req,     //< Input: Protobuf message request
+      google::protobuf::Message&        msg_rep,     //< Output: Protobuf message reply
+      unsigned int                      time_out = 0//< Input: ms to wait for reply
                 );
 
   /// Make a remote procedure call like "node->func()" -- with out node name resolution.
   // this is the main API most calls boil down to.
-  bool call_rpc(NodeSocket pSock,
-                const std::string& sFuncName,  //< Input: Remote function to call
-                const google::protobuf::Message& MsgReq,     //< Input: Protobuf message request
-                google::protobuf::Message& MsgRep,     //< Output: Protobuf message reply
+  bool call_rpc(NodeSocket socket,
+                const std::string& function,  //< Input: Remote function to call
+                const google::protobuf::Message& msg_req,     //< Input: Protobuf message request
+                google::protobuf::Message& msg_rep,     //< Output: Protobuf message reply
                 unsigned int nTimeoutMS = 0 //< Input: ms to wait for reply
                 );
 
@@ -260,14 +260,12 @@ class node {
   /// print the rpc sockets
   void _PrintRpcSockets();
 
-  int _BindRandomPort(NodeSocket& pSock);
+  int _BindRandomPort(NodeSocket& socket);
 
   std::string _GetAddress();
-
   std::string _GetAddress(const std::string& sHostIP, const int nPort);
 
   std::string _ZmqAddress();
-
   std::string _ZmqAddress(const std::string& sHostIP, const int nPort);
 
   double _Tic();
@@ -280,8 +278,8 @@ class node {
   std::string _ParseRpcName(const std::string& sResource);
 
   // ensure we have a connection
-  void _ConnectRpcSocket(const std::string& sNodeName,
-                         const std::string& sNodeAddr);
+  void _ConnectRpcSocket(const std::string& node_name_name,
+                         const std::string& node_nameAddr);
 
   static void NodeSignalHandler(int nSig);
 
@@ -295,70 +293,70 @@ class node {
   /// used to time socket communications
   struct TimedNodeSocket {
     TimedNodeSocket() {}
-    TimedNodeSocket(const NodeSocket& pSocket) : m_pSocket(pSocket),
-                                                 m_dLastHeartbeatTime(0.0) {}
+    TimedNodeSocket(const NodeSocket& socketet) : socket(socketet),
+                                                  last_heartbeat_time(0.0) {}
 
     TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
       if (this == &RHS) {
         return *this;
       }
-      m_pSocket = RHS.m_pSocket;
-      m_dLastHeartbeatTime = RHS.m_dLastHeartbeatTime;
+      socket = RHS.socket;
+      last_heartbeat_time = RHS.last_heartbeat_time;
       return *this;
     }
 
-    NodeSocket  m_pSocket;
-    double      m_dLastHeartbeatTime;
+    NodeSocket  socket;
+    double      last_heartbeat_time;
   };
 
   // NB a "resource" is a nodename, node/rpc or node/topic URL
   // resource to host:port map
-  std::map<std::string, std::string> m_mResourceTable;
+  std::map<std::string, std::string> resource_table_;
 
   // resource to socket map
-  std::map<std::string, NodeSocket> m_mTopicSockets;
+  std::map<std::string, NodeSocket> topic_sockets_;
 
   // nodename to socket map
-  std::map<std::string, TimedNodeSocket> m_mRpcSockets;
+  std::map<std::string, TimedNodeSocket> rpc_sockets_;
 
   // function to RPC structs map
-  std::map<std::string, RPC*> m_mRpcTable;
+  std::map<std::string, RPC*> rpc_table_;
 
   // for automatic server discovery
-  ZeroConf m_ZeroConf;
+  ZeroConf zero_conf_;
 
   // global socket, (RPC too)
-  NodeSocket m_pSocket;
+  NodeSocket socket_;
 
   // global context
-  zmq::context_t* m_pContext;
+  zmq::context_t* context_;
 
   // node's machine IP
-  std::string m_sHostIP;
+  std::string host_ip_;
 
   // node's RPC port
-  int m_nPort;
+  int port_;
 
   // node unique name
-  std::string m_sNodeName;
+  std::string node_name_;
 
   // initialized?
-  bool m_bInitDone;
+  bool init_done_;
 
   // Thread for handling rpc
-  std::thread m_RPCThread;
+  std::thread rpc_thread_;
 
   // Thread for handling heartbeats
-  std::thread m_HeartbeatThread;
+  std::thread heartbeat_thread_;
 
   // Max timeout wait
-  double m_dGetResourceTableMaxWait;
-  double m_dHeartbeatWaitTresh;
-  unsigned int m_uResourceTableVersion;
-  std::mutex m_Mutex;
+  double get_resource_table_max_wait_;
+  double heartbeat_wait_thresh_;
+  unsigned int resource_table_version_;
+  std::mutex mutex_;
 
   // send and receive message max wait
-  int m_dSendRecvMaxWait;
+  int send_recv_max_wait_;
 };
 
 }  // end namespace rpg
