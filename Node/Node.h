@@ -110,21 +110,18 @@ class node {
 
     assert(init_done_);
     // check if function with that name is already registered
-    std::map<std::string, RPC*>::iterator it;
-    it = rpc_table_.find(sName);
-    if (it != rpc_table_.end()) {
-      return false;
-    } else {
-      RPC* pRPC = new RPC;
-      pRPC->RpcFunc = (FuncPtr)pFunc;
-      pRPC->ReqMsg = new Req;
-      pRPC->RepMsg = new Rep;
-      pRPC->UserData = pUserData;
-      rpc_table_[sName] = pRPC;
-      std::string rpc_resource = "rpc://" + node_name_ + "/" + sName;
-      resource_table_[rpc_resource] = _GetAddress();
-      return true;
-    }
+    auto it = rpc_table_.find(sName);
+    if (it != rpc_table_.end()) return false;
+
+    RPC* pRPC = new RPC;
+    pRPC->RpcFunc = (FuncPtr)pFunc;
+    pRPC->ReqMsg = new Req;
+    pRPC->RepMsg = new Rep;
+    pRPC->UserData = pUserData;
+    rpc_table_[sName] = pRPC;
+    std::string rpc_resource = "rpc://" + node_name_ + "/" + sName;
+    resource_table_[rpc_resource] = _GetAddress();
+    return true;
   }
 
   /// Make a remote procedure call like "node->func()".
@@ -155,6 +152,7 @@ class node {
   /// Make a remote procedure call like "node->func()" -- with out node name resolution.
   // this is the main API most calls boil down to.
   bool call_rpc(NodeSocket socket,
+                std::shared_ptr<std::mutex> socket_mutex,
                 const std::string& function,  //< Input: Remote function to call
                 const google::protobuf::Message& msg_req,     //< Input: Protobuf message request
                 google::protobuf::Message& msg_rep,     //< Output: Protobuf message reply
@@ -289,6 +287,9 @@ class node {
   static void _IntStringFunc(msg::String& sStr,
                              msg::Int& nInt, void* pUserData);
 
+  /** Get the mutex associated with the socket connected to a certain node */
+  std::shared_ptr<std::mutex> rpc_mutex(const std::string& node);
+
  private:
   /// used to time socket communications
   struct TimedNodeSocket {
@@ -318,6 +319,9 @@ class node {
 
   // nodename to socket map
   std::map<std::string, TimedNodeSocket> rpc_sockets_;
+
+  // Each socket should only be used by one thread at a time
+  std::map<std::string, std::shared_ptr<std::mutex> > rpc_mutex_;
 
   // function to RPC structs map
   std::map<std::string, RPC*> rpc_table_;
