@@ -56,7 +56,7 @@
 
 #include <google/protobuf/message.h>
 
-#include <NodeMessages.pb.h>
+#include "NodeMessages.pb.h"
 #include "./ZeroConf.h"
 #include "./PrintMessage.h"
 

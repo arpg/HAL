@@ -51,7 +51,8 @@ set( NODE_SRCS Node.cpp PrintMessage.cpp ${PROTO_SRCS} )
 
 add_library( node ${NODE_HDRS} ${NODE_SRCS} )
 target_link_libraries(node ${PROJ_LIBRARIES})
-
+target_link_libraries(node ${Boost_SYSTEM_LIBRARY})
+message( "Boost system libraries found: " ${Boost_SYSTEM_LIBRARY})
 # Create the NODEConfig.cmake file for the build tree.
 set(EXPORT_NODE_INC
   ${CMAKE_CURRENT_SOURCE_DIR}/..
