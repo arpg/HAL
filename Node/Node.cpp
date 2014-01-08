@@ -1,9 +1,9 @@
 #include "Node.h"
 #include <HAL/Utils/TicToc.h>
 
-std::vector<rpg::node*> g_vNodes;
+std::vector<hal::node*> g_vNodes;
 
-namespace rpg {
+namespace hal {
 
 zmq::context_t* _InitSingleton() {
   // not ideal! we should apparently port away from avahi-compat... ug
@@ -30,7 +30,7 @@ node::~node() {
 }
 
 void node::set_verbocity(int nLevel) {
-  rpg::PrintHandlerSetErrorLevel(nLevel);
+  hal::PrintHandlerSetErrorLevel(nLevel);
 }
 
 ///
@@ -1116,4 +1116,4 @@ void node::_IntStringFunc(msg::String& sStr,
   nInt.set_value((*pFunc)(sStr.value()));
 }
 
-}  // end namespace rpg
+}  // end namespace hal

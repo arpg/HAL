@@ -41,7 +41,7 @@ int main( int, char** )
     string sNodeName = "Node1";
 
     // initialize node
-    rpg::node n;
+    hal::node n;
 
     n.set_verbocity(3); // be a bit noisy
     n.init( sNodeName );

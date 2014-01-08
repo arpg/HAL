@@ -21,13 +21,13 @@
 #       define PrintMessage( nErrorLevel, ... )
 #   else
 #       define PrintMessage( nErrorLevel, ... ) \
-           if( ((int)nErrorLevel) <= rpg::PrintHandlerGetErrorLevel() ) { \
-               rpg::PrintVaradicMessage( nErrorLevel, __VA_ARGS__ ); \
+           if( ((int)nErrorLevel) <= hal::PrintHandlerGetErrorLevel() ) { \
+               hal::PrintVaradicMessage( nErrorLevel, __VA_ARGS__ ); \
            }
 #   endif
 #endif
 
-namespace rpg
+namespace hal
 {
     int _GetSetErrorLevel( int nLevel = -1 );
     int PrintHandlerGetErrorLevel();
@@ -44,14 +44,14 @@ namespace rpg
         return ss.str();
     }
 
-    template <class T> inline T StrToVal( const std::string& sStr )
-    {
-        std::stringstream ss;
-        ss << sStr;
-        T t;
-        ss >> t;
-        return t;
-    }
+//    template <class T> inline T StrToVal( const std::string& sStr )
+//    {
+//        std::stringstream ss;
+//        ss << sStr;
+//        T t;
+//        ss >> t;
+//        return t;
+//    }
 }
 
 #endif 

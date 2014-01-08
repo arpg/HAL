@@ -26,7 +26,7 @@ int main( int argc, char** argv )
     int nVerbosity   = atoi(argv[3]);
 
     // initialize node
-    rpg::node n;
+    hal::node n;
     n.set_verbocity(nVerbosity); // be a bit noisy
     if( n.init(sNodeName) == false ){
         return -1;

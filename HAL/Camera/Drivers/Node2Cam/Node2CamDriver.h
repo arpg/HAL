@@ -36,7 +36,7 @@ private:
         unsigned int        m_nChannels;
         unsigned int        m_nNumNodes;
 
-        rpg::node           m_Node;
+        hal::node           m_Node;
         std::string         m_sHostName;
         std::string         m_sDeviceName;
         int                 m_nTimeStep;

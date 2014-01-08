@@ -73,12 +73,12 @@ struct RPC {
   void*                       UserData;
 };
 
-namespace rpg { class node; }
+namespace hal { class node; }
 
 // global list of all alocated nodes -- we will call _BroadcastExit on shutdown
-extern std::vector<rpg::node*> g_vNodes;
+extern std::vector<hal::node*> g_vNodes;
 
-namespace rpg {
+namespace hal {
 
 zmq::context_t* _InitSingleton();
 

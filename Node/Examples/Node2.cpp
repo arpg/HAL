@@ -13,7 +13,7 @@
 int main() 
 {
 
-    rpg::node n;
+    hal::node n;
 //    n.set_verbocity( 3 ); // make some noise on errors
     n.init("Node2");
 
