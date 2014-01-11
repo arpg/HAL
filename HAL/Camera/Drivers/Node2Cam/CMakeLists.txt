@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
-set( BUILD_Node2Cam false CACHE BOOL force )
+set(BUILD_Node2Cam false CACHE BOOL force)
 
-find_package( NODE REQUIRED )
-if(NODE_FOUND AND BUILD_Node2Cam )
+if(BUILD_Node2Cam)
+  find_package( NODE REQUIRED )
+
+  if(NODE_FOUND)
     message( "Building Node2Cam" )
     find_package( Protobuf REQUIRED )
     find_package( PbMsgs 0.1 REQUIRED )
@@ -27,6 +29,5 @@ if(NODE_FOUND AND BUILD_Node2Cam )
     add_to_hal_include_dirs( ${NODE_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${PROTOBUF_INCLUDE_DIRS} )
     add_to_hal_libraries( Node2Cam ${NODE_LIBRARIES})
     add_to_hal_sources( Node2CamDriver.h Node2CamDriver.cpp Node2CamFactory.cpp )
+  endif()
 endif()
-
-
