@@ -37,6 +37,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
+#include <functional>
 #include <map>
 #include <string>
 #include <sstream>
@@ -66,11 +67,15 @@ typedef void(*FuncPtr)(google::protobuf::Message&,
                        google::protobuf::Message&,
                        void *);
 
+typedef std::function<void(google::protobuf::Message&,
+                           google::protobuf::Message&,
+                           void *)> RPCFunction;
+
 struct RPC {
-  FuncPtr                     RpcFunc;
-  google::protobuf::Message*  ReqMsg;
-  google::protobuf::Message*  RepMsg;
-  void*                       UserData;
+  RPCFunction RpcFunc;
+  google::protobuf::Message* ReqMsg;
+  google::protobuf::Message* RepMsg;
+  void* UserData;
 };
 
 namespace rpg { class node; }

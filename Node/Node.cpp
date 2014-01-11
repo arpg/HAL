@@ -742,7 +742,7 @@ void node::RPCThreadFunc() {
     auto it = rpc_table_.find(FuncName);
     if (it != rpc_table_.end()) {
       RPC* pRPC = it->second;
-      FuncPtr Func = pRPC->RpcFunc;
+      RPCFunction& Func = pRPC->RpcFunc;
       google::protobuf::Message* Req = pRPC->ReqMsg;
       google::protobuf::Message* Rep = pRPC->RepMsg;
 
