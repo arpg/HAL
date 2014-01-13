@@ -1,0 +1,5 @@
+#pragma once
+
+#ifndef HAVE_DNSSD
+#cmakedefine HAVE_DNSSD
+#endif  // HAVE_DNSSD

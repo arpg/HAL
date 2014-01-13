@@ -1,21 +1,15 @@
-#ifndef _ZERO_CONF_H_
-#define _ZERO_CONF_H_
-
-#include <inttypes.h>
-#include <errno.h>
-#include <sys/types.h> // for u_char
-#include <dns_sd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <boost/thread.hpp>
+#pragma once
 
 #include <string>
 #include <vector>
+#include <boost/thread.hpp>
+#include <Node/NodeConfig.h>
+
+typedef struct _DNSServiceRef_t* DNSServiceRef;
+typedef uint32_t DNSServiceFlags;
+typedef int32_t DNSServiceErrorType;
+
+namespace hal {
 
 struct ZeroConfRecord {
   std::string     service_name;    //  service name
@@ -41,7 +35,17 @@ struct ZeroConfURL {
 class ZeroConf {
  public:
   ZeroConf();
-  ~ZeroConf();
+  virtual ~ZeroConf();
+
+  ///
+  /// Returns true if ZeroConf is connected to the DNS and Avahi system
+  bool IsValid() {
+#ifdef HAVE_DNSSD
+    return true;
+#else
+    return false;
+#endif
+  }
 
   /// Generic interface to just register a service and bail
   bool RegisterService(
@@ -63,8 +67,6 @@ class ZeroConf {
       uint32_t nFlags = 0,
       uint32_t nInterface = 0);
 
-  const char* _GetHostIP();
-
   void ResolveReplyCallback(
       DNSServiceRef , //client,
       DNSServiceFlags nFlags,
@@ -81,13 +83,15 @@ class ZeroConf {
   /// sit on the DNSServiceRef file descriptor to wait for results
   /// from the server
   void _HandleEvents(DNSServiceRef ServiceRef);
+ protected:
+  const char* _GetHostIP();
 
  private:
-  DNSServiceRef dns_service_ref_; // only use for our registered service
+  DNSServiceRef dns_service_ref_;
   std::vector<ZeroConfURL>  resolved_urls_;
   bool resolve_complete_;
   ZeroConfRecord record_;
   boost::thread listen_to_server_thread_;
 };
 
-#endif
+}  // end namespace hal

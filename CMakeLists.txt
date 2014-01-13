@@ -13,6 +13,8 @@ endif()
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 add_subdirectory( PbMsgs )
 set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
 
@@ -24,7 +26,6 @@ endif()
 
 add_subdirectory( HAL )
 set(HAL_DIR ${HAL_BINARY_DIR})
-
 
 set( BUILD_APPLICATIONS true CACHE BOOL force )
 if( BUILD_APPLICATIONS )

@@ -1,9 +1,21 @@
 #include <Node/ZeroConf.h>
+#include <inttypes.h>
+#include <errno.h>
+#include <sys/types.h> // for u_char
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-ZeroConf::ZeroConf() {
-  dns_service_ref_ = 0;
-}
+#ifdef HAVE_DNSSD
+#include <dns_sd.h>
+#endif  // HAVE_DNSSD
 
+namespace hal {
+
+ZeroConf::ZeroConf() : dns_service_ref_(0) {}
 ZeroConf::~ZeroConf() {
   listen_to_server_thread_.interrupt();
   //            sleep(2);
@@ -25,6 +37,7 @@ inline void _BrowseReplyCallback(
     const char * sRegType,
     const char * sReplyDomain,
     void *pUserData) {
+#ifdef HAVE_DNSSD
   std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
 
   if (nErrorCode != kDNSServiceErr_NoError) {
@@ -55,6 +68,7 @@ inline void _BrowseReplyCallback(
   /// done?
   if (!(nFlags & kDNSServiceFlagsMoreComing)) {
   }
+#endif  // HAVE_DNSSD
 }
 
 /// Callback to get the results of a ResolveService request.
@@ -90,6 +104,7 @@ inline void _RegisterServiceCallback(
     const char *sDomain,             //< Input: e.g. local
     void *pUserData                  //< Input: user supplied data
                                      ) {
+#ifdef HAVE_DNSSD
   ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
   if (nErrorCode != kDNSServiceErr_NoError) {
     printf("error in _RegisterServiceCallback\n");
@@ -99,6 +114,7 @@ inline void _RegisterServiceCallback(
     pRecord->reg_type     = sRegType;
     pRecord->domain      = sDomain ? sDomain : "local";
   }
+#endif  // HAVE_DNSSD
 }
 
 bool ZeroConf::RegisterService(
@@ -106,6 +122,7 @@ bool ZeroConf::RegisterService(
     const std::string& sRegType, //<
     uint16_t nPort,
     const std::string& sDomain) {
+#ifdef HAVE_DNSSD
   DNSServiceErrorType err = kDNSServiceErr_NameConflict;
   std::string sServiceName = sName;
   //int nServiceCount = 0;
@@ -148,13 +165,16 @@ bool ZeroConf::RegisterService(
   listen_to_server_thread_ = boost::thread(_HandleEvents2, this);
 
   return true;
+#else
+  return false;
+#endif  // HAVE_DNSSD
 }
 
 std::vector<ZeroConfRecord> ZeroConf::BrowseForServiceType(
     const std::string& sServiceType,
     const std::string& sDomain) {
   std::vector<ZeroConfRecord> vRecords;
-
+#ifdef HAVE_DNSSD
   DNSServiceRef ServiceRef;
   DNSServiceErrorType nErr =
       DNSServiceBrowse(
@@ -219,6 +239,7 @@ std::vector<ZeroConfRecord> ZeroConf::BrowseForServiceType(
   */
 
   DNSServiceRefDeallocate(ServiceRef);
+#endif  // HAVE_DNSSD
   return vRecords;
 }
 
@@ -228,6 +249,7 @@ std::vector<ZeroConfURL> ZeroConf::ResolveService(
     const std::string& sDomain,
     uint32_t nFlags,
     uint32_t nInterface) {
+#ifdef HAVE_DNSSD
   DNSServiceRef ServiceRef;
   resolve_complete_ = false;
   DNSServiceResolve(&ServiceRef, nFlags, nInterface, sName.c_str(),
@@ -239,6 +261,9 @@ std::vector<ZeroConfURL> ZeroConf::ResolveService(
   std::vector<ZeroConfURL> vRes = resolved_urls_;
   resolved_urls_.clear();
   return vRes;
+#else
+  return std::vector<ZeroConfURL>();
+#endif  // HAVE_DNSSD
 }
 
 const char* ZeroConf::_GetHostIP() {
@@ -260,6 +285,7 @@ void ZeroConf::ResolveReplyCallback(
     uint16_t, //txtLen,
     const unsigned char * //txtRecord
                                     ) {
+#ifdef HAVE_DNSSD
   //const char *src = (char*)txtRecord;
   union { uint16_t s; u_char b[2]; }
   port = { opaqueport };
@@ -288,9 +314,11 @@ void ZeroConf::ResolveReplyCallback(
   if (!(nFlags & kDNSServiceFlagsMoreComing)) {
     resolve_complete_ = true;
   }
+#endif  // HAVE_DNSSD
 }
 
 void ZeroConf::HandleEvents2() {
+#ifdef HAVE_DNSSD
   int dns_sd_fd =
       dns_service_ref_ ? DNSServiceRefSockFD(dns_service_ref_) : -1;
   int nfds = dns_sd_fd + 1;
@@ -339,9 +367,11 @@ void ZeroConf::HandleEvents2() {
       return;
     }
   }
+#endif  // HAVE_DNSSD
 }
 
 void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
+#ifdef HAVE_DNSSD
   int dns_sd_fd = ServiceRef ? DNSServiceRefSockFD(ServiceRef) : -1;
   int nfds = dns_sd_fd + 1;
   fd_set readfds;
@@ -375,10 +405,13 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
     } else if (result == 0 && resolve_complete_) {
       bStopNow = true;
     } else{
-      //                   printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
+      // printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
       if (errno != EINTR) {
         bStopNow = 1;
       }
     }
   }
+#endif  // HAVE_DNSSD
 }
+
+}  // end namespace hal
