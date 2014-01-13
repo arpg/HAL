@@ -1,5 +1,7 @@
 // hack to enable sleep_for (GCC < 4.8)
+#ifndef _GLIBCXX_USE_NANOSLEEP
 #define _GLIBCXX_USE_NANOSLEEP
+#endif  // _GLIBCXX_USE_NANOSLEEP
 
 #include "NodeIMUDriver.h"
 
