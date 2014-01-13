@@ -13,7 +13,7 @@ libfind_pkg_check_modules(ZeroMQ_PKGCONF libzmq)
 
 # Include dir
     find_path(ZeroMQ_INCLUDE_DIR
-            NAMES zmq.hpp
+            NAMES zmq.h
             PATHS ${ZEROMQ_ROOT}/include ${ZeroMQ_PKGCONF_INCLUDE_DIRS}
             )
 
@@ -24,7 +24,7 @@ libfind_pkg_check_modules(ZeroMQ_PKGCONF libzmq)
             )
 ELSEIF (WIN32)
     find_path(ZeroMQ_INCLUDE_DIR
-            NAMES zmq.hpp
+            NAMES zmq.h
             PATHS ${ZEROMQ_ROOT}/include ${CMAKE_INCLUDE_PATH}
             )
 # Finally the library itself
