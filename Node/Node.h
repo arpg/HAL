@@ -29,37 +29,23 @@
 #ifndef _HAL_NODE_NODE_H_
 #define _HAL_NODE_NODE_H_
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <signal.h>
-
 #include <functional>
-#include <map>
-#include <string>
-#include <sstream>
 #include <iostream>
-
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-
-#include <thread>
-#include <mutex>
+#include <map>
 #include <memory>
-#include <boost/crc.hpp>  // for boost::crc_32_type
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
 
-#include "./zmq.hpp"
 #include <zmq.h>
-
 #include <google/protobuf/message.h>
 
-#include "NodeMessages.pb.h"
-#include "./ZeroConf.h"
-#include "./PrintMessage.h"
+#include <Node/NodeConfig.h>
+#include <Node/NodeMessages.pb.h>
+#include <Node/PrintMessage.h>
+#include <Node/zmq.hpp>
+#include <Node/ZeroConf.h>
 
 typedef std::shared_ptr<zmq::socket_t> NodeSocket;
 

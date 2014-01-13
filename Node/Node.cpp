@@ -1,5 +1,20 @@
-#include "Node.h"
+#include <Node/Node.h>
+#include <arpa/inet.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+
+#include <boost/crc.hpp>  // for boost::crc_32_type
+
 #include <HAL/Utils/TicToc.h>
+#include <Node/ZeroConf.h>
 
 std::vector<hal::node*> g_vNodes;
 
@@ -84,11 +99,13 @@ bool node::init(std::string node_name) {
   port_ = _BindRandomPort(socket_);
 
   // register with zeroconf
-  if (!zero_conf_.RegisterService("hermes_" + node_name_,
-                                  "_hermes._tcp", port_)) {
-    PrintError("[Node] ERROR registering node '%s' with ZeroConf -- make sure the name is unique\n",
-               node_name_.c_str());
-    return false;
+  if (zero_conf_.IsValid()) {
+    if (!zero_conf_.RegisterService("hermes_" + node_name_,
+                                    "_hermes._tcp", port_)) {
+      PrintError("[Node] ERROR registering node '%s' with ZeroConf -- make sure the name is unique\n",
+                 node_name_.c_str());
+      return false;
+    }
   }
 
   // register special calls for distributing the node-table
@@ -828,6 +845,8 @@ void node::_PropagateResourceTable() {
 }
 
 void node::_UpdateNodeRegistery() {
+  if (!zero_conf_.IsValid()) return;
+
   std::vector<ZeroConfRecord> vRecords;
   vRecords = zero_conf_.BrowseForServiceType("_hermes._tcp");
   PrintMessage(1, "[Node] looking for hermes.tcp \n");
