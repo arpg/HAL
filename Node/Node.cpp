@@ -493,16 +493,16 @@ std::string node::_GetHostIP(const std::string& sPreferredInterface) {
   // the interface matches what Zeroconf says.. this
   // is a hack. should instead re-map what zeroconf
   // says to some standard...
-  std::vector<std::string> vIfs;
-  vIfs.push_back(sPreferredInterface);
-  vIfs.push_back("eth");
-  vIfs.push_back("en");
-  vIfs.push_back("wlan");
+  std::vector<std::string> ifs;
+  ifs.push_back(sPreferredInterface);
+  ifs.push_back("eth");
+  ifs.push_back("en");
+  ifs.push_back("wlan");
 
   struct ifaddrs *ifaddr, *ifa;
   char host[NI_MAXHOST];
 
-  std::vector<std::pair<std::string, std::string> > vIfAndIP;
+  std::vector<std::pair<std::string, std::string> > if_ips;
 
   if (getifaddrs(&ifaddr) == -1) {
     perror("getifaddrs");
@@ -515,19 +515,18 @@ std::string node::_GetHostIP(const std::string& sPreferredInterface) {
     int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
                         NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     if (s == 0 && ifa->ifa_addr->sa_family == AF_INET) {
-      vIfAndIP.push_back(std::pair<std::string, std::string>(ifa->ifa_name, host));
+      if_ips.push_back(std::pair<std::string, std::string>(ifa->ifa_name,
+                                                           host));
     }
   }
   freeifaddrs(ifaddr);
 
   std::string sIP = "127.0.0.1";
-  std::string sIf;
-  for (size_t ii = 0; ii < vIfs.size(); ++ii) {
-    std::string sPreferredIf = vIfs[ii];
-    for (size_t n = 0; n < vIfAndIP.size(); ++n) {
-      sIf = vIfAndIP[n].first;
-      if (sIf.find(sPreferredIf) != std::string::npos) { // found a prefered interface
-        sIP = vIfAndIP[n].second;
+  for (const std::string& preferred_if : ifs) {
+    for (const std::pair<std::string, std::string> ifip : if_ips) {
+      // found a prefered interface
+      if (ifip.first.find(preferred_if) != std::string::npos) {
+        sIP = ifip.second;
       }
     }
   }
