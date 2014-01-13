@@ -247,7 +247,7 @@ class node {
 
  private:
   /// Build a protobuf containing all the resources we know of, and the CRC.
-  msg::ResourceTable _BuildResoruceTableMessage(msg::ResourceTable& t);
+  msg::ResourceTable _BuildResourceTableMessage(msg::ResourceTable& t);
 
   /// Checksum of the ResourceTable (used by nodes to check they are
   /// up-to-date).

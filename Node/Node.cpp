@@ -530,7 +530,7 @@ void node::HeartbeatFunc(
   // us an updated table.
   // 2) if client is behind, send him our table (TODO: send a diff instead)
   if (req.version() < resource_table_version_) {
-    _BuildResoruceTableMessage(*rep.mutable_resource_table());
+    _BuildResourceTableMessage(*rep.mutable_resource_table());
   }
   // 3) if version match, do nothing -- this is the default case
 }
@@ -686,7 +686,7 @@ void node::HeartbeatThreadFunc() {
         if (hbrep.version() < resource_table_version_) {
           msg::SetTableRequest streq;
           msg::SetTableResponse strep;
-          _BuildResoruceTableMessage(*streq.mutable_resource_table());
+          _BuildResourceTableMessage(*streq.mutable_resource_table());
           streq.set_requesting_node_name(node_name_);
           streq.set_requesting_node_addr(_GetAddress());
           if (!call_rpc(it->second.socket, rpc_mutex(it->first),
@@ -782,7 +782,7 @@ std::vector<std::string> node::GetSubscribeClientName() {
   return vClientNames;
 }
 
-msg::ResourceTable node::_BuildResoruceTableMessage(msg::ResourceTable& t) {
+msg::ResourceTable node::_BuildResourceTableMessage(msg::ResourceTable& t) {
   for (auto it = resource_table_.begin(); it != resource_table_.end(); ++it) {
     msg::ResourceLocator* pMsg = t.add_urls();// add new url to end of table
     pMsg->set_resource(it->first);
@@ -807,7 +807,7 @@ void node::_PropagateResourceTable() {
   msg::SetTableRequest req;
   msg::SetTableResponse rep;
 
-  _BuildResoruceTableMessage(*req.mutable_resource_table());
+  _BuildResourceTableMessage(*req.mutable_resource_table());
   req.set_requesting_node_name(node_name_);
   req.set_requesting_node_addr(_GetAddress());
 
@@ -1067,16 +1067,15 @@ void node::_BroadcastExit() {
     }
   }
 
-  //_PrintRpcSockets();
-
   // ask all known nodes to remove us:
   std::map<std::string, TimedNodeSocket> tmp = rpc_sockets_;
   for (auto sockit = tmp.begin(); sockit != tmp.end(); ++sockit) {
     if (sockit->second.socket == socket_) {
       continue;
     }
-    PrintMessage(1, "[Node '%s']  Calling DeleteFromResource to remove %d resources\n",
-                 node_name_.c_str(), (int)req.urls_to_delete_size());
+    PrintMessage(
+        1, "[Node '%s']  Calling DeleteFromResource to remove %d resources\n",
+        node_name_.c_str(), (int)req.urls_to_delete_size());
     if (!call_rpc(sockit->second.socket, rpc_mutex(sockit->first),
                   "DeleteFromResourceTable", req, rep)) {
       PrintMessage(1, "ERROR: calling remote DeleteFromResourceTable\n");
