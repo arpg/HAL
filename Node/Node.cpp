@@ -3,6 +3,9 @@
 
 std::vector<hal::node*> g_vNodes;
 
+static const std::string kTopicScheme = "topic://";
+static const std::string kRpcScheme = "rpc://";
+
 namespace hal {
 
 zmq::context_t* _InitSingleton() {
@@ -153,7 +156,7 @@ bool node::call_rpc(const std::string& node_name,
   std::unique_lock<std::mutex> lock(mutex_); // careful
 
   // make sure we know about this method
-  std::string rpc_resource =  "rpc://" + node_name + "/" + function_name;
+  std::string rpc_resource =  kRpcScheme + node_name + "/" + function_name;
   auto it = resource_table_.find(rpc_resource);
   if (it == resource_table_.end()) {
     // unknown method, fail
@@ -275,7 +278,7 @@ bool node::advertise(const std::string& sTopic) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   assert(init_done_);
-  std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
+  std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -311,7 +314,7 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
                    const google::protobuf::Message& Msg //< Input: Message to send
                    ) {
   assert(init_done_);
-  std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
+  std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -347,7 +350,7 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
 
 bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
   assert(init_done_);
-  std::string sTopicResource = "topic://" + node_name_ + "/" + sTopic;
+  std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -379,7 +382,7 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
 bool node::subscribe(const std::string& resource) {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  std::string         sTopicResource = "topic://" + resource;
+  std::string         sTopicResource = kTopicScheme + resource;
   assert(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -412,7 +415,7 @@ bool node::subscribe(const std::string& resource) {
 
 bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
-  std::string sTopicResource = "topic://" + resource;
+  std::string sTopicResource = kTopicScheme + resource;
   assert(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -444,7 +447,7 @@ bool node::receive(const std::string& resource,
 }
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
-  std::string         sTopicResource = "topic://" + resource;
+  std::string         sTopicResource = kTopicScheme + resource;
   assert(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
@@ -914,8 +917,29 @@ bool node::ConnectNode(const std::string& host, uint32_t port,
 }
 
 void node::DisconnectNode(const std::string& node_name) {
-  // NOT IMPLEMENTED YET!
-  abort();
+  msg::DeleteFromTableRequest req;
+  BuildDeleteFromTableRequest(&req);
+
+  std::string topic_res = kTopicScheme + node_name;
+  std::string rpc_res = kRpcScheme + node_name;
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  for (auto it = resource_table_.begin(); it != resource_table_.end(); ) {
+    if (it->first.find(topic_res) != std::string::npos ||
+        it->first.find(rpc_res) != std::string::npos) {
+      resource_table_.erase(it++);
+    } else {
+      ++it;
+    }
+  }
+
+  auto it = rpc_sockets_.find(node_name);
+  if (it == rpc_sockets_.end()) return;
+
+  msg::DeleteFromTableResponse rep;
+  call_rpc(it->second.socket, rpc_mutex(it->first),
+           "DeleteFromResourceTable", req, rep);
+  rpc_sockets_.erase(it);
 }
 
 void node::_PrintResourceLocatorTable() {
@@ -958,21 +982,22 @@ int node::_BindRandomPort(NodeSocket& socket) {
   return port;
 }
 
-std::string node::_GetAddress() {
+std::string node::_GetAddress() const {
   return _GetAddress(host_ip_, port_);
 }
 
-std::string node::_GetAddress(const std::string& host_ip, const int port) {
+std::string node::_GetAddress(const std::string& host_ip, const int port) const {
   std::ostringstream address;
   address << host_ip << ":" << port;
   return address.str();
 }
 
-std::string node::_ZmqAddress() {
+std::string node::_ZmqAddress() const {
   return _ZmqAddress(host_ip_, port_);
 }
 
-std::string node::_ZmqAddress(const std::string& host_ip, const int port) {
+std::string node::_ZmqAddress(const std::string& host_ip,
+                              const int port) const {
   std::ostringstream address;
   address << "tcp://"<< host_ip << ":" << port;
   return address.str();
@@ -1046,37 +1071,35 @@ void node::NodeSignalHandler(int nSig) {
   exit(-1);
 }
 
-void node::_BroadcastExit() {
-  // std::lock_guard<std::mutex> lock(mutex_); // careful
-  //
-  // we should not use lock here because of the following call_rpc
-  // method. (rpc method also use this lock)
-
-  // collect all resources we provide
-  msg::DeleteFromTableRequest req;
-  msg::DeleteFromTableResponse rep;
-
-  req.set_requesting_node_name(node_name_);
-  req.set_requesting_node_addr(_GetAddress());
-  for (auto it = resource_table_.begin(); it != resource_table_.end(); ++it) {
-    if (it->first.find("rpc://" + node_name_) != std::string::npos
-        || it->first.find("topic://" + node_name_) != std::string::npos) {
-      msg::ResourceLocator* pMsg = req.add_urls_to_delete();
-      pMsg->set_resource(it->first);
-      pMsg->set_address(it->second);
+/// collect all resources we provide
+void node::BuildDeleteFromTableRequest(msg::DeleteFromTableRequest* msg) const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  msg->set_requesting_node_name(node_name_);
+  msg->set_requesting_node_addr(_GetAddress());
+  for (const std::pair<std::string, std::string> res : resource_table_) {
+    if (res.first.find(kRpcScheme + node_name_) != std::string::npos ||
+        res.first.find(kTopicScheme + node_name_) != std::string::npos) {
+      msg::ResourceLocator* pMsg = msg->add_urls_to_delete();
+      pMsg->set_resource(res.first);
+      pMsg->set_address(res.second);
     }
   }
+}
+
+void node::_BroadcastExit() {
+  msg::DeleteFromTableRequest req;
+  BuildDeleteFromTableRequest(&req);
+
+  msg::DeleteFromTableResponse rep;
 
   // ask all known nodes to remove us:
   std::map<std::string, TimedNodeSocket> tmp = rpc_sockets_;
-  for (auto sockit = tmp.begin(); sockit != tmp.end(); ++sockit) {
-    if (sockit->second.socket == socket_) {
-      continue;
-    }
+  for (const auto& pair : tmp) {
+    if (pair.second.socket == socket_) continue;
     PrintMessage(
         1, "[Node '%s']  Calling DeleteFromResource to remove %d resources\n",
         node_name_.c_str(), (int)req.urls_to_delete_size());
-    if (!call_rpc(sockit->second.socket, rpc_mutex(sockit->first),
+    if (!call_rpc(pair.second.socket, rpc_mutex(pair.first),
                   "DeleteFromResourceTable", req, rep)) {
       PrintMessage(1, "ERROR: calling remote DeleteFromResourceTable\n");
     }

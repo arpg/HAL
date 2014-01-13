@@ -241,8 +241,17 @@ class node {
   // this function return the name of all connect client
   std::vector<std::string> GetSubscribeClientName();
 
+  /// Connect to another node at a given hostname string and port
+  ///
+  /// The GetTableResponse will be filled out with the response from
+  /// the connected node. This includes the Node name to be used for
+  /// RPC nodes.
+  ///
+  /// Returns whether the connection was successful.
   bool ConnectNode(const std::string& host, uint32_t port,
                    msg::GetTableResponse* rep);
+
+  /// Disconnect from the desired node
   void DisconnectNode(const std::string& node_name);
 
  private:
@@ -269,11 +278,11 @@ class node {
 
   int _BindRandomPort(NodeSocket& socket);
 
-  std::string _GetAddress();
-  std::string _GetAddress(const std::string& sHostIP, const int nPort);
+  std::string _GetAddress() const;
+  std::string _GetAddress(const std::string& sHostIP, const int nPort) const;
 
-  std::string _ZmqAddress();
-  std::string _ZmqAddress(const std::string& sHostIP, const int nPort);
+  std::string _ZmqAddress() const;
+  std::string _ZmqAddress(const std::string& sHostIP, const int nPort) const;
 
   double _Tic();
   double _Toc(double dSec);
@@ -298,6 +307,8 @@ class node {
 
   /** Get the mutex associated with the socket connected to a certain node */
   std::shared_ptr<std::mutex> rpc_mutex(const std::string& node);
+
+  void BuildDeleteFromTableRequest(msg::DeleteFromTableRequest* msg) const;
 
  private:
   /// used to time socket communications
@@ -366,7 +377,7 @@ class node {
   double get_resource_table_max_wait_;
   double heartbeat_wait_thresh_;
   unsigned int resource_table_version_;
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
 
   // send and receive message max wait
   int send_recv_max_wait_;
