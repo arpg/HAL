@@ -659,13 +659,13 @@ void node::HeartbeatThreadFunc() {
       double dElapsedTime = _Toc(it->second.last_heartbeat_time);
       if (dElapsedTime > heartbeat_wait_thresh_) { // haven't heard from this guy in a while
         PrintMessage(9, "[Node] sending heartbeat to '%s'\n", it->first.c_str());
-        double dTimeout = get_resource_table_max_wait_ * 1e3;
+        double timeout = get_resource_table_max_wait_ * 1e3;
         msg::HeartbeatRequest hbreq;
         msg::HeartbeatResponse hbrep;
         hbreq.set_checksum(_ResourceTableCRC());
         hbreq.set_version(resource_table_version_);
         if (!call_rpc(it->second.socket, rpc_mutex(it->first),
-                      "Heartbeat", hbreq, hbrep, dTimeout)) {
+                      "Heartbeat", hbreq, hbrep, timeout)) {
           PrintMessage(1,  "[Node] WARNING: haven't heard from '%s' for %.2f ms seconds\n",
                        it->first.c_str(), _Tic()-it->second.last_heartbeat_time);
           continue;
@@ -834,92 +834,88 @@ void node::_UpdateNodeRegistery() {
     usleep(1000);
   }
 
-  std::shared_ptr<std::mutex> socket_mutex = std::make_shared<std::mutex>();
-
   // Report all the nodes registered with Avahi:
   std::vector<ZeroConfURL> urls;
-  for (size_t ii = 0; ii < vRecords.size(); ++ii) {
-    ZeroConfRecord r = vRecords[ii];
-    std::vector<ZeroConfURL> new_urls
-        = zero_conf_.ResolveService(r.service_name, r.reg_type);
-    for (size_t jj = 0; jj < new_urls.size(); ++jj) {
-      urls.push_back(new_urls[jj]);
-      ZeroConfURL url = new_urls[jj];
-    }
+  for (const ZeroConfRecord& r : vRecords) {
+    std::vector<ZeroConfURL> new_urls =
+        zero_conf_.ResolveService(r.service_name, r.reg_type);
+    urls.insert(urls.end(), new_urls.begin(), new_urls.end());
   }
 
   PrintMessage(1, "[Node] found %d URLs for nodes\n", (int)urls.size());
-  for (size_t ii = 0; ii < urls.size(); ++ii) {
-    ZeroConfURL url = urls[ii];
+
+  for (ZeroConfURL& url : urls) {
     std::string sAddr = _GetAddress(url.host, url.port);
     std::string sMyAddr = _GetAddress();
     if (sAddr == sMyAddr) { // don't send a message to ourselves...
-      PrintMessage(1, "     node at %s:%d (my URL)\n", url.Host(), url.Port());
-    }
-    else{
-      PrintMessage(1, "     node at %s:%d\n", url.Host(), url.Port());
+      PrintMessage(1, "\tnode at %s:%d (my URL)\n", url.Host(), url.Port());
+    } else{
+      PrintMessage(1, "\tnode at %s:%d\n", url.Host(), url.Port());
     }
   }
 
   unsigned int uLatestResourceTableVersion = 0;
-
-  for (size_t ii = 0; ii < urls.size(); ++ii) {
-    ZeroConfURL url = urls[ii];
-
-    std::string sAddr = _GetAddress(url.host, url.port);
-    std::string sMyAddr = _GetAddress();
-    if (sAddr == sMyAddr) { // don't send a message to ourselves...
-      continue;
-    }
+  msg::GetTableResponse rep;
+  for (const ZeroConfURL& url : urls) {
+    if (url.host == host_ip_ && url.port == port_) continue;
 
     // connect to the service, if we can
-    auto it = resource_table_.find(sAddr);
-    if (it == resource_table_.end()) { // not in registery, connect to this node
-      std::string sZmqAddr = _ZmqAddress(url.Host(), url.Port());
-      NodeSocket socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
-      try {
-        socket->connect(sZmqAddr.c_str());
-      } catch(const zmq::error_t& error) {
-        std::string sErr = error.what();
-        PrintError("ERROR: zmq->connect() -- %s", sErr.c_str());
+    if (!ConnectNode(url.host, url.port, &rep)) continue;
 
-      }
-      PrintMessage(1, "[Node] '%s' connected to remote node: %s:%d\n",
-                   node_name_.c_str(), url.Host(), url.Port());
+    uint32_t table_version = rep.resource_table().version();
 
-      /// update our registery
-      msg::GetTableResponse rep; // we get this back
-      msg::GetTableRequest req;
-      req.set_requesting_node_name(node_name_);
-      req.set_requesting_node_addr(_GetAddress());
-      double dTimeout = get_resource_table_max_wait_ * 1e3;
-      if (!call_rpc(socket, socket_mutex,
-                    "GetResourceTable", req, rep, dTimeout)) {
-        PrintError("Error: Failed when asking for remote node name\n");
-      }
-      PrintMessage(1, "[Node]    heard back from '%s' about %d resources\n",
-                   rep.sender_name().c_str(), rep.resource_table().urls_size());
-
-      // ok, now we have the nodes name to record his socket
-      rpc_sockets_[rep.sender_name()] = TimedNodeSocket(socket);
-      // push these into our resource table:
-      for (int ii = 0; ii < rep.resource_table().urls_size(); ++ii) {
-        msg::ResourceLocator r = rep.resource_table().urls(ii);
-        resource_table_[r.resource()] = r.address();
-      }
-
-      // keep track of incoming resource table versions
-      if (uLatestResourceTableVersion == 0) { // catch the initial case
-        uLatestResourceTableVersion = rep.resource_table().version();
-      }
-      if (uLatestResourceTableVersion != rep.resource_table().version()) {
-        // error, in this case, we have received different resource table
-        // versions from at least two different nodes... there is a conflict.
-        PrintMessage(1, "[Node] WARNING resource table conflict\n");
-      }
+    // keep track of incoming resource table versions
+    if (uLatestResourceTableVersion == 0) { // catch the initial case
+      uLatestResourceTableVersion = table_version;
+    } else if (uLatestResourceTableVersion != table_version) {
+      // error, in this case, we have received different resource table
+      // versions from at least two different nodes... there is a conflict.
+      PrintMessage(1, "[Node] WARNING resource table conflict\n");
     }
-    resource_table_version_ = uLatestResourceTableVersion + 1;
   }
+  resource_table_version_ = uLatestResourceTableVersion + 1;
+}
+
+bool node::ConnectNode(const std::string& host, uint32_t port,
+                       msg::GetTableResponse* rep) {
+  // Skip if we are already connected to this node
+  if (resource_table_.count(_GetAddress(host, port))) return false;
+
+  std::string zmq_addr = _ZmqAddress(host, port);
+  NodeSocket socket(new zmq::socket_t(*context_, ZMQ_REQ));
+  try {
+    socket->connect(zmq_addr.c_str());
+  } catch(const zmq::error_t& error) {
+    PrintError("ERROR: zmq->connect() -- %s", error.what());
+  }
+  PrintMessage(1, "[Node] '%s' connected to remote node: %s:%d\n",
+               node_name_.c_str(), host.c_str(), port);
+
+  /// update our registery
+  msg::GetTableRequest req;
+  req.set_requesting_node_name(node_name_);
+  req.set_requesting_node_addr(_GetAddress());
+  double timeout = get_resource_table_max_wait_ * 1e3;
+  if (!call_rpc(socket, std::shared_ptr<std::mutex>(new std::mutex),
+                "GetResourceTable", req, *rep, timeout)) {
+    PrintError("Error: Failed when asking for remote node name\n");
+    return false;
+  }
+  PrintMessage(1, "[Node]\tHeard back from '%s' about %d resources\n",
+               rep->sender_name().c_str(), rep->resource_table().urls_size());
+
+  // ok, now we have the nodes name to record his socket
+  rpc_sockets_[rep->sender_name()] = TimedNodeSocket(socket);
+  // push these into our resource table:
+  for (const msg::ResourceLocator& r : rep->resource_table().urls()) {
+    resource_table_[r.resource()] = r.address();
+  }
+  return true;
+}
+
+void node::DisconnectNode(const std::string& node_name) {
+  // NOT IMPLEMENTED YET!
+  abort();
 }
 
 void node::_PrintResourceLocatorTable() {

@@ -241,6 +241,10 @@ class node {
   // this function return the name of all connect client
   std::vector<std::string> GetSubscribeClientName();
 
+  bool ConnectNode(const std::string& host, uint32_t port,
+                   msg::GetTableResponse* rep);
+  void DisconnectNode(const std::string& node_name);
+
  private:
   /// Build a protobuf containing all the resources we know of, and the CRC.
   msg::ResourceTable _BuildResoruceTableMessage(msg::ResourceTable& t);
@@ -344,7 +348,7 @@ class node {
   std::string host_ip_;
 
   // node's RPC port
-  int port_;
+  uint32_t port_;
 
   // node unique name
   std::string node_name_;
