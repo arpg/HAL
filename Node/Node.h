@@ -29,37 +29,23 @@
 #ifndef _HAL_NODE_NODE_H_
 #define _HAL_NODE_NODE_H_
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <signal.h>
-
 #include <functional>
-#include <map>
-#include <string>
-#include <sstream>
 #include <iostream>
-
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-
-#include <thread>
-#include <mutex>
+#include <map>
 #include <memory>
-#include <boost/crc.hpp>  // for boost::crc_32_type
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
 
-#include "./zmq.hpp"
 #include <zmq.h>
-
 #include <google/protobuf/message.h>
 
-#include "NodeMessages.pb.h"
-#include "./ZeroConf.h"
-#include "./PrintMessage.h"
+#include <Node/NodeConfig.h>
+#include <Node/NodeMessages.pb.h>
+#include <Node/PrintMessage.h>
+#include <Node/zmq.hpp>
+#include <Node/ZeroConf.h>
 
 typedef std::shared_ptr<zmq::socket_t> NodeSocket;
 
@@ -91,8 +77,11 @@ class node {
  public:
   /// node constructor you can call wo initialization.  user MUST call
   /// init at some point.
-  node();
-  ~node();
+  ///
+  /// @param use_autodiscovery Use Avahi to autodiscover other nodes
+  ///        (if available)
+  explicit node(bool use_auto_discovery = true);
+  virtual ~node();
   void set_verbocity(int nLevel);
 
   ///
@@ -241,9 +230,30 @@ class node {
   // this function return the name of all connect client
   std::vector<std::string> GetSubscribeClientName();
 
+  /// Connect to another node at a given hostname string and port
+  ///
+  /// The GetTableResponse will be filled out with the response from
+  /// the connected node. This includes the Node name to be used for
+  /// RPC nodes.
+  ///
+  /// Returns whether the connection was successful.
+  bool ConnectNode(const std::string& host, uint32_t port,
+                   msg::GetTableResponse* rep);
+
+  /// Disconnect from the desired node
+  void DisconnectNode(const std::string& node_name);
+
+  bool using_auto_discovery() const {
+    return use_auto_discovery_;
+  }
+
+  void set_using_auto_discovery(bool use_auto) {
+    use_auto_discovery_ = use_auto;
+  }
+
  private:
   /// Build a protobuf containing all the resources we know of, and the CRC.
-  msg::ResourceTable _BuildResoruceTableMessage(msg::ResourceTable& t);
+  msg::ResourceTable _BuildResourceTableMessage(msg::ResourceTable& t);
 
   /// Checksum of the ResourceTable (used by nodes to check they are
   /// up-to-date).
@@ -265,11 +275,11 @@ class node {
 
   int _BindRandomPort(NodeSocket& socket);
 
-  std::string _GetAddress();
-  std::string _GetAddress(const std::string& sHostIP, const int nPort);
+  std::string _GetAddress() const;
+  std::string _GetAddress(const std::string& sHostIP, const int nPort) const;
 
-  std::string _ZmqAddress();
-  std::string _ZmqAddress(const std::string& sHostIP, const int nPort);
+  std::string _ZmqAddress() const;
+  std::string _ZmqAddress(const std::string& sHostIP, const int nPort) const;
 
   double _Tic();
   double _Toc(double dSec);
@@ -294,6 +304,8 @@ class node {
 
   /** Get the mutex associated with the socket connected to a certain node */
   std::shared_ptr<std::mutex> rpc_mutex(const std::string& node);
+
+  void BuildDeleteFromTableRequest(msg::DeleteFromTableRequest* msg) const;
 
  private:
   /// used to time socket communications
@@ -344,7 +356,7 @@ class node {
   std::string host_ip_;
 
   // node's RPC port
-  int port_;
+  uint32_t port_;
 
   // node unique name
   std::string node_name_;
@@ -362,10 +374,12 @@ class node {
   double get_resource_table_max_wait_;
   double heartbeat_wait_thresh_;
   unsigned int resource_table_version_;
-  std::mutex mutex_;
+  mutable std::mutex mutex_;
 
   // send and receive message max wait
   int send_recv_max_wait_;
+
+  bool use_auto_discovery_;
 };
 
 }  // end namespace hal

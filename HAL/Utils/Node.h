@@ -12,7 +12,8 @@
 #include <thread>
 #include <chrono>
 
-#include "zmq.hpp"
+// Hack. Use the zmq.hpp in NodeV2
+#include <Node/zmq.hpp>
 
 #include <google/protobuf/message.h>
 
