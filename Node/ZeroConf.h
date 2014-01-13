@@ -41,7 +41,6 @@ struct ZeroConfURL {
 class ZeroConf {
  public:
   ZeroConf();
-
   ~ZeroConf();
 
   /// Generic interface to just register a service and bail
@@ -64,20 +63,6 @@ class ZeroConf {
       uint32_t nFlags = 0,
       uint32_t nInterface = 0);
 
- private:
-  /// Callback to get the results of a ResolveService request.
-  static void DNSSD_API _ResolveReplyCallback(
-      DNSServiceRef client,
-      DNSServiceFlags nFlags,
-      uint32_t ifIndex,
-      DNSServiceErrorType errorCode,
-      const char *fullname,
-      const char *hosttarget,
-      uint16_t opaqueport,
-      uint16_t txtLen,
-      const unsigned char *txtRecord,
-      void *pThis);
-
   const char* _GetHostIP();
 
   void ResolveReplyCallback(
@@ -91,31 +76,6 @@ class ZeroConf {
       uint16_t , //txtLen,
       const unsigned char * //txtRecord
                             );
-
-  // Callback called with registration result
-  static void DNSSD_API  _RegisterServiceCallback(
-      DNSServiceRef /*sdRef*/,             //< Input:
-      DNSServiceFlags,                 //< NA currently unused
-      DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
-      const char *sName,               //< Input: service name
-      const char *sRegType,            //< Input: _tcp or _udp
-      const char *sDomain,             //< Input: e.g. local
-      void *pUserData                  //< Input: user supplied data
-                                                  );
-  static void DNSSD_API _BrowseReplyCallback(
-      DNSServiceRef,
-      DNSServiceFlags nFlags,
-      uint32_t,
-      DNSServiceErrorType nErrorCode,
-      const char *sServiceName,
-      const char * sRegType,
-      const char * sReplyDomain,
-      void *pUserData);
-
-  /// sit on the DNSServiceRef file descriptor to wait for results
-  /// from the server
-  static void _HandleEvents2(void* pThis);
-
   void HandleEvents2();
 
   /// sit on the DNSServiceRef file descriptor to wait for results

@@ -12,6 +12,95 @@ ZeroConf::~ZeroConf() {
   //            DNSServiceRefDeallocate(dns_service_ref_);
 }
 
+inline void _HandleEvents2(void* pThis) {
+  ((ZeroConf*)pThis)->HandleEvents2();
+}
+
+inline void _BrowseReplyCallback(
+    DNSServiceRef,
+    DNSServiceFlags nFlags,
+    uint32_t,
+    DNSServiceErrorType nErrorCode,
+    const char *sServiceName,
+    const char * sRegType,
+    const char * sReplyDomain,
+    void *pUserData) {
+  std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
+
+  if (nErrorCode != kDNSServiceErr_NoError) {
+    printf("error _BrowseReplyCallback() -- %d\n", nErrorCode);
+    return;
+  }
+
+  /// kDNSServiceFlagsAdd  indicates that the service parameter contains the
+  //  name of a service that has been found; you should add it to your list of
+  //  available services.
+  if (nFlags & kDNSServiceFlagsAdd) {
+    ZeroConfRecord r;
+    r.service_name = sServiceName;
+    r.reg_type = sRegType;
+    r.domain = sReplyDomain;
+    // only record node if we haven't seen it yet -- else bail
+    for (size_t ii = 0; ii < vRecords.size(); ii++) {
+      if (vRecords[ii].service_name == sServiceName &&
+          vRecords[ii].reg_type == sRegType &&
+          vRecords[ii].domain == sReplyDomain) {
+        return;
+      }
+    }
+
+    vRecords.push_back(r);
+  }
+
+  /// done?
+  if (!(nFlags & kDNSServiceFlagsMoreComing)) {
+  }
+}
+
+/// Callback to get the results of a ResolveService request.
+inline void _ResolveReplyCallback(
+    DNSServiceRef client,
+    DNSServiceFlags nFlags,
+    uint32_t ifIndex,
+    DNSServiceErrorType errorCode,
+    const char *fullname,
+    const char *hosttarget,
+    uint16_t opaqueport,
+    uint16_t txtLen,
+    const unsigned char *txtRecord,
+    void *pThis) {
+  ((ZeroConf*)pThis)->ResolveReplyCallback(
+      client,
+      nFlags,
+      ifIndex,
+      errorCode,
+      fullname,
+      hosttarget,
+      opaqueport,
+      txtLen,
+      txtRecord);
+}
+
+inline void _RegisterServiceCallback(
+    DNSServiceRef /*sdRef*/,             //< Input:
+    DNSServiceFlags,                 //< NA currently unused
+    DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
+    const char *sName,               //< Input: service name
+    const char *sRegType,            //< Input: _tcp or _udp
+    const char *sDomain,             //< Input: e.g. local
+    void *pUserData                  //< Input: user supplied data
+                                     ) {
+  ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
+  if (nErrorCode != kDNSServiceErr_NoError) {
+    printf("error in _RegisterServiceCallback\n");
+  }
+  else {
+    pRecord->service_name = sName;
+    pRecord->reg_type     = sRegType;
+    pRecord->domain      = sDomain ? sDomain : "local";
+  }
+}
+
 bool ZeroConf::RegisterService(
     const std::string& sName, //<
     const std::string& sRegType, //<
@@ -111,7 +200,6 @@ std::vector<ZeroConfRecord> ZeroConf::BrowseForServiceType(
         return vRecords;
       }
     } else if (result == 0)  {
-      //myTimerCallBack();
       return vRecords;
     }   else {
       if (errno != EINTR) {
@@ -151,30 +239,6 @@ std::vector<ZeroConfURL> ZeroConf::ResolveService(
   std::vector<ZeroConfURL> vRes = resolved_urls_;
   resolved_urls_.clear();
   return vRes;
-}
-
-/// Callback to get the results of a ResolveService request.
-void DNSSD_API ZeroConf::_ResolveReplyCallback(
-    DNSServiceRef client,
-    DNSServiceFlags nFlags,
-    uint32_t ifIndex,
-    DNSServiceErrorType errorCode,
-    const char *fullname,
-    const char *hosttarget,
-    uint16_t opaqueport,
-    uint16_t txtLen,
-    const unsigned char *txtRecord,
-    void *pThis) {
-  ((ZeroConf*)pThis)->ResolveReplyCallback(
-      client,
-      nFlags,
-      ifIndex,
-      errorCode,
-      fullname,
-      hosttarget,
-      opaqueport,
-      txtLen,
-      txtRecord);
 }
 
 const char* ZeroConf::_GetHostIP() {
@@ -226,71 +290,6 @@ void ZeroConf::ResolveReplyCallback(
   }
 }
 
-void DNSSD_API ZeroConf::_RegisterServiceCallback(
-    DNSServiceRef /*sdRef*/,             //< Input:
-    DNSServiceFlags,                 //< NA currently unused
-    DNSServiceErrorType nErrorCode,  //< Input: kDNSServiceErr_NoError on success
-    const char *sName,               //< Input: service name
-    const char *sRegType,            //< Input: _tcp or _udp
-    const char *sDomain,             //< Input: e.g. local
-    void *pUserData                  //< Input: user supplied data
-                                                         ) {
-  ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
-  if (nErrorCode != kDNSServiceErr_NoError) {
-    printf("error in _RegisterServiceCallback\n");
-  }
-  else {
-    pRecord->service_name = sName;
-    pRecord->reg_type     = sRegType;
-    pRecord->domain      = sDomain ? sDomain : "local";
-  }
-}
-
-void DNSSD_API ZeroConf::_BrowseReplyCallback(
-    DNSServiceRef,
-    DNSServiceFlags nFlags,
-    uint32_t,
-    DNSServiceErrorType nErrorCode,
-    const char *sServiceName,
-    const char * sRegType,
-    const char * sReplyDomain,
-    void *pUserData) {
-  std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
-
-  if (nErrorCode != kDNSServiceErr_NoError) {
-    printf("error _BrowseReplyCallback() -- %d\n", nErrorCode);
-    return;
-  }
-
-  /// kDNSServiceFlagsAdd  indicates that the service parameter contains the
-  //  name of a service that has been found; you should add it to your list of
-  //  available services.
-  if (nFlags & kDNSServiceFlagsAdd) {
-    ZeroConfRecord r;
-    r.service_name = sServiceName;
-    r.reg_type = sRegType;
-    r.domain = sReplyDomain;
-    // only record node if we haven't seen it yet -- else bail
-    for (size_t ii = 0; ii < vRecords.size(); ii++) {
-      if (vRecords[ii].service_name == sServiceName &&
-          vRecords[ii].reg_type == sRegType &&
-          vRecords[ii].domain == sReplyDomain) {
-        return;
-      }
-    }
-
-    vRecords.push_back(r);
-  }
-
-  /// done?
-  if (!(nFlags & kDNSServiceFlagsMoreComing)) {
-  }
-}
-
-void ZeroConf::_HandleEvents2(void* pThis) {
-  ((ZeroConf*)pThis)->HandleEvents2();
-}
-
 void ZeroConf::HandleEvents2() {
   int dns_sd_fd =
       dns_service_ref_ ? DNSServiceRefSockFD(dns_service_ref_) : -1;
@@ -332,7 +331,6 @@ void ZeroConf::HandleEvents2() {
     }
     else if (result == 0 && resolve_complete_) {
       // bStopNow = true;
-      //myTimerCallBack();
     }
     else{
       if (errno != EINTR) {
@@ -376,7 +374,6 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
       }
     } else if (result == 0 && resolve_complete_) {
       bStopNow = true;
-      //myTimerCallBack();
     } else{
       //                   printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
       if (errno != EINTR) {
