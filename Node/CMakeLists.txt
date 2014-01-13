@@ -33,7 +33,6 @@ set(PROJ_INCLUDE_DIRS
   ${ZeroMQ_INCLUDE_DIRS}
   ${Avahi_INCLUDE_DIRS}
   ${PROTOBUF_INCLUDE_DIRS}
-  ${DNSSD_INCLUDE_DIRS}
   ${Node_SOURCE_DIR}/..
   ${Node_BINARY_DIR}
   ${Node_SOURCE_DIR}
@@ -44,8 +43,12 @@ set(PROJ_LIBRARIES
   ${ZeroMQ_LIBRARIES}
   ${AVAHI_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${DNSSD_LIBRARIES}
   )
+
+if(DNSSD_FOUND)
+  list(APPEND PROJ_INCLUDE_DIRS ${DNSSD_INCLUDE_DIRS})
+  list(APPEND PROJ_LIBRARIES ${DNSSD_LIBRARIES})
+endif()
 
 include_directories(${PROJ_INCLUDE_DIRS})
 
@@ -54,10 +57,16 @@ PROTOBUF_GENERATE_CPP(PROTO_HDRS PROTO_SRCS NodeMessages.proto)
 set(NODE_HDRS Node.h PrintMessage.h ZeroConf.h ${PROTO_HDRS})
 set(NODE_SRCS Node.cpp PrintMessage.cpp ZeroConf.cpp ${PROTO_SRCS})
 
+if(ANDROID)
+  list(APPEND NODE_HDRS android-ifaddrs/ifaddrs.h)
+  list(APPEND NODE_SRCS android-ifaddrs/ifaddrs.c)
+  include_directories(SYSTEM android-ifaddrs)
+endif()
+
 add_library(node ${NODE_HDRS} ${NODE_SRCS})
 target_link_libraries(node ${PROJ_LIBRARIES})
 target_link_libraries(node ${Boost_SYSTEM_LIBRARY})
-message("Boost system libraries found: " ${Boost_SYSTEM_LIBRARY})
+
 # Create the NODEConfig.cmake file for the build tree.
 set(EXPORT_NODE_INC
   ${CMAKE_CURRENT_SOURCE_DIR}/..
