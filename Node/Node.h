@@ -77,8 +77,11 @@ class node {
  public:
   /// node constructor you can call wo initialization.  user MUST call
   /// init at some point.
-  node();
-  ~node();
+  ///
+  /// @param use_autodiscovery Use Avahi to autodiscover other nodes
+  ///        (if available)
+  explicit node(bool use_auto_discovery = true);
+  virtual ~node();
   void set_verbocity(int nLevel);
 
   ///
@@ -240,6 +243,14 @@ class node {
   /// Disconnect from the desired node
   void DisconnectNode(const std::string& node_name);
 
+  bool using_auto_discovery() const {
+    return use_auto_discovery_;
+  }
+
+  void set_using_auto_discovery(bool use_auto) {
+    use_auto_discovery_ = use_auto;
+  }
+
  private:
   /// Build a protobuf containing all the resources we know of, and the CRC.
   msg::ResourceTable _BuildResourceTableMessage(msg::ResourceTable& t);
@@ -367,6 +378,8 @@ class node {
 
   // send and receive message max wait
   int send_recv_max_wait_;
+
+  bool use_auto_discovery_;
 };
 
 }  // end namespace hal

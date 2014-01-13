@@ -33,7 +33,8 @@ zmq::context_t* _InitSingleton() {
   return pContext;
 }
 
-node::node() : context_(nullptr), port_(0) {
+node::node(bool use_auto_discovery) : context_(nullptr), port_(0),
+                                      use_auto_discovery_(use_auto_discovery) {
   heartbeat_wait_thresh_ = 10;
 
   // maximum of timeout. Default value is 0.1.
@@ -99,7 +100,7 @@ bool node::init(std::string node_name) {
   port_ = _BindRandomPort(socket_);
 
   // register with zeroconf
-  if (zero_conf_.IsValid()) {
+  if (use_auto_discovery_ && zero_conf_.IsValid()) {
     if (!zero_conf_.RegisterService("hermes_" + node_name_,
                                     "_hermes._tcp", port_)) {
       PrintError("[Node] ERROR registering node '%s' with ZeroConf -- make sure the name is unique\n",
@@ -845,7 +846,7 @@ void node::_PropagateResourceTable() {
 }
 
 void node::_UpdateNodeRegistery() {
-  if (!zero_conf_.IsValid()) return;
+  if (!use_auto_discovery_ || !zero_conf_.IsValid()) return;
 
   std::vector<ZeroConfRecord> vRecords;
   vRecords = zero_conf_.BrowseForServiceType("_hermes._tcp");
