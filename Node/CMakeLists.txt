@@ -47,7 +47,7 @@ include_directories(${PROJ_INCLUDE_DIRS})
 PROTOBUF_GENERATE_CPP( PROTO_HDRS PROTO_SRCS NodeMessages.proto )
 
 set( NODE_HDRS Node.h PrintMessage.h ZeroConf.h ${PROTO_HDRS} )
-set( NODE_SRCS Node.cpp PrintMessage.cpp ${PROTO_SRCS} )
+set( NODE_SRCS Node.cpp PrintMessage.cpp ZeroConf.cpp ${PROTO_SRCS} )
 
 add_library( node ${NODE_HDRS} ${NODE_SRCS} )
 target_link_libraries(node ${PROJ_LIBRARIES})
