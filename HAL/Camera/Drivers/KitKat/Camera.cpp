@@ -2,8 +2,6 @@
 
 #include <android/log.h>
 
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
 #include <camera/ProCamera.h>
 #include <hardware/camera3.h>
 #include <system/camera_metadata.h>
@@ -163,23 +161,6 @@ camera_t *camera_alloc(int id)
   // Disable face Detection
   camera_update_metadata(ANDROID_STATISTICS_FACE_DETECT_MODE,
                          1, &faceMode, &(camera->request));
-
-  // // Create a texture for this image
-  // glGenTextures(1, &camera->image.texture_id);
-
-  // // Bind the texture object
-  // glBindTexture(GL_TEXTURE_2D, camera->image.texture_id);
-
-  // unsigned char *buffer = (unsigned char *)malloc(2048*1024);
-  // for (int i = 0 ; i < 2048*512 ; i++) buffer[i] = i;
-
-  // // Load the texture
-  // glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
-  //              2048, 1024, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, (void *)buffer);
-
-  // Set the filtering mode
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   return camera;
 }
 
