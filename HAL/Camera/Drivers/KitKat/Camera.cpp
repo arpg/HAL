@@ -27,9 +27,8 @@ typedef struct camera_t {
   image_t image;
 } camera_t;
 
-namespace android{
-
-  class listener_t : public ProCameraListener {
+namespace android {
+class listener_t : public ProCameraListener {
   public:
     listener_t(camera_t *cam) {camera = cam; last_buffer = NULL;};
     ~listener_t() {};
@@ -38,7 +37,6 @@ namespace android{
       status_t ret;
       CpuConsumer::LockedBuffer buf;
       if ((ret = consumer->lockNextBuffer(&buf)) == OK) {
-#ifdef NEXUS5
         struct timespec up_ts, unix_ts;
         google::uint64 up_time, unix_time;
         clock_gettime(CLOCK_MONOTONIC, &up_ts);
@@ -46,9 +44,6 @@ namespace android{
         up_time = up_ts.tv_sec*1e9 + up_ts.tv_nsec;
         unix_time = unix_ts.tv_sec*1e9 + unix_ts.tv_nsec;
         double timestamp = (buf.timestamp - up_time + unix_time) * 1e-9;
-#else
-        double timestamp = buf.timestamp * 1e-9;
-#endif
         int framecount   = buf.frameNumber;
 
         // DrawBuffer
@@ -115,8 +110,7 @@ static void camera_update_metadata(uint32_t tag, int data_count, void *data,
   }
 }
 
-camera_t *camera_alloc(int id)
-{
+camera_t *camera_alloc(int id) {
   camera_t *camera = new camera_t();
   if ((camera->camera = android::ProCamera::connect(id)) == NULL) {
     delete camera;
@@ -164,8 +158,7 @@ camera_t *camera_alloc(int id)
   return camera;
 }
 
-void camera_play(camera_t *camera)
-{
+void camera_play(camera_t *camera) {
   if (camera == NULL || camera->camera == NULL) return;
   if (camera->camera->exclusiveTryLock() == android::OK) {
     for (int i = 0 ; i < CAMERA_REQUEST_COUNT ; i++)
@@ -173,18 +166,14 @@ void camera_play(camera_t *camera)
   }
 }
 
-void camera_lock_buffer(camera_t *camera, image_t *image)
-{
+void camera_lock_buffer(camera_t *camera, image_t *image) {
   if (camera == NULL || image == NULL) return;
   *image = camera->image;
 }
 
-void camera_unlock_buffer(camera_t *camera, image_t *image)
-{
-}
+void camera_unlock_buffer(camera_t *camera, image_t *image) {}
 
-void camera_stop(camera_t *camera)
-{
+void camera_stop(camera_t *camera) {
   if (camera == NULL) return;
 
   if (camera->camera != NULL &&
@@ -196,8 +185,7 @@ void camera_stop(camera_t *camera)
   }
 }
 
-void camera_free(camera_t *camera)
-{
+void camera_free(camera_t *camera) {
   if (camera == NULL) return;
 
   if (camera->camera != NULL) {

@@ -6,7 +6,6 @@
 #include "./Camera.h"
 #include "./Image.h"
 
-#include <android/log.h>
 namespace hal {
 
 KitKatDriver::KitKatDriver() {
@@ -23,8 +22,7 @@ KitKatDriver::~KitKatDriver() {
   camera_free(camera_);
 }
 
-bool KitKatDriver::Capture( pb::CameraMsg& vImages )
-{
+bool KitKatDriver::Capture( pb::CameraMsg& vImages ) {
   pb::ImageMsg* pb_img = vImages.add_image();
 
   image_t image;
@@ -43,19 +41,16 @@ bool KitKatDriver::Capture( pb::CameraMsg& vImages )
   return true;
 }
 
-size_t KitKatDriver::NumChannels() const
-{
+size_t KitKatDriver::NumChannels() const {
   return 1;
 }
 
-size_t KitKatDriver::Width( size_t ) const
-{
+size_t KitKatDriver::Width( size_t ) const {
   return 1280;
 }
 
-size_t KitKatDriver::Height( size_t ) const
-{
+size_t KitKatDriver::Height( size_t ) const {
   return 720;
 }
 
-}
+}  // namespace hal
