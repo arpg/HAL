@@ -73,7 +73,12 @@ int main(int argc, char* argv[]) {
   hal::Camera theCam;
   pb::ImageArray images;
   if (bHaveCam) {
-    theCam = hal::Camera(sCam);
+    try {
+      theCam = hal::Camera(sCam);
+    } catch (const hal::DeviceException& e) {
+      std::cerr << "Camera failed to open!" << std::endl;
+      abort();
+    }
     nNumChannels = theCam.NumChannels();
     nBaseWidth = theCam.Width();
     nBaseHeight = theCam.Height();
