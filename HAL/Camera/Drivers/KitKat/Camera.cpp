@@ -38,11 +38,11 @@ class listener_t : public ProCameraListener {
       CpuConsumer::LockedBuffer buf;
       if ((ret = consumer->lockNextBuffer(&buf)) == OK) {
         struct timespec up_ts, unix_ts;
-        google::uint64 up_time, unix_time;
+        uint64_t up_time, unix_time;
         clock_gettime(CLOCK_MONOTONIC, &up_ts);
         clock_gettime(CLOCK_REALTIME, &unix_ts);
-        up_time = up_ts.tv_sec*1e9 + up_ts.tv_nsec;
-        unix_time = unix_ts.tv_sec*1e9 + unix_ts.tv_nsec;
+        up_time = up_ts.tv_sec * 1e9 + up_ts.tv_nsec;
+        unix_time = unix_ts.tv_sec * 1e9 + unix_ts.tv_nsec;
         double timestamp = (buf.timestamp - up_time + unix_time) * 1e-9;
         int framecount   = buf.frameNumber;
 
