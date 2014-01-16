@@ -45,12 +45,7 @@ endmacro()
 
 macro( add_to_hal_libraries )
     foreach( lib ${ARGN} )
-        get_target_property( libpath ${lib} LOCATION )
-        if(libpath)
-            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
-        else()
-            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
-        endif()
+      set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
     endforeach()
 endmacro()
 
