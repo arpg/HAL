@@ -45,7 +45,28 @@ endmacro()
 
 macro( add_to_hal_libraries )
     foreach( lib ${ARGN} )
-      set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+      # Process targets correctly
+      if (TARGET ${lib})
+
+	# If the library is NOT imported, ie is in this project, we
+	# want to depend on it directly rather than through its path
+        get_target_property(is_lib_imported ${lib} IMPORTED)
+	if (NOT ${is_lib_imported})
+	  set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+	else()
+	  # For imported targets, we just want to depend on the library directly
+          get_target_property(libpath ${lib} LOCATION)
+	  if (libpath)
+            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
+
+	    # This shouldn't really happen, but let's cover our bases.
+	  else()
+	    set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+	  endif()
+	endif()
+      else()			# Just add the direct path/flag to the list
+	set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+      endif()
     endforeach()
 endmacro()
 
