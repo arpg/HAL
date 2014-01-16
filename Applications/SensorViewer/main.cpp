@@ -59,9 +59,16 @@ int main(int argc, char* argv[]) {
   GetPot clArgs(argc,argv);
 
   std::string sCam = clArgs.follow("", "-cam");
-  const bool bHaveCam = !sCam.empty();
+  bool bHaveCam = !sCam.empty();
   std::string sIMU = clArgs.follow("", "-imu");
-  const bool bHaveIMU = !sIMU.empty();
+  bool bHaveIMU = !sIMU.empty();
+
+#ifdef ANDROID
+  if (!bHaveCam && !bHaveIMU) {
+    sCam = "kitkat://";
+    bHaveCam = true;
+  }
+#endif
 
   ///-------------------- CAMERA INIT (Optional)
 
@@ -186,7 +193,7 @@ int main(int argc, char* argv[]) {
         if (!glTex[ii].tid && nNumChannels) {
           // Only initialise now we know format.
           glTex[ii].Reinitialise(img.Width(), img.Height(),
-                                 GL_RGBA, true, 0,
+                                 img.Format(), true, 0,
                                  img.Format(), img.Type(), 0);
         }
 
