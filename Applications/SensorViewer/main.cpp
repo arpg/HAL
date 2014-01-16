@@ -59,9 +59,16 @@ int main(int argc, char* argv[]) {
   GetPot clArgs(argc,argv);
 
   std::string sCam = clArgs.follow("", "-cam");
-  const bool bHaveCam = !sCam.empty();
+  bool bHaveCam = !sCam.empty();
   std::string sIMU = clArgs.follow("", "-imu");
-  const bool bHaveIMU = !sIMU.empty();
+  bool bHaveIMU = !sIMU.empty();
+
+#ifdef ANDROID
+  if (!bHaveCam && !bHaveIMU) {
+    sCam = "kitkat://";
+    bHaveCam = true;
+  }
+#endif
 
   ///-------------------- CAMERA INIT (Optional)
 
@@ -73,7 +80,12 @@ int main(int argc, char* argv[]) {
   hal::Camera theCam;
   pb::ImageArray images;
   if (bHaveCam) {
-    theCam = hal::Camera(sCam);
+    try {
+      theCam = hal::Camera(sCam);
+    } catch (const hal::DeviceException& e) {
+      std::cerr << "Camera failed to open!" << std::endl;
+      abort();
+    }
     nNumChannels = theCam.NumChannels();
     nBaseWidth = theCam.Width();
     nBaseHeight = theCam.Height();
@@ -179,9 +191,11 @@ int main(int argc, char* argv[]) {
       for (size_t ii = 0; ii < nNumChannels; ++ii) {
         pb::Image img = images[ii];
         if (!glTex[ii].tid && nNumChannels) {
+          GLint internal_format = (img.Format() == GL_LUMINANCE ?
+                                   GL_LUMINANCE : GL_RGBA);
           // Only initialise now we know format.
           glTex[ii].Reinitialise(img.Width(), img.Height(),
-                                 GL_RGBA, true, 0,
+                                 internal_format, true, 0,
                                  img.Format(), img.Type(), 0);
         }
 
