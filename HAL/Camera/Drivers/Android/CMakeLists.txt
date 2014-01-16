@@ -1,7 +1,7 @@
 if( ANDROID )
-    set( BUILD_Android true CACHE BOOL force )
+    set( BUILD_Android OFF CACHE BOOL "Build Android library" ) # Default to OFF
 elseif()
-    set( BUILD_Android false )
+    set( BUILD_Android OFF )
 endif()
 
 if( BUILD_Android )
