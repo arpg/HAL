@@ -191,9 +191,11 @@ int main(int argc, char* argv[]) {
       for (size_t ii = 0; ii < nNumChannels; ++ii) {
         pb::Image img = images[ii];
         if (!glTex[ii].tid && nNumChannels) {
+          GLint internal_format = (img.Format() == GL_LUMINANCE ?
+                                   GL_LUMINANCE : GL_RGBA);
           // Only initialise now we know format.
           glTex[ii].Reinitialise(img.Width(), img.Height(),
-                                 img.Format(), true, 0,
+                                 internal_format, true, 0,
                                  img.Format(), img.Type(), 0);
         }
 
