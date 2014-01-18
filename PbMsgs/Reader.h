@@ -12,95 +12,118 @@
 #include <PbMsgs/Header.pb.h>
 #include <PbMsgs/Messages.pb.h>
 
-namespace pb
-{
+namespace pb {
 
 enum MessageType {
-    Msg_Type_Camera,
-    Msg_Type_Encoder,
-    Msg_Type_IMU,
-    Msg_Type_LIDAR,
-    Msg_Type_Posys
+  Msg_Type_Camera,
+  Msg_Type_Encoder,
+  Msg_Type_IMU,
+  Msg_Type_LIDAR,
+  Msg_Type_Posys
 };
 
-class Reader
-{
-public:
-    static Reader& Instance(const std::string& filename, MessageType eType);
+class Reader {
+ public:
+  static Reader& Instance(const std::string& filename, MessageType eType);
 
-    Reader(const std::string& filename);
-    ~Reader();
+  Reader(const std::string& filename);
+  ~Reader();
 
-    /// Reads message regardless of type. This allows the user to handle the message list directly.
-    /// This will block if no messages are in the queue.
-    std::unique_ptr<pb::Msg> ReadMessage();
+  /// Reads message regardless of type. This allows the user to handle
+  /// the message list directly.
+  ///
+  /// This will block if no messages are in the queue.
+  std::unique_ptr<pb::Msg> ReadMessage();
 
-    /// Reads the next camera message from the message queue. If the next message is NOT a camera message,
-    /// or the message queue is empty, the function will block. Mostly used for camera specific driver implementations.
-    /// The "ReadCamera" static variable must be set to true if the reader is to queue camera messages.
-    std::unique_ptr<pb::CameraMsg> ReadCameraMsg();
+  /// Reads the next camera message from the message queue. If the
+  /// next message is NOT a camera message, or the message queue is
+  /// empty, the function will block. Mostly used for camera specific
+  /// driver implementations.
+  ///
+  /// The "ReadCamera" static variable must be set to true if the
+  /// reader is to queue camera messages.
+  std::unique_ptr<pb::CameraMsg> ReadCameraMsg();
 
-    /// Reads the next ENCODER message from the message queue. If the next message is NOT a ENCODER message,
-    /// or the message queue is empty, the function will block. Mostly used for ENCODER specific driver implementations.
-    /// The "ReadEncoder" static variable must be set to true if the reader is to queue ENCODER messages.
-    std::unique_ptr<pb::EncoderMsg> ReadEncoderMsg();
+  /// Reads the next ENCODER message from the message queue. If the
+  /// next message is NOT a ENCODER message, or the message queue is
+  /// empty, the function will block. Mostly used for ENCODER specific
+  /// driver implementations.
+  ///
+  /// The "ReadEncoder" static variable must be set to true if the
+  /// reader is to queue ENCODER messages.
+  std::unique_ptr<pb::EncoderMsg> ReadEncoderMsg();
 
-    /// Reads the next IMU message from the message queue. If the next message is NOT an IMU message,
-    /// or the message queue is empty, the function will block. Mostly used for IMU specific driver implementations.
-    /// The "ReadIMU" static variable must be set to true if the reader is to queue IMU messages.
-    std::unique_ptr<pb::ImuMsg> ReadImuMsg();
+  /// Reads the next IMU message from the message queue. If the next
+  /// message is NOT an IMU message, or the message queue is empty,
+  /// the function will block. Mostly used for IMU specific driver
+  /// implementations.
+  ///
+  /// The "ReadIMU" static variable must be set to true if the reader
+  /// is to queue IMU messages.
+  std::unique_ptr<pb::ImuMsg> ReadImuMsg();
 
-    /// Reads the next LIDAR message from the message queue. If the next message is NOT a LIDAR message,
-    /// or the message queue is empty, the function will block. Mostly used for LIDAR specific driver implementations.
-    /// The "ReadLidar" static variable must be set to true if the reader is to queue LIDAR messages.
-    std::unique_ptr<pb::LidarMsg> ReadLidarMsg();
+  /// Reads the next LIDAR message from the message queue. If the next
+  /// message is NOT a LIDAR message, or the message queue is empty,
+  /// the function will block. Mostly used for LIDAR specific driver
+  /// implementations.
+  ///
+  /// The "ReadLidar" static variable must be set to true if the
+  /// reader is to queue LIDAR messages.
+  std::unique_ptr<pb::LidarMsg> ReadLidarMsg();
 
-    /// Reads the next POSE message from the message queue. If the next message is NOT a POSE message,
-    /// or the message queue is empty, the function will block. Mostly used for POSYS specific driver implementations.
-    /// The "ReadPose" static variable must be set to true if the reader is to queue POSE messages.
-    std::unique_ptr<pb::PoseMsg> ReadPoseMsg();
+  /// Reads the next POSE message from the message queue. If the next
+  /// message is NOT a POSE message, or the message queue is empty,
+  /// the function will block. Mostly used for POSYS specific driver
+  /// implementations.
+  ///
+  /// The "ReadPose" static variable must be set to true if the reader
+  /// is to queue POSE messages.
+  std::unique_ptr<pb::PoseMsg> ReadPoseMsg();
 
-    /// Stops the buffering thread. Should be called by driver implementations, usually in their destructors.
-    void StopBuffering();
+  /// Stops the buffering thread. Should be called by driver
+  /// implementations, usually in their destructors.
+  void StopBuffering();
 
-    /// Reset reader to use specified initial image
-   bool SetInitialImage(size_t nImgID);
+  /// Reset reader to use specified initial image
+  bool SetInitialImage(size_t nImgID);
 
-    /// Getters and setters for max buffer size
-    void SetMaxBufferSize(const int nNumMessages) { m_nMaxBufferSize = nNumMessages; }
-    size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
+  /// Getters and setters for max buffer size
+  void SetMaxBufferSize(const int nNumMessages) {
+    m_nMaxBufferSize = nNumMessages;
+  }
+  size_t GetMaxBufferSize() const { return m_nMaxBufferSize; }
 
-    /// Return the log's filename.
-    std::string GetFilename() const { return m_sFilename; }
+  /// Return the log's filename.
+  std::string GetFilename() const { return m_sFilename; }
 
-    /// Return Header protobuf.
-    const pb::Header& GetHeader() const { return m_Header; }
+  /// Return Header protobuf.
+  const pb::Header& GetHeader() const { return m_Header; }
 
-private:
-    /// Buffer from file.
-    bool _BufferFromFile(const std::string &fileName);
+ private:
+  /// Buffer from file.
+  bool _BufferFromFile(const std::string &fileName);
 
-    bool _AmINext( MessageType eMsgType );
-    void _ThreadFunc();
+  bool _AmINext( MessageType eMsgType );
+  void _ThreadFunc();
 
-private:
-    std::string                             m_sFilename;
-    pb::Header                              m_Header;
-    bool                                    m_bRunning;
-    bool                                    m_bShouldRun;
-    bool                                    m_bReadCamera;
-    bool                                    m_bReadEncoder;
-    bool                                    m_bReadIMU;
-    bool                                    m_bReadLIDAR;
-    bool                                    m_bReadPosys;
-    std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
-    std::list<MessageType >                 m_qMessageTypes;
-    std::mutex                              m_QueueMutex;
-    std::condition_variable                 m_ConditionQueued;
-    std::condition_variable                 m_ConditionDequeued;
-    std::thread                             m_ReadThread;
-    size_t                                  m_nInitialImageID;
-    size_t                                  m_nMaxBufferSize;
+ private:
+  std::string                             m_sFilename;
+  pb::Header                              m_Header;
+  bool                                    m_bRunning;
+  bool                                    m_bShouldRun;
+  bool                                    m_bReadCamera;
+  bool                                    m_bReadEncoder;
+  bool                                    m_bReadIMU;
+  bool                                    m_bReadLIDAR;
+  bool                                    m_bReadPosys;
+  std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
+  std::list<MessageType >                 m_qMessageTypes;
+  std::mutex                              m_QueueMutex;
+  std::condition_variable                 m_ConditionQueued;
+  std::condition_variable                 m_ConditionDequeued;
+  std::thread                             m_ReadThread;
+  size_t                                  m_nInitialImageID;
+  size_t                                  m_nMaxBufferSize;
 };
 
-} /* namespace */
+}  // end namespace pb
