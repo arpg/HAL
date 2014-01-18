@@ -17,7 +17,7 @@ using namespace hal;
 /////////////////////////////////////////////////////////////////////////////////////////
 // port defaults to 2368 if not provided.
 VelodyneDriver::VelodyneDriver(int port)
-    : m_port(port), m_running(false), m_callback(nullptr)
+    : m_running(false), m_callback(nullptr), m_port(port), m_socketDescriptor(0)
 {
     //open the socket and stuff.
     struct sockaddr_in si_me;
@@ -52,7 +52,7 @@ void VelodyneDriver::_ThreadFunc()
 	    throw DeviceException(strerror(errno));
 
 	//Now we start transfering the data to PbMsg.
-	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206. 
+	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206.
 	pbMsg.set_system_time(Tic());//before doing anything else.
 
 	pb::VectorMsg *pbVec = pbMsg.mutable_rotational_position();
@@ -101,7 +101,7 @@ void VelodyneDriver::_ThreadFunc()
 	}
 
 	// Code for packet recieving and packaging ends.
-	
+
 	//Now call the callback function with the data.
 	m_callback(pbMsg);
     }
