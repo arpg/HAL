@@ -42,7 +42,7 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
     if(success) {
         vImages.Clear();
 
-        pb::Image inimg[2] = { vIn.mutable_image(0), vIn.mutable_image(1)};
+        pb::Image inimg[2] = { vIn.image(0), vIn.image(1)};
 
         for(int k=0; k < 2; ++k) {
             pb::ImageMsg* pimg = vImages.add_image();
@@ -52,9 +52,11 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
             pimg->set_format( (pb::Format)inimg[k].Format());
             pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
-            pb::Image img = pb::Image(pimg);
-            calibu::Rectify( m_vLuts[k], inimg[k].data(),
-                    img.data(), img.Width(), img.Height() );
+            pb::Image img = pb::Image(*pimg);
+            calibu::Rectify(
+                m_vLuts[k], inimg[k].data(),
+                reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
+                img.Width(), img.Height());
         }
     }
 

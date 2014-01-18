@@ -14,248 +14,222 @@
 
 namespace pb {
 
-
 #ifdef HAVE_OPENCV
 
-inline void ReadCvMat( const cv::Mat& cvImage, pb::ImageMsg* pbImage )
-{
+inline void ReadCvMat(const cv::Mat& cvImage, pb::ImageMsg* pbImage) {
   pbImage->set_data((const char*)cvImage.data,
                     cvImage.total() * cvImage.elemSize());
-    pbImage->set_height( cvImage.rows );
-    pbImage->set_width( cvImage.cols );
+  pbImage->set_height(cvImage.rows);
+  pbImage->set_width(cvImage.cols);
 
-    if( cvImage.elemSize1() == 1 ) {
-        pbImage->set_type( pb::PB_UNSIGNED_BYTE );
-    }
-    if( cvImage.elemSize1() == 2 ) {
-        pbImage->set_type( pb::PB_UNSIGNED_SHORT );
-    }
-    if( cvImage.elemSize1() == 4 ) {
-        pbImage->set_type( pb::PB_FLOAT );
-    }
+  if (cvImage.elemSize1() == 1) {
+    pbImage->set_type(pb::PB_UNSIGNED_BYTE);
+  } else if (cvImage.elemSize1() == 2) {
+    pbImage->set_type(pb::PB_UNSIGNED_SHORT);
+  } else if (cvImage.elemSize1() == 4) {
+    pbImage->set_type(pb::PB_FLOAT);
+  } else {
+    abort();
+  }
 
-    if( cvImage.channels() == 1 ) {
-        pbImage->set_format( pb::PB_LUMINANCE );
-    }
-    if( cvImage.channels() == 3 ) {
-        pbImage->set_format( pb::PB_RGB );
-    }
+  if (cvImage.channels() == 1) {
+    pbImage->set_format(pb::PB_LUMINANCE);
+  } else if (cvImage.channels() == 3) {
+    pbImage->set_format(pb::PB_RGB);
+  } else {
+    abort();
+  }
 }
 
-inline cv::Mat WriteCvMat(const pb::ImageMsg& pbImage )
-{
-    int nCvType = 0;
-    if( pbImage.type() == pb::PB_BYTE || pbImage.type() == pb::PB_UNSIGNED_BYTE ) {
-        if(pbImage.format() == pb::PB_LUMINANCE ) {
-            nCvType = CV_8UC1;
-        }
-        if(pbImage.format() == pb::PB_RGB ) {
-            nCvType = CV_8UC3;
-        }
+/** This will make create a cv::Mat based on the data stored in the
+ * given message.
+ *
+ * */
+inline cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
+  int nCvType = 0;
+  if (pbImage.type() == pb::PB_BYTE ||
+      pbImage.type() == pb::PB_UNSIGNED_BYTE) {
+    if (pbImage.format() == pb::PB_LUMINANCE) {
+      nCvType = CV_8UC1;
+    } else if (pbImage.format() == pb::PB_RGB) {
+      nCvType = CV_8UC3;
     }
-    if( pbImage.type() == pb::PB_UNSIGNED_SHORT || pbImage.type() == pb::PB_SHORT ) {
-        if(pbImage.format() == pb::PB_LUMINANCE ) {
-            nCvType = CV_16UC1;
-        }
-        if(pbImage.format() == pb::PB_RGB ) {
-            nCvType = CV_16UC3;
-        }
+  } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
+      pbImage.type() == pb::PB_SHORT) {
+    if (pbImage.format() == pb::PB_LUMINANCE) {
+      nCvType = CV_16UC1;
+    } else if (pbImage.format() == pb::PB_RGB) {
+      nCvType = CV_16UC3;
     }
-    if( pbImage.type() == pb::PB_FLOAT ) {
-        if(pbImage.format() == pb::PB_LUMINANCE ) {
-            nCvType = CV_32FC1;
-        }
-        if(pbImage.format() == pb::PB_RGB ) {
-            nCvType = CV_32FC3;
-        }
+  } else if (pbImage.type() == pb::PB_FLOAT) {
+    if (pbImage.format() == pb::PB_LUMINANCE) {
+      nCvType = CV_32FC1;
+    } else if (pbImage.format() == pb::PB_RGB) {
+      nCvType = CV_32FC3;
     }
+  }
 
-    /**
-     * @note We need to clone the cv::Mat here because OpenCV will not
-     * copy the data we give it on its own! This _will_ cause problems
-     * otherwise.
-     */
-    return cv::Mat(pbImage.height(), pbImage.width(), nCvType,
-                   (void*)pbImage.data().data()).clone();
+  return cv::Mat(pbImage.height(), pbImage.width(), nCvType,
+                 (void*)pbImage.data().data());
 }
 
-inline void ReadFile( const std::string& sFileName, pb::ImageMsg* pbImage )
-{
-    cv::Mat Image;
+inline void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage) {
+  cv::Mat Image;
 
-    std::string sExtension = sFileName.substr( sFileName.rfind( "." ) + 1 );
+  std::string sExtension = sFileName.substr(sFileName.rfind(".") + 1);
 
-    // check if it is our own "portable depth map" format
-    if( sExtension == "pdm" ) {
+  // check if it is our own "portable depth map" format
+  if (sExtension == "pdm") {
 
-        // magic number P7, portable depthmap, binary
-        std::ifstream File( sFileName.c_str() );
+    // magic number P7, portable depthmap, binary
+    std::ifstream File(sFileName.c_str());
 
-        unsigned int        nImgWidth;
-        unsigned int        nImgHeight;
-        long unsigned int   nImgSize;
+    if (File.is_open()) {
+      std::string sType;
+      File >> sType;
 
-        if( File.is_open() ) {
-            std::string sType;
-            File >> sType;
-            File >> nImgWidth;
-            File >> nImgHeight;
-            File >> nImgSize;
+      unsigned int nImgWidth = 0;
+      File >> nImgWidth;
 
-            // the actual PGM/PPM expects this as the next field:
-            //		nImgSize++;
-            //		nImgSize = (log( nImgSize ) / log(2)) / 8.0;
+      unsigned int nImgHeight = 0;
+      File >> nImgHeight;
 
-            // but ours has the actual size (4 bytes of float * pixels):
-            nImgSize = 4 * nImgWidth * nImgHeight;
+      long unsigned int nImgSize = 0;
+      File >> nImgSize;
 
-            Image.create( nImgHeight, nImgWidth, CV_32FC1 );
+      // the actual PGM/PPM expects this as the next field:
+      //		nImgSize++;
+      //		nImgSize = (log(nImgSize) / log(2)) / 8.0;
 
-            File.seekg( File.tellg() + (std::ifstream::pos_type)1, std::ios::beg );
-            File.read( (char*)Image.data, nImgSize );
-            File.close();
-        }
-    } else {
-        // ... otherwise let OpenCV open it
-        Image = cv::imread( sFileName, cv::IMREAD_UNCHANGED );
+      // but ours has the actual size (4 bytes of float * pixels):
+      nImgSize = 4 * nImgWidth * nImgHeight;
+
+      Image.create(nImgHeight, nImgWidth, CV_32FC1);
+
+      File.seekg(File.tellg() + (std::ifstream::pos_type)1, std::ios::beg);
+      File.read((char*)Image.data, nImgSize);
+      File.close();
     }
-    ReadCvMat( Image, pbImage );
+  } else {
+    // ... otherwise let OpenCV open it
+    Image = cv::imread(sFileName, cv::IMREAD_UNCHANGED);
+  }
+  ReadCvMat(Image, pbImage);
 }
+#endif  // HAVE_OPENCV
 
-#endif
+class Image {
+ public:
+  Image(const ImageMsg& img) : msg_(img)
+#ifdef HAVE_OPENCV
+                             , mat_(WriteCvMat(msg_))
+#endif  // HAVE_OPENCV
+  {}
+  unsigned int Width() const {
+    return msg_.width();
+  }
 
+  unsigned int Height() const {
+    return msg_.height();
+  }
 
+  int Type() const {
+    return msg_.type();
+  }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Image
-{
-public:
-    Image()
-        : m_pImage(nullptr)
-    {
-    }
+  int Format() const {
+    return msg_.format();
+  }
 
-    Image(ImageMsg* Ptr)
-        : m_pImage(Ptr)
-    {
-    }
+  double Timestamp() const {
+    return msg_.timestamp();
+  }
 
-    unsigned int Width() const
-    {
-        return m_pImage->width();
-    }
+  const pb::ImageInfoMsg& GetInfo() const {
+    msg_.info();
+  }
 
-    unsigned int Height() const
-    {
-        return m_pImage->height();
-    }
+  const bool HasInfo() const {
+    return msg_.has_info();
+  }
 
-    int Type() const
-    {
-        return m_pImage->type();
-    }
+  const unsigned char* data() const {
+    return (const unsigned char*)(&msg_.data().front());
+  }
 
-    int Format() const
-    {
-        return m_pImage->format();
-    }
-
-    double Timestamp() const
-    {
-        return m_pImage->timestamp();
-    }
-
-    const pb::ImageInfoMsg& GetInfo() const
-    {
-        m_pImage->info();
-    }
-
-    const bool HasInfo() const
-    {
-        return m_pImage->has_info();
-    }
-
-    unsigned char* data() const
-    {
-        return (unsigned char*)( &m_pImage->mutable_data()->front() );
-    }
-
-    unsigned char* RowPtr( unsigned int row = 0 ) const
-    {
-        return data() + (row * Width());
-    }
-
+  const unsigned char* RowPtr(unsigned int row = 0) const {
+    return data() + (row * Width());
+  }
 
 #ifdef HAVE_OPENCV
-    operator cv::Mat()
-    {
-      return WriteCvMat(*m_pImage);
-    }
-#endif
+  operator cv::Mat() {
+    return mat_;
+  }
 
-    template< typename T >
-    T at( unsigned int row, unsigned int col ) const
-    {
-        return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
-    }
+  cv::Mat& Mat() {
+    return mat_;
+  }
+#endif  // HAVE_OPENCV
 
-    template< typename T >
-    T& at( unsigned int row, unsigned int col )
-    {
-        return *(T*)( RowPtr(row) + ( col*sizeof(T) ) );
-    }
+  template< typename T >
+  T at(unsigned int row, unsigned int col) const {
+    return *(T*)(RowPtr(row) + (col*sizeof(T)));
+  }
 
-    unsigned char operator()( unsigned int row, unsigned int col  ) const
-    {
-        return *(RowPtr(row) + col);
-    }
+  template< typename T >
+  T& at(unsigned int row, unsigned int col) {
+    return *(T*)(RowPtr(row) + (col*sizeof(T)));
+  }
 
-    unsigned char& operator()( unsigned int row, unsigned int col  )
-    {
-        return *(RowPtr(row) + col);
-    }
+  unsigned char operator()(unsigned int row, unsigned int col) const {
+    return *(RowPtr(row) + col);
+  }
 
-protected:
-    ImageMsg*       m_pImage;
+  const unsigned char& operator()(unsigned int row, unsigned int col) {
+    return *(RowPtr(row) + col);
+  }
+
+ protected:
+  const ImageMsg& msg_;
+#ifdef HAVE_OPENCV
+  cv::Mat mat_;
+#endif  // HAVE_OPENCV
 };
 
+class ImageArray {
+ public:
+  ImageArray() {}
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ImageArray
-{
-public:
-    ImageArray() {}
+  CameraMsg& Ref() {
+    return message_;
+  }
 
-    CameraMsg& Ref()
-    {
-        return m_Message;
+  int Size() const {
+    return message_.image_size();
+  }
+
+  bool Empty() const {
+    return message_.image_size() == 0;
+  }
+
+  double Timestamp() const {
+    return message_.image(0).timestamp();
+  }
+
+  Image operator[](unsigned int idx) const {
+    if (idx < Size()) {
+      return Image(message_.image(idx));
     }
 
-    unsigned int Size()
-    {
-        return m_Message.image_size();
-    }
+    // TODO: define ensure macro or throw exception
+    std::cerr << "error: Channel index '" << idx
+              << "' out of bounds: did you split the image stream?"
+              << std::endl;
+    exit(1);
+  }
 
-    double Timestamp()
-    {
-        return m_Message.image(0).timestamp();
-    }
-
-    Image operator[]( unsigned int idx  )
-    {
-        if( idx < Size() ) {
-            return Image(m_Message.mutable_image(idx));
-        }
-
-        // TODO: define ensure macro or throw exception
-        std::cerr << "error: Channel index '" << idx << "' out of bounds: did you split the image stream?" << std::endl;
-        exit(1);
-    }
-
-private:
-    CameraMsg                       m_Message;
+ private:
+  CameraMsg message_;
 };
 
-
-
-} /* namespace */
+}  // end namespace pb

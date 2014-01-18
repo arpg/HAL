@@ -93,7 +93,7 @@ public:
         vImages.resize( pbImages.Size() );
         vImageInfo.resize( pbImages.Size() );
         if( bRes ){
-            for( size_t ii = 0; ii < pbImages.Size(); ii++ ){
+          for (int ii = 0; ii < pbImages.Size(); ++ii){
                 vImages[ii] = cv::Mat( pbImages[ii] );
                 if( pbImages[ii].HasInfo() ){
                     vImageInfo[ii] = pbImages[ii].GetInfo();
