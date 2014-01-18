@@ -9,7 +9,6 @@
 #include "./Camera.h"
 
 #define CAMERA_REQUEST_COUNT 5
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-camera", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-camera", __VA_ARGS__))
 
 namespace android{
@@ -44,7 +43,6 @@ class listener_t : public ProCameraListener {
         up_time = up_ts.tv_sec * 1e9 + up_ts.tv_nsec;
         unix_time = unix_ts.tv_sec * 1e9 + unix_ts.tv_nsec;
         double timestamp = (buf.timestamp - up_time + unix_time) * 1e-9;
-        int framecount   = buf.frameNumber;
 
         // DrawBuffer
         camera->image.framecount = buf.frameNumber;
@@ -58,12 +56,6 @@ class listener_t : public ProCameraListener {
           consumer->unlockBuffer(*(last_buffer));
         buffer = buf;
         last_buffer = &buffer;
-
-        LOGI("FrameAvailable(%d) %d @ %lf %dx%d", stream_id,
-             framecount, timestamp,
-             camera->image.width, camera->image.height);
-      } else {
-        LOGI("No Frame Available");
       }
 
       camera->request_id[camera->request_count] =
@@ -134,7 +126,7 @@ camera_t *camera_alloc(int id) {
                                       format, MAX_BUFFERS,
                                       &camera->consumer,
                                       &camera->stream_id) != android::OK) {
-    LOGI("Camera Failed to create CPU stream.");
+    LOGW("Camera Failed to create CPU stream.");
     delete camera;
     return NULL;
   }
