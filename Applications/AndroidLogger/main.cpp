@@ -32,7 +32,7 @@ int main( int /*argc*/, char** /*argv*/ )
 
     const std::string video_uri = "android://";
     hal::Camera camera(video_uri);
-    pb::ImageArray images;
+    std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
 
 //    hal::IMU imu(imu_uri);
 //    imu.RegisterIMUDataCallback(HandleIMU);
@@ -96,7 +96,7 @@ int main( int /*argc*/, char** /*argv*/ )
             break;
         }
 
-        if( !camera.Capture(images) ) {
+        if( !camera.Capture(*images) ) {
             // error!
         }
 
@@ -109,7 +109,7 @@ int main( int /*argc*/, char** /*argv*/ )
                 glColor3f(1,1,1);
 
                 // Display camera image
-                tex.Upload(images[iI].data(),GL_LUMINANCE,GL_UNSIGNED_BYTE);
+                tex.Upload(images->at(iI).data(),GL_LUMINANCE,GL_UNSIGNED_BYTE);
                 pangolin::glDrawTextureFlipY(GL_TEXTURE_2D,tex.tid);
             }
         }
@@ -119,7 +119,7 @@ int main( int /*argc*/, char** /*argv*/ )
             g_Log = true;
             pb::Msg msg;
             msg.set_timestamp(nFrame);
-            msg.mutable_camera()->Swap(&images.Ref());
+            msg.mutable_camera()->Swap(&images->Ref());
             if( g_Logger.LogMessage(msg) == false ) {
                 log = false;
                 LOGI("LOGGER WAS STOPPED!");

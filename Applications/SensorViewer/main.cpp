@@ -98,7 +98,7 @@ class SensorViewer {
 
     pangolin::Timer timer;
     bool got_first_image = false;
-    pb::ImageArray images;
+    std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
     for (; !pangolin::ShouldQuit(); ++frame_number_) {
       const bool go = is_running_ || pangolin::Pushed(is_stepping_);
       usleep(20000);
@@ -107,7 +107,7 @@ class SensorViewer {
       glColor4f(1.0f,1.0f,1.0f,1.0f);
 
       if (go && num_channels_) {
-        bool capture_success = camera_.Capture(images);
+        bool capture_success = camera_.Capture(*images);
         if (!got_first_image && capture_success) {
           got_first_image = true;
         }
@@ -130,7 +130,7 @@ class SensorViewer {
 
       if (got_first_image) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
-          pb::Image img = images[ii];
+          pb::Image img = images->at(ii);
           if (!glTex[ii].tid && num_channels_) {
             GLint internal_format = (img.Format() == GL_LUMINANCE ?
                                      GL_LUMINANCE : GL_RGBA);
@@ -149,7 +149,7 @@ class SensorViewer {
       }
 
       if (*logging_enabled_ && is_running_) {
-        LogCamera(&images);
+        LogCamera(images.get());
         DrawLoggingIndicator();
       }
 
