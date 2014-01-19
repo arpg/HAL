@@ -2,6 +2,7 @@
 
 #include <HAL/Devices/SharedLoad.h>
 
+#include <PbMsgs/ImageArray.h>
 #include <PbMsgs/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
@@ -88,15 +89,16 @@ public:
             std::vector<pb::ImageInfoMsg>& vImageInfo
             )
     {
-        static pb::ImageArray pbImages;
-        bool bRes = Capture( pbImages.Ref() );
-        vImages.resize( pbImages.Size() );
-        vImageInfo.resize( pbImages.Size() );
+      static std::shared_ptr<pb::ImageArray> pbImages =
+          pb::ImageArray::Create();
+        bool bRes = Capture( pbImages->Ref() );
+        vImages.resize( pbImages->Size() );
+        vImageInfo.resize( pbImages->Size() );
         if( bRes ){
-          for (int ii = 0; ii < pbImages.Size(); ++ii){
-                vImages[ii] = cv::Mat( pbImages[ii] );
-                if( pbImages[ii].HasInfo() ){
-                    vImageInfo[ii] = pbImages[ii].GetInfo();
+          for (int ii = 0; ii < pbImages->Size(); ++ii){
+                vImages[ii] = cv::Mat( pbImages->at(ii) );
+                if( pbImages->at(ii).HasInfo() ){
+                  vImageInfo[ii] = pbImages->at(ii).GetInfo();
                 }
             }
         }

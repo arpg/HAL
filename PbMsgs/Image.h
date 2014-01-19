@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <memory>
 
 #include <Eigen/Eigen>
 #include <PbMsgs/Messages.pb.h>
@@ -13,6 +14,8 @@
 #endif
 
 namespace pb {
+
+class ImageArray;
 
 #ifdef HAVE_OPENCV
 
@@ -55,7 +58,7 @@ inline cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
       nCvType = CV_8UC3;
     }
   } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
-      pbImage.type() == pb::PB_SHORT) {
+             pbImage.type() == pb::PB_SHORT) {
     if (pbImage.format() == pb::PB_LUMINANCE) {
       nCvType = CV_16UC1;
     } else if (pbImage.format() == pb::PB_RGB) {
@@ -120,11 +123,27 @@ inline void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage) {
 
 class Image {
  public:
-  Image(const ImageMsg& img) : msg_(img)
+
+  /// Construct with only an ImageMsg reference. Caller is responsible
+  /// for ensuring the data outlasts this Image and its cv::Mat
+  explicit Image(const ImageMsg& img) : msg_(img)
 #ifdef HAVE_OPENCV
-                             , mat_(WriteCvMat(msg_))
+                                      , mat_(WriteCvMat(msg_))
 #endif  // HAVE_OPENCV
   {}
+
+  /// Construct with a pointer to the parent ImageArray
+  Image(const ImageMsg& img,
+        const std::shared_ptr<const ImageArray>& source_array) :
+      msg_(img), source_array_(source_array)
+#ifdef HAVE_OPENCV
+      , mat_(WriteCvMat(msg_))
+#endif  // HAVE_OPENCV
+  {}
+
+  Image(const Image&) = default;
+  Image(Image&&) = default;
+
   unsigned int Width() const {
     return msg_.width();
   }
@@ -191,45 +210,13 @@ class Image {
 
  protected:
   const ImageMsg& msg_;
+
+  /// Maintains a reference to the parent ImageArray to ensure its
+  /// lifetime extends longer than this Image's
+  std::shared_ptr<const ImageArray> source_array_;
 #ifdef HAVE_OPENCV
   cv::Mat mat_;
 #endif  // HAVE_OPENCV
-};
-
-class ImageArray {
- public:
-  ImageArray() {}
-
-  CameraMsg& Ref() {
-    return message_;
-  }
-
-  int Size() const {
-    return message_.image_size();
-  }
-
-  bool Empty() const {
-    return message_.image_size() == 0;
-  }
-
-  double Timestamp() const {
-    return message_.image(0).timestamp();
-  }
-
-  Image operator[](unsigned int idx) const {
-    if (idx < Size()) {
-      return Image(message_.image(idx));
-    }
-
-    // TODO: define ensure macro or throw exception
-    std::cerr << "error: Channel index '" << idx
-              << "' out of bounds: did you split the image stream?"
-              << std::endl;
-    exit(1);
-  }
-
- private:
-  CameraMsg message_;
 };
 
 }  // end namespace pb

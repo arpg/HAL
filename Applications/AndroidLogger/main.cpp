@@ -4,6 +4,7 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 
+#include <PbMsgs/ImageArray.h>
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Matrix.h>
 

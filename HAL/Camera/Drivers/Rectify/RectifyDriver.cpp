@@ -42,7 +42,8 @@ bool RectifyDriver::Capture( pb::CameraMsg& vImages )
     if(success) {
         vImages.Clear();
 
-        pb::Image inimg[2] = { vIn.image(0), vIn.image(1)};
+        pb::Image inimg[2] = { pb::Image(vIn.image(0)),
+                               pb::Image(vIn.image(1)) };
 
         for(int k=0; k < 2; ++k) {
             pb::ImageMsg* pimg = vImages.add_image();

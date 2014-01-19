@@ -8,6 +8,7 @@
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
 
+#include <PbMsgs/ImageArray.h>
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Matrix.h>
 
