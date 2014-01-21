@@ -123,57 +123,57 @@ inline void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage) {
 
 class Image {
  public:
-
   /// Construct with only an ImageMsg reference. Caller is responsible
   /// for ensuring the data outlasts this Image and its cv::Mat
-  explicit Image(const ImageMsg& img) : msg_(img)
+  explicit Image(const ImageMsg& img) : msg_(&img)
 #ifdef HAVE_OPENCV
-                                      , mat_(WriteCvMat(msg_))
+                                      , mat_(WriteCvMat(*msg_))
 #endif  // HAVE_OPENCV
   {}
 
   /// Construct with a pointer to the parent ImageArray
   Image(const ImageMsg& img,
         const std::shared_ptr<const ImageArray>& source_array) :
-      msg_(img), source_array_(source_array)
+      msg_(&img), source_array_(source_array)
 #ifdef HAVE_OPENCV
-      , mat_(WriteCvMat(msg_))
+      , mat_(WriteCvMat(*msg_))
 #endif  // HAVE_OPENCV
   {}
 
+  Image& operator=(const Image&) = default;
   Image(const Image&) = default;
   Image(Image&&) = default;
 
   unsigned int Width() const {
-    return msg_.width();
+    return msg_->width();
   }
 
   unsigned int Height() const {
-    return msg_.height();
+    return msg_->height();
   }
 
   int Type() const {
-    return msg_.type();
+    return msg_->type();
   }
 
   int Format() const {
-    return msg_.format();
+    return msg_->format();
   }
 
   double Timestamp() const {
-    return msg_.timestamp();
+    return msg_->timestamp();
   }
 
   const pb::ImageInfoMsg& GetInfo() const {
-    msg_.info();
+    msg_->info();
   }
 
   const bool HasInfo() const {
-    return msg_.has_info();
+    return msg_->has_info();
   }
 
   const unsigned char* data() const {
-    return (const unsigned char*)(&msg_.data().front());
+    return (const unsigned char*)(&msg_->data().front());
   }
 
   const unsigned char* RowPtr(unsigned int row = 0) const {
@@ -209,7 +209,7 @@ class Image {
   }
 
  protected:
-  const ImageMsg& msg_;
+  const ImageMsg* msg_;
 
   /// Maintains a reference to the parent ImageArray to ensure its
   /// lifetime extends longer than this Image's
