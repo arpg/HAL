@@ -185,7 +185,7 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(m_qMessages.size()) {
+  if(!m_qMessages.empty()) {
     std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
     m_qMessages.pop_front();
     m_qMessageTypes.pop_front();
@@ -198,7 +198,8 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage() {
 
 std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg() {
   if( !m_bReadCamera ) {
-    std::cerr << "warning: ReadCameraMsg was called but ReadCamera variable is set to false! " << std::endl;
+    std::cerr << "warning: ReadCameraMsg was called but"
+              << " ReadCamera variable is set to false! " << std::endl;
     return nullptr;
   }
 
@@ -212,19 +213,20 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg() {
     return nullptr;
   }
 
-  std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+  std::unique_ptr<pb::CameraMsg> pCameraMsg(new pb::CameraMsg);
+  pCameraMsg->Swap(m_qMessages.front()->mutable_camera());
+
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
 
-  std::unique_ptr<pb::CameraMsg> pCameraMsg( new pb::CameraMsg );
-  pCameraMsg->Swap( pMessage->mutable_camera() );
   return pCameraMsg;
 }
 
 std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg() {
   if( !m_bReadEncoder ) {
-    std::cerr << "warning: ReadEncoderMsg was called but ReadEncoder variable is set to false! " << std::endl;
+    std::cerr << "warning: ReadEncoderMsg was called but"
+              << "ReadEncoder variable is set to false! " << std::endl;
     return nullptr;
   }
 
