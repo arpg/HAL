@@ -15,7 +15,9 @@ public:
             {"loop", "false", "Play beginning once finished."},
             {"grey", "false", "Convert internally to greyscale."},
             {"buffer", "10", "Number of frames to cache in memory"},
-            {"frequency", "30", "Capture frequency to emulate if needed"}
+            {"frequency", "30", "Capture frequency to emulate if needed"},
+            {"name", "FileCam", "Camera name."},
+            {"id", "0", "Camera id (serial number or UUID)."}
         };
     }
 
@@ -25,6 +27,8 @@ public:
         bool Loop          = uri.properties.Get("loop", false);
         size_t BufferSize  = uri.properties.Get("buffer", 10);
         bool Grey          = uri.properties.Get("grey", false);
+        std::string sName  = uri.properties.Get("name", std::string());
+        std::string sId  = uri.properties.Get("id", std::string());
 //        double Frequency  = uri.properties.Get("frequency", 30.0); // default if not in files
         int cvFlags = Grey ? 0 : -1;
 
@@ -35,7 +39,7 @@ public:
         }
 
         FileReaderDriver* filereader = new FileReaderDriver(
-                    Channels, StartFrame, Loop, BufferSize, cvFlags
+                    Channels, StartFrame, Loop, BufferSize, cvFlags, sName, sId
                     );
         return std::shared_ptr<CameraDriverInterface>( filereader );
     }    

@@ -15,14 +15,16 @@ namespace hal {
 
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
                                    size_t StartFrame, bool Loop,
-                                   size_t BufferSize, int cvFlags)
+                                   size_t BufferSize, int cvFlags, std::string sName, std::string idString)
     : m_bShouldRun(false),
       m_nNumChannels(ChannelRegex.size()),
       m_nStartFrame(StartFrame),
       m_nCurrentImageIndex(StartFrame),
       m_bLoop(Loop),
       m_nBufferSize(BufferSize),
-      m_iCvImageReadFlags(cvFlags) {
+      m_iCvImageReadFlags(cvFlags),
+      m_sName(sName),
+      m_sId(idString){
   // clear variables if previously initialized
   m_vFileList.clear();
 
@@ -116,6 +118,13 @@ std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty) {
   if(sProperty == hal::DeviceDirectory) {
     return m_sBaseDir;
   }
+  else if(sProperty == "name") {
+    return m_sName;
+  }
+  else if(sProperty == "id") {
+    return m_sId;
+  }
+
   return std::string();
 }
 

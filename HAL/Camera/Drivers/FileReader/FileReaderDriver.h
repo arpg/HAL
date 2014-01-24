@@ -16,7 +16,9 @@ class FileReaderDriver : public CameraDriverInterface {
                    size_t StartFrame = 0,
                    bool Loop = false,
                    size_t BufferSize = 35,
-                   int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/);
+                   int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/,
+                   std::string sName = std::string(),
+                   std::string idString = std::string());
   ~FileReaderDriver();
 
   bool Capture( pb::CameraMsg& vImages );
@@ -60,5 +62,7 @@ class FileReaderDriver : public CameraDriverInterface {
   unsigned int                                    m_nBufferSize;
   int                                             m_iCvImageReadFlags;
   std::string                                     m_sTimeKeeper;
+  std::string                                     m_sName;
+  std::string                                     m_sId;
 };
 }  // end namespace hal
