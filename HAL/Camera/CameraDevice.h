@@ -25,7 +25,7 @@ public:
     Camera(const std::string& uri)
         : m_uri(uri)
     {
-        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri);
+        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri, "Cam");
     }
 
     ///////////////////////////////////////////////////////////////
