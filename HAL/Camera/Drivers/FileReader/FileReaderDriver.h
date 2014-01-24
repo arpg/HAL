@@ -10,51 +10,55 @@
 
 namespace hal {
 
-class FileReaderDriver : public CameraDriverInterface
-{
-    public:
-        FileReaderDriver(const std::vector<std::string>& ChannelRegex, size_t StartFrame = 0, bool Loop = false, size_t BufferSize = 35, int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/);
-        ~FileReaderDriver();
+class FileReaderDriver : public CameraDriverInterface {
+ public:
+  FileReaderDriver(const std::vector<std::string>& ChannelRegex,
+                   size_t StartFrame = 0,
+                   bool Loop = false,
+                   size_t BufferSize = 35,
+                   int cvFlags = 0 /*cv::IMREAD_UNCHANGED*/);
+  ~FileReaderDriver();
 
-        bool Capture( pb::CameraMsg& vImages );
-        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+  bool Capture( pb::CameraMsg& vImages );
+  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+    return std::shared_ptr<CameraDriverInterface>();
+  }
 
-        std::string GetDeviceProperty(const std::string& sProperty);
+  std::string GetDeviceProperty(const std::string& sProperty);
 
-        size_t NumChannels() const;
-        size_t Width( size_t idx = 0 ) const;
-        size_t Height( size_t idx = 0 ) const;
+  size_t NumChannels() const;
+  size_t Width( size_t idx = 0 ) const;
+  size_t Height( size_t idx = 0 ) const;
 
-    private:
-        static void _ThreadCaptureFunc( FileReaderDriver* pFR );
-        bool _Read();
-        double _GetNextTime();
+ private:
+  static void _ThreadCaptureFunc( FileReaderDriver* pFR );
+  bool _Read();
+  double _GetNextTime();
 
-    private:
-        volatile bool                                   m_bShouldRun;
-        std::thread*									m_CaptureThread;
+ private:
+  volatile bool                                   m_bShouldRun;
+  std::shared_ptr<std::thread>                    m_CaptureThread;
 
-        // vector of lists of files
-        std::mutex                                      m_Mutex;
-        std::condition_variable                         m_cBufferEmpty;
-        std::condition_variable                         m_cBufferFull;
+  // vector of lists of files
+  std::mutex                                      m_Mutex;
+  std::condition_variable                         m_cBufferEmpty;
+  std::condition_variable                         m_cBufferFull;
 
-        // TODO refactor using circular buffer
-        std::vector< pb::CameraMsg >                    m_vBuffer;
-        unsigned int                                    m_nHead;
-        unsigned int                                    m_nTail;
+  // TODO refactor using circular buffer
+  std::vector< pb::CameraMsg >                    m_vBuffer;
+  unsigned int                                    m_nHead;
+  unsigned int                                    m_nTail;
 
-        std::queue< pb::CameraMsg >                     m_qImageBuffer;
-        std::vector< std::vector< std::string > >		m_vFileList;
-        std::string                                     m_sBaseDir;
-        unsigned int                                    m_nNumChannels;
-        unsigned int                                    m_nStartFrame;
-        unsigned int                                    m_nCurrentImageIndex;
-        bool                                            m_bLoop;
-        unsigned int                                    m_nNumImages;
-        unsigned int                                    m_nBufferSize;
-        int                                             m_iCvImageReadFlags;
-        std::string                                     m_sTimeKeeper;
+  std::queue< pb::CameraMsg >                     m_qImageBuffer;
+  std::vector< std::vector< std::string > >		m_vFileList;
+  std::string                                     m_sBaseDir;
+  unsigned int                                    m_nNumChannels;
+  unsigned int                                    m_nStartFrame;
+  unsigned int                                    m_nCurrentImageIndex;
+  bool                                            m_bLoop;
+  unsigned int                                    m_nNumImages;
+  unsigned int                                    m_nBufferSize;
+  int                                             m_iCvImageReadFlags;
+  std::string                                     m_sTimeKeeper;
 };
-
-}
+}  // end namespace hal
