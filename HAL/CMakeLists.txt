@@ -20,8 +20,8 @@ endif()
 find_package( OpenCV2 REQUIRED )
 find_package( PbMsgs 0.1 REQUIRED )
 find_package( Sophus REQUIRED )
-#find_package( Boost REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED )
+find_package( TinyXML2 REQUIRED )
 
 include_directories(${Sophus_INCLUDE_DIR})
 
@@ -130,6 +130,7 @@ add_library(hal ${HAL_SOURCES})
 target_link_libraries( hal ${INTERNAL_LIBS} )
 target_link_libraries( hal ${Boost_FILESYSTEM_LIBRARY} )
 target_link_libraries( hal ${Boost_SYSTEM_LIBRARY} )
+target_link_libraries( hal ${TinyXML2_LIBRARIES} )
 
 #message( "Boost system library: " ${Boost_SYSTEM_LIBRARY} )
 
