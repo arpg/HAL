@@ -11,6 +11,8 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
+            {"id","0","Camera id."},
+            {"name", "FileCam", "Camera name"},
             {"startframe", "0", "First frame to capture."},
             {"loop", "false", "Play beginning once finished."},
             {"grey", "false", "Convert internally to greyscale."},
@@ -21,6 +23,8 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
+        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
+        std::string sName       = uri.properties.Get<std::string>("name", "FileCam");
         size_t StartFrame  = uri.properties.Get("startframe", 0);
         bool Loop          = uri.properties.Get("loop", false);
         size_t BufferSize  = uri.properties.Get("buffer", 10);

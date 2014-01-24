@@ -11,6 +11,8 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
+            {"id","0","Camera id."},
+            {"name", "OpenNICam", "Camera name."},
             {"size", "640x480", "Capture resolution."},
             {"fps", "30", "Capture framerate."},
             {"rgb", "true", "Capture RGB image."},
@@ -22,6 +24,8 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
+        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
+        std::string sName       = uri.properties.Get<std::string>("name", "OpenNICam");
         ImageDim Dims       = uri.properties.Get("size", ImageDim(640,480));
         unsigned int nFPS   = uri.properties.Get("fps", 30);
         bool bRGB           = uri.properties.Get("rgb", true);
