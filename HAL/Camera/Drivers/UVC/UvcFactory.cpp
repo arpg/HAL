@@ -11,16 +11,11 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"id","0","Camera id."},
-            {"name", "ProtoCam", "Camera name."},
         };
     }
         
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& /*uri*/)
     {
-        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
-        std::string sName       = uri.properties.Get<std::string>("name", "UVCCam");
-
         UvcDriver* Uvc = new UvcDriver();
         return std::shared_ptr<CameraDriverInterface>( Uvc );
     }

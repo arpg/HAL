@@ -11,17 +11,12 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"id","0","Camera id."},
-            {"name", "ProtoCam", "Camera name."},
             {"startframe", "0", "First frame to capture."}
         };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
-        std::string sName       = uri.properties.Get<std::string>("name", "ProtoCam");
-
         const std::string file = ExpandTildePath(uri.url);
         size_t startframe  = uri.properties.Get("startframe", 0);
 

@@ -11,18 +11,13 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"id","0","Camera id."},
-            {"name", "Node2Cam", "Camera name."},
             {"device", "", "DeviceName."},
             {"host", "", "name of host that Node2Cam connect."},
-
         };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
-        std::string sName       = uri.properties.Get<std::string>("name", "Node2Cam");
         std::string  Device = uri.properties.Get<std::string>("device","NodeCam");
         std::string  Host = uri.properties.Get<std::string>("host","StateKeeper");
 

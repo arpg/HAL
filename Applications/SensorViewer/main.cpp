@@ -12,10 +12,9 @@
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Matrix.h>
 
-#include <SceneGraph/SceneGraph.h>
-
-bool        g_bLog      = false;
-pb::Logger& g_Logger    = pb::Logger::GetInstance();
+pangolin::DataLog g_PlotLogAccel;
+pangolin::DataLog g_PlotLogGryo;
+pangolin::DataLog g_PlotLogMag;
 
 using std::placeholders::_1;
 
@@ -73,50 +72,22 @@ class SensorViewer {
         cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
         imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
       }
-    }    
-}
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void IMU_Handler(pb::ImuMsg& IMUdata)
-{
-  if( g_bLog ) {
-    pb::Msg pbMsg;
-    pbMsg.set_timestamp( hal::Tic() );
-    pbMsg.mutable_imu()->Swap(&IMUdata);
-    g_Logger.LogMessage(pbMsg);
-  }
-  //    const pb::VectorMsg& pbVec = IMUdata.accel();
-  //    printf("X: %5f    Y: %5f     Z: %5f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2));
-  if( IMUdata.has_accel() ) {
-    g_PlotLogAccel.Log( IMUdata.accel().data(0), IMUdata.accel().data(1), IMUdata.accel().data(2) );
-  }
-  if( IMUdata.has_gyro() ) {
-    g_PlotLogGryo.Log( IMUdata.gyro().data(0), IMUdata.gyro().data(1), IMUdata.gyro().data(2) );
-  }
-  if( IMUdata.has_mag() ) {
-    g_PlotLogMag.Log( IMUdata.mag().data(0), IMUdata.mag().data(1), IMUdata.mag().data(2) );
-  }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Posys_Handler(pb::PoseMsg& PoseData)
-{
-
-    pb::VectorMsg pbVec = PoseData.pose();
-    if( PoseData.id() == 0 ) {
-//        printf("%4f   %4f   %4f -- %4f   %4f   %4f   %4f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2),
-//           pbVec.data(3),pbVec.data(4),pbVec.data(5),pbVec.data(6));
-//        fflush(stdout);
-//        glAxis.SetPose( pbVec.data(0),pbVec.data(1),pbVec.data(2), pbVec.data(3),pbVec.data(4),pbVec.data(5),pbVec.data(6) );
-        g_Pose(0) = pbVec.data(0);
-        g_Pose(1) = pbVec.data(1);
-        g_Pose(2) = pbVec.data(2);
-        g_Pose(3) = pbVec.data(3);
-        g_Pose(4) = pbVec.data(4);
-        g_Pose(5) = pbVec.data(5);
-        g_Pose(6) = pbVec.data(6);
     }
 
+    pangolin::RegisterKeyPressCallback(
+        pangolin::PANGO_SPECIAL + pangolin::PANGO_KEY_RIGHT,
+        [this]() {
+          is_stepping_ = true;
+        });
+
+    pangolin::RegisterKeyPressCallback(' ', [&]() {
+        is_running_ = !is_running_;
+      });
+    pangolin::RegisterKeyPressCallback(
+        'l', [this]() {
+          *logging_enabled_ = !*logging_enabled_;
+          frame_number_ = 0;
+        });
   }
 
   void Run() {
@@ -225,13 +196,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
                                                  this, _1));
       std::cout << "- Registering Posys device." << std::endl;
     }
-  pangolin::View& imuView = pangolin::CreateDisplay().SetLayout(pangolin::LayoutEqualVertical);
-
-  if( bHaveIMU ) {
-    imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel) );
-    imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo) );
-    imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag) );
->>>>>>> Stashed changes
 
     if (has_imu_) {
       imu_.RegisterIMUDataCallback(
@@ -240,7 +204,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
     }
   }
 
-<<<<<<< Updated upstream
   /// Draw red circle on bottom left corner for visual cue
   void DrawLoggingIndicator() {
     if (frame_number_ % 60 < 20) {
@@ -253,56 +216,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
       pangolin::glDrawCircle(panel_width_ + 20, 20, 7);
     }
   }
-=======
-  SceneGraph::GLSceneGraph glGraph;
-  SceneGraph::GLAxis glAxis;
-  glGraph.AddChild( &glAxis );
-
-  if (bHavePosys) {
-
-      pangolin::View& posysView = pangolin::CreateDisplay();
-      const double far = 10*1000;
-      const double near = 1E-3;
-
-      pangolin::OpenGlRenderState stacks3d(
-          pangolin::ProjectionMatrix(1280,480,420,420,320,240,near,far),
-                  pangolin::ModelViewLookAt(0, 0, -2, 0, 0, 1, pangolin::AxisNegY)
-      );
-
-      if (bHaveCam && bHaveIMU) {
-          cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 0.5);
-          imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
-          posysView.SetBounds(0, 1.0/3.0, 0.5, 1.0);
-      }
-      else if (bHaveCam) {
-          cameraView.SetBounds(0, 1.0, 0.0, 0.5);
-          posysView.SetBounds(0, 1.0, 0.5, 1.0);
-      }
-      else if (bHaveIMU) {
-          posysView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
-          imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
-      }
-
-      posysView.SetHandler(new SceneGraph::HandlerSceneGraph(glGraph,stacks3d))
-            .SetDrawFunction(SceneGraph::ActivateDrawFunctor(glGraph, stacks3d));
-
-//      posysView.AddDisplay( pangolin::CreateDisplay() );
-  }
-
-  bool bRun = true;
-  bool bStep = false;
-  unsigned long nFrame=0;
-
-  pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + pangolin::PANGO_KEY_RIGHT, [&bStep](){bStep=true;} );
-  pangolin::RegisterKeyPressCallback(' ', [&](){bRun = !bRun;} );
-  pangolin::RegisterKeyPressCallback('l', [&](){ g_bLog = !g_bLog; nFrame = 0; } );
-
-  pangolin::Timer theTimer;
-
-  for(; !pangolin::ShouldQuit(); nFrame++)
-  {
-    const bool bGo = bRun || pangolin::Pushed(bStep);
->>>>>>> Stashed changes
 
   void LogCamera(pb::ImageArray* images) {
     if (!has_camera_) return;
@@ -313,31 +226,12 @@ void Posys_Handler(pb::PoseMsg& PoseData)
     logger_.LogMessage(pbMsg);
   }
 
-<<<<<<< Updated upstream
   void IMU_Handler(pb::ImuMsg& IMUdata) {
     if (logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_imu()->Swap(&IMUdata);
       logger_.LogMessage(pbMsg);
-=======
-//      glAxis.SetPose( g_Pose );
-
-#ifdef HAVE_GLUT
-      if(nFrame%30 == 0) {
-        char buffer[1024];
-        sprintf(buffer,"SensorViewer (FPS: %f)", 30.0 / theTimer.Elapsed_s() );
-        glutSetWindowTitle(buffer);
-        theTimer.Reset();
-      }
-#endif
-#if ANDROID
-      if(nFrame%30 == 0) {
-        LOGI("SensorViewer (FPS: %f)", 30.0 / theTimer.Elapsed_s());
-        theTimer.Reset();
-      }
-#endif
->>>>>>> Stashed changes
     }
 
     if (IMUdata.has_accel()) {

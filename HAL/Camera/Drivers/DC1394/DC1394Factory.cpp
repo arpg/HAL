@@ -13,7 +13,6 @@ public:
     {
         Params() = {
             {"id","0","Camera id."},
-            {"name", "DC1394Cam", "Camera name"},
             {"mode","MONO8","Video mode: RGB8, MONO8, MONO16, FORMAT7_X"},
             {"size", "640x480", "Capture resolution."},
             {"roi", "0+0+640x480", "ROI resolution for Format7."},
@@ -26,7 +25,6 @@ public:
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
         unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
-        std::string sName       = uri.properties.Get<std::string>("name", "DC1394Cam");
         std::string sMode       = uri.properties.Get<std::string>("mode", "MONO8");
         ImageDim Dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
         ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));

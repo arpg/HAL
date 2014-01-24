@@ -15,7 +15,6 @@ const int MAX_RETRIES = 10;
 const int MAX_CAMERA_LIST_SIZE = 20;
 const int RETRY_WAIT_MS = 200;
 const std::string PROPERTY_CAM_UUID  = "CamUUID";
-const std::string PROPERTY_CAM_NAME  = "AlliedCamera";
 const std::string PROPERTY_NUM_CAMS  = "NumChannels";
 const std::string PROPERTY_WIDTH     = "ImageWidth";
 const std::string PROPERTY_HEIGHT    = "ImageHeight";

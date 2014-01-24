@@ -9,7 +9,6 @@ endif()
 
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
-find_package(SceneGraph 0.1 QUIET)
 
 find_package( OpenCV2 QUIET )
 
@@ -28,18 +27,9 @@ if(Pangolin_FOUND AND HAL_FOUND)
   target_link_libraries(SensorViewer
     ${Pangolin_LIBRARIES}
 
-<<<<<<< Updated upstream
     ${LINK_WHOLE_ARCHIVE_FLAG}
     hal
     ${NO_LINK_WHOLE_ARCHIVE_FLAG}
-=======
-    include_directories( ${HAL_INCLUDE_DIRS} )
-    include_directories( ${Pangolin_INCLUDE_DIRS} )
-    include_directories( ${SceneGraph_INCLUDE_DIRS} )
-    target_link_libraries(SensorViewer ${HAL_LIBRARIES} )
-    target_link_libraries(SensorViewer ${Pangolin_LIBRARIES} )
-    target_link_libraries(SensorViewer ${SceneGraph_LIBRARIES} )
->>>>>>> Stashed changes
 
     pbmsgs)
 endif()
