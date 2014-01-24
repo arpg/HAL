@@ -22,7 +22,7 @@ class IMU : public IMUDriverInterface
         IMU(const std::string& uri)
             : m_URI(uri)
         {
-            m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI);
+            m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI, "Imu");
         }
 
         ///////////////////////////////////////////////////////////////

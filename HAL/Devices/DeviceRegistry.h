@@ -38,7 +38,8 @@ public:
             const std::string& alias
             );
 
-    std::shared_ptr<BaseDevice> Create(const Uri& uri);
+    //std::shared_ptr<BaseDevice> Create(const Uri& uri);
+    std::shared_ptr<BaseDevice> Create(const Uri& uri, const char* sDeviceType=NULL);
 
     void Destroy(BaseDevice* dev);
 

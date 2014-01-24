@@ -22,7 +22,7 @@ class Encoder : public EncoderDriverInterface
         Encoder(const std::string& uri)
             : m_URI(uri)
         {
-            m_Encoder = DeviceRegistry<EncoderDriverInterface>::I().Create(m_URI);
+          m_Encoder = DeviceRegistry<EncoderDriverInterface>::I().Create(m_URI, "Encoder");
         }
 
         ///////////////////////////////////////////////////////////////
