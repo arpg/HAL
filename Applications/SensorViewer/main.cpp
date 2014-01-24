@@ -302,26 +302,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
   for(; !pangolin::ShouldQuit(); nFrame++)
   {
     const bool bGo = bRun || pangolin::Pushed(bStep);
->>>>>>> Stashed changes
-
-  void LogCamera(pb::ImageArray* images) {
-    if (!has_camera_) return;
-
-    pb::Msg pbMsg;
-    pbMsg.set_timestamp(hal::Tic());
-    pbMsg.mutable_camera()->Swap(&images->Ref());
-    logger_.LogMessage(pbMsg);
-  }
-
-<<<<<<< Updated upstream
-  void IMU_Handler(pb::ImuMsg& IMUdata) {
-    if (logging_enabled_) {
-      pb::Msg pbMsg;
-      pbMsg.set_timestamp(hal::Tic());
-      pbMsg.mutable_imu()->Swap(&IMUdata);
-      logger_.LogMessage(pbMsg);
-=======
-//      glAxis.SetPose( g_Pose );
 
 #ifdef HAVE_GLUT
       if(nFrame%30 == 0) {
@@ -337,8 +317,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
         theTimer.Reset();
       }
 #endif
->>>>>>> Stashed changes
-    }
 
     if (IMUdata.has_accel()) {
       g_PlotLogAccel.Log(IMUdata.accel().data(0),
