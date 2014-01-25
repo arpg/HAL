@@ -284,6 +284,9 @@ int main(int argc, char* argv[]) {
   if (cam_uri.empty()) {
     cam_uri = "kitkat://";
   }
+  if (imu_uri.empty()) {
+    imu_uri = "android://";
+  }
 #endif
 
   SensorViewer viewer;
