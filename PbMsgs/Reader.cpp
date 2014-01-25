@@ -62,7 +62,8 @@ void Reader::_ThreadFunc() {
   int fd = open(m_sFilename.c_str(), O_RDONLY);
 
   if(fd == -1) {
-    std::cerr << "HAL: File '"<< m_sFilename << "' could not be opened. Does it exist?" << std::endl;
+    std::cerr << "HAL: File '"<< m_sFilename
+              << "' could not be opened. Does it exist?" << std::endl;
     return;
   }
 
@@ -77,8 +78,10 @@ void Reader::_ThreadFunc() {
     coded_input.ReadRaw(magic_number, 4);
   }
 
-  if( magic_number[0] != '%' || magic_number[1] != 'H' || magic_number[2] != 'A' || magic_number[3] != 'L' ) {
-    std::cerr << "HAL: File '"<< m_sFilename << "' not in expected format (wrong magic number)." << std::endl;
+  if( magic_number[0] != '%' || magic_number[1] != 'H' ||
+      magic_number[2] != 'A' || magic_number[3] != 'L' ) {
+    std::cerr << "HAL: File '"<< m_sFilename
+              << "' not in expected format (wrong magic number)." << std::endl;
     return;
   }
 
@@ -92,9 +95,12 @@ void Reader::_ThreadFunc() {
       return;
     }
 
-    google::protobuf::io::CodedInputStream::Limit lim = coded_input.PushLimit(hdr_size_bytes);
+    google::protobuf::io::CodedInputStream::Limit lim =
+        coded_input.PushLimit(hdr_size_bytes);
     if( !m_Header.ParseFromCodedStream(&coded_input) ) {
-      std::cerr << "HAL: Error while parsing from coded stream. Has the HEADER Proto file definitions changed?" << std::endl;
+      std::cerr << "HAL: Error while parsing from coded stream. "
+                << "Has the HEADER Proto file definitions changed?"
+                << std::endl;
       return;
     }
     coded_input.PopLimit(lim);
@@ -102,7 +108,8 @@ void Reader::_ThreadFunc() {
 
   // check if version numbers match
   if( m_Header.version() != PBMSGS_VERSION ) {
-    std::cerr << "HAL: Log was recorded using a different version and it is unreadable!" << std::endl;
+    std::cerr << "HAL: Log was recorded using a different "
+              << "version and it is unreadable!" << std::endl;
     return;
   }
 
@@ -125,7 +132,8 @@ void Reader::_ThreadFunc() {
         coded_input.PushLimit(msg_size_bytes);
     std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
     if( !pMsg->ParseFromCodedStream(&coded_input) ) {
-      std::cerr << "HAL: Error while parsing from coded stream. Has the Proto file definitions changed?" << std::endl;
+      std::cerr << "HAL: Error while parsing from coded stream. "
+                << "Has the Proto file definitions changed?" << std::endl;
       break;
     }
     coded_input.PopLimit(lim);
@@ -150,23 +158,18 @@ void Reader::_ThreadFunc() {
 
       if( pMsg->has_camera() ) {
         m_qMessageTypes.push_back( Msg_Type_Camera );
-        //                std::cout << "Pushing CAM: " << pMsg->camera().image(0).timestamp() << std::endl;
       }
       if( pMsg->has_encoder() ) {
         m_qMessageTypes.push_back( Msg_Type_Encoder );
-        //                std::cout << "Pushing Encoder: " << pMsg->encoder().device_time() << std::endl;
       }
       if( pMsg->has_imu() ) {
         m_qMessageTypes.push_back( Msg_Type_IMU );
-        //                std::cout << "Pushing IMU: " << pMsg->imu().device_time() << std::endl;
       }
       if( pMsg->has_lidar() ) {
         m_qMessageTypes.push_back( Msg_Type_LIDAR );
-        //                std::cout << "Pushing LIDAR: " << pMsg->lidar().device_time() << std::endl;
       }
       if( pMsg->has_pose() ) {
         m_qMessageTypes.push_back( Msg_Type_Posys );
-        //                std::cout << "Pushing Pose: " << pMsg->pose().device_time() << std::endl;
       }
 
       m_qMessages.push_back(std::move(pMsg));
@@ -209,7 +212,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(!m_bRunning) {
+  if(!m_bRunning || m_qMessages.empty()) {
     return nullptr;
   }
 
@@ -236,7 +239,7 @@ std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(!m_bRunning) {
+  if(!m_bRunning || m_qMessages.empty()) {
     return nullptr;
   }
 
@@ -262,7 +265,7 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(!m_bRunning) {
+  if(!m_bRunning || m_qMessages.empty()) {
     return nullptr;
   }
 
@@ -288,7 +291,7 @@ std::unique_ptr<pb::LidarMsg> Reader::ReadLidarMsg() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(!m_bRunning) {
+  if(!m_bRunning || m_qMessages.empty()) {
     return nullptr;
   }
 
@@ -314,7 +317,7 @@ std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg() {
     m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
   }
 
-  if(!m_bRunning) {
+  if(!m_bRunning || m_qMessages.empty()) {
     return nullptr;
   }
 
