@@ -29,6 +29,10 @@ if( OpenCV2_FOUND )
 else()
     message(STATUS "OpenCV2 not found")
 endif()
+if( BUILD_Velodyne ) #This comes from HAL/LIDAR/DRIVERS/Velodyne/CMakeLists.txt
+    find_package( TinyXML2  REQUIRED )
+    find_package( MVL REQUIRED )
+endif()
 
 list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_DIR}/.." )
 list( APPEND USER_INC   ${CMAKE_CURRENT_BINARY_DIR} )
@@ -37,6 +41,9 @@ list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIR} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
 list( APPEND LINK_LIBS  ${PROTOBUF_LIBRARIES} )
+list( APPEND LINK_LIBS  ${TinyXML2_LIBRARIES} )
+list( APPEND LINK_LIBS  ${MVL_LIBRARIES} )
+message("MVL: ${MVL_LIBRARIES}")
 
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${USER_INC} )
@@ -75,18 +82,21 @@ set( SRCS
     ${PROTO_SRCS}
     Logger.cpp
     Reader.cpp
-    #Lidar.cpp
    )
 
 set( HDRS
     ${PROTO_HDRS}
     Logger.h
     Reader.h
-    #Lidar.h
     Image.h
     Matrix.h
     Pose.h
    )
+
+if( BUILD_Velodyne )
+    set( SRCS ${SRCS} Velodyne.cpp )
+    set( HDRS ${HDRS} Velodyne.h )
+endif()
 
 add_library( ${LIBRARY_NAME} ${SRCS} ${HDRS} )
 target_link_libraries(${LIBRARY_NAME} ${LINK_LIBS})
