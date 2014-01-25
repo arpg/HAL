@@ -5,7 +5,10 @@
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
 #include <HAL/Posys/PosysDevice.h>
+
+#ifdef HAVE_TINYXML2
 #include <HAL/Utils/SimLauncher.h>
+#endif
 
 namespace hal
 {
@@ -52,6 +55,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     const Uri& uri,
     const char *sDeviceType)
 {
+#ifdef HAVE_TINYXML2
   char *sEnv = getenv("SIM");
   if(sEnv!= NULL)
   {
@@ -73,6 +77,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(uri);
     return dev;
   }
+#endif  // HAVE_TINYXML2
 
   // Check for aliases
   std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
