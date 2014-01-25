@@ -227,13 +227,6 @@ class SensorViewer {
   }
 
   void IMU_Handler(pb::ImuMsg& IMUdata) {
-    if (logging_enabled_) {
-      pb::Msg pbMsg;
-      pbMsg.set_timestamp(hal::Tic());
-      pbMsg.mutable_imu()->Swap(&IMUdata);
-      logger_.LogMessage(pbMsg);
-    }
-
     if (IMUdata.has_accel()) {
       g_PlotLogAccel.Log(IMUdata.accel().data(0),
                          IMUdata.accel().data(1),
@@ -248,6 +241,13 @@ class SensorViewer {
       g_PlotLogMag.Log(IMUdata.mag().data(0),
                        IMUdata.mag().data(1),
                        IMUdata.mag().data(2));
+    }
+
+    if (logging_enabled_) {
+      pb::Msg pbMsg;
+      pbMsg.set_timestamp(hal::Tic());
+      pbMsg.mutable_imu()->Swap(&IMUdata);
+      logger_.LogMessage(pbMsg);
     }
   }
 
