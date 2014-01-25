@@ -22,5 +22,6 @@ find_library(CLAPACK_LIBRARY
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
 set(CLAPACK_PROCESS_INCLUDES CLAPACK_INCLUDE_DIR CLAPACK_INCLUDE_DIRS)
 set(CLAPACK_PROCESS_LIBS CLAPACK_LIBRARY CLAPACK_LIBRARIES)
+set(CLAPACK_FIND_REQUIRED OFF)
 libfind_process(CLAPACK)
 

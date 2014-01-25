@@ -1,4 +1,15 @@
-set( BUILD_Velodyne true CACHE BOOL force )
-if( BUILD_Velodyne )
-    add_to_hal_sources( VelodyneDriver.h VelodyneDriver.cpp VelodyneFactory.cpp )
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+find_package(TinyXML2)
+find_package(MVL)
+
+if(TinyXML2_FOUND AND MVL_FOUND)
+  set(should_build ON)
+else()
+  set(should_build OFF)
+endif()
+
+set(BUILD_Velodyne ${should_build} CACHE BOOL "Build the Velodyne LIDAR driver")
+if(BUILD_Velodyne)
+  add_to_hal_sources(VelodyneDriver.h VelodyneDriver.cpp VelodyneFactory.cpp)
+  add_to_hal_include_dirs(${MVL_INCLUDE_DIRS} ${TinyXML2_INCLUDE_DIRS})
 endif()
