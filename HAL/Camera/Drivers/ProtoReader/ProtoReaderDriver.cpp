@@ -42,13 +42,14 @@ bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg) {
 }
 
 bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages ) {
-  if( m_first ) {
+  bool success = true;
+  if (m_first) {
     m_nextMsg.Swap(&vImages);
     m_first = false;
   } else {
-    ReadNextCameraMessage(vImages);
+    success = ReadNextCameraMessage(vImages);
   }
-  return vImages.image_size() > 0;
+  return success && vImages.image_size() > 0;
 }
 
 std::string ProtoReaderDriver::GetDeviceProperty(const std::string& sProperty) {
