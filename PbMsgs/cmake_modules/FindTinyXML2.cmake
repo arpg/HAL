@@ -26,6 +26,7 @@ find_library(TinyXML2_LIBRARIES NAMES "tinyxml2")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args("TinyXML2" DEFAULT_MSG TinyXML2_INCLUDE_DIR TinyXML2_LIBRARIES)
+set(TinyXML2_FOUND ${TINYXML2_FOUND} CACHE BOOL "TinyXML2 was found or not" FORCE)
 
 mark_as_advanced(TinyXML2_INCLUDE_DIR TinyXML2_LIBRARIES)
 

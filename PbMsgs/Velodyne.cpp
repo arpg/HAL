@@ -3,7 +3,7 @@
 /* Headers related to ReadCalibData */
 #include <math.h>
 #include <tinyxml2.h>
-#include <mvl/image/colormap.h>
+//#include <mvl/image/colormap.h>
 
 using namespace tinyxml2;
 
@@ -76,6 +76,61 @@ void Velodyne::setColMethod(const ColoringMethod &value)
 {
   me_ColMethod = value;
   SetupColorMethod();
+}
+
+void build_jet_map(
+        int length,
+        unsigned char *table )
+{
+    int ii;
+    int sectlength = length / 5;
+    int sect1 = (1 * length) / 5;
+    int sect2 = (2 * length) / 5;
+    int sect3 = (3 * length) / 5;
+    int sect4 = (4 * length) / 5;
+
+    for(ii = 0; ii < length; ii++) {
+        if( ii < sect1 ) {
+            /* red is zero */
+            table[ii*3 + 0] = 0;
+            /* green is zero */
+            table[ii*3 + 1] = 0;
+            /* blue is rising */
+            table[ii*3 + 2] = (128* ii) / sectlength + 127;
+        }
+        else if( ii < sect2 ) {
+            /* red is zero */
+            table[ii*3 + 0] = 0;
+            /* green is rising */
+            table[ii*3 + 1] = (255 * (ii - sect1)) / sectlength;
+            /* blue is flat */
+            table[ii*3 + 2] = 255;
+        }
+        else if( ii < sect3 ) {
+            /* red is rising */
+            table[ii*3 + 0] = (255 * (ii - sect2)) / sectlength;
+            /* green is flat */
+            table[ii*3 + 1] = 255;
+            /* blue is falling */
+            table[ii*3 + 2] = 255 - (255 * (ii - sect2)) / sectlength;
+        }
+        else if( ii < sect4 ) {
+            /* red is flat */
+            table[ii*3 + 0] = 255;
+            /* green is falling */
+            table[ii*3 + 1] = 255 - (255 * (ii - sect3)) / sectlength;
+            /* blue is zero */
+            table[ii*3 + 2] = 0;
+        }
+        else {
+            /* red is falling */
+            table[ii*3 + 0] = 255 - (128 * (ii - sect4)) / sectlength;
+            /* green is zero */
+            table[ii*3 + 1] = 0;
+            /* blue is zero */
+            table[ii*3 + 2] = 0;
+        }
+    }
 }
 
 void Velodyne::SetupColorMethod()
