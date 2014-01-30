@@ -77,7 +77,7 @@ void AndroidIMUDriver::SensorLoop() {
           mag->add_data(event.magnetic.z);
         }
 
-        imu_msg.set_device_time(event.timestamp);
+        imu_msg.set_device_time(event.timestamp * 1e-9);
         if (imu_callback_) {
           imu_callback_(imu_msg);
         }
