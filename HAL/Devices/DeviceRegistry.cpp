@@ -76,8 +76,9 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     //If we are here that means Simulator is launched and we have a device
     //type passed to us, but then you knew that, didn't you.
     std::string sDriverName = "Node"; sDriverName.append( sDeviceType);
-    uri.SetProperties("host=" + sSimName);
-    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(uri);
+    hal::Uri simUri = uri;
+    simUri.SetProperties("host=" + sSimName);
+    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(simUri);
     return dev;
   }
 #endif  // HAVE_TINYXML2
