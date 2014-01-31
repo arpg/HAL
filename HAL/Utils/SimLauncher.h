@@ -76,12 +76,12 @@ bool ReadSimXml( string &sSimName, string &sSimPath, string &sStateKeeperName, s
 }
 
 // check if we need to launch Simulation
-bool LaunchSimulationIfNeeded()
+bool LaunchSimulationIfNeeded(string &sSimName)
 {
     if (bSimWorldRunningFlag == false)
     {
 
-        string sSimName, sSimPath, sStateKeeperName, sWorldPath, sRobotPath;
+        string sSimPath, sStateKeeperName, sWorldPath, sRobotPath;
         if(!ReadSimXml(sSimName,sSimPath, sStateKeeperName, sWorldPath, sRobotPath))
         {
             std::cout<<"As you know there was problem in parsing Sim.Xml, please Check"<<endl;
