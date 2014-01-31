@@ -33,7 +33,7 @@ zmq::context_t* _InitSingleton() {
   return pContext;
 }
 
-node::node(bool use_auto_discovery) : context_(nullptr), port_(0),
+node::node(bool use_auto_discovery) : context_(nullptr),
                                       use_auto_discovery_(use_auto_discovery) {
   heartbeat_wait_thresh_ = 10;
 
@@ -95,9 +95,20 @@ bool node::init(std::string node_name) {
 
   init_done_ = true;
   PrintMessage(1, "[Node] finished registering signals\n");
+
   // RPC server socket
-  socket_ = NodeSocket(new zmq::socket_t(*context_, ZMQ_REP));
-  port_ = _BindRandomPort(socket_);
+  socket_.reset(new zmq::socket_t(*context_, ZMQ_REP));
+
+  // If we're not using ZeroConf then we should bind a known port and
+  // fail if we can't bind that port.
+  if (use_fixed_port_ || !use_auto_discovery_) {
+    if (!_BindPort(port_, socket_)) {
+      PrintError("Failed to bind to port %d", port_);
+      return false;
+    }
+  } else {
+    port_ = _BindRandomPort(socket_);
+  }
 
   // register with zeroconf
   if (use_auto_discovery_ && zero_conf_.IsValid()) {
@@ -116,9 +127,9 @@ bool node::init(std::string node_name) {
   this->provide_rpc("DeleteFromResourceTable",
                     &_DeleteFromResourceTableFunc, this);
 
-  std::lock_guard<std::mutex> lock(mutex_); // careful
-  rpc_thread_ = std::thread(_RPCThreadFunc, this);// run RPC listener in his own thread.
-  heartbeat_thread_ = std::thread(_HeartbeatThreadFunc, this);// run RPC listener in his own thread.
+  std::lock_guard<std::mutex> lock(mutex_);
+  rpc_thread_ = std::thread(std::bind(&node::RPCThread, this));
+  heartbeat_thread_ = std::thread(std::bind(&node::HeartbeatThread, this));
 
   // ask avahi who's around, and get their resource tables, also build our table
   _UpdateNodeRegistery();
@@ -133,6 +144,7 @@ bool node::init(std::string node_name) {
 
   _PrintResourceLocatorTable();
 
+  initialized_ = true;
   return true;
 }
 
@@ -667,9 +679,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
   printf("set resource table complete..\n");
 }
 
-void node::_HeartbeatThreadFunc(node *pThis) { pThis->HeartbeatThreadFunc(); }
-
-void node::HeartbeatThreadFunc() {
+void node::HeartbeatThread() {
   std::string sAddr = _GetAddress(host_ip_, port_);
   PrintMessage(9, "[Node] Starting Heartbeat Thread at %s\n", sAddr.c_str());
   while(1) {
@@ -677,9 +687,12 @@ void node::HeartbeatThreadFunc() {
     std::unique_lock<std::mutex> lock(mutex_);
     for (auto it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
       double dElapsedTime = _Toc(it->second.last_heartbeat_time);
-      if (dElapsedTime > heartbeat_wait_thresh_) { // haven't heard from this guy in a while
-        PrintMessage(9, "[Node] sending heartbeat to '%s'\n", it->first.c_str());
+      // haven't heard from this guy in a while
+      if (dElapsedTime > heartbeat_wait_thresh_) {
+        PrintMessage(9, "[Node] sending heartbeat to '%s'\n",
+                     it->first.c_str());
         double timeout = get_resource_table_max_wait_ * 1e3;
+
         msg::HeartbeatRequest hbreq;
         msg::HeartbeatResponse hbrep;
         hbreq.set_checksum(_ResourceTableCRC());
@@ -702,6 +715,7 @@ void node::HeartbeatThreadFunc() {
           }
           resource_table_version_ = hbrep.version();
         }
+
         // if our resource table is more current, send it out:
         if (hbrep.version() < resource_table_version_) {
           msg::SetTableRequest streq;
@@ -723,14 +737,11 @@ void node::HeartbeatThreadFunc() {
       }
     }
     lock.unlock();
-    /// wait a bit
     usleep(10000);
   }
 }
 
-void node::_RPCThreadFunc(node *pThis) { pThis->RPCThreadFunc(); }
-
-void node::RPCThreadFunc() {
+void node::RPCThread() {
   std::string sAddr = _GetAddress(host_ip_, port_);
   PrintMessage(1, "[Node] Starting RPC server at %s\n", sAddr.c_str());
 
@@ -740,9 +751,7 @@ void node::RPCThreadFunc() {
 
     try {
       if (!socket_->recv(&ZmqReq)) {
-        // error receiving
-        PrintMessage(1, "[Node] WARNING! RPC listener was terminated.\n");
-        exit(1);
+        PrintMessage(1, "[Node] WARNING! RPC listener timed out.\n");
       }
     } catch(const zmq::error_t& error) {
       std::string sErr = error.what();
@@ -865,10 +874,9 @@ void node::_UpdateNodeRegistery() {
   }
 
   PrintMessage(1, "[Node] found %d URLs for nodes\n", (int)urls.size());
-
+  std::string sMyAddr = _GetAddress();
   for (ZeroConfURL& url : urls) {
     std::string sAddr = _GetAddress(url.host, url.port);
-    std::string sMyAddr = _GetAddress();
     if (sAddr == sMyAddr) { // don't send a message to ourselves...
       PrintMessage(1, "\tnode at %s:%d (my URL)\n", url.Host(), url.Port());
     } else{
@@ -898,11 +906,12 @@ void node::_UpdateNodeRegistery() {
   resource_table_version_ = uLatestResourceTableVersion + 1;
 }
 
-bool node::ConnectNode(const std::string& host, uint32_t port,
+bool node::ConnectNode(const std::string& host, uint16_t port,
                        msg::GetTableResponse* rep) {
   // Skip if we are already connected to this node
   if (resource_table_.count(_GetAddress(host, port))) return false;
-
+  PrintMessage(0, "Connecting to %s:%d\n",
+               host.c_str(), port);
   std::string zmq_addr = _ZmqAddress(host, port);
   NodeSocket socket(new zmq::socket_t(*context_, ZMQ_REQ));
   try {
@@ -981,22 +990,22 @@ void node::_PrintRpcSockets() {
   PrintMessage(1, "\n\n");
 }
 
-int node::_BindRandomPort(NodeSocket& socket) {
-  std::ostringstream address;
-  int port = 5555;
-  address << "tcp://*:" << port;
-  while(1) {
-    try {
-      // socket->setsockopt(ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
-      // socket->setsockopt(ZMQ_SNDTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
+bool node::_BindPort(uint16_t port, const NodeSocket& socket) {
 
-      socket->bind(address.str().c_str());
-      break;
-    } catch(const zmq::error_t& error) {
-      address.str("");
-      ++port;
-      address << "tcp://*:" << port;
-    }
+  try {
+    std::ostringstream address;
+    address << "tcp://*:" << port;
+    socket->bind(address.str().c_str());
+    return true;
+  } catch(const zmq::error_t& error) {
+    return false;
+  }
+}
+
+int node::_BindRandomPort(const NodeSocket& socket) {
+  uint16_t port = 5555;
+  while (!_BindPort(port, socket)) {
+    ++port;
   }
   return port;
 }

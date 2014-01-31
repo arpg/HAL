@@ -71,6 +71,9 @@ extern std::vector<hal::node*> g_vNodes;
 
 namespace hal {
 
+// The port to use by default if we can't autodiscover
+#define NODE_DEFAULT_PORT 1776U
+
 zmq::context_t* _InitSingleton();
 
 class node {
@@ -218,14 +221,8 @@ class node {
   void SetResourceTableFunc(msg::SetTableRequest& req,
                             msg::SetTableResponse& rep);
 
-  /// Send a heartbeat message to peers.
-  static void _HeartbeatThreadFunc(node *pThis);
-
-  void HeartbeatThreadFunc();
-
-  static void _RPCThreadFunc(node *pThis);
-
-  void RPCThreadFunc();
+  void HeartbeatThread();
+  void RPCThread();
 
   // this function return the name of all connect client
   std::vector<std::string> GetSubscribeClientName();
@@ -237,7 +234,7 @@ class node {
   /// RPC nodes.
   ///
   /// Returns whether the connection was successful.
-  bool ConnectNode(const std::string& host, uint32_t port,
+  bool ConnectNode(const std::string& host, uint16_t port,
                    msg::GetTableResponse* rep);
 
   /// Disconnect from the desired node
@@ -249,6 +246,21 @@ class node {
 
   void set_using_auto_discovery(bool use_auto) {
     use_auto_discovery_ = use_auto;
+  }
+
+  // Set the port for this Node to use. Can only be called BEFORE init().
+  void set_bind_port(uint16_t port) {
+    if (initialized_) {
+      std::cerr << "Only call set_bind_port before init()!" << std::endl;
+      abort();
+    }
+    port_ = port;
+    use_fixed_port_ = true;
+  }
+
+  // Get the port this node is listening on.
+  uint16_t bind_port() {
+    return port_;
   }
 
  private:
@@ -273,7 +285,11 @@ class node {
   /// print the rpc sockets
   void _PrintRpcSockets();
 
-  int _BindRandomPort(NodeSocket& socket);
+  // Bind the given socket on a certain port
+  bool _BindPort(uint16_t port, const NodeSocket& socket);
+
+  // Find an available port number and bind to it.
+  int _BindRandomPort(const NodeSocket& socket);
 
   std::string _GetAddress() const;
   std::string _GetAddress(const std::string& sHostIP, const int nPort) const;
@@ -356,7 +372,7 @@ class node {
   std::string host_ip_;
 
   // node's RPC port
-  uint32_t port_;
+  uint16_t port_ = NODE_DEFAULT_PORT;
 
   // node unique name
   std::string node_name_;
@@ -377,9 +393,16 @@ class node {
   mutable std::mutex mutex_;
 
   // send and receive message max wait
-  int send_recv_max_wait_;
+  int send_recv_max_wait_ = 3000;
 
-  bool use_auto_discovery_;
+  // Should we use autodiscovery to find other nodes
+  bool use_auto_discovery_ = true;
+
+  // Has a port number been set for this Node to use
+  bool use_fixed_port_ = false;
+
+  // Has this Node been initialized yet?
+  bool initialized_ = false;
 };
 
 }  // end namespace hal
