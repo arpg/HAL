@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(Node)
 
+string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-DOS_OBJECT_USE_OBJC=0")
 endif()
@@ -67,6 +69,8 @@ add_library(node ${NODE_HDRS} ${NODE_SRCS})
 target_link_libraries(node ${PROJ_LIBRARIES})
 target_link_libraries(node ${Boost_SYSTEM_LIBRARY})
 
+set( CMAKECONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}" )
+
 # Create the NODEConfig.cmake file for the build tree.
 set(EXPORT_NODE_INC
   ${CMAKE_CURRENT_SOURCE_DIR}/..
@@ -79,16 +83,39 @@ configure_file(${Node_SOURCE_DIR}/NODEConfig.cmake.in
   ${Node_BINARY_DIR}/NODEConfig.cmake @ONLY)
 
 # Add module to CMake package registery.
-export(TARGETS node
+export(TARGETS ${LIBRARY_NAME}
   FILE "${CMAKE_CURRENT_BINARY_DIR}/NODETargets.cmake")
 
 option(EXPORT_NODE
   "Should the NODE package be exported for use by other software" ON)
 
 if(EXPORT_NODE)
-  export(PACKAGE NODE)
+    export(PACKAGE ${PROJECT_NAME})
 else()
   set(NODE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
+
+#######################################################
+## Install headers / targets
+message("cmip: ${CMAKE_INSTALL_PREFIX}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
+)
+install(TARGETS ${LIBRARY_NAME}
+  EXPORT "${PROJECT_NAME}Targets"
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+#######################################################
+## Install CMake config
+
+INSTALL(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
+
+install( EXPORT "${PROJECT_NAME}Targets" DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
 
 add_subdirectory(Examples)

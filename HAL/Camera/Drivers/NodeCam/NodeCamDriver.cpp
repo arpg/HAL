@@ -1,13 +1,13 @@
 /*
    \file NodeCamDriver.cpp
  */
-#include "Node2CamDriver.h"
+#include "NodeCamDriver.h"
 #include "stdlib.h"
 
 namespace hal
 {
 
-Node2CamDriver::Node2CamDriver(
+NodeCamDriver::NodeCamDriver(
         std::string& sDeviceName,
         std::string& sHostName)
 {
@@ -15,17 +15,17 @@ Node2CamDriver::Node2CamDriver(
     m_sHostName = sHostName;
 
     InitNode();
-    std::cout<<"init Node2Cam success"<<std::endl;
+    std::cout<<"init NodeCam success"<<std::endl;
 }
 
 
-Node2CamDriver::~Node2CamDriver()
+NodeCamDriver::~NodeCamDriver()
 {
 
 }
 
 // capture images from host
-bool Node2CamDriver::Capture( pb::CameraMsg& vImages )
+bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 {
     // e.g. Proxy1/RCamera
     std::string sTopicName =m_sHostName+"/"+m_sDeviceName;
@@ -52,7 +52,7 @@ bool Node2CamDriver::Capture( pb::CameraMsg& vImages )
 
     if(bSuccessFlag==false)
     {
-        std::cout<<"[Node2CamDriver/Capture] Fail. Cannot receive images. form "<<sTopicName<<std::endl;
+        std::cout<<"[NodeCamDriver/Capture] Fail. Cannot receive images. form "<<sTopicName<<std::endl;
         return false;
     }
 
@@ -97,7 +97,7 @@ bool Node2CamDriver::Capture( pb::CameraMsg& vImages )
     return true;
 }
 
-std::string Node2CamDriver::GetDeviceProperty(const std::string& sProperty)
+std::string NodeCamDriver::GetDeviceProperty(const std::string& sProperty)
 {
     // TODO add property with suffix of camera (ie. DepthBaseline0, DepthBaseline1)
     // and return correct vector info
@@ -110,37 +110,37 @@ std::string Node2CamDriver::GetDeviceProperty(const std::string& sProperty)
     return std::string();
 }
 
-size_t Node2CamDriver::NumChannels() const
+size_t NodeCamDriver::NumChannels() const
 {
     return  m_nChannels;
 }
 
-size_t Node2CamDriver::Width( size_t /*idx*/ ) const
+size_t NodeCamDriver::Width( size_t /*idx*/ ) const
 {
     return m_nImgWidth;
 }
 
-size_t Node2CamDriver::Height( size_t /*idx*/ ) const
+size_t NodeCamDriver::Height( size_t /*idx*/ ) const
 {
     return m_nImgHeight;
 }
 
 
-bool Node2CamDriver::InitNode()
+bool NodeCamDriver::InitNode()
 {
     m_Node.set_verbocity(2); // make some noise on errors
     if(m_Node.init(m_sDeviceName)==false)
     {
-        std::cerr<<"[Node2CamDriver] Cannot init Node2Cam '"<<m_sDeviceName<<"'"<<std::endl;
+        std::cerr<<"[NodeCamDriver] Cannot init NodeCam '"<<m_sDeviceName<<"'"<<std::endl;
         return false;
     }
     else
     {
-        std::cout<<"[Node2CamDriver] init Node2Cam '"<<m_sDeviceName<<"' success"<<std::endl;
+        std::cout<<"[NodeCamDriver] init NodeCam '"<<m_sDeviceName<<"' success"<<std::endl;
     }
 
 
-    // register Node2Cam with Host
+    // register NodeCam with Host
     if(RegisterInHost()==false)
     {
         return false;
@@ -149,8 +149,8 @@ bool Node2CamDriver::InitNode()
     return true;
 }
 
-// register Node2Cam in Host
-bool Node2CamDriver::RegisterInHost()
+// register NodeCam in Host
+bool NodeCamDriver::RegisterInHost()
 {
     RegisterCamReqMsg mRequest;
     RegisterCamRepMsg mReply;
@@ -159,7 +159,7 @@ bool Node2CamDriver::RegisterInHost()
     mRequest.set_name(m_sDeviceName);
     while( m_Node.call_rpc(sServiceName, mRequest, mReply) ==false)
     {
-        std::cerr << "[Node2CamDriver] Error Call Rpc method of '" << sServiceName << "'. Cannot connect to host!! Please make sure the host is running!" << std::endl;
+        std::cerr << "[NodeCamDriver] Error Call Rpc method of '" << sServiceName << "'. Cannot connect to host!! Please make sure the host is running!" << std::endl;
         sleep(1);
     }
 
@@ -172,20 +172,20 @@ bool Node2CamDriver::RegisterInHost()
 
         std::string sTopicName =m_sHostName+"/"+m_sDeviceName;
 
-        std::cout<<"[Node2CamDriver] Try to subscrive to topic '"<<sTopicName<<"'"<<std::endl;
+        std::cout<<"[NodeCamDriver] Try to subscrive to topic '"<<sTopicName<<"'"<<std::endl;
         if( m_Node.subscribe(sTopicName) == false )
         {
-            std::cerr << "[Node2CamDriver] Error subscribing to '" << sTopicName << "'. Please make sure "<<sTopicName<<" is running !!" << std::endl;
+            std::cerr << "[NodeCamDriver] Error subscribing to '" << sTopicName << "'. Please make sure "<<sTopicName<<" is running !!" << std::endl;
             return false;
         }
         else
         {
-            std::cout<<"[Node2CamDriver] Subscrive to topic '"<<sTopicName<<"' success!"<<std::endl;
+            std::cout<<"[NodeCamDriver] Subscrive to topic '"<<sTopicName<<"' success!"<<std::endl;
         }
     }
     else
     {
-        std::cerr<<"[Node2CamDriver] Cannot register RPG to "<<sServiceName<<std::endl;
+        std::cerr<<"[NodeCamDriver] Cannot register RPG to "<<sServiceName<<std::endl;
         return false;
     }
 

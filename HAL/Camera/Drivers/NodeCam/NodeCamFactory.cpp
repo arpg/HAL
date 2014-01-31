@@ -1,18 +1,18 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include "Node2CamDriver.h"
+#include "NodeCamDriver.h"
 
 namespace hal
 {
 
-class Node2CamFactory : public DeviceFactory<CameraDriverInterface>
+class NodeCamFactory : public DeviceFactory<CameraDriverInterface>
 {
 public:
-    Node2CamFactory(const std::string& name)
+    NodeCamFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
             {"device", "", "DeviceName."},
-            {"host", "", "name of host that Node2Cam connect."},
+            {"host", "", "name of host that NodeCam connect."},
         };
     }
 
@@ -21,12 +21,12 @@ public:
         std::string  Device = uri.properties.Get<std::string>("device","NodeCam");
         std::string  Host = uri.properties.Get<std::string>("host","StateKeeper");
 
-        Node2CamDriver* pDriver = new Node2CamDriver(Device, Host);
+        NodeCamDriver* pDriver = new NodeCamDriver(Device, Host);
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static Node2CamFactory g_Node2CamFactory("node2cam");
+static NodeCamFactory g_NodeCamFactory("NodeCam");
 
 }

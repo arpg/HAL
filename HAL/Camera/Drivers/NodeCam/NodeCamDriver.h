@@ -9,14 +9,14 @@
 
 namespace hal {
 
-class Node2CamDriver : public CameraDriverInterface
+class NodeCamDriver : public CameraDriverInterface
 {
     public:
-        Node2CamDriver(std::string& sDeviceName,
+        NodeCamDriver(std::string& sDeviceName,
                        std::string& sHostName
                       );
 
-        virtual ~Node2CamDriver();
+        virtual ~NodeCamDriver();
 
         bool Capture( pb::CameraMsg& vImages );
         std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
