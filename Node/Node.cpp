@@ -1081,10 +1081,10 @@ void node::NodeSignalHandler(int nSig) {
     g_vNodes[ii]->_BroadcastExit();
   }
   switch(nSig) {
-    case SIGINT : PrintMessage(1, "[Node] caught SIGINT\n"); break;
-    case SIGTERM: PrintMessage(1, "[Node] caught SIGTERM\n"); break;
-    case SIGSTOP: PrintMessage(1, "[Node] caught SIGSTOP\n"); break;
-    case SIGSEGV: PrintMessage(1, "[Node] caught SIGSEGV\n"); break;
+    case SIGINT : PrintMessage(0, "[Node] caught SIGINT\n"); break;
+    case SIGTERM: PrintMessage(0, "[Node] caught SIGTERM\n"); break;
+    case SIGSTOP: PrintMessage(0, "[Node] caught SIGSTOP\n"); break;
+    case SIGSEGV: PrintMessage(0, "[Node] caught SIGSEGV\n"); break;
   }
   printf("exit success.");
   exit(-1);
