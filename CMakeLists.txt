@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.10)
+cmake_minimum_required(VERSION 2.8)
 project( HAL )
 
 # Add to module path, so we can find our cmake modules
