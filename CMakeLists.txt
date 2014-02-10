@@ -1,3 +1,4 @@
+# Version 2.8.10 onwards is required for dependency build to work correctly.
 cmake_minimum_required(VERSION 2.8.10)
 project( HAL )
 
