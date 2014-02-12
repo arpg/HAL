@@ -62,8 +62,10 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     if(sDeviceType==NULL)
       throw DeviceException("DeviceType was not set when create was not"
                             " called, so i don't know what driver to"
-                            " use for SimDevice");
-    if( !LaunchSimulationIfNeeded() )
+                            " use for Simulating the Device");
+
+    std::string sSimName;
+    if( !LaunchSimulationIfNeeded(sSimName) )
         throw DeviceException("You set SIM Environment variable, but"
                               " Sim was not succesfully launched."
                               " Please Read messages above this one for"
@@ -74,7 +76,9 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     //If we are here that means Simulator is launched and we have a device
     //type passed to us, but then you knew that, didn't you.
     std::string sDriverName = "Node"; sDriverName.append( sDeviceType);
-    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(uri);
+    hal::Uri simUri = uri;
+    simUri.SetProperties("sim=" + sSimName);
+    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(simUri);
     return dev;
   }
 #endif  // HAVE_TINYXML2

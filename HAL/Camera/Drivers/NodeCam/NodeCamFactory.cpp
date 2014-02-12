@@ -11,17 +11,15 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"device", "", "DeviceName."},
-            {"host", "", "name of host that NodeCam connect."},
+            {"id", "", "Device ID (Serve the purpose of UUID)."},
+            {"sim", "", "name of the simulator, which is also node name."},
+            {"name", "", "name of the camera. Id will be used if not set"},
         };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        std::string  Device = uri.properties.Get<std::string>("device","NodeCam");
-        std::string  Host = uri.properties.Get<std::string>("host","StateKeeper");
-
-        NodeCamDriver* pDriver = new NodeCamDriver(Device, Host);
+        NodeCamDriver* pDriver = new NodeCamDriver(uri);
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
