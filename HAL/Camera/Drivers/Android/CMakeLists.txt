@@ -4,12 +4,7 @@ if(ANDROID)
   find_package(AndroidKernel QUIET)
   find_package(GLUES QUIET)
 
-  if(AndroidKernel_FOUND AND GLUES_FOUND)
-    set(BUILD_Android ON CACHE BOOL "Build the generic Android camera driver")
-  elseif()
-    set(BUILD_Android OFF CACHE BOOL "Build the generic Android camera driver")
-  endif()
-
+  set(BUILD_Android OFF CACHE BOOL "Build the generic Android camera driver")
   if(BUILD_Android)
     add_to_hal_include_dirs( ${AndroidKernel_INCLUDE_DIRS} )
     add_to_hal_libraries( ${AndroidKernel_LIBRARIES} )
