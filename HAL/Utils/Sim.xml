@@ -1,5 +1,5 @@
 <SimInfo>
-    <sim name="Proxy1" path="/Users/jongnarr/Codes/simba/Applications/LocalSim/"/>
+    <sim name="Proxy1" path="/Users/jongnarr/Codes/simba/build/Applications/LocalSim/"/>
     <statekeeper name="NULL"/>
     <world path="/Users/jongnarr/Codes/simba/urdf/World.xml"/>
     <robot path="/Users/jongnarr/Codes/simba/urdf/Robot.xml"/>
