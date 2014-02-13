@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 set(BUILD_Node2Cam false CACHE BOOL force)
 
 if(BUILD_Node2Cam)
-  find_package( NODE REQUIRED )
+  find_package( Node REQUIRED )
 
   if(NODE_FOUND)
     message( "Building Node2Cam" )

@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 2.8 )
 
-find_package( NODE REQUIRED )
+find_package( Node REQUIRED )
 
 include_directories( ${NODE_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} )
 link_libraries( ${NODE_LIBRARIES} )
