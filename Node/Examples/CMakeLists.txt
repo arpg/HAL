@@ -1,9 +1,9 @@
 cmake_minimum_required( VERSION 2.8 )
 
-find_package( NODE REQUIRED )
+find_package( Node REQUIRED )
 
-include_directories( ${NODE_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} )
-link_libraries( ${NODE_LIBRARIES} )
+include_directories( ${Node_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} )
+link_libraries( ${Node_LIBRARIES} )
 
 include_directories( ${CMAKE_BINARY_DIR}/Examples )
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ExampleMessage.proto )

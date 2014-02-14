@@ -1,8 +1,7 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(TinyXML2)
-find_package(MVL)
 
-if(TinyXML2_FOUND AND MVL_FOUND)
+if(TinyXML2_FOUND)
   set(should_build ON)
 else()
   set(should_build OFF)

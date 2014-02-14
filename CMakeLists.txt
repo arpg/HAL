@@ -1,3 +1,4 @@
+# Version 2.8.10 onwards is required for dependency build to work correctly.
 cmake_minimum_required(VERSION 2.8.10)
 project( HAL )
 
@@ -18,11 +19,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory( PbMsgs )
 set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
 
-option(BUILD_NODE OFF "Build Node library")
-if (BUILD_NODE)
-  add_subdirectory(Node)
-  set(NODE_DIR ${NODE_BINARY_DIR})
-endif()
+add_subdirectory(Node)
+set(NODE_DIR ${NODE_BINARY_DIR})
 
 add_subdirectory( HAL )
 set(HAL_DIR ${HAL_BINARY_DIR})

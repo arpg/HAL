@@ -1,6 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 #include <flycapture/FlyCapture2.h>
 
@@ -10,7 +13,9 @@ namespace hal {
 class FlycapDriver : public CameraDriverInterface
 {
     public:
-        FlycapDriver();
+        FlycapDriver(std::vector<unsigned int>& vID,
+                     FlyCapture2::Mode Mode,
+                     ImageRoi ROI);
         ~FlycapDriver();
 
         bool Capture( pb::CameraMsg& vImages );
@@ -26,10 +31,9 @@ class FlycapDriver : public CameraDriverInterface
         void _CheckError( FlyCapture2::Error error );
 
 private:
-        FlyCapture2::Camera      m_Cam1;
-        FlyCapture2::Camera      m_Cam2;
-        unsigned int             m_nImgWidth;
-        unsigned int             m_nImgHeight;
+        std::vector<FlyCapture2::Camera*>   m_vCams;
+        unsigned int                        m_nImgWidth;
+        unsigned int                        m_nImgHeight;
 
 };
 
