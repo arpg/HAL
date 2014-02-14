@@ -17,7 +17,7 @@ find_package(ZeroMQ)
 find_package(Protobuf)
 find_package(Boost COMPONENTS system thread)
 
-if( ZeroMQ_FOUND AND ProtoBuf_FOUND AND Boost_FOUND )
+if( ZeroMQ_FOUND AND PROTOBUF_FOUND AND Boost_FOUND )
     set(should_build ON)
 else()
     set(should_build OFF)
