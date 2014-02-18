@@ -12,53 +12,55 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include <HAL/Utils/Uri.h>
 
+namespace hal {
 ///////////////////////////////////////////////////////////////////////////////
 // Generic car device
-class Car : public CarDriverInterface
-{
-    public:
-        ///////////////////////////////////////////////////////////////
-        Car()
-        {
-        }
+class Car : public CarDriverInterface {
+public:
+  ///////////////////////////////////////////////////////////////
+  Car()
+  {
+  }
 
-        ///////////////////////////////////////////////////////////////
-        Car(const std::string& uri)
-          :m_uri(uri)
-        {
-          m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
-        }
+  ///////////////////////////////////////////////////////////////
+  Car(const std::string& uri)
+    :m_uri(uri)
+  {
+    m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+  }
 
-        ///////////////////////////////////////////////////////////////
-        Car(const hal::Uri& uri)
-          :m_uri(uri)
-        {
-          m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
-        }
+  ///////////////////////////////////////////////////////////////
+  Car(const hal::Uri& uri)
+    :m_uri(uri)
+  {
+    m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+  }
 
-        ///////////////////////////////////////////////////////////////
-        ~Car()
-        {
-          Clear();
-        }
+  ///////////////////////////////////////////////////////////////
+  ~Car()
+  {
+    Clear();
+  }
 
-        inline void Clear() {
-          m_car = nullptr;
-        }
+  inline void Clear() {
+    m_car = nullptr;
+  }
 
-        inline void Reset() {
-          Clear();
-          m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri);
-        }
+  inline void Reset() {
+    Clear();
+    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri, "Car");
+  }
 
-        ///////////////////////////////////////////////////////////////
-        virtual bool ApplyCommand( float flTorque, float flSteering ) {
-          m_car->ApplyCommand(flTorque,flSteering);
-        }
+  ///////////////////////////////////////////////////////////////
+  virtual bool ApplyCommand( float flTorque, float flSteering ) {
+    m_car->ApplyCommand(flTorque,flSteering);
+  }
 
-    protected:
-        hal::Uri                            m_uri;
-        std::shared_ptr<CarDriverInterface> m_car;
+protected:
+  hal::Uri                            m_uri;
+  std::shared_ptr<CarDriverInterface> m_car;
 };
+
+}
 
 #endif
