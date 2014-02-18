@@ -98,7 +98,7 @@ if( BUILD_NODE )
     if(EXPORT_NODE)
 	export(PACKAGE ${PROJECT_NAME})
     else()
-      set(NODE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+      set(Node_DIR ${CMAKE_CURRENT_BINARY_DIR}) # For the examples
     endif()
 
     add_subdirectory(Examples)
