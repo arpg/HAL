@@ -8,54 +8,57 @@
 #ifndef _CAR_DEVICE_H_
 #define _CAR_DEVICE_H_
 
-#include <RPG/Utils/PropertyMap.h>		// so a CarDevice can have generic "properties"
-#include <RPG/Devices/Car/CarDriverInterface.h>
-#include <RPG/Devices/Car/Drivers/CarDriverRegistery.h>
-
-// Driver Creation Factory
-extern CarDriver* CreateCarDriver( const std::string& sDriverName );
+#include <HAL/Car/CarDriverInterface.h>
+#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Utils/Uri.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic car device
-class CarDevice : public PropertyMap
+class Car : public CarDriverInterface
 {
     public:
         ///////////////////////////////////////////////////////////////
-        CarDevice()
-            : m_pDriver(0)
+        Car()
         {
         }
 
         ///////////////////////////////////////////////////////////////
-        ~CarDevice()
+        Car(const std::string& uri)
+          :m_uri(uri)
         {
-            if(m_pDriver) {
-                delete m_pDriver;
-            }
+          m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
         }
 
         ///////////////////////////////////////////////////////////////
-        bool InitDriver( const std::string& sDriver )
+        Car(const hal::Uri& uri)
+          :m_uri(uri)
         {
-            if(m_pDriver) {
-                delete m_pDriver;
-                m_pDriver = 0;
-            }
-
-            m_pDriver = CreateCarDriver( sDriver );
-            if( m_pDriver ){
-                m_pDriver->SetPropertyMap( this );
-                return m_pDriver->Init();
-            }
-            return false;
+          m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
         }
 
         ///////////////////////////////////////////////////////////////
-        virtual bool ApplyCommand( float flVelocity, float flSteering ) = 0;
+        ~Car()
+        {
+          Clear();
+        }
 
-    private:
-        // A car device will create and initialize a particular driver:
-        CarDriver*          m_pDriver;
+        inline void Clear() {
+          m_car = nullptr;
+        }
+
+        inline void Reset() {
+          Clear();
+          m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri);
+        }
+
+        ///////////////////////////////////////////////////////////////
+        virtual bool ApplyCommand( float flTorque, float flSteering ) {
+          m_car->ApplyCommand(flTorque,flSteering);
+        }
+
+    protected:
+        hal::Uri                            m_uri;
+        std::shared_ptr<CarDriverInterface> m_car;
 };
 
 #endif

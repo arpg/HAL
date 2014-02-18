@@ -2,36 +2,23 @@
     \file Master interface for all car drivers
 */
 
-#ifndef CAR_DRIVER_INTERFACE_H
-#define CAR_DRIVER_INTERFACE_H
+#pragma once
 
 // each car driver can have a generic set of "properties"
-#include "RPG/Utils/PropertyMap.h"
+#include <HAL/Devices/DriverInterface.h>
+
+namespace hal {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic Car Driver Interface
 ///////////////////////////////////////////////////////////////////////////////
-class CarDriverInterface
+class CarDriverInterface : public DriverInterface
 {
-    public:
-	CarDriverInterface()
-        {
-            m_pPropertyMap = NULL;
-        }
-	virtual ~CarDriverInterface() {}
+public:
+  CarDriverInterface();
+  virtual ~CarDriverInterface() {}
 
-        // Pure virtual functions car drivers must implement
-	virtual bool Init( void ) = 0;
-
-    virtual bool ApplyCommand( float flVelocity, float flSteering ) = 0;
-
-	// Getters and setters
-        PropertyMap *GetPropertyMap( void ) { return m_pPropertyMap; }
-        void SetPropertyMap( PropertyMap *pPropertyMap ) { m_pPropertyMap = pPropertyMap; }
-
-    protected:
-        PropertyMap *m_pPropertyMap; // set by car drivers that implement this interface
+  virtual bool ApplyCommand( float flTorque, float flSteering ) = 0;
 };
 
-#endif	// CAR_DRIVER_INTERFACE_H
-
+}
