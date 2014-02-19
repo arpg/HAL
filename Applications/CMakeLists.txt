@@ -1,3 +1,5 @@
 add_subdirectory( SensorViewer )
-add_subdirectory( LexusLogger )
+if (TinyXML2_FOUND)
+	add_subdirectory( LexusLogger )
+endif()
 #add_subdirectory( LogViewer )
