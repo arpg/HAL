@@ -24,7 +24,7 @@ class SensorViewer {
   SensorViewer() : num_channels_(0), base_width_(0), base_height_(0),
                    has_camera_(false), has_imu_(false), has_posys_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
-                   panel_width_(0),
+                   panel_height_(0),
                    logger_(pb::Logger::GetInstance()) {
 #ifdef ANDROID
     logger_.LogToFile("/sdcard/", "sensors");
@@ -35,8 +35,8 @@ class SensorViewer {
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
-    panel_width_ = base_width_ / 6;
-    int window_width = num_channels_ * base_width_ + panel_width_;
+    panel_height_ = 30;
+    int window_width = num_channels_ * base_width_;
     pangolin::OpenGlRenderState render_state;
     pangolin::Handler3D handler(render_state);
     pangolin::CreateWindowAndBind("SensorViewer",
@@ -46,21 +46,23 @@ class SensorViewer {
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 
-    // Create Smart viewports for each camera image that preserve aspect
+    // Create panel.
+    pangolin::CreatePanel("ui").
+        SetBounds(0, pangolin::Attach::Pix(panel_height_), 0, 1.0);
+    logging_enabled_.reset(new pangolin::Var<bool>("ui.Enable Logging",
+                                                   false));
+
+    // Create Smart viewports for each camera image that preserve aspect.
     pangolin::View& cameraView = pangolin::Display("camera").
         SetLayout(pangolin::LayoutEqual);
     for (size_t ii = 0; ii < num_channels_; ++ii) {
-      float right = panel_width_ + (ii + 1) * base_width_;
+      float right = (ii + 1) * base_width_;
       cameraView.AddDisplay(pangolin::CreateDisplay().
                             SetAspect((double)base_width_ / base_height_).
-                            SetBounds(1.0, 0.0,
-                                      pangolin::Attach::Pix(panel_width_),
+                            SetBounds(pangolin::Attach::Pix(panel_height_), 1.0,
+                                      0,
                                       pangolin::Attach::Pix(right), true));
     }
-    pangolin::CreatePanel("ui").SetBounds(1.0, 0.0, 0,
-                                          pangolin::Attach::Pix(panel_width_));
-    logging_enabled_.reset(new pangolin::Var<bool>("ui.Enable logging",
-                                                   false));
 
     if (has_imu_) {
       pangolin::View& imuView = pangolin::CreateDisplay().
@@ -71,7 +73,7 @@ class SensorViewer {
 
       if (has_camera_) {
         cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
-        imuView.SetBounds(0, 1.0/3.0, 0.0, 1.0);
+        imuView.SetBounds(pangolin::Attach::Pix(panel_height_), 1.0/3.0, 0.0, 1.0);
       }
     }
 
@@ -214,7 +216,7 @@ class SensorViewer {
       state.glDisable(GL_DEPTH_TEST);
       state.glDisable(GL_LIGHTING);
       glColor3f(1.0, 0, 0);
-      pangolin::glDrawCircle(panel_width_ + 20, 20, 7);
+      pangolin::glDrawCircle(20, 20, 7);
     }
   }
 
@@ -266,7 +268,7 @@ class SensorViewer {
   bool has_camera_, has_imu_, has_posys_;
   bool is_running_, is_stepping_;
   int frame_number_;
-  int panel_width_;
+  int panel_height_;
   hal::Camera camera_;
   hal::IMU imu_;
   hal::Encoder encoder_;
