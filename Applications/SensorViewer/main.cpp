@@ -190,6 +190,12 @@ class SensorViewer {
     has_posys_ = true;
   }
 
+  // osme more change
+  void set_odometry(const std::string& odometry_uri){
+    osometry_ = hall::Posys(odometry_uri);
+    has_odometry_ = true;
+  }
+
  protected:
   void RegisterCallbacks() {
     if (has_posys_) {
