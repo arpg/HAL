@@ -4,6 +4,7 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/Posys/PosysDevice.h>
+#include <HAL/Encoder/EncoderDevice.h>
 
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
@@ -252,7 +253,6 @@ class SensorViewer {
   }
 
   void Posys_Handler(pb::PoseMsg& PoseData) {
-    std::cout << "blaha: " << std::endl;
     if (logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
@@ -269,6 +269,7 @@ class SensorViewer {
   int panel_width_;
   hal::Camera camera_;
   hal::IMU imu_;
+  hal::Encoder encoder_;
   hal::Posys posys_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   pb::Logger& logger_;
