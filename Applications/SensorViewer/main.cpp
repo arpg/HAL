@@ -252,6 +252,7 @@ class SensorViewer {
   }
 
   void Posys_Handler(pb::PoseMsg& PoseData) {
+    std::cout << "blaha: " << std::endl;
     if (logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
@@ -299,7 +300,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (!posys_uri.empty()) {
-    viewer.set_camera(posys_uri);
+    viewer.set_posys(posys_uri);
   }
 
   viewer.SetupGUI();
