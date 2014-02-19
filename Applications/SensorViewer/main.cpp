@@ -93,7 +93,7 @@ class SensorViewer {
   void Run() {
     RegisterCallbacks();
 
-    pangolin::GlTexture glTex[num_channels_];
+    std::vector<pangolin::GlTexture> glTex(num_channels_);
     pangolin::View& cameraView = pangolin::Display("camera");
 
     pangolin::Timer timer;
