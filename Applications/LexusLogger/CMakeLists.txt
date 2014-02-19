@@ -15,7 +15,9 @@ find_package( OpenCV2 QUIET )
 
 find_package( TinyXML2 )
 
-if(Pangolin_FOUND AND HAL_FOUND)
+set(BUILD_LEXUSLOGGER OFF CACHE BOOL "Toggle building LexusLogger")
+
+if(BUILD_LEXUSLOGGER AND Pangolin_FOUND AND HAL_FOUND)
     add_executable( LexusLogger main.cpp )
 
     include_directories( ${HAL_INCLUDE_DIRS} )
