@@ -53,15 +53,14 @@ class SensorViewer {
                                                    false));
 
     // Create Smart viewports for each camera image that preserve aspect.
-    pangolin::View& cameraView = pangolin::Display("camera").
-        SetLayout(pangolin::LayoutEqual);
+    pangolin::View& cameraView = pangolin::Display("camera");
+    cameraView.SetLayout(pangolin::LayoutEqual);
+    cameraView.SetBounds(pangolin::Attach::Pix(panel_height_), 1.0, 0, 1.0);
+    pangolin::DisplayBase().AddDisplay(cameraView);
+
     for (size_t ii = 0; ii < num_channels_; ++ii) {
-      float right = (ii + 1) * base_width_;
       cameraView.AddDisplay(pangolin::CreateDisplay().
-                            SetAspect((double)base_width_ / base_height_).
-                            SetBounds(pangolin::Attach::Pix(panel_height_), 1.0,
-                                      0,
-                                      pangolin::Attach::Pix(right), true));
+                            SetAspect((double)camera_.Width() / camera_.Height()));
     }
 
     if (has_imu_) {
