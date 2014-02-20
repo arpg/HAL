@@ -23,8 +23,7 @@ find_package( Sophus REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED )
 find_package( TinyXML2 )
 if(TinyXML2_FOUND)
-#  add_definitions(-DHAVE_TINYXML2)
-    set(HAVE_TINYXML2 True)
+  add_definitions(-DHAVE_TINYXML2)
 endif()
 
 include_directories(${Sophus_INCLUDE_DIR})
@@ -126,6 +125,10 @@ endforeach()
 
 if( ANDROID )
     list(APPEND INTERNAL_LIBS "z")
+endif()
+
+if(TinyXML2_FOUND)
+  include_directories( ${TinyXML2_INCLUDE_DIR} )
 endif()
 
 include_directories( ${LIB_INC_DIR} )

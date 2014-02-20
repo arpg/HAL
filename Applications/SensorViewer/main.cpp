@@ -212,7 +212,8 @@ class SensorViewer {
     }
 
     if (has_encoder_){
-      encoder_.RegisterEncoderDataCallback();
+      encoder_.RegisterEncoderDataCallback(
+            std::bind(&SensorViewer::Encoder_Handler, this, _1));
       std::cout << "- Registering Encoder device." << std::endl;
     }
   }
@@ -274,6 +275,7 @@ class SensorViewer {
   }
 
   void Encoder_Handler(pb::EncoderMsg& EncoderData) {
+    std::cout << "print data" << std::endl;
     if (logging_enabled_){
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
