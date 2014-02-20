@@ -191,6 +191,12 @@ class SensorViewer {
     has_posys_ = true;
   }
 
+  void set_odometry(const std::string& odometry_uri)
+  {
+    odometry_ = hal::Odometry(odometry_uri);
+    has_odometry_ = true;
+  }
+
  protected:
   void RegisterCallbacks() {
     if (has_posys_) {
@@ -203,6 +209,11 @@ class SensorViewer {
       imu_.RegisterIMUDataCallback(
           std::bind(&SensorViewer::IMU_Handler, this, _1));
       std::cout << "- Registering IMU device." << std::endl;
+    }
+
+    if (has_odometry_){
+      //odometry_.RegisterOdometryDataCallback()
+      std::cout << "- Registering Odometry device." << std::endl;
     }
   }
 
@@ -264,13 +275,13 @@ class SensorViewer {
 
  private:
   size_t num_channels_, base_width_, base_height_;
-  bool has_camera_, has_imu_, has_posys_;
+  bool has_camera_, has_imu_, has_posys_, has_odometry_;
   bool is_running_, is_stepping_;
   int frame_number_;
   int panel_height_;
   hal::Camera camera_;
   hal::IMU imu_;
-  hal::Encoder encoder_;
+  hal::Odometry odometry_;
   hal::Posys posys_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   pb::Logger& logger_;
@@ -282,6 +293,7 @@ int main(int argc, char* argv[]) {
   std::string cam_uri = cl_args.follow("", "-cam");
   std::string imu_uri = cl_args.follow("", "-imu");
   std::string posys_uri = cl_args.follow("", "-posys");
+  std::string odometry_uri = cl_args.follow("","-odom");
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
