@@ -191,10 +191,10 @@ class SensorViewer {
     has_posys_ = true;
   }
 
-  void set_odometry(const std::string& odometry_uri)
+  void set_encoder(const std::string& encoder_uri)
   {
-    odometry_ = hal::Odometry(odometry_uri);
-    has_odometry_ = true;
+    encoder_ = hal::Encoder(encoder_uri);
+    has_encoder_ = true;
   }
 
  protected:
@@ -211,9 +211,9 @@ class SensorViewer {
       std::cout << "- Registering IMU device." << std::endl;
     }
 
-    if (has_odometry_){
-      //odometry_.RegisterOdometryDataCallback()
-      std::cout << "- Registering Odometry device." << std::endl;
+    if (has_encoder_){
+      encoder_.RegisterEncoderDataCallback();
+      std::cout << "- Registering Encoder device." << std::endl;
     }
   }
 
@@ -273,24 +273,24 @@ class SensorViewer {
     }
   }
 
-  void Odometry_Handler(pb::OdometryMsg& OdometryData) {
+  void Encoder_Handler(pb::EncoderMsg& EncoderData) {
     if (logging_enabled_){
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
-      pbMsg.mutable_odometry()->Swap(&OdometryData);
+      pbMsg.mutable_encoder()->Swap(&EncoderData);
       logger_.LogMessage(pbMsg);
     }
   }
 
  private:
   size_t num_channels_, base_width_, base_height_;
-  bool has_camera_, has_imu_, has_posys_, has_odometry_;
+  bool has_camera_, has_imu_, has_posys_, has_encoder_;
   bool is_running_, is_stepping_;
   int frame_number_;
   int panel_height_;
   hal::Camera camera_;
   hal::IMU imu_;
-  hal::Odometry odometry_;
+  hal::Encoder encoder_;
   hal::Posys posys_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   pb::Logger& logger_;
@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
   std::string cam_uri = cl_args.follow("", "-cam");
   std::string imu_uri = cl_args.follow("", "-imu");
   std::string posys_uri = cl_args.follow("", "-posys");
-  std::string odometry_uri = cl_args.follow("","-odom");
+  std::string encoder_uri = cl_args.follow("","-encoder");
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
@@ -326,6 +326,9 @@ int main(int argc, char* argv[]) {
     viewer.set_posys(posys_uri);
   }
 
+  if (!encoder_uri.empty()) {
+    viewer.set_encoder(encoder_uri);
+  }
   viewer.SetupGUI();
   viewer.Run();
 }
