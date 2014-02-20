@@ -273,6 +273,15 @@ class SensorViewer {
     }
   }
 
+  void Odometry_Handler(pb::OdometryMsg& OdometryData) {
+    if (logging_enabled_){
+      pb::Msg pbMsg;
+      pbMsg.set_timestamp(hal::Tic());
+      pbMsg.mutable_odometry()->Swap(&OdometryData);
+      logger_.LogMessage(pbMsg);
+    }
+  }
+
  private:
   size_t num_channels_, base_width_, base_height_;
   bool has_camera_, has_imu_, has_posys_, has_odometry_;
