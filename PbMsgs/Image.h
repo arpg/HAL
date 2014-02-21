@@ -125,24 +125,51 @@ class Image {
  public:
   /// Construct with only an ImageMsg reference. Caller is responsible
   /// for ensuring the data outlasts this Image and its cv::Mat
-  explicit Image(const ImageMsg& img) : msg_(&img)
+  explicit Image(const ImageMsg& img) : msg_(&img),
 #ifdef HAVE_OPENCV
-                                      , mat_(WriteCvMat(*msg_))
+                                        mat_(WriteCvMat(*msg_)),
 #endif  // HAVE_OPENCV
+                                        owns_image_(false)
   {}
 
   /// Construct with a pointer to the parent ImageArray
   Image(const ImageMsg& img,
         const std::shared_ptr<const ImageArray>& source_array) :
-      msg_(&img), source_array_(source_array)
+      msg_(&img), source_array_(source_array),
 #ifdef HAVE_OPENCV
-      , mat_(WriteCvMat(*msg_))
+      mat_(WriteCvMat(*msg_)),
 #endif  // HAVE_OPENCV
+      owns_image_(false)
   {}
 
-  Image& operator=(const Image&) = default;
-  Image(const Image&) = default;
+  Image& operator=(const Image& other) {
+    if (this != &other) {
+      owns_image_ = true;
+      msg_ = new pb::ImageMsg(*other.msg_);
+      source_array_.reset();
+
+#ifdef HAVE_OPENCV
+      mat_ = WriteCvMat(*msg_);
+#endif  // HAVE_OPENCV
+    }
+    return *this;
+  }
+
+  Image(const Image& other) : msg_(new pb::ImageMsg(*other.msg_)),
+#ifdef HAVE_OPENCV
+                              mat_(WriteCvMat(*msg_)),
+#endif  // HAVE_OPENC
+                              owns_image_(true)
+  {
+
+  }
   Image(Image&&) = default;
+
+  virtual ~Image() {
+    if (owns_image_) {
+      delete msg_;
+    }
+  }
 
   unsigned int Width() const {
     return msg_->width();
@@ -217,6 +244,8 @@ class Image {
 #ifdef HAVE_OPENCV
   cv::Mat mat_;
 #endif  // HAVE_OPENCV
+
+  bool owns_image_;
 };
 
 }  // end namespace pb
