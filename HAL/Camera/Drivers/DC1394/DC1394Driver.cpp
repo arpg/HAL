@@ -78,9 +78,7 @@ DC1394Driver::DC1394Driver(
 {
     dc1394error_t e;
 
-//    if( m_pBus == nullptr ) {
-        m_pBus = dc1394_new();
-//    }
+    m_pBus = dc1394_new();
 
     dc1394camera_list_t*  pCameraList = NULL;
     e = dc1394_camera_enumerate( m_pBus, &pCameraList );
@@ -251,16 +249,18 @@ DC1394Driver::DC1394Driver(
 
     if( pFrame->color_coding == DC1394_COLOR_CODING_MONO8  ) {
         m_VideoFormat = pb::PB_LUMINANCE;
-        m_VideoType = pb::PB_UNSIGNED_BYTE;
     } else if( pFrame->color_coding == DC1394_COLOR_CODING_MONO16  ) {
         m_VideoFormat = pb::PB_LUMINANCE;
-        m_VideoType = pb::PB_UNSIGNED_SHORT;
     } else if( pFrame->color_coding == DC1394_COLOR_CODING_RGB8  ) {
         m_VideoFormat = pb::PB_RGB;
-        m_VideoType = pb::PB_UNSIGNED_BYTE;
     } else {
         m_VideoFormat = pb::PB_RAW;
-        m_VideoType = pb::PB_UNSIGNED_BYTE;
+    }
+
+    if( pFrame->data_depth == 16 ) {
+      m_VideoType = pb::PB_UNSIGNED_SHORT;
+    } else {
+      m_VideoType = pb::PB_UNSIGNED_BYTE;
     }
 
     // release the frame
