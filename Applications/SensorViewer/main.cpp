@@ -25,13 +25,10 @@ class SensorViewer {
                    has_camera_(false), has_imu_(false), has_posys_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
                    panel_height_(0),
-                   logger_(pb::Logger::GetInstance()) {
-#ifdef ANDROID
-    logger_.LogToFile("/sdcard/", "sensors");
-#else
-    logger_.LogToFile("", "sensors");
-#endif
+                   logger_(pb::Logger::GetInstance())
+  {
   }
+
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
@@ -152,6 +149,13 @@ class SensorViewer {
       }
 
       if (*logging_enabled_ && is_running_) {
+        if (pb::Logger::GetInstance().IsLogging() == false) {
+#ifdef ANDROID
+          logger_.LogToFile("/sdcard/", "sensors");
+#else
+          logger_.LogToFile("", "sensors");
+#endif
+        }
         if (capture_success) {
           LogCamera(images.get());
         }
