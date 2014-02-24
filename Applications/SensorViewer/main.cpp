@@ -133,19 +133,19 @@ class SensorViewer {
 
       if (got_first_image) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
-          pb::Image img = images->at(ii);
+          std::shared_ptr<pb::Image> img = images->at(ii);
           if (!glTex[ii].tid && num_channels_) {
-            GLint internal_format = (img.Format() == GL_LUMINANCE ?
+            GLint internal_format = (img->Format() == GL_LUMINANCE ?
                                      GL_LUMINANCE : GL_RGBA);
             // Only initialise now we know format.
-            glTex[ii].Reinitialise(img.Width(), img.Height(),
+            glTex[ii].Reinitialise(img->Width(), img->Height(),
                                    internal_format, true, 0,
-                                   img.Format(), img.Type(), 0);
+                                   img->Format(), img->Type(), 0);
           }
 
           cameraView[ii].Activate();
-          if (got_first_image && img.data()) {
-            glTex[ii].Upload(img.data(), img.Format(), img.Type());
+          if (got_first_image && img->data()) {
+            glTex[ii].Upload(img->data(), img->Format(), img->Type());
             glTex[ii].RenderToViewportFlipY();
           }
         }
