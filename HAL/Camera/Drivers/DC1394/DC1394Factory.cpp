@@ -43,8 +43,6 @@ public:
         if( sMode.find( "FORMAT7" ) != std::string::npos ) {
             if( sMode == "FORMAT7_0" ) {
                 Mode = DC1394_VIDEO_MODE_FORMAT7_0;
-//                printf(" ");
-//                std::cout << "Test" << std::endl;
             } else if( sMode == "FORMAT7_1" ) {
                 Mode = DC1394_VIDEO_MODE_FORMAT7_1;
             } else if( sMode == "FORMAT7_2" ) {
