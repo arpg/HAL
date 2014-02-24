@@ -95,12 +95,13 @@ public:
         vImages.resize( pbImages->Size() );
         vImageInfo.resize( pbImages->Size() );
         if( bRes ){
-          for (int ii = 0; ii < pbImages->Size(); ++ii){
-                vImages[ii] = cv::Mat( pbImages->at(ii) );
-                if( pbImages->at(ii).HasInfo() ){
-                  vImageInfo[ii] = pbImages->at(ii).GetInfo();
-                }
+          for (int ii = 0; ii < pbImages->Size(); ++ii) {
+            std::shared_ptr<pb::Image> img = pbImages->at(ii);
+            vImages[ii] = *img;
+            if( img->HasInfo() ){
+              vImageInfo[ii] = img->GetInfo();
             }
+          }
         }
         return bRes;
     }
