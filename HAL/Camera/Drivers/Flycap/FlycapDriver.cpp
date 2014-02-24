@@ -62,8 +62,8 @@ FlycapDriver::FlycapDriver(
     F7Config.width = m_nImgWidth;
     F7Config.offsetX = ROI.x;
     F7Config.offsetY = ROI.y;
-    F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_RAW8;
-    unsigned int PacketSize = 5280;
+    F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
+    const unsigned int PacketSize = 1400;
 
     /*
     // image properties
@@ -122,7 +122,7 @@ FlycapDriver::FlycapDriver(
         _CheckError(error);
 
         // set video mode and framerate
-//        error = pCam->SetFormat7Configuration( &F7Config, PacketSize );
+        error = pCam->SetFormat7Configuration( &F7Config, PacketSize );
         _CheckError(error);
 
         /*
@@ -138,6 +138,7 @@ FlycapDriver::FlycapDriver(
         CheckError(error);
         */
 
+        /*
         // prepare trigger. first camera always strobes, others get trigger.
         if( ii == 0 ) {
             FlyCapture2::TriggerMode Trigger;
@@ -163,7 +164,7 @@ FlycapDriver::FlycapDriver(
             Strobe.onOff = true;
             Strobe.source = StrobeOut;
             Strobe.delay = 0;
-            Strobe.duration = 0;
+            Strobe.duration = 50;
             Strobe.polarity = 0;
 
             error = pCam->SetStrobe( &Strobe );
@@ -178,7 +179,7 @@ FlycapDriver::FlycapDriver(
             pCam->SetGPIOPinDirection( TriggerIn, 0 );
 
             // external trigger is enabled
-            Trigger.onOff = true;
+            Trigger.onOff = false;
             Trigger.mode = 0;
             Trigger.parameter = 0;
             Trigger.source = TriggerIn;
@@ -189,6 +190,8 @@ FlycapDriver::FlycapDriver(
 
             m_vCams.push_back(pCam);
         }
+        */
+        m_vCams.push_back(pCam);
     }
 
     // initiate transmission on all cameras
@@ -199,7 +202,6 @@ FlycapDriver::FlycapDriver(
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///  Releases the cameras and exits
 FlycapDriver::~FlycapDriver()
 {
 }

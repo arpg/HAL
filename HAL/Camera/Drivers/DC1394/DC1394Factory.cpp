@@ -17,7 +17,7 @@ public:
             {"size", "640x480", "Capture resolution."},
             {"roi", "0+0+640x480", "ROI resolution for Format7."},
             {"fps", "30.0", "Capture framerate."},
-            {"iso", "400", "ISO speed."},
+            {"iso", "800", "ISO speed."},
             {"dma", "4", "Number of DMA channels."}
         };
     }

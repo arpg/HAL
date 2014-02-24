@@ -81,6 +81,7 @@ private:
     int mn_NumLasers; //Num of lasers in Velodyne, for HDL-64E it's 64, for HDL-32E it's 32. Imagine that!!
     int mn_PointsSize;//Number of elment in float *mp_Points.
     int mn_IntensitySize;// Number of element in float *mp_Intensities
+    double md_TimeStamp;
 
     VelodyneLaserCorrection *vlc;//This will contain the parameters to correct the data. Each laser will have one struct, hence the array.
 

@@ -27,7 +27,7 @@ void Velodyne::Init(const char *calibFileName, int numLasers)
 {
   this->mn_NumLasers = numLasers;
   vlc = new VelodyneLaserCorrection[numLasers];
-  me_ColMethod = intensity;
+  me_ColMethod = height;
   SetupColorMethod();
 
   // 144000 = 36000*4. 36000 because that's the precision for rotational position, i.e. hundredth of a degree.
@@ -78,9 +78,7 @@ void Velodyne::setColMethod(const ColoringMethod &value)
   SetupColorMethod();
 }
 
-void build_jet_map(
-        int length,
-        unsigned char *table )
+void build_jet_map( int length, unsigned char *table )
 {
     int ii;
     int sectlength = length / 5;
@@ -346,6 +344,7 @@ void Velodyne::ConvertRangeToPoints(pb::LidarMsg& LidarData)
   ComputePoints(LidarData);
   ComputeIntensity(LidarData);
   ComputeColor();
+  md_TimeStamp = LidarData.system_time();
 }
 
 void Velodyne::ComputeIntensity(pb::LidarMsg& LidarData)
