@@ -121,6 +121,11 @@ Image::Image(const ImageMsg& img,
 
 Image& Image::operator=(const Image& other) {
   if (this != &other) {
+    // If we've already created our own image, free it before overwriting
+    if (owns_image_) {
+      delete msg_;
+    }
+
     owns_image_ = true;
     msg_ = new pb::ImageMsg(*other.msg_);
     source_array_.reset();
