@@ -25,6 +25,9 @@
 //#include <mvl/image/colormap.h>
 #include <Velodyne.h>
 
+/* Generic Includes */
+#include <queue>
+
 using namespace pangolin;
 
 
@@ -35,20 +38,24 @@ pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGryo;
 pangolin::DataLog g_PlotLogMag;
 
-//Camera Variables
+// Camera Variables
 bool bCamsRunning = false;
-std::vector<std::shared_ptr<pb::ImageArray> > vImgArr;
-std::vector<std::vector<pb::Image> > vvImgs;
+std::vector<std::shared_ptr<pb::ImageArray> > vImgCap;
 std::vector<hal::Camera> vCams;
+// should be vector of mutex, but vector requires object to be movable, but
+// apparently mutex isn't, which makes sense. deque doesn't require movable
+// objects, hence is used. Also initialization is complicated, push_back and
+// such don't work, but a simple resize does. :)
+std::deque <std::mutex> vCamMtx;
 
-//For lidar
+// For lidar
 void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc);
 float *ptp;//[9216000];
 unsigned char *col;//[9216000];
 pangolin::GlBuffer *buf;
 pangolin::GlBuffer *colBuf;
 unsigned char colMap[6000];//2000(2.0m) * 3 (rgb)
-pb::Velodyne vld("/Users/jongnarr/Codes/CoreDev/HAL/Applications/LexusLogger/db.xml");
+pb::Velodyne vld;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
@@ -85,6 +92,9 @@ void Posys_Handler(pb::PoseMsg& PoseData)
     }
     */
 
+  std::cout<<"lat: "<<PoseData.pose().data(0)<<", long: "
+           <<PoseData.pose().data(1) <<", height: "
+           <<PoseData.pose().data(2) <<std::endl;
   if( g_bLog ) {
     pb::Msg pbMsg;
     pbMsg.set_timestamp( hal::Tic() );
@@ -249,11 +259,11 @@ void Camera_Handler(int id) {
   while(bRun) {
     // Captures the image, if capture fails bRun=false
     // o.w. log data in case logging enabled.
-    //std::cout<<"id="<<id<<std::flush;
     if(bCamsRunning){
-      //std::shared_ptr<pb::ImageArray> img = pb::ImageArray::Create();
-      bool success = vCams[id].Capture(*vImgArr[id]);
-
+      //std::cout<<"id="<<id<<std::flush;
+      vCamMtx[id].lock();
+      bool success = vCams[id].Capture(*vImgCap[id]);
+      vCamMtx[id].unlock();
 
       if(!success) {
         bRun = false;
@@ -262,14 +272,14 @@ void Camera_Handler(int id) {
         if(g_bLog ) {
           pb::Msg pbMsg;
           pbMsg.set_timestamp( hal::Tic() );
-          pbMsg.mutable_camera()->Swap(&vImgArr[id]->Ref());
+          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
           g_Logger.LogMessage(pbMsg);
         }
       }
     }
-    usleep(100000);
+    usleep(3330);
   }
-  std::cout<<"End"<<std::endl;
+  std::cout<<"Camera "<< id << "stopped." <<std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,7 +304,7 @@ int main( int argc, char* argv[] )
   } while(vsCamsUri[0]!=vsCamsUri[vsCamsUri.size()-1]);
   vsCamsUri.pop_back();
 
-  const bool bHaveCam= !vsCamsUri.empty();
+  const bool bHaveCam= (vsCamsUri[0]!=""); //if no cam it will have 1 element "".
 
   std::vector<std::thread> vCamThreads;
   int nNumCam = 0;
@@ -303,11 +313,10 @@ int main( int argc, char* argv[] )
     for(int ii=0;ii<nNumCam; ii++) {
       std::cout<<"arg = "<<vsCamsUri[ii]<<std::endl;
       vCams.push_back(hal::Camera(vsCamsUri[ii]));
-      vImgArr.push_back(pb::ImageArray::Create());
+      vImgCap.push_back(pb::ImageArray::Create());
       vCamThreads.push_back( std::thread( Camera_Handler, ii) );
     }
-    vvImgs.resize(nNumCam);
-
+    vCamMtx.resize(nNumCam);
     //if IMU and Lidar are present they would have to make space for camera.
     dImuViewBottom = 0.5; dLidarViewBottom = 0.5;
   }
@@ -347,6 +356,9 @@ int main( int argc, char* argv[] )
   hal::LIDAR theLIDAR;
   if( bHaveLIDAR ) {
     //build_jet_map(2000, colMap);//to cover 2m in z;
+    vld.Init("/Users/jongnarr/Codes/CoreDev/HAL/Applications/LexusLogger/db.xml");
+    std::cout<<"inited"<<std::endl;
+    return 0;
     theLIDAR = hal::LIDAR(sLIDAR);
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
@@ -390,7 +402,6 @@ int main( int argc, char* argv[] )
   if(bHaveCam)
   {
     for(int ii=0; ii < nNumCam; ++ii ) {
-      std::cout<<"img["<< ii<<"] w = "<<vCams[ii].Width()<<std::endl;
       cameraView.AddDisplay(pangolin::CreateDisplay()
                             .SetAspect(
                               vCams[ii].Width() / (double)vCams[ii].Height()
@@ -453,10 +464,10 @@ int main( int argc, char* argv[] )
 #endif
 
       for(int ii=0; ii<nNumCam; ++ii ) {
-        //std::cout<< "img SIZE = "<< vImgArr[ii]->Size()<<std::endl;
-        if(vImgArr[ii]->Size() == 0)
+        if(vImgCap[ii]->Size() == 0 )
           continue;
-        pb::Image img = vImgArr[ii]->at(0);
+        vCamMtx[ii].lock();
+        pb::Image img = vImgCap[ii]->at(0);
         //Only initialise now we know format.
         GLenum imgFormat = img.Format();
         GLenum imgType = img.Type();
@@ -473,6 +484,7 @@ int main( int argc, char* argv[] )
         glTex[ii].Upload(img.data(),
                          imgFormat, imgType);
         glTex[ii].RenderToViewportFlipY();
+        vCamMtx[ii].unlock();
       }
     }
 
@@ -496,6 +508,7 @@ int main( int argc, char* argv[] )
     }
 
     pangolin::FinishFrame();
+    usleep(10000);
   }
 
   bCamsRunning = false;
