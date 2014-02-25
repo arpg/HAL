@@ -43,8 +43,6 @@ public:
         if( sMode.find( "FORMAT7" ) != std::string::npos ) {
             if( sMode == "FORMAT7_0" ) {
                 Mode = DC1394_VIDEO_MODE_FORMAT7_0;
-//                printf(" ");
-//                std::cout << "Test" << std::endl;
             } else if( sMode == "FORMAT7_1" ) {
                 Mode = DC1394_VIDEO_MODE_FORMAT7_1;
             } else if( sMode == "FORMAT7_2" ) {
@@ -106,8 +104,6 @@ public:
         } else {
             Speed = DC1394_ISO_SPEED_400;
         }
-
-//        printf("%d - %s - %dx%d - %d+%d+%dx%d - %f - %d - %d\n", nCamId,sMode.c_str(),Dims.x, Dims.y, ROI.x, ROI.y, ROI.w, ROI.h, fFPS, nISO, nDMA);
 
         DC1394Driver* pDriver = new DC1394Driver(
                     nCamId, Mode, ROI.x, ROI.y, ROI.w, ROI.h,

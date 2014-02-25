@@ -15,7 +15,7 @@ namespace hal
 
 template<typename BaseDevice>
 DeviceRegistry<BaseDevice>::DeviceRegistry() {
-  RegisterAlias( "bumblebee", "debayer://dc1394://" );
+  RegisterAlias( "bumblebee", "convert:[fmt=MONO8]//debayer://deinterlace://dc1394:[mode=FORMAT7_3]//" );
   RegisterAlias( "twizzler",  "deinterlace://v4l://" );
 }
 
@@ -97,7 +97,6 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     if(pf != m_factories.end()) {
 
       std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
-      //                m_instances[uri.scheme].insert( dev );
       return dev;
     }
     else{
@@ -106,20 +105,9 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
   }
 }
 
-//template<typename BaseDevice>
-//std::shared_ptr<hal::BaseDevice> DeviceRegistry::Create(const Uri &uri)
-//{
-//    Create(uri, NULL);
-//}
-
 template<typename BaseDevice>
 void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)
 {
-  //        auto i = std::find(m_instances.begin(), m_instances.end(), dev);
-
-  //        if(i != m_instances.end()) {
-  //            m_instances.erase(i);
-  //        }
 }
 
 // Explicitly instantiate desired registries.
