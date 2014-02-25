@@ -14,7 +14,7 @@
 
 // ??? how should I include these header files?
 #include <libpcan.h>
-#include <pcan.h>
+//#include <pcan.h>
 #define B125K 125000
 #define B500K 500000
 #define B1M   1000000
@@ -23,23 +23,10 @@
 #include <HAL/Utils/TicToc.h>
 #include <HAL/Encoder/EncoderDriverInterface.h>
 
-#ifndef PrintMessage
-#  ifdef ANDROID
-#    include <android/log.h>
-#    define PrintMessage( ... ) \
-  (void)__android_log_print(ANDROID_LOG_INFO,  "HAL", __VA_ARGS__);
-#  else
-#    define PrintMessage( ... ) \
-  printf( __VA_ARGS__ );
-#  endif
-#endif
-
 using fPtr_IMU = void(*)(pb::ImuMsg& IMUdata);
 using fPtr_Encoder = void(*)(pb::EncoderMsg& Encoderdata);
 
-typedef int PCANHandle;
-
-struct CanMessage
+struct CANMessage
 {
     unsigned int id;       // 11/29 bit code
     char  msgtype;         // bits of MSGTYPE_*
@@ -47,6 +34,18 @@ struct CanMessage
     char  data[8];         // data bytes, up to 8
     // TODO: findout how dgc_get_time() works then define timestamp type
     unsigned long int timeStamp;
+};
+
+struct CANParsedPkg
+{
+    unsigned int YawRate;
+    unsigned int EncRate_LF;
+    unsigned int EncRate_RF;
+    unsigned int EncRate_LB;
+    unsigned int EncRate_RB;
+    unsigned int GearState;
+    signed int Acc_x;
+    signed int Acc_y;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,10 +99,10 @@ public:
       //open the given path
       m_PortHandle = _OpenCANBus(path, B500K);
 
-      if(m_PortHandle <= 0){
-        PrintMessage("HAL: Failed to open at 500Kbps, aborting...\n");
+      if(!m_PortHandle){
+        std::cout << "HAL: Failed to open at 500Kbps, aborting...\n" << std::endl;
       } else {
-        PrintMessage("HAL: CAN BUS '%s'' opened.\n",path);
+        std::cout << "HAL: CAN BUS '%s'' opened.\n" << std::endl;
         m_bIsConnected = true;
       }
     }
@@ -125,9 +124,9 @@ public:
 private:
 
   ///////////////////////////////////////////////////////////////////////////////
-  void _CloseCANBus(PCANHandle pcanHandle)
+  void _CloseCANBus(HANDLE pcanHandle)
   {
-    PrintMessage("End PCAN\n");
+    std::cout << "End PCAN\n" << std::endl;
     if(pcanHandle) {
       CAN_Close(pcanHandle);
       pcanHandle = NULL;
@@ -136,7 +135,7 @@ private:
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  int _ReadCANBus(CanMessage* pkg)
+  int _ReadCANBus(CANMessage* pkg)
   {
     static TPCANRdMsg   Rdmsg;
     static const int    timeout = 10000; /* 0.01 seconds. this is a default value */
@@ -156,14 +155,14 @@ private:
       }
     }else
     {
-      PrintMessage("CAN Bus read Error!\n");
+      std::cout << "CAN Bus read Error!\n" << std::endl;
       PrintParsedError(read_error);
     }
     return read_error;
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  int _WriteCANBus(CanMessage* pkg)
+  int _WriteCANBus(CANMessage* pkg)
   {
     TPCANMsg Wmsg;
     Wmsg.MSGTYPE = pkg->msgtype;
@@ -176,7 +175,7 @@ private:
 
     if(error)
     {
-      PrintMessage("CAN Bus Write Error!\n");
+      std::cout << "CAN Bus Write Error!\n" << std::endl;
       return 0;
     }else
       return error;
@@ -185,32 +184,32 @@ private:
   void PrintParsedError(int err_int)
   {
       if(err_int){
-          printf("Error : ");
+          std::cout << "Error : " << std::endl;
           switch(err_int)
           {
-              case 0x0001:  PrintMessage("transmit buffer full\n"); break;
-              case 0x0002:  PrintMessage("overrun in receive buffer\n"); break;
-              case 0x0004:  PrintMessage("bus error, errorcounter limit reached\n"); break;
-              case 0x0008:  PrintMessage("bus error, errorcounter limit reached\n"); break;
-              case 0x0010:  PrintMessage("bus error, 'bus off' state entered\n"); break;
-              case 0x0020:  PrintMessage("receive queue is empty\n"); break;
-              case 0x0040:  PrintMessage("receive queue overrun\n"); break;
-              case 0x0080:  PrintMessage("transmit queue full \n"); break;
-              case 0x0100:  PrintMessage("test of controller registers failed\n"); break;
-              case 0x0200:  PrintMessage("Win95/98/ME only\n"); break;
-              case 0x2000:  PrintMessage("can't create resource\n"); break;
-              case 0x4000:  PrintMessage("illegal parameter\n"); break;
-              case 0x8000:  PrintMessage("value out of range\n"); break;
-              case 0x1C00:  PrintMessage("wrong handle, handle error\n"); break;
+              case 0x0001:  std::cout << "transmit buffer full\n" << std::endl; break;
+              case 0x0002:  std::cout << "overrun in receive buffer\n" << std::endl; break;
+              case 0x0004:  std::cout << "bus error, errorcounter limit reached\n" << std::endl; break;
+              case 0x0008:  std::cout << "bus error, errorcounter limit reached\n" << std::endl; break;
+              case 0x0010:  std::cout << "bus error, 'bus off' state entered\n" << std::endl; break;
+              case 0x0020:  std::cout << "receive queue is empty\n" << std::endl; break;
+              case 0x0040:  std::cout << "receive queue overrun\n" << std::endl; break;
+              case 0x0080:  std::cout << "transmit queue full \n" << std::endl; break;
+              case 0x0100:  std::cout << "test of controller registers failed\n" << std::endl; break;
+              case 0x0200:  std::cout << "Win95/98/ME only\n" << std::endl; break;
+              case 0x2000:  std::cout << "can't create resource\n" << std::endl; break;
+              case 0x4000:  std::cout << "illegal parameter\n" << std::endl; break;
+              case 0x8000:  std::cout << "value out of range\n" << std::endl; break;
+              case 0x1C00:  std::cout << "wrong handle, handle error\n" << std::endl; break;
           }
       }
   }
   ///////////////////////////////////////////////////////////////////////////////
-  PCANHandle _OpenCANBus(const char* comPortPath,const int baudRate = B500K)
+  HANDLE _OpenCANBus(const char* comPortPath,const int baudRate = B500K)
   {
     int init_err, status_err;
     m_PortHandle = LINUX_CAN_Open(comPortPath, O_RDWR); // O_RDWR -> open the port in Blocking mode
-    if(pcan_handle) {
+    if(m_PortHandle) {
       switch(baudRate) {
       case B125K: {
           init_err = CAN_Init(m_PortHandle, CAN_BAUD_125K, CAN_INIT_TYPE_ST);
@@ -229,32 +228,39 @@ private:
       }
 
       status_err = CAN_Status(m_PortHandle);
-      if((init_err != 0) || (status_err != 0)) {
-        PrintMessage("PCAN initialization failed.\n");
-        return -1;
-      }
-    } else {
-        PrintMessage("Unable to open PCAN device.\n");
-        return -1;
-    }
-    return pcan_handle;
+      if((init_err != 0) || (status_err != 0))
+        std::cout << "PCAN initialization failed.\n" << std::endl;
+      else
+        std::cout << "Unable to open PCAN device.\n" << std::endl;
   }
-
+  return m_PortHandle;
+}
 
 private:
+
+  CANParsedPkg ParseCanMessage(CANMessage* RawMsg)
+  {
+    CANParsedPkg ParsedMsg;
+    ParsedMsg.Acc_x = RawMsg->data[2];
+    return ParsedMsg;
+  }
+
   /////////////////////////////////////////////////////////////////////////////////////////
   void _ThreadFunc()
   {
     pb::ImuMsg      pbIMU;
     pb::EncoderMsg  pbEncoder;
-    SensorPacket    Pkt;
+    CANMessage      RawPkg;
+    CANParsedPkg    Pkt;
 
     while( m_Running ) {
 
-      if( ReadSensorPacket(Pkt) != sizeof(SensorPacket) ) {
-        PrintMessage("Error reading virtual com port.\n");
+      if( _ReadCANBus(&RawPkg) ) {
+        std::cout << "Error reading CAN Bus port.\n" << std::endl;
         continue;
       }
+
+      Pkt = ParseCanMessage(&RawPkg);
 
       if( m_IMUCallback ) {
         pbIMU.Clear();
@@ -265,59 +271,41 @@ private:
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
         pbVec->add_data(Pkt.Acc_x);
         pbVec->add_data(Pkt.Acc_y);
-        pbVec->add_data(Pkt.Acc_z);
+        pbVec->add_data(0);
 
         pbVec = pbIMU.mutable_gyro();
-        pbVec->add_data(Pkt.Gyro_x);
-        pbVec->add_data(Pkt.Gyro_y);
-        pbVec->add_data(Pkt.Gyro_z);
-
-        pbVec = pbIMU.mutable_mag();
-        pbVec->add_data(Pkt.Mag_x);
-        pbVec->add_data(Pkt.Mag_y);
-        pbVec->add_data(Pkt.Mag_z);
+        pbVec->add_data(0); //Gyro X
+        pbVec->add_data(0); //Gyro Y
+        pbVec->add_data(Pkt.YawRate); //Gyro Z
 
         (*m_IMUCallback)(pbIMU);
       }
 
       if( m_EncoderCallback ) {
         pbEncoder.Clear();
-
         pbEncoder.set_device_time( hal::Tic() );
 
         // encoders
-        pbEncoder.set_label(0, "ENC_LF");
-        pbEncoder.set_data(0, Pkt.Enc_LF);
-        pbEncoder.set_label(1, "ENC_RF");
-        pbEncoder.set_data(1, Pkt.Enc_RF);
-        pbEncoder.set_label(2, "ENC_LB");
-        pbEncoder.set_data(2, Pkt.Enc_LB);
-        pbEncoder.set_label(3, "ENC_RB");
-        pbEncoder.set_data(3, Pkt.Enc_RB);
-
-        // adcs
-        pbEncoder.set_label(4, "ADC_LB");
-        pbEncoder.set_data(4, Pkt.ADC_LB);
-        pbEncoder.set_label(5, "ADC_LF_YAW");
-        pbEncoder.set_data(5, Pkt.ADC_LF_yaw);
-        pbEncoder.set_label(6, "ADC_LF_ROLL");
-        pbEncoder.set_data(6, Pkt.ADC_LF_rol);
-        pbEncoder.set_label(7, "ADC_RB");
-        pbEncoder.set_data(7, Pkt.ADC_RB);
-        pbEncoder.set_label(8, "ADC_RF_YAW");
-        pbEncoder.set_data(8, Pkt.ADC_RF_yaw);
-        pbEncoder.set_label(9, "ADC_RF_ROLL");
-        pbEncoder.set_data(9, Pkt.ADC_RF_rol);
+        pbEncoder.set_label(0, "ENC_RATE_LF");
+        pbEncoder.set_data(0, Pkt.EncRate_LF);
+        pbEncoder.set_label(1, "ENC_RATE_RF");
+        pbEncoder.set_data(1, Pkt.EncRate_RF);
+        pbEncoder.set_label(2, "ENC_RATE_LB");
+        pbEncoder.set_data(2, Pkt.EncRate_LB);
+        pbEncoder.set_label(3, "ENC_RATE_RB");
+        pbEncoder.set_data(3, Pkt.EncRate_RB);
 
         (*m_EncoderCallback)(pbEncoder);
       }
+
     }
   }
 
+private:
 
 private:
   bool                            m_bIsConnected;
-  PCANHandle                      m_PortHandle;
+  HANDLE                          m_PortHandle;
 
   bool                            m_Running;
   std::thread                     m_CallbackThread;
