@@ -29,9 +29,9 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
     return message_.image(0).timestamp();
   }
 
-  Image at(int idx) const {
+  std::shared_ptr<Image> at(int idx) const {
     if (idx < Size()) {
-      return Image(message_.image(idx), shared_from_this());
+      return std::make_shared<Image>(message_.image(idx), shared_from_this());
     }
 
     // TODO: define ensure macro or throw exception
@@ -41,7 +41,7 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
     exit(1);
   }
 
-  Image operator[](int idx) const {
+  std::shared_ptr<Image> operator[](int idx) const {
     return at(idx);
   }
 

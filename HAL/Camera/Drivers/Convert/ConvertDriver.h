@@ -2,21 +2,17 @@
 
 #include <memory>
 
-#include <dc1394/conversions.h>
-
 #include <HAL/Camera/CameraDriverInterface.h>
 
 
 namespace hal
 {
 
-class DebayerDriver : public CameraDriverInterface
+class ConvertDriver : public CameraDriverInterface
 {
 public:
-    DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
-                   dc1394bayer_method_t                   Method,
-                   dc1394color_filter_t                   Filter,
-                   unsigned int                           nDepth
+    ConvertDriver(std::shared_ptr<CameraDriverInterface> Input,
+                   const std::string& sFormat
                  );
 
     bool Capture( pb::CameraMsg& vImages );
@@ -31,13 +27,11 @@ public:
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
     pb::CameraMsg                           m_Message;
+    std::string                             m_sFormat;
+    int                                     m_nCvType;
     unsigned int                            m_nImgWidth;
     unsigned int                            m_nImgHeight;
     unsigned int                            m_nNumChannels;
-    dc1394bayer_method_t                    m_Method;
-    dc1394color_filter_t                    m_Filter;
-    unsigned int                            m_nDepth;
-
 };
 
 }
