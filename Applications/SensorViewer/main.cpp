@@ -195,6 +195,12 @@ class SensorViewer {
     has_posys_ = true;
   }
 
+  void set_encoder(const std::string& encoder_uri)
+  {
+    encoder_ = hal::Encoder(encoder_uri);
+    has_encoder_ = true;
+  }
+
  protected:
   void RegisterCallbacks() {
     if (has_posys_) {
@@ -207,6 +213,12 @@ class SensorViewer {
       imu_.RegisterIMUDataCallback(
           std::bind(&SensorViewer::IMU_Handler, this, _1));
       std::cout << "- Registering IMU device." << std::endl;
+    }
+
+    if (has_encoder_){
+      encoder_.RegisterEncoderDataCallback(
+            std::bind(&SensorViewer::Encoder_Handler, this, _1));
+      std::cout << "- Registering Encoder device." << std::endl;
     }
   }
 
@@ -266,9 +278,19 @@ class SensorViewer {
     }
   }
 
+  void Encoder_Handler(pb::EncoderMsg& EncoderData) {
+    std::cout << "print data" << std::endl;
+    if (logging_enabled_){
+      pb::Msg pbMsg;
+      pbMsg.set_timestamp(hal::Tic());
+      pbMsg.mutable_encoder()->Swap(&EncoderData);
+      logger_.LogMessage(pbMsg);
+    }
+  }
+
  private:
   size_t num_channels_, base_width_, base_height_;
-  bool has_camera_, has_imu_, has_posys_;
+  bool has_camera_, has_imu_, has_posys_, has_encoder_;
   bool is_running_, is_stepping_;
   int frame_number_;
   int panel_height_;
@@ -286,6 +308,7 @@ int main(int argc, char* argv[]) {
   std::string cam_uri = cl_args.follow("", "-cam");
   std::string imu_uri = cl_args.follow("", "-imu");
   std::string posys_uri = cl_args.follow("", "-posys");
+  std::string encoder_uri = cl_args.follow("","-encoder");
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
@@ -309,6 +332,9 @@ int main(int argc, char* argv[]) {
     viewer.set_posys(posys_uri);
   }
 
+  if (!encoder_uri.empty()) {
+    viewer.set_encoder(encoder_uri);
+  }
   viewer.SetupGUI();
   viewer.Run();
 }
