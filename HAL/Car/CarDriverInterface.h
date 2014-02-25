@@ -15,10 +15,9 @@ namespace hal {
 class CarDriverInterface : public DriverInterface
 {
 public:
-  CarDriverInterface();
   virtual ~CarDriverInterface() {}
 
-  virtual bool ApplyCommand( float flTorque, float flSteering ) = 0;
+  virtual bool ApplyCommand( double flTorque, double flSteering ) = 0;
 };
 
 }

@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 project(Node)
 string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 
-string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
-
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-DOS_OBJECT_USE_OBJC=0")
 endif()
@@ -102,6 +100,30 @@ if( BUILD_NODE )
     else()
       set(Node_DIR ${CMAKE_CURRENT_BINARY_DIR}) # For the examples
     endif()
+
+    #######################################################
+    ## Install headers / targets
+    set( CMAKECONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}" )
+
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+      DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
+    )
+    install(TARGETS ${LIBRARY_NAME}
+      EXPORT "${PROJECT_NAME}Targets"
+      RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+      LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    )
+
+    #######################################################
+    ## Install CMake config
+
+    INSTALL(
+	FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+	      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
+
+    install( EXPORT "${PROJECT_NAME}Targets" DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
 
     add_subdirectory(Examples)
 endif()

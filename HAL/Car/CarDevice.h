@@ -26,14 +26,14 @@ public:
   Car(const std::string& uri)
     :m_uri(uri)
   {
-    m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
   }
 
   ///////////////////////////////////////////////////////////////
   Car(const hal::Uri& uri)
     :m_uri(uri)
   {
-    m_cam = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
   }
 
   ///////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////
-  virtual bool ApplyCommand( float flTorque, float flSteering ) {
+  virtual bool ApplyCommand( double flTorque, double flSteering ) {
     m_car->ApplyCommand(flTorque,flSteering);
   }
 

@@ -5,6 +5,7 @@
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
 #include <HAL/Posys/PosysDevice.h>
+#include <HAL/Car/CarDevice.h>
 
 #ifdef HAVE_TINYXML2
 #include <HAL/Utils/SimLauncher.h>
@@ -128,5 +129,6 @@ template class DeviceRegistry<hal::EncoderDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
 template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
+template class DeviceRegistry<hal::CarDriverInterface>;
 
 }
