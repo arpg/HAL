@@ -26,7 +26,6 @@ public:
 
         // Create input camera
         std::shared_ptr<CameraDriverInterface> InCam =
-//                DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri.url);
                 DeviceRegistry<hal::CameraDriverInterface>::I().Create(subUri);
 
         std::vector<ImageRoi> vROI;
@@ -48,23 +47,18 @@ public:
             }
 
             if( vROI.empty() ) {
-                vROI.push_back( default_roi );
+              unsigned int nImgWidth = InCam->Width();
+              unsigned int nImgHeight = InCam->Height();
+              if( nImgWidth > nImgHeight ) {
+                  nImgWidth = nImgWidth / 2;
+              } else {
+                  nImgHeight = nImgHeight / 2;
+              }
+
+              vROI.push_back( ImageRoi( 0, 0, nImgWidth, nImgHeight ) );
+              vROI.push_back( ImageRoi( nImgWidth, 0, nImgWidth, nImgHeight ) );
             }
         }
-
-        if( !uri.scheme.compare("deinterlace") ) {
-            unsigned int nImgWidth = InCam->Width();
-            unsigned int nImgHeight = InCam->Height();
-            if( nImgWidth > nImgHeight ) {
-                nImgWidth = nImgWidth / 2;
-            } else {
-                nImgHeight = nImgHeight / 2;
-            }
-
-            vROI.push_back( ImageRoi( 0, 0, nImgWidth, nImgHeight ) );
-            vROI.push_back( ImageRoi( nImgWidth, 0, nImgWidth, nImgHeight ) );
-        }
-
 
         SplitDriver* pDriver = new SplitDriver( InCam, vROI );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
@@ -73,6 +67,5 @@ public:
 
 // Register this factory by creating static instance of factory
 static SplitFactory g_SplitFactory("split");
-static SplitFactory g_DeinterlaceFactory("deinterlace");
 
 }
