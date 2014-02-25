@@ -4,19 +4,19 @@
 
 #include <HAL/Encoder/EncoderDriverInterface.h>
 
-#include <HAL/IMU/Drivers/Ninja/FtdiListener.h>
+#include <HAL/Encoder/Drivers/PCAN/PCANListener.h>
 
 namespace hal {
 
-class NinjaEncoderDriver : public EncoderDriverInterface
+class PCANEncoderDriver : public EncoderDriverInterface
 {
 public:
-    NinjaEncoderDriver(const std::string& sCom);
-    ~NinjaEncoderDriver();
+    PCANEncoderDriver(const std::string& sCom);
+    ~PCANEncoderDriver();
     void RegisterEncoderDataCallback(EncoderDriverDataCallback Callback);
 
 private:
-    FtdiListener&               m_FtdiListener;
+    PCANListener&               m_PCANListener;
 
 };
 

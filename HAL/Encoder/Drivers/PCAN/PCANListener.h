@@ -13,9 +13,6 @@
 #include <time.h>
 
 // ??? how should I include these header files?
-#include <vector>
-#include <pthread.h>
-#include <pcan_device.h>
 #include <libpcan.h>
 #include <pcan.h>
 #define B125K 125000

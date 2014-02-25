@@ -1,26 +1,26 @@
-#include "NinjaEncoderDriver.h"
+#include "PCANEncoderDriver.h"
 
 
 using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-NinjaEncoderDriver::NinjaEncoderDriver(const std::string& sCom)
-    : m_FtdiListener(FtdiListener::GetInstance())
+PCANEncoderDriver::PCANEncoderDriver(const std::string& sCom)
+    : m_PCANListener(PCANListener::GetInstance())
 {
-    m_FtdiListener.Connect( sCom.c_str() );
+    m_PCANListener.Connect( sCom.c_str() );
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-NinjaEncoderDriver::~NinjaEncoderDriver()
+PCANEncoderDriver::~PCANEncoderDriver()
 {
-    m_FtdiListener.Disconnect();
+    m_PCANListener.Disconnect();
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void NinjaEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
+void PCANEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
 {
-  m_FtdiListener.RegisterEncoderCallback( *Callback.target<fPtr_Encoder>() );
+  m_PCANListener.RegisterEncoderCallback( *Callback.target<fPtr_Encoder>() );
 }
