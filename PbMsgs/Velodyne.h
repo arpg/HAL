@@ -69,11 +69,15 @@ public:
     /*Here lie the doers, the movers and the shakers */
     void ConvertRangeToPoints(pb::LidarMsg& LidarData);
 
+    int getPointsSize() const;
+    void setPointsSize(int value);
+
 private:
     /* Methods */
     void ReadCalibData(const char *calibFileName);
     void SetupColorMethod();
     void ComputePoints(pb::LidarMsg &LidarData);
+    void ComputePoints_Old(pb::LidarMsg &LidarData);
     void ComputeColor();
     void ComputeIntensity(pb::LidarMsg &LidarData);
 
