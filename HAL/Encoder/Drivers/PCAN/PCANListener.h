@@ -19,6 +19,28 @@
 #define B500K 500000
 #define B1M   1000000
 
+#define Lex_YawRate_id         0x24
+#define Lex_YawRate_mul     0.244
+#define Lex_YawRate_offset  -125
+
+#define Lex_XAcc_id            0x24
+#define Lex_XAcc_mul        0.03589
+#define Lex_XAcc_offset     -18.375
+
+#define Lex_YAcc_id            0x24
+#define Lex_YAcc_mul        0.03589
+#define Lex_YAcc_offset     -18.375
+
+#define Lex_WheelOdom_id          0xAA
+#define Lex_WheelOdom_mul         0.01
+#define Lex_WheelOdom_offset      -67.67
+
+#define Lex_GearState_id          0x3BC
+
+#define Lex_SteeringWheel_id        0x25
+#define Lex_SteeringWheel_mul       1
+#define Lex_SteeringWheel_offset    0
+
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Utils/TicToc.h>
 #include <HAL/Encoder/EncoderDriverInterface.h>
@@ -33,19 +55,19 @@ struct CANMessage
     char  len;             // count of data bytes (0..8)
     char  data[8];         // data bytes, up to 8
     // TODO: findout how dgc_get_time() works then define timestamp type
-    unsigned long int timeStamp;
 };
 
 struct CANParsedPkg
 {
-    unsigned int YawRate;
-    unsigned int EncRate_LF;
-    unsigned int EncRate_RF;
-    unsigned int EncRate_LB;
-    unsigned int EncRate_RB;
-    unsigned int GearState;
-    signed int Acc_x;
-    signed int Acc_y;
+    double YawRate;
+    double EncRate_FL;
+    double EncRate_FR;
+    double EncRate_RL;
+    double EncRate_RR;
+    double GearState;
+    double Acc_x;
+    double Acc_y;
+    double SteeringAngle;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,10 +260,26 @@ private:
 
 private:
 
-  CANParsedPkg ParseCanMessage(CANMessage* RawMsg)
+  CANParsedPkg ParseLexusCanMessage(CANMessage* RawMsg)
   {
-    CANParsedPkg ParsedMsg;
-    ParsedMsg.Acc_x = RawMsg->data[2];
+    static CANParsedPkg ParsedMsg;
+    if( RawMsg->id == Lex_YawRate_id)
+      ParsedMsg.YawRate = (((RawMsg->data[1] & 0x0003)<<8)|(RawMsg->data[2]))*Lex_YawRate_mul+Lex_YawRate_offset;
+    if( RawMsg->id == Lex_XAcc_id)
+      ParsedMsg.Acc_x = (((RawMsg->data[3] & 0x0003)<<8)|(RawMsg->data[4]))*Lex_XAcc_mul+Lex_XAcc_offset;
+    if( RawMsg->id == Lex_YAcc_id)
+      ParsedMsg.Acc_y = (((RawMsg->data[5] & 0x0003)<<8)|(RawMsg->data[6]))*Lex_YAcc_mul+Lex_YAcc_offset;
+//    if( RawMsg->id == Lex_SteeringWheel_id)
+//      ParsedMsg.SteeringWheel = (((RawMsg->data[?] & 0x0003)<<8)|(RawMsg->data[?]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+    if( RawMsg->id == Lex_WheelOdom_id)
+      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[1] & 0x007F)<<8)|(RawMsg->data[2]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+    if( RawMsg->id == Lex_WheelOdom_id)
+      ParsedMsg.EncRate_FL = (((RawMsg->data[3] & 0x007F)<<8)|(RawMsg->data[4]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+    if( RawMsg->id == Lex_WheelOdom_id)
+      ParsedMsg.EncRate_RR = (((RawMsg->data[5] & 0x007F)<<8)|(RawMsg->data[6]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+    if( RawMsg->id == Lex_WheelOdom_id)
+      ParsedMsg.EncRate_RL = (((RawMsg->data[7] & 0x007F)<<8)|(RawMsg->data[8]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+
     return ParsedMsg;
   }
 
@@ -260,12 +298,12 @@ private:
         continue;
       }
 
-      Pkt = ParseCanMessage(&RawPkg);
+      Pkt = ParseLexusCanMessage(&RawPkg);
 
       if( m_IMUCallback ) {
         pbIMU.Clear();
 
-        pbIMU.set_id(1);
+        pbIMU.set_id(2); // changed the Id from 1 to 2
         pbIMU.set_device_time( hal::Tic() );
 
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
@@ -286,14 +324,14 @@ private:
         pbEncoder.set_device_time( hal::Tic() );
 
         // encoders
-        pbEncoder.set_label(0, "ENC_RATE_LF");
-        pbEncoder.set_data(0, Pkt.EncRate_LF);
-        pbEncoder.set_label(1, "ENC_RATE_RF");
-        pbEncoder.set_data(1, Pkt.EncRate_RF);
-        pbEncoder.set_label(2, "ENC_RATE_LB");
-        pbEncoder.set_data(2, Pkt.EncRate_LB);
-        pbEncoder.set_label(3, "ENC_RATE_RB");
-        pbEncoder.set_data(3, Pkt.EncRate_RB);
+        pbEncoder.set_label(0, "ENC_RATE_FL");
+        pbEncoder.set_data(0, Pkt.EncRate_FL);
+        pbEncoder.set_label(1, "ENC_RATE_FR");
+        pbEncoder.set_data(1, Pkt.EncRate_FR);
+        pbEncoder.set_label(2, "ENC_RATE_RL");
+        pbEncoder.set_data(2, Pkt.EncRate_RL);
+        pbEncoder.set_label(3, "ENC_RATE_RR");
+        pbEncoder.set_data(3, Pkt.EncRate_RR);
 
         (*m_EncoderCallback)(pbEncoder);
       }
