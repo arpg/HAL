@@ -43,6 +43,7 @@
 #include "mip_sdk_user_functions.h"
 #include "ring_buffer.h"
 #include "byteswap_utilities.h"
+#include <string>
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -121,7 +122,7 @@ typedef struct _mip_interface
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-u16 mip_interface_init(u32 com_port, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val);
+u16 mip_interface_init(u32 com_port, std::string device_name, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val);
 u16 mip_interface_close(mip_interface *device_interface);
 
 u16 mip_interface_add_descriptor_set_callback(mip_interface *device_interface, u8 data_set, void *user_ptr, void (*packet_callback)(void *user_ptr, u8 *packet, u16 packet_size, u8 callback_type));
