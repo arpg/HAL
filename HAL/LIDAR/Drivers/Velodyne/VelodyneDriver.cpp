@@ -60,6 +60,16 @@ void VelodyneDriver::_ThreadFunc()
 	pb::MatrixMsg *pbMatIntensity = pbMsg.mutable_intensity();
 	int offset=0; //This Variable will tell where data for block starts, each block will be of 100 bytes.
 
+
+
+    /* Data contains 12 blocks (6 upper, 6 lower), each block contains
+     * 32 lasers, we read data in this format. ALTHOUGH, each pair of upper
+     * and lower block have same rotational position, so it can be interpreted
+     * as 6 blocks of 64 lasers. LidarMsg should be thought of as a matrix of
+     * 64x6, each column representing block and each row laser in that block.
+     */
+    pbMatDist->set_rows(64);//64 lasers
+    pbMatIntensity->set_rows(64);
 	for(int block=0; block<12; block++)
 	{
 	    /*100, which consists of 2byte block id, 2 byte rotational position and 96 byts (32x3) of distance and intensity information from laser. Upper and lower block should alternate. */

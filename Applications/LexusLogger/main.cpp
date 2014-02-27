@@ -44,12 +44,13 @@ std::vector<unsigned char*> dat;
 
 //For lidar
 void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc);
-float ptp[9216000];
-unsigned char col[9216000];
+float *ptp;//[9216000];
+unsigned char *col;//[9216000];
 pangolin::GlBuffer *buf;
 pangolin::GlBuffer *colBuf;
 unsigned char colMap[6000];//2000(2.0m) * 3 (rgb)
 pb::Velodyne vld("/home/rpg/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
+std::mutex mtx;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
@@ -96,43 +97,29 @@ void Posys_Handler(pb::PoseMsg& PoseData)
 
 void LIDAR_Handler(pb::LidarMsg& LidarData)
 {
-  static bool first = true;
-  static struct VelodyneCalib vc[64];
-  if(first)
-  {
-    ReadCalib("/home/rpg/Code/CoreDev/HAL/Applications/SensorViewer/db.xml", vc);
-    first = false;
-  }
+//  static bool first = true;
+//  static struct VelodyneCalib vc[64];
+//  if(first)
+//  {
+//    ReadCalib("/home/rpg/Code/CoreDev/HAL/Applications/SensorViewer/db.xml", vc);
+//    first = false;
+//  }
 
-//  vld.ConvertRangeToPoints(LidarData);
-//  ptp = vld.getPoints();
-//  col = vld.getCol();
+  //std::cout<<"lasers = "<<(int)LidarData.distance().rows()<<std::flush;
+
+
   static double prev_clear_time = hal::Tic();
   if(LidarData.system_time() - prev_clear_time > 2)
   {
-      std::cout<<"Celar"<<std::endl;
-    memset(ptp, 0, sizeof(ptp));
-    memset(col, 0, sizeof(col));
+    memset(ptp, 0, vld.getPointsSize()*4);
+    memset(col, 0, vld.getPointsSize());
     prev_clear_time = LidarData.system_time();
   }
-//  if(LidarData.rotational_position().data(0) == 90) {
-      ConvertRangeToPose(LidarData, vc);
-//      for(int ii =0; ii< 9216000; ii+=4){
-//          if(ptp[ii+3] ==1){
-//          std::cout<<ii<<"="<<ptp[ii]<<", "
-//                   <<ptp[ii+1]<<", "
-//                   <<ptp[ii+2]<<", "
-//                   <<ptp[ii+3]<<"::"
-//                   <<(int)col[ii]<<", "
-//                   <<(int)col[ii+1]<<", "
-//                   <<(int)col[ii+2]<<", "
-//                   <<(int)col[ii+3]
-//                   <<std::endl;
-//          }
-//      }
-//  std::cout<<"handler ends here"<<std::endl;
-//  }
-  //buf->Upload(ptp, sizeof(ptp));//possible but would require restructuring, seg fault right now.
+
+  vld.ConvertRangeToPoints(LidarData);
+  ptp = vld.getPoints();
+  col = vld.getCol();
+
   if(g_bLog)
   {
     pb::Msg pbMsg;
@@ -245,7 +232,7 @@ void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc)
       //multiplication by 25600.
       //Adding each laser gives us data worth of 4 floats, so we multiply laser by 4 to get exact position in array.
       int idx = ((int)LidarData.rotational_position().data(block))*25600 + laser*4;//
-      //std::cout<<idx<<std::endl;
+      std::cout<<idx<<std::endl;
 
       //std::cout<<":: idx = "<<idx<<", "<<xx<<", "<<yy<<", "<<zz<<std::flush;
       ptp[idx] = (float)xx;
@@ -305,7 +292,7 @@ int main( int argc, char* argv[] )
 {
 
   GetPot clArgs(argc,argv);
-  double dCamViewTop = 1, dImuViewBottom = 0.1, dLidarViewBottom = 0.1;
+  double dCamViewTop = 1, dImuViewBottom = 0, dLidarViewBottom = 0;
   double dImuViewRight = 1, dLidarViewLeft = 0;
 
   ///-------------------- CAMERA INIT (Optional)
@@ -407,7 +394,7 @@ int main( int argc, char* argv[] )
 
 
   // Create Smart viewports for each camera image that preserve aspect
-  pangolin::CreatePanel("ui").SetBounds(0,0.1,0,1);
+//  pangolin::CreatePanel("ui").SetBounds(0,0.1,0,1);
   pangolin::View& cameraView = pangolin::Display("Camera");
   //cameraView.SetLayout(pangolin::LayoutEqualHorizontal);
   cameraView.SetLayout(pangolin::LayoutEqual);
@@ -459,10 +446,9 @@ int main( int argc, char* argv[] )
 
   pangolin::Timer theTimer;
 
-  bCamsRunning = true;//starting cameras just before starting GUI.
+  bCamsRunning = bHaveCam;//starting cameras just before starting GUI.
   usleep(100);
   pangolin::GlTexture glTex[nNumCam];
-  std::vector<pangolin::GlTexture> glt;
   for(; !pangolin::ShouldQuit(); nFrame++)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -480,7 +466,7 @@ int main( int argc, char* argv[] )
 #endif
 
       for(int ii=0; ii<nNumCam; ++ii ) {
-          //std::cout<<"frm = "<< nFrame<<std::endl;
+          std::cout<<"frm = "<< nFrame<<std::endl;
         //std::cout<< "img SIZE = "<< vImgArr[ii]->Size()<<std::endl;
         if(vImgArr[ii]->Size() == 0)// || vImgs[ii].size() ==0)
           continue;
@@ -513,7 +499,7 @@ int main( int argc, char* argv[] )
     if(g_bLog) {
       // draw red circle on bottom left corner for visual cue
       if( ! ((nFrame / 30) %2) ) {
-        cameraView.ActivatePixelOrthographic();
+        pangolin::DisplayBase().ActivatePixelOrthographic();
         pangolin::GlState state;
         state.glDisable(GL_DEPTH_TEST);
         state.glDisable(GL_LIGHTING);
@@ -524,9 +510,8 @@ int main( int argc, char* argv[] )
 
     if(bHaveLIDAR)
     {
-//        std::cout<<"siz = "<<sizeof(ptp)<<std::endl;
-      buf->Upload(ptp, sizeof(ptp));
-      colBuf->Upload(col, sizeof(col));
+      buf->Upload(ptp, vld.getPointsSize()*4);
+      colBuf->Upload(col, vld.getPointsSize());
     }
 
     pangolin::FinishFrame();

@@ -78,7 +78,7 @@ private:
     void SetupColorMethod();
     void ComputePoints(pb::LidarMsg &LidarData);
     void ComputePoints_Old(pb::LidarMsg &LidarData);
-    void ComputeColor();
+    void ComputeColor(int ii);
     void ComputeIntensity(pb::LidarMsg &LidarData);
 
     /* Properties */
