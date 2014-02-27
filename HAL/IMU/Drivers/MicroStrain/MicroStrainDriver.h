@@ -12,7 +12,13 @@ namespace hal {
 class MicroStrainDriver : public IMUDriverInterface
 {
     public:
-        MicroStrainDriver();
+        MicroStrainDriver(std::string portname,
+                          bool capture_accel,
+                          bool capture_gyro,
+                          bool capture_mag,
+                          bool capture_gps,
+                          int  gps_hz,
+                          int  imu_hz);
         ~MicroStrainDriver();
         void RegisterIMUDataCallback(IMUDriverDataCallback callback);
 
@@ -46,6 +52,7 @@ class MicroStrainDriver : public IMUDriverInterface
         bool m_bGetMagnetometerAHRS;
         int  m_nHzGPS;
         int  m_nHzAHRS;
+        std::string m_sPortName;
 
 };
 
