@@ -25,13 +25,10 @@ class SensorViewer {
                    has_camera_(false), has_imu_(false), has_posys_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
                    panel_height_(0),
-                   logger_(pb::Logger::GetInstance()) {
-#ifdef ANDROID
-    logger_.LogToFile("/sdcard/", "sensors");
-#else
-    logger_.LogToFile("", "sensors");
-#endif
+                   logger_(pb::Logger::GetInstance())
+  {
   }
+
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
@@ -133,25 +130,32 @@ class SensorViewer {
 
       if (got_first_image) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
-          pb::Image img = images->at(ii);
+          std::shared_ptr<pb::Image> img = images->at(ii);
           if (!glTex[ii].tid && num_channels_) {
-            GLint internal_format = (img.Format() == GL_LUMINANCE ?
+            GLint internal_format = (img->Format() == GL_LUMINANCE ?
                                      GL_LUMINANCE : GL_RGBA);
             // Only initialise now we know format.
-            glTex[ii].Reinitialise(img.Width(), img.Height(),
+            glTex[ii].Reinitialise(img->Width(), img->Height(),
                                    internal_format, true, 0,
-                                   img.Format(), img.Type(), 0);
+                                   img->Format(), img->Type(), 0);
           }
 
           cameraView[ii].Activate();
-          if (got_first_image && img.data()) {
-            glTex[ii].Upload(img.data(), img.Format(), img.Type());
+          if (got_first_image && img->data()) {
+            glTex[ii].Upload(img->data(), img->Format(), img->Type());
             glTex[ii].RenderToViewportFlipY();
           }
         }
       }
 
       if (*logging_enabled_ && is_running_) {
+        if (pb::Logger::GetInstance().IsLogging() == false) {
+#ifdef ANDROID
+          logger_.LogToFile("/sdcard/", "sensors");
+#else
+          logger_.LogToFile("", "sensors");
+#endif
+        }
         if (capture_success) {
           LogCamera(images.get());
         }
@@ -191,6 +195,12 @@ class SensorViewer {
     has_posys_ = true;
   }
 
+  void set_encoder(const std::string& encoder_uri)
+  {
+    encoder_ = hal::Encoder(encoder_uri);
+    has_encoder_ = true;
+  }
+
  protected:
   void RegisterCallbacks() {
     if (has_posys_) {
@@ -203,6 +213,12 @@ class SensorViewer {
       imu_.RegisterIMUDataCallback(
           std::bind(&SensorViewer::IMU_Handler, this, _1));
       std::cout << "- Registering IMU device." << std::endl;
+    }
+
+    if (has_encoder_){
+      encoder_.RegisterEncoderDataCallback(
+            std::bind(&SensorViewer::Encoder_Handler, this, _1));
+      std::cout << "- Registering Encoder device." << std::endl;
     }
   }
 
@@ -262,9 +278,19 @@ class SensorViewer {
     }
   }
 
+  void Encoder_Handler(pb::EncoderMsg& EncoderData) {
+    std::cout << "print data" << std::endl;
+    if (logging_enabled_){
+      pb::Msg pbMsg;
+      pbMsg.set_timestamp(hal::Tic());
+      pbMsg.mutable_encoder()->Swap(&EncoderData);
+      logger_.LogMessage(pbMsg);
+    }
+  }
+
  private:
   size_t num_channels_, base_width_, base_height_;
-  bool has_camera_, has_imu_, has_posys_;
+  bool has_camera_, has_imu_, has_posys_, has_encoder_;
   bool is_running_, is_stepping_;
   int frame_number_;
   int panel_height_;
@@ -282,6 +308,7 @@ int main(int argc, char* argv[]) {
   std::string cam_uri = cl_args.follow("", "-cam");
   std::string imu_uri = cl_args.follow("", "-imu");
   std::string posys_uri = cl_args.follow("", "-posys");
+  std::string encoder_uri = cl_args.follow("","-encoder");
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
@@ -305,6 +332,9 @@ int main(int argc, char* argv[]) {
     viewer.set_posys(posys_uri);
   }
 
+  if (!encoder_uri.empty()) {
+    viewer.set_encoder(encoder_uri);
+  }
   viewer.SetupGUI();
   viewer.Run();
 }

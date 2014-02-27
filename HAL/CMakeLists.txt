@@ -127,6 +127,10 @@ if( ANDROID )
     list(APPEND INTERNAL_LIBS "z")
 endif()
 
+if(TinyXML2_FOUND)
+  include_directories( ${TinyXML2_INCLUDE_DIR} )
+endif()
+
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 add_library(hal ${HAL_SOURCES})

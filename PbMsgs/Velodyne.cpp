@@ -39,7 +39,7 @@ void Velodyne::Init(const char *calibFileName, int numLasers)
   mp_Col = new unsigned char[mn_PointsSize];
   mp_Intensities = new float[mn_IntensitySize];
   memset(mp_Points,0,mn_PointsSize*4);
-  memset(mp_Col,0,mn_PointsSize*4);
+  memset(mp_Col,0,mn_PointsSize);
 
   ReadCalibData(calibFileName);
 }

@@ -26,6 +26,7 @@ find_package( OpenCV2 QUIET )
 if( OpenCV2_FOUND )
     add_definitions( -DHAVE_OPENCV )
     message(STATUS "OpenCV2 Found: ${OpenCV2_INCLUDE_DIRS}")
+    list(APPEND LINK_LIBS ${OpenCV2_LIBRARIES})
 else()
     message(STATUS "OpenCV2 not found")
 endif()
@@ -80,6 +81,7 @@ set( SRCS
     ${PROTO_SRCS}
     Logger.cpp
     Reader.cpp
+    Image.cpp
    )
 
 set( HDRS

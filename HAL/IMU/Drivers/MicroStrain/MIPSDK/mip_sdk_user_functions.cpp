@@ -46,10 +46,15 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 
-std::string DeviceById(int id)
+std::string DeviceById(int id, std::string device_name)
 {
     //search /dev/serial for microstrain devices in Linux
-    FILE* instream = popen("find /dev/serial -print 2> /dev/null | grep -i microstrain","r");
+    //FILE* instream = popen("find /dev/serial -print 2> /dev/null | grep -i microstrain","r");
+
+  // device should be something like /dev/serial/microstrain for linux or
+  //                                 /dev/cu.usbmodem* for MacOS
+  std::string cmd = "find " + device_name + " -print 2> /dev/null";
+  FILE* instream = popen(cmd.c_str(), "r");
 
     if(!instream) {
         std::cerr << "Unable to open pipe." << std::endl;
@@ -64,9 +69,10 @@ std::string DeviceById(int id)
     if( devfound >= id ) {
         devname[strlen(devname)-1] = '\0';
         return std::string(devname);
-    } else {
+    } /*else {
         //search /dev/cu.usbmodem1 for microstrain devices in MacOS
-        instream = popen("find /dev/cu.usbmodem1 -print 2> /dev/null","r");
+      std::cerr << "looking for /dev/cu.usbmodemfa131 " << std::endl;
+        instream = popen("find /dev/cu.usbmodemfa131 -print 2> /dev/null","r");
 
         for(devfound=-1; devfound < id && fgets(devname,sizeof(devname), instream); ++devfound) {
         }
@@ -75,7 +81,7 @@ std::string DeviceById(int id)
             devname[strlen(devname)-1] = '\0';
             return std::string(devname);
         }
-    }
+    }*/
 
     return std::string();
 }
@@ -115,9 +121,9 @@ int Purge(ComPortHandle comPortHandle){
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_sdk_port_open(void **port_handle, int port_num, int /*baudrate*/)
+u16 mip_sdk_port_open(void **port_handle, int port_num, std::string device_name, int /*baudrate*/)
 {
-    const std::string comPortPath = DeviceById(port_num);
+    const std::string comPortPath = DeviceById(port_num, device_name);
     if( comPortPath.empty() ) {
         std::cerr << "Device not connected" << std::endl;
         return MIP_USER_FUNCTION_ERROR;

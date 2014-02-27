@@ -13,7 +13,6 @@ find_package(SceneGraph QUIET)
 find_package(OpenCV2 QUIET)
 #find_package(TinyXML2 QUIET)
 
-
 if(Pangolin_FOUND AND HAL_FOUND AND TinyXML2_FOUND )
     set(BUILD_LEXUSLOGGER OFF CACHE BOOL "Toggle building LexusLogger")
     

@@ -62,14 +62,14 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-u16 mip_interface_init(u32 com_port, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val)
+u16 mip_interface_init(u32 com_port, std::string device_name, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val)
 {
  u16 i;
   
  device_interface->port_handle = NULL; 
   
  //Attempt to open the port
- if(mip_sdk_port_open(&device_interface->port_handle, com_port, baudrate) != MIP_USER_FUNCTION_OK)
+ if(mip_sdk_port_open(&device_interface->port_handle, com_port, device_name, baudrate) != MIP_USER_FUNCTION_OK)
   return MIP_INTERFACE_ERROR; 
   
   
