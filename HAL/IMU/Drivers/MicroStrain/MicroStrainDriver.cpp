@@ -42,13 +42,13 @@ MicroStrainDriver::MicroStrainDriver(std::string portname,
                                      int gps_hz,
                                      int imu_hz)
     : mShouldRun(false),
-      m_sPortName(portname),
+      m_bGetGPS(capture_gps),
       m_bGetAccelerometerAHRS(capture_accel),
       m_bGetGyroAHRS(capture_gyro),
       m_bGetMagnetometerAHRS(capture_mag),
-      m_bGetGPS(capture_gps),
       m_nHzGPS(gps_hz),
-      m_nHzAHRS(imu_hz)
+      m_nHzAHRS(imu_hz),
+      m_sPortName(portname)
 {
     m_bGetEulerAHRS			= false;
     m_bGetQuaternionAHRS	= false;
