@@ -24,8 +24,8 @@
 #define B1M   1000000
 
 #define Lex_YawRate_id         0x24
-#define Lex_YawRate_mul     0.244
-#define Lex_YawRate_offset  -125
+#define Lex_YawRate_mul     1//0.244
+#define Lex_YawRate_offset  0//-125
 
 #define Lex_XAcc_id            0x24
 #define Lex_XAcc_mul        1//0.03589
@@ -34,11 +34,15 @@
 #define Lex_YAcc_id            0x24
 #define Lex_YAcc_mul        1//0.03589
 #define Lex_YAcc_offset     0//-18.375
+// 548 brake id
+// 800 brake
+// 705,720 gear
+// 835 timer
+// 176,178
 
-#define Lex_WheelOdom_id          0xAA
-#define Lex_WheelOdom_mul         0.01
-#define Lex_WheelOdom_offset      -67.67
-
+#define Lex_WheelOdom_id          178//0xAA
+#define Lex_WheelOdom_mul         1//0.01
+#define Lex_WheelOdom_offset      0//-67.67
 #define Lex_
 #define Lex_GearState_id          0x3BC
 
@@ -322,33 +326,58 @@ private:
       }
       return result;
   }
+  int read_int_from_10_signed_bits(char data1, char data2)
+  {
+      const uint8_t upper_mask = 0x03; // = 0000 1111
+      data1 = data1 & upper_mask;
 
+      const uint8_t sign_test = 0x02; // = 0000 1000
+
+      int result;
+      if (data1 & sign_test)
+      {
+          data1 = ~data1 & upper_mask;
+          data2 = ~data2;
+          result = (data2 + data1*256 + 1) * -1;
+      } else {
+          result = data2 + data1*256;
+      }
+      return result;
+  }
   CANParsedPkg ParseLexusCanMessage(CANMessage* RawMsg)
   {
     static CANParsedPkg ParsedMsg;
     Init_CANParsedPkg(ParsedMsg);
     if( RawMsg->id == Lex_YawRate_id)
-      ParsedMsg.YawRate = (((RawMsg->data[1] & 0x0003)<<8)|(RawMsg->data[2]))*Lex_YawRate_mul+Lex_YawRate_offset;
+      ParsedMsg.YawRate = (double)(((RawMsg->data[0] & 0x0001)<<8)|(RawMsg->data[1]))*Lex_YawRate_mul+Lex_YawRate_offset;
     if( RawMsg->id == Lex_XAcc_id)
-      ParsedMsg.Acc_x = (((RawMsg->data[3] & 0x0003)<<8)|(RawMsg->data[4]))*Lex_XAcc_mul+Lex_XAcc_offset;
+      ParsedMsg.Acc_x = (double)(((RawMsg->data[2] & 0x0001)<<8)|(RawMsg->data[3]))*Lex_XAcc_mul+Lex_XAcc_offset;
     if( RawMsg->id == Lex_YAcc_id)
-      ParsedMsg.Acc_y = (((RawMsg->data[5] & 0x0003)<<8)|(RawMsg->data[6]))*Lex_YAcc_mul+Lex_YAcc_offset;
-//    if( RawMsg->id == Lex_SteeringWheel_id)
-//      ParsedMsg.SteeringWheel = (((RawMsg->data[?] & 0x0003)<<8)|(RawMsg->data[?]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.Acc_y = (double)(((RawMsg->data[4] & 0x0001)<<8)|(RawMsg->data[5]))*Lex_YAcc_mul+Lex_YAcc_offset;
+
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[1] & 0x007F)<<8)|(RawMsg->data[2]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[0] & 0x007F)<<8)|(RawMsg->data[1]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FL = (((RawMsg->data[3] & 0x007F)<<8)|(RawMsg->data[4]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+      ParsedMsg.EncRate_FL = (double)(((RawMsg->data[2] & 0x007F)<<8)|(RawMsg->data[3]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RR = (((RawMsg->data[5] & 0x007F)<<8)|(RawMsg->data[6]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+      ParsedMsg.EncRate_RR = (double)(((RawMsg->data[4] & 0x003F)<<8)|(RawMsg->data[5]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RL = (((RawMsg->data[7] & 0x007F)<<8)|(RawMsg->data[8]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+      ParsedMsg.EncRate_RL = (double)(((RawMsg->data[6] & 0x003F)<<8)|(RawMsg->data[7]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+#if(false)
+    if( RawMsg->id == Lex_WheelOdom_id)
+    {ParsedMsg.EncRate_RL = (double)RawMsg->data[0];
+    ParsedMsg.EncRate_RR = (double)RawMsg->data[1];
+    ParsedMsg.EncRate_FL = (double)RawMsg->data[2];
+    ParsedMsg.EncRate_FR = (double)RawMsg->data[3];
+    }
+#endif
     if( RawMsg->id == Lex_SteeringWheel_id)
-      ParsedMsg.SteeringAngle = (read_int_from_12_signed_bits(RawMsg->data[1],RawMsg->data[2]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.SteeringAngle = (double)(read_int_from_12_signed_bits(RawMsg->data[0],RawMsg->data[1]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
     if( RawMsg->id == Lex_MemSteeringZero_id)
-      ParsedMsg.MemSteeringZero = (read_int_from_12_signed_bits(RawMsg->data[3],RawMsg->data[4]))*Lex_MemSteeringZero_mul+Lex_MemSteeringZero_offset;
+      ParsedMsg.MemSteeringZero = (double)(read_int_from_12_signed_bits(RawMsg->data[2],RawMsg->data[3]))*Lex_MemSteeringZero_mul+Lex_MemSteeringZero_offset;
+
     if( RawMsg->id == Lex_Pinion_id)
-      ParsedMsg.Pinion = ((((RawMsg->data[4] & 0x00FF)<<8)|(RawMsg->data[5]))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
+      ParsedMsg.Pinion = (double)((((RawMsg->data[4] & 0x00FF)<<8)|(RawMsg->data[4]))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
 
     return ParsedMsg;
   }
@@ -369,12 +398,17 @@ private:
       }
 
       Pkt = ParseLexusCanMessage(&RawPkg);
-
-      std::cout << "Acc: " << Pkt.Acc_x << " , " << Pkt.Acc_y << " , " << Pkt.YawRate;
-      std::cout << " Enc: " << Pkt.EncRate_FL;
-      std::cout << " Pin: " << Pkt.Pinion;
-      std::cout << " StrZer: " << Pkt.MemSteeringZero;
-      std::cout << " StrA: " << Pkt.SteeringAngle << " " << std::endl;
+      std::cout << "\t:" << RawPkg.id;
+//      std::cout << " Acc:" << Pkt.Acc_x << ",\t" << Pkt.Acc_y ;
+      std::cout << "\tYaw:" << Pkt.YawRate;
+      std::cout << "\tEnc1:" << Pkt.EncRate_FL;
+      std::cout << "\tEnc2:" << Pkt.EncRate_FR;
+      std::cout << "\tEnc3:" << Pkt.EncRate_RL;
+      std::cout << "\tEnc4:" << Pkt.EncRate_RR;
+      std::cout << "\tPin:" << Pkt.Pinion;
+//      std::cout << "\tStrZ:" << Pkt.MemSteeringZero;
+//      std::cout << "\tStrA: " << Pkt.SteeringAngle;
+      std::cout << std::endl;
 
       if( m_IMUCallback ) {
         pbIMU.Clear();
@@ -383,9 +417,9 @@ private:
         pbIMU.set_device_time( hal::Tic() );
 
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
-        pbVec->add_data(Pkt.Acc_x);
-        pbVec->add_data(Pkt.Acc_y);
-        pbVec->add_data(Pkt.SteeringAngle);
+        pbVec->add_data(Pkt.YawRate);
+        pbVec->add_data(Pkt.YawRate);
+        pbVec->add_data(Pkt.YawRate);
 
         pbVec = pbIMU.mutable_gyro();
         pbVec->add_data(0); //Gyro X

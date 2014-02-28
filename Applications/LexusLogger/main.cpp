@@ -33,6 +33,7 @@ using namespace pangolin;
 
 bool        g_bLog      = false;
 pb::Logger& g_Logger    = pb::Logger::GetInstance();
+std::mutex logMutex;
 
 pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGryo;
@@ -42,6 +43,7 @@ pangolin::DataLog g_PlotLogMag;
 bool bCamsRunning = false;
 std::vector<std::shared_ptr<pb::ImageArray> > vImgCap;
 std::vector<hal::Camera> vCams;
+std::deque<pb::Image> vImgs;
 // should be vector of mutex, but vector requires object to be movable, but
 // apparently mutex isn't, which makes sense. deque doesn't require movable
 // objects, hence is used. Also initialization is complicated, push_back and
@@ -55,7 +57,7 @@ unsigned char *col;//[9216000];
 pangolin::GlBuffer *buf;
 pangolin::GlBuffer *colBuf;
 unsigned char colMap[6000];//2000(2.0m) * 3 (rgb)
-pb::Velodyne vld("/Users/jongnarr/Codes/CoreDev/HAL/Applications/LexusLogger/db.xml");
+pb::Velodyne vld("/home/rpg/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
@@ -129,6 +131,7 @@ void LIDAR_Handler(pb::LidarMsg& LidarData)
 
 void Camera_Handler(int id) {
   bool bRun = true;
+  bool bStarted = false;
 
   while(bRun) {
     // Captures the image, if capture fails bRun=false
@@ -137,21 +140,28 @@ void Camera_Handler(int id) {
       //std::cout<<"id="<<id<<std::flush;
       vCamMtx[id].lock();
       bool success = vCams[id].Capture(*vImgCap[id]);
+//      vImgs[id] = *(vImgCap[id]->at(0));
       vCamMtx[id].unlock();
 
       if(!success) {
         bRun = false;
       }
       else {
+	if(!bStarted)
+	    bStarted=true;
         if(g_bLog ) {
-
-
           pb::Msg pbMsg;
+          logMutex.lock();
           pbMsg.set_timestamp( hal::Tic() );
-          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
+//          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
+          pbMsg.mutable_camera()->CopyFrom(vImgCap[id]->Ref());
           g_Logger.LogMessage(pbMsg);
+          logMutex.unlock();
         }
       }
+    }
+    else if(bStarted){
+	bRun=false;
     }
     usleep(3000);
   }
@@ -191,6 +201,8 @@ int main( int argc, char* argv[] )
       vCams.push_back(hal::Camera(vsCamsUri[ii]));
       vImgCap.push_back(pb::ImageArray::Create());
       vCamThreads.push_back( std::thread( Camera_Handler, ii) );
+      //pb::Image img(vImgCap[ii]->Ref().image(0), vImgCap[ii]);
+      //vImgs.push_back(img);
     }
     vCamMtx.resize(nNumCam);
     //if IMU and Lidar are present they would have to make space for camera.
@@ -284,11 +296,11 @@ int main( int argc, char* argv[] )
   if( bHaveIMU ) {
     pangolin::View& imuView = pangolin::CreateDisplay();
     imuView.SetLayout(pangolin::LayoutEqualVertical);
-    imuView.SetBounds(dImuViewBottom,1,0,dImuViewRight);
     imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel));
     imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo));
     imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag));
     pangolin::DisplayBase().AddDisplay(imuView);
+    imuView.SetBounds(dImuViewBottom,1,0,dImuViewRight);
   }
 
   // Define Camera Render Object (for view / scene browsing)
@@ -341,6 +353,7 @@ int main( int argc, char* argv[] )
           continue;
         vCamMtx[ii].lock();
         pb::Image img = *(vImgCap[ii]->at(0));
+//	pb::Image img = vImgs[ii];
         GLenum imgFormat = img.Format();
         GLenum imgType = img.Type();
 
