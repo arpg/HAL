@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <cmath>
 #include <stdio.h> // standard input / output functions
 #include <string.h> // string function definitions
 #include <unistd.h> // UNIX standard function definitions
@@ -42,15 +43,15 @@
 #define Lex_GearState_id          0x3BC
 
 #define Lex_SteeringWheel_id        0x25
-#define Lex_SteeringWheel_mul       1
+#define Lex_SteeringWheel_mul       1.5
 #define Lex_SteeringWheel_offset    0
 
 #define Lex_MemSteeringZero_id        0x25
-#define Lex_MemSteeringZero_mul       1
-#define Lex_MemSteeringZero_offset    0
+#define Lex_MemSteeringZero_mul       1.5
+#define Lex_MemSteeringZero_offset    0x800
 
 #define Lex_Pinion_id                 0x260
-#define Lex_Pinion_mul                1
+#define Lex_Pinion_mul                0.001
 #define Lex_Pinion_offset             0
 
 #include <HAL/IMU/IMUDriverInterface.h>
@@ -130,8 +131,9 @@ public:
   {
     // Default path is "/dev/pcan32"
     if( m_bIsConnected == false ) {
-      //open the given path
-      m_bIsConnected = _OpenCANBus(path, B500K);
+     //open the given path
+//      m_bIsConnected = _OpenCANBus(path, B500K);
+      m_bIsConnected = _OpenCANBus("/dev/pcan32", B500K);
     }
     return m_bIsConnected;
   }
@@ -369,8 +371,10 @@ private:
       Pkt = ParseLexusCanMessage(&RawPkg);
 
       std::cout << "Acc: " << Pkt.Acc_x << " , " << Pkt.Acc_y << " , " << Pkt.YawRate;
-      std::cout << "Enc: " << Pkt.EncRate_FL;
-      std::cout << "StrA: " << Pkt.SteeringAngle << std::endl;
+      std::cout << " Enc: " << Pkt.EncRate_FL;
+      std::cout << " Pin: " << Pkt.Pinion;
+      std::cout << " StrZer: " << Pkt.MemSteeringZero;
+      std::cout << " StrA: " << Pkt.SteeringAngle << " " << std::endl;
 
       if( m_IMUCallback ) {
         pbIMU.Clear();
@@ -381,7 +385,7 @@ private:
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
         pbVec->add_data(Pkt.Acc_x);
         pbVec->add_data(Pkt.Acc_y);
-        pbVec->add_data(0);
+        pbVec->add_data(Pkt.SteeringAngle);
 
         pbVec = pbIMU.mutable_gyro();
         pbVec->add_data(0); //Gyro X
@@ -390,7 +394,7 @@ private:
 
         (m_IMUCallback)(pbIMU);
       }
-
+/*
       if( m_EncoderCallback ) {
         pbEncoder.Clear();
         pbEncoder.set_device_time( hal::Tic() );
@@ -416,7 +420,7 @@ private:
         pbEncoder.set_data(3, Pkt.EncRate_RR);
         (m_EncoderCallback)(pbEncoder);
       }
-    }
+*/    }
   }
 
 private:
