@@ -23,6 +23,6 @@ public:
 };
 
 // Register this factory by creating static instance of factory
-static PCANEncoderFactory g_PCANEncoderFactory("PCAN");
+static PCANEncoderFactory g_PCANEncoderFactory("pcan");
 
 }

@@ -1,26 +1,27 @@
-#include "PCANEncoderDriver.h"
+#include <HAL/Utils/TicToc.h>
 
+#include "PCANIMUDriver.h"
 
 using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-PCANEncoderDriver::PCANEncoderDriver(const std::string& sCom)
+PCANIMUDriver::PCANIMUDriver(const std::string& sCom)
     : m_PCANListener(PCANListener::GetInstance())
 {
-    m_PCANListener.Connect( sCom.c_str() );
+  m_PCANListener.Connect( sCom.c_str() );
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-PCANEncoderDriver::~PCANEncoderDriver()
+PCANIMUDriver::~PCANIMUDriver()
 {
-    m_PCANListener.Disconnect();
+  m_PCANListener.Disconnect();
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-void PCANEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
+void PCANIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback Callback)
 {
-  m_PCANListener.RegisterEncoderCallback( Callback );
+  m_PCANListener.RegisterIMUCallback( Callback );
 }
