@@ -5,7 +5,7 @@
 #include <HAL/Encoder/EncoderDriverInterface.h>
 
 #include <HAL/Encoder/Drivers/PCAN/PCANListener.h>
-
+class PCANListener;
 namespace hal {
 
 class PCANEncoderDriver : public EncoderDriverInterface

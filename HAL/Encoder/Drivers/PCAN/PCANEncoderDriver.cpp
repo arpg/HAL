@@ -22,5 +22,5 @@ PCANEncoderDriver::~PCANEncoderDriver()
 /////////////////////////////////////////////////////////////////////////////////////////
 void PCANEncoderDriver::RegisterEncoderDataCallback(EncoderDriverDataCallback Callback)
 {
-  m_PCANListener.RegisterEncoderCallback( *Callback.target<fPtr_Encoder>() );
+  m_PCANListener.RegisterEncoderCallback( Callback );
 }

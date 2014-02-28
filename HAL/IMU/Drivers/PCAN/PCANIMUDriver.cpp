@@ -23,5 +23,5 @@ PCANIMUDriver::~PCANIMUDriver()
 /////////////////////////////////////////////////////////////////////////////////////////
 void PCANIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback Callback)
 {
-  m_PCANListener.RegisterIMUCallback( *Callback.target<fPtr_IMU>() );
+  m_PCANListener.RegisterIMUCallback( Callback );
 }

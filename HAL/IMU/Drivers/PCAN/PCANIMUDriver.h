@@ -5,7 +5,7 @@
 #include <HAL/IMU/IMUDriverInterface.h>
 
 #include <HAL/Encoder/Drivers/PCAN/PCANListener.h>
-
+class PCANListener;
 namespace hal {
 
 class PCANIMUDriver : public IMUDriverInterface

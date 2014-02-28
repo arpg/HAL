@@ -13,6 +13,9 @@
 #include <time.h>
 
 // ??? how should I include these header files?
+#include "PCANEncoderDriver.h"
+#include <HAL/IMU/Drivers/PCAN/PCANIMUDriver.h>
+
 #include <libpcan.h>
 //#include <pcan.h>
 #define B125K 125000
@@ -24,12 +27,12 @@
 #define Lex_YawRate_offset  -125
 
 #define Lex_XAcc_id            0x24
-#define Lex_XAcc_mul        0.03589
-#define Lex_XAcc_offset     -18.375
+#define Lex_XAcc_mul        1//0.03589
+#define Lex_XAcc_offset     0//-18.375
 
 #define Lex_YAcc_id            0x24
-#define Lex_YAcc_mul        0.03589
-#define Lex_YAcc_offset     -18.375
+#define Lex_YAcc_mul        1//0.03589
+#define Lex_YAcc_offset     0//-18.375
 
 #define Lex_WheelOdom_id          0xAA
 #define Lex_WheelOdom_mul         0.01
@@ -44,9 +47,6 @@
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Utils/TicToc.h>
 #include <HAL/Encoder/EncoderDriverInterface.h>
-
-using fPtr_IMU = void(*)(pb::ImuMsg& IMUdata);
-using fPtr_Encoder = void(*)(pb::EncoderMsg& Encoderdata);
 
 struct CANMessage
 {
@@ -94,7 +94,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  void RegisterIMUCallback(fPtr_IMU callback)
+  void RegisterIMUCallback(hal::IMUDriverDataCallback callback)
   {
     m_IMUCallback = callback;
     if( m_Running == false ) {
@@ -104,7 +104,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  void RegisterEncoderCallback(fPtr_Encoder callback)
+  void RegisterEncoderCallback(hal::EncoderDriverDataCallback callback)
   {
     m_EncoderCallback = callback;
     if( m_Running == false ) {
@@ -119,14 +119,8 @@ public:
     // Default path is "/dev/pcan32"
     if( m_bIsConnected == false ) {
       //open the given path
-      m_PortHandle = _OpenCANBus(path, B500K);
-
-      if(!m_PortHandle){
-        std::cout << "HAL: Failed to open at 500Kbps, aborting...\n" << std::endl;
-      } else {
-        std::cout << "HAL: CAN BUS '%s'' opened.\n" << std::endl;
-        m_bIsConnected = true;
-      }
+//      m_bIsConnected = _OpenCANBus(path, B500K);
+        m_bIsConnected = _OpenCANBus("/dev/pcan32", B500K);
     }
     return m_bIsConnected;
   }
@@ -227,9 +221,27 @@ private:
       }
   }
   ///////////////////////////////////////////////////////////////////////////////
-  HANDLE _OpenCANBus(const char* comPortPath,const int baudRate = B500K)
+/////// CAN BUS error codes
+///#define CAN_ERR_OK             0x0000  // no error
+///#define CAN_ERR_XMTFULL        0x0001  // transmit buffer full
+///#define CAN_ERR_OVERRUN        0x0002  // overrun in receive buffer
+///#define CAN_ERR_BUSLIGHT       0x0004  // bus error, errorcounter limit reached
+///#define CAN_ERR_BUSHEAVY       0x0008  // bus error, errorcounter limit reached
+///#define CAN_ERR_BUSOFF         0x0010  // bus error, 'bus off' state entered
+///#define CAN_ERR_QRCVEMPTY      0x0020  // receive queue is empty
+///#define CAN_ERR_QOVERRUN       0x0040  // receive queue overrun
+///#define CAN_ERR_QXMTFULL       0x0080  // transmit queue full
+///#define CAN_ERR_REGTEST        0x0100  // test of controller registers failed
+///#define CAN_ERR_NOVXD          0x0200  // Win95/98/ME only
+///#define CAN_ERR_RESOURCE       0x2000  // can't create resource
+///#define CAN_ERR_ILLPARAMTYPE   0x4000  // illegal parameter
+///#define CAN_ERR_ILLPARAMVAL    0x8000  // value out of range
+///#define CAN_ERRMASK_ILLHANDLE  0x1C00  // wrong handle, handle error
+
+  bool _OpenCANBus(const char* comPortPath,const int baudRate = B500K)
   {
     int init_err, status_err;
+    bool connection_flag = false;
     m_PortHandle = LINUX_CAN_Open(comPortPath, O_RDWR); // O_RDWR -> open the port in Blocking mode
     if(m_PortHandle) {
       switch(baudRate) {
@@ -250,12 +262,16 @@ private:
       }
 
       status_err = CAN_Status(m_PortHandle);
-      if((init_err != 0) || (status_err != 0))
-        std::cout << "PCAN initialization failed.\n" << std::endl;
-      else
-        std::cout << "Unable to open PCAN device.\n" << std::endl;
-  }
-  return m_PortHandle;
+      if(init_err != 0) // || (status_err != 0))
+        std::cout << "CAN Status Error : CAN bus initialization failed.\n" << std::endl;
+      else{
+        std::cout << "CAN bus initialized successfully.\n" << std::endl;
+        connection_flag = true;
+      }
+
+  }else
+        std::cout << "Can not open PCAN device, (Please chech device name).\n" << std::endl;
+  return connection_flag;
 }
 
 private:
@@ -300,6 +316,7 @@ private:
 
       Pkt = ParseLexusCanMessage(&RawPkg);
 
+      std::cout << "Accel: " << Pkt.Acc_x << " , " << Pkt.Acc_y << std::endl;
       if( m_IMUCallback ) {
         pbIMU.Clear();
 
@@ -316,9 +333,10 @@ private:
         pbVec->add_data(0); //Gyro Y
         pbVec->add_data(Pkt.YawRate); //Gyro Z
 
-        (*m_IMUCallback)(pbIMU);
+        (m_IMUCallback)(pbIMU);
       }
 
+      /*
       if( m_EncoderCallback ) {
         pbEncoder.Clear();
         pbEncoder.set_device_time( hal::Tic() );
@@ -333,9 +351,9 @@ private:
         pbEncoder.set_label(3, "ENC_RATE_RR");
         pbEncoder.set_data(3, Pkt.EncRate_RR);
 
-        (*m_EncoderCallback)(pbEncoder);
+        (m_EncoderCallback)(pbEncoder);
       }
-
+      */
     }
   }
 
@@ -347,6 +365,6 @@ private:
 
   bool                            m_Running;
   std::thread                     m_CallbackThread;
-  fPtr_IMU                        m_IMUCallback;
-  fPtr_Encoder                    m_EncoderCallback;
+  hal::IMUDriverDataCallback           m_IMUCallback;
+  hal::EncoderDriverDataCallback       m_EncoderCallback;
 };
