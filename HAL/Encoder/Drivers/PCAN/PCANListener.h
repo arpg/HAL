@@ -38,11 +38,20 @@
 #define Lex_WheelOdom_mul         0.01
 #define Lex_WheelOdom_offset      -67.67
 
+#define Lex_
 #define Lex_GearState_id          0x3BC
 
 #define Lex_SteeringWheel_id        0x25
 #define Lex_SteeringWheel_mul       1
 #define Lex_SteeringWheel_offset    0
+
+#define Lex_MemSteeringZero_id        0x25
+#define Lex_MemSteeringZero_mul       1
+#define Lex_MemSteeringZero_offset    0
+
+#define Lex_Pinion_id                 0x260
+#define Lex_Pinion_mul                1
+#define Lex_Pinion_offset             0
 
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Utils/TicToc.h>
@@ -68,6 +77,9 @@ struct CANParsedPkg
     double Acc_x;
     double Acc_y;
     double SteeringAngle;
+    double MemSteeringZero;
+    double Pinion;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,8 +131,7 @@ public:
     // Default path is "/dev/pcan32"
     if( m_bIsConnected == false ) {
       //open the given path
-//      m_bIsConnected = _OpenCANBus(path, B500K);
-        m_bIsConnected = _OpenCANBus("/dev/pcan32", B500K);
+      m_bIsConnected = _OpenCANBus(path, B500K);
     }
     return m_bIsConnected;
   }
@@ -275,10 +286,45 @@ private:
 }
 
 private:
+  CANParsedPkg Init_CANParsedPkg(CANParsedPkg pkg)
+  {
+    pkg.Acc_x = 0;
+    pkg.Acc_y = 0;
+    pkg.EncRate_FL = 0;
+    pkg.EncRate_FR = 0;
+    pkg.EncRate_RL = 0;
+    pkg.EncRate_RR = 0;
+    pkg.GearState = 0;
+    pkg.SteeringAngle = 0;
+    pkg.YawRate = 0;
+    pkg.MemSteeringZero = 0;
+    pkg.Pinion = 0;
+
+    return pkg;
+  }
+  int read_int_from_12_signed_bits(char data1, char data2)
+  {
+      const uint8_t upper_mask = 0x0F; // = 0000 1111
+      data1 = data1 & upper_mask;
+
+      const uint8_t sign_test = 0x08; // = 0000 1000
+
+      int result;
+      if (data1 & sign_test)
+      {
+          data1 = ~data1 & upper_mask;
+          data2 = ~data2;
+          result = (data2 + data1*256 + 1) * -1;
+      } else {
+          result = data2 + data1*256;
+      }
+      return result;
+  }
 
   CANParsedPkg ParseLexusCanMessage(CANMessage* RawMsg)
   {
     static CANParsedPkg ParsedMsg;
+    Init_CANParsedPkg(ParsedMsg);
     if( RawMsg->id == Lex_YawRate_id)
       ParsedMsg.YawRate = (((RawMsg->data[1] & 0x0003)<<8)|(RawMsg->data[2]))*Lex_YawRate_mul+Lex_YawRate_offset;
     if( RawMsg->id == Lex_XAcc_id)
@@ -288,13 +334,19 @@ private:
 //    if( RawMsg->id == Lex_SteeringWheel_id)
 //      ParsedMsg.SteeringWheel = (((RawMsg->data[?] & 0x0003)<<8)|(RawMsg->data[?]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[1] & 0x007F)<<8)|(RawMsg->data[2]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[1] & 0x007F)<<8)|(RawMsg->data[2]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FL = (((RawMsg->data[3] & 0x007F)<<8)|(RawMsg->data[4]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.EncRate_FL = (((RawMsg->data[3] & 0x007F)<<8)|(RawMsg->data[4]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RR = (((RawMsg->data[5] & 0x007F)<<8)|(RawMsg->data[6]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.EncRate_RR = (((RawMsg->data[5] & 0x007F)<<8)|(RawMsg->data[6]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
     if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RL = (((RawMsg->data[7] & 0x007F)<<8)|(RawMsg->data[8]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+      ParsedMsg.EncRate_RL = (((RawMsg->data[7] & 0x007F)<<8)|(RawMsg->data[8]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
+    if( RawMsg->id == Lex_SteeringWheel_id)
+      ParsedMsg.SteeringAngle = (read_int_from_12_signed_bits(RawMsg->data[1],RawMsg->data[2]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
+    if( RawMsg->id == Lex_MemSteeringZero_id)
+      ParsedMsg.MemSteeringZero = (read_int_from_12_signed_bits(RawMsg->data[3],RawMsg->data[4]))*Lex_MemSteeringZero_mul+Lex_MemSteeringZero_offset;
+    if( RawMsg->id == Lex_Pinion_id)
+      ParsedMsg.Pinion = ((((RawMsg->data[4] & 0x00FF)<<8)|(RawMsg->data[5]))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
 
     return ParsedMsg;
   }
@@ -316,7 +368,10 @@ private:
 
       Pkt = ParseLexusCanMessage(&RawPkg);
 
-      std::cout << "Accel: " << Pkt.Acc_x << " , " << Pkt.Acc_y << std::endl;
+      std::cout << "Acc: " << Pkt.Acc_x << " , " << Pkt.Acc_y << " , " << Pkt.YawRate;
+      std::cout << "Enc: " << Pkt.EncRate_FL;
+      std::cout << "StrA: " << Pkt.SteeringAngle << std::endl;
+
       if( m_IMUCallback ) {
         pbIMU.Clear();
 
@@ -336,24 +391,31 @@ private:
         (m_IMUCallback)(pbIMU);
       }
 
-      /*
       if( m_EncoderCallback ) {
         pbEncoder.Clear();
         pbEncoder.set_device_time( hal::Tic() );
 
-        // encoders
-        pbEncoder.set_label(0, "ENC_RATE_FL");
-        pbEncoder.set_data(0, Pkt.EncRate_FL);
-        pbEncoder.set_label(1, "ENC_RATE_FR");
-        pbEncoder.set_data(1, Pkt.EncRate_FR);
-        pbEncoder.set_label(2, "ENC_RATE_RL");
-        pbEncoder.set_data(2, Pkt.EncRate_RL);
-        pbEncoder.set_label(3, "ENC_RATE_RR");
-        pbEncoder.set_data(3, Pkt.EncRate_RR);
+//        // encoders
+//        pbEncoder.set_label(0, "ENC_RATE_FL");
+//        pbEncoder.set_data(0, Pkt.EncRate_FL);
+//        pbEncoder.set_label(1, "ENC_RATE_FR");
+//        pbEncoder.set_data(1, Pkt.EncRate_FR);
+//        pbEncoder.set_label(2, "ENC_RATE_RL");
+//        pbEncoder.set_data(2, Pkt.EncRate_RL);
+//        pbEncoder.set_label(3, "ENC_RATE_RR");
+//        pbEncoder.set_data(3, Pkt.EncRate_RR);
 
+        // encoders
+        pbEncoder.set_label(0, "ENC_LF");
+        pbEncoder.set_data(0, Pkt.EncRate_FL);
+        pbEncoder.set_label(1, "ENC_RF");
+        pbEncoder.set_data(1, Pkt.EncRate_FR);
+        pbEncoder.set_label(2, "ENC_LB");
+        pbEncoder.set_data(2, Pkt.EncRate_RL);
+        pbEncoder.set_label(3, "ENC_RB");
+        pbEncoder.set_data(3, Pkt.EncRate_RR);
         (m_EncoderCallback)(pbEncoder);
       }
-      */
     }
   }
 
