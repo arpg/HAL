@@ -25,35 +25,27 @@
 //#include <mvl/image/colormap.h>
 #include <Velodyne.h>
 
-/* Generic Includes */
-#include <queue>
-
 using namespace pangolin;
 
 
 bool        g_bLog      = false;
 pb::Logger& g_Logger    = pb::Logger::GetInstance();
-std::mutex logMutex;
 
 pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGryo;
 pangolin::DataLog g_PlotLogMag;
 
-// Camera Variables
+//Camera Variables
 bool bCamsRunning = false;
-std::vector<std::shared_ptr<pb::ImageArray> > vImgCap;
+std::vector<std::shared_ptr<pb::ImageArray> > vImgArr;
+std::vector<std::vector<pb::Image> >vImgs;
 std::vector<hal::Camera> vCams;
-std::deque<pb::Image> vImgs;
-// should be vector of mutex, but vector requires object to be movable, but
-// apparently mutex isn't, which makes sense. deque doesn't require movable
-// objects, hence is used. Also initialization is complicated, push_back and
-// such don't work, but a simple resize does. :)
-std::deque <std::mutex> vCamMtx;
+std::vector<unsigned char*> dat;
 
-// For lidar
+//For lidar
 void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc);
-float *ptp;//[9216000];
-unsigned char *col;//[9216000];
+float ptp[9216000];
+unsigned char col[9216000];
 pangolin::GlBuffer *buf;
 pangolin::GlBuffer *colBuf;
 unsigned char colMap[6000];//2000(2.0m) * 3 (rgb)
@@ -94,9 +86,6 @@ void Posys_Handler(pb::PoseMsg& PoseData)
     }
     */
 
-  std::cout<<"lat: "<<PoseData.pose().data(0)<<", long: "
-           <<PoseData.pose().data(1) <<", height: "
-           <<PoseData.pose().data(2) <<std::endl;
   if( g_bLog ) {
     pb::Msg pbMsg;
     pbMsg.set_timestamp( hal::Tic() );
@@ -107,19 +96,43 @@ void Posys_Handler(pb::PoseMsg& PoseData)
 
 void LIDAR_Handler(pb::LidarMsg& LidarData)
 {
+  static bool first = true;
+  static struct VelodyneCalib vc[64];
+  if(first)
+  {
+    ReadCalib("/home/rpg/Code/CoreDev/HAL/Applications/SensorViewer/db.xml", vc);
+    first = false;
+  }
 
+//  vld.ConvertRangeToPoints(LidarData);
+//  ptp = vld.getPoints();
+//  col = vld.getCol();
   static double prev_clear_time = hal::Tic();
   if(LidarData.system_time() - prev_clear_time > 2)
   {
-    memset(ptp, 0, vld.getPointsSize()*4);
-    memset(col, 0, vld.getPointsSize());
+      std::cout<<"Celar"<<std::endl;
+    memset(ptp, 0, sizeof(ptp));
+    memset(col, 0, sizeof(col));
     prev_clear_time = LidarData.system_time();
   }
-
-  vld.ConvertRangeToPoints(LidarData);
-  ptp = vld.getPoints();
-  col = vld.getCol();
-
+//  if(LidarData.rotational_position().data(0) == 90) {
+      ConvertRangeToPose(LidarData, vc);
+//      for(int ii =0; ii< 9216000; ii+=4){
+//          if(ptp[ii+3] ==1){
+//          std::cout<<ii<<"="<<ptp[ii]<<", "
+//                   <<ptp[ii+1]<<", "
+//                   <<ptp[ii+2]<<", "
+//                   <<ptp[ii+3]<<"::"
+//                   <<(int)col[ii]<<", "
+//                   <<(int)col[ii+1]<<", "
+//                   <<(int)col[ii+2]<<", "
+//                   <<(int)col[ii+3]
+//                   <<std::endl;
+//          }
+//      }
+//  std::cout<<"handler ends here"<<std::endl;
+//  }
+  //buf->Upload(ptp, sizeof(ptp));//possible but would require restructuring, seg fault right now.
   if(g_bLog)
   {
     pb::Msg pbMsg;
@@ -129,43 +142,160 @@ void LIDAR_Handler(pb::LidarMsg& LidarData)
   }
 }
 
+void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc)
+{
+  //block contains upper and lower block, i.e. 64 lasers.
+  for(int block=0; block<6; block++)
+  {
+    //calculating sine and cos beforehand, to save computation later
+    double cos_rotation_pos=cos(LidarData.rotational_position().data(block)*M_PI/180);
+    double sin_rotation_pos=sin(LidarData.rotational_position().data(block)*M_PI/180);
+
+    for(int laser=0; laser<64;laser++)
+    {
+      //printf("--------------------------------------------------------------------\n");
+      int pt_idx = block*64+laser;
+
+      //if the distance is 0, that means it was either max range or less tha 0.9, so invalid, in that case we don't do anything
+      double distance = LidarData.distance().data(pt_idx);
+      double distance_raw = distance;
+      if(distance==0)
+      {
+        continue;
+      }
+
+      //getting a pointer to calibration data for this laser.
+      VelodyneCalib vcl = vc[laser];//vcl stands for Velodyne calibration of a laser.
+
+      /* 1. Correct the distance, that is done by just adding the value with distCorrection (which is far point calibration at 25.04m).
+       *    This is the distance error along the ray which a laser has.
+       *    Distance from LidarMsg is already converted in meters, so was the correction factor in calibration data.
+       **/
+      double dist_corr = vcl.distCorrection;
+      distance += dist_corr;
+      //printf("pt_id = %d\ndist=%.3lf, dist_corr=%.1lf, dist_cor = %.1lf\n", pt_idx, distance, dist_corr, vc[laser].distCorrection);
+      //printf("cos_rot_ang = %.1lf, sin = %.1lf\n", cos_rotation_pos, sin_rotation_pos);
+
+      /* 2. Now we correct angles, these angles are with the front of the camera, which is +y.
+       *    These values will be primarily used when we will be computing x and y coordinate.
+       *    If a is angle of laser, b is correction, to correct angle we want a-b, but finally for calculationswe want cos(a-b), we have cos of a,b.
+       *    So we use the identity cos(a-b) = cos(a)cos(b) + sin(a)*sin(b)
+       *    Similarly for sin(a-b) = sin(a)*cos(b) - cos(a)*sin(b)
+       **/
+      double cos_rotation_angle = cos_rotation_pos*vcl.cos_rotCorrection + sin_rotation_pos*vcl.sin_rotCorrection;
+      double sin_rotation_angle = sin_rotation_pos*vcl.cos_rotCorrection - vcl.sin_rotCorrection*cos_rotation_pos;
+      //printf("cos_rot_corr= %.1lf, sin = %.1lf\n", vcl.cos_rotCorrection, vcl.sin_rotCorrection);
+
+
+      /* 3. Now we compute the distance in xy plane, i.e. the distance in horizontal plane and not along the ray.
+       *    This is done to correct vertical and horizontal offset for the laser. Each laser is supposed to originate from a single point,
+       *    which obviously doesn't happen. Vertical Offset is the offset along z-axis from xy-plane, a positive offset is towards +z.
+       *    Horizontal offset is the offset in xy plane from the origin, a +ve offset is towards -x.
+       *    To get the final results, some more adjustments are made in next step.
+       **/
+      double cos_vert_corr = vcl.cos_vertCorrection;
+      double sin_vert_corr = vcl.sin_vertCorrection;
+      double horiz_offset = vcl.horizOffsetCorrection;
+      double vert_offset = vcl.vertOffsetCorrection;
+      //now variable names are dist in corresponding planes or axis
+      double xy = distance * cos_vert_corr;
+      double xx = xy * sin_rotation_angle  - horiz_offset * cos_rotation_angle;
+      double yy = xy * cos_rotation_angle  + horiz_offset * sin_rotation_angle;
+      xx = xx<0?-xx:xx;
+      yy = yy<0?-yy:yy;
+      //printf("cos_vert_corr= %.1lf, sin = %.1lf\n", vcl.cos_vertCorrection, vcl.sin_vertCorrection);
+      //printf("vert_off = %.1lf, horiz_off = %.1lf\n", vert_offset, horiz_offset);
+      //printf("xx=%.1lf, yy=%.1lf\n", xx, yy);
+
+      /* 4. Now, we correct for parameters distCorrectionX and distCorrectionY. Why we do this is unclear, but; what we know is what we do.
+       *    The idea here is that we have correction value for near points at x=2.4m and y=1.93m, we also have distCorrection for far point
+       *    calibration at 25.04m. So, to get the correction for a particular distance in x, we interpolate using values corresponding to x-axis
+       *    i.e. 2.4, distCorrectionX, 25.04, distCorrection (last two apply to both cases). Similarly for y-axis using 1.93,distCorrectionY,
+       *    25.04, distCorrection.
+       *    For better understanding of the interpolation formulae refer to Appendix F of the manual.
+       **/
+      //compute the correction via interpolation
+      double corr_xx = vcl.distCorrectionX + (dist_corr - vcl.distCorrectionX) * (xx-2.4)/22.64;//25.04-2.4 = 22.64
+      double corr_yy = vcl.distCorrectionY + (dist_corr - vcl.distCorrectionY) * (yy-1.93)/23.11;//25.04-1.93 = 23.11
+
+      /* 5. Next task is to extract coordinates x, y and z.
+       *    To compute x and y cordinates we correct distance with corrections computed, then take projection on xy palne, then on respective axes.
+       *    Ofcourse we correct for horizontal offset as well, we are not stupid you know.
+       *    z is a good boy and calculating it is straight forward, projection of distance on z-axis and then correcting by vertOffset.
+       **/
+      //If B=distance in the follwing three formulae, then To B or Not to B is the question.
+      //The X-coordinate
+      xy = (distance_raw + corr_xx)*cos_vert_corr;
+      //points[pt_idx][0]=  xy * sin_rotation_angle  - horiz_offset * cos_rotation_angle;
+      xx =  xy * sin_rotation_angle  - horiz_offset * cos_rotation_angle;
+      //x.push_back(xx);
+
+      //The Y-coordinate
+      xy = (distance_raw + corr_yy)*cos_vert_corr;
+      //points[pt_idx][1] =  xy * cos_rotation_angle  + horiz_offset * sin_rotation_angle;
+      yy =  xy * cos_rotation_angle  + horiz_offset * sin_rotation_angle;
+      //y.push_back(yy);
+
+      //The Z-coordinate
+      //points[pt_idx][2] = distance * sin_vert_corr + vert_offset;
+      double zz=distance_raw * sin_vert_corr + vert_offset + 1.5;//velodyne is porbably at 1.5m from ground, adding 1.5 to have the ground plane at z=0, exact value to be estimated later.
+
+      //we have angular resolution of 0.01 degrees. For each rotational position (there are 36000 such positions) we have a block of 256 (64(laser) * 4(x,y,z,1) = 256) float values.
+      //Angle supplied by LidarData is in degrees, so to compute a rotational position we multiply angle by 100, then we multiply by 256 to reach the offset for that block, hence
+      //multiplication by 25600.
+      //Adding each laser gives us data worth of 4 floats, so we multiply laser by 4 to get exact position in array.
+      int idx = ((int)LidarData.rotational_position().data(block))*25600 + laser*4;//
+      //std::cout<<idx<<std::endl;
+
+      //std::cout<<":: idx = "<<idx<<", "<<xx<<", "<<yy<<", "<<zz<<std::flush;
+      ptp[idx] = (float)xx;
+      ptp[idx+1] = (float)yy;
+      ptp[idx+2] = (float)zz;
+      ptp[idx+3] = 1.0;
+
+      //color the point
+//      int cidx = floor(zz*1000)*3;//m to mm. 3 is for three bytes of r,g,b.
+//      col[idx] = colMap[cidx];
+//      col[idx+1] = colMap[cidx+1];
+//      col[idx+2] = colMap[cidx+2];
+//      col[idx+3] = 255;
+      col[idx] = 0;
+      col[idx+1] = 255;
+      col[idx+2] = 0;
+      col[idx+3] = 255;
+    }
+  }
+
+}
+
 void Camera_Handler(int id) {
   bool bRun = true;
-  bool bStarted = false;
 
   while(bRun) {
     // Captures the image, if capture fails bRun=false
     // o.w. log data in case logging enabled.
+    //std::cout<<"id="<<id<<std::flush;
     if(bCamsRunning){
-      //std::cout<<"id="<<id<<std::flush;
-      vCamMtx[id].lock();
-      bool success = vCams[id].Capture(*vImgCap[id]);
-//      vImgs[id] = *(vImgCap[id]->at(0));
-      vCamMtx[id].unlock();
+      //std::shared_ptr<pb::ImageArray> img = pb::ImageArray::Create();
+      bool success = vCams[id].Capture(*vImgArr[id]);
+
 
       if(!success) {
         bRun = false;
       }
       else {
-	if(!bStarted)
-	    bStarted=true;
         if(g_bLog ) {
+
+
           pb::Msg pbMsg;
-          logMutex.lock();
           pbMsg.set_timestamp( hal::Tic() );
-//          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
-          pbMsg.mutable_camera()->CopyFrom(vImgCap[id]->Ref());
+          pbMsg.mutable_camera()->Swap(&vImgArr[id]->Ref());
           g_Logger.LogMessage(pbMsg);
-          logMutex.unlock();
         }
       }
     }
-    else if(bStarted){
-	bRun=false;
-    }
-    usleep(3000);
   }
-  std::cout<<"Camera "<< id << "stopped." <<std::endl;
+  std::cout<<"End"<<std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,7 +305,7 @@ int main( int argc, char* argv[] )
 {
 
   GetPot clArgs(argc,argv);
-  double dCamViewTop = 1, dImuViewBottom = 0, dLidarViewBottom = 0;
+  double dCamViewTop = 1, dImuViewBottom = 0.1, dLidarViewBottom = 0.1;
   double dImuViewRight = 1, dLidarViewLeft = 0;
 
   ///-------------------- CAMERA INIT (Optional)
@@ -190,7 +320,7 @@ int main( int argc, char* argv[] )
   } while(vsCamsUri[0]!=vsCamsUri[vsCamsUri.size()-1]);
   vsCamsUri.pop_back();
 
-  const bool bHaveCam= (vsCamsUri[0]!=""); //if no cam it will have 1 element "".
+  const bool bHaveCam= (vsCamsUri[0]!="");
 
   std::vector<std::thread> vCamThreads;
   int nNumCam = 0;
@@ -199,12 +329,11 @@ int main( int argc, char* argv[] )
     for(int ii=0;ii<nNumCam; ii++) {
       std::cout<<"arg = "<<vsCamsUri[ii]<<std::endl;
       vCams.push_back(hal::Camera(vsCamsUri[ii]));
-      vImgCap.push_back(pb::ImageArray::Create());
+      vImgArr.push_back(pb::ImageArray::Create());
       vCamThreads.push_back( std::thread( Camera_Handler, ii) );
-      //pb::Image img(vImgCap[ii]->Ref().image(0), vImgCap[ii]);
-      //vImgs.push_back(img);
     }
-    vCamMtx.resize(nNumCam);
+    //vImgs.resize(nNumCam);
+
     //if IMU and Lidar are present they would have to make space for camera.
     dImuViewBottom = 0.5; dLidarViewBottom = 0.5;
   }
@@ -243,6 +372,7 @@ int main( int argc, char* argv[] )
 
   hal::LIDAR theLIDAR;
   if( bHaveLIDAR ) {
+    //build_jet_map(2000, colMap);//to cover 2m in z;
     theLIDAR = hal::LIDAR(sLIDAR);
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
@@ -277,7 +407,7 @@ int main( int argc, char* argv[] )
 
 
   // Create Smart viewports for each camera image that preserve aspect
-//  pangolin::CreatePanel("ui").SetBounds(0,0.1,0,1);
+  pangolin::CreatePanel("ui").SetBounds(0,0.1,0,1);
   pangolin::View& cameraView = pangolin::Display("Camera");
   //cameraView.SetLayout(pangolin::LayoutEqualHorizontal);
   cameraView.SetLayout(pangolin::LayoutEqual);
@@ -286,6 +416,7 @@ int main( int argc, char* argv[] )
   if(bHaveCam)
   {
     for(int ii=0; ii < nNumCam; ++ii ) {
+      std::cout<<"img["<< ii<<"] w = "<<vCams[ii].Width()<<std::endl;
       cameraView.AddDisplay(pangolin::CreateDisplay()
                             .SetAspect(
                               vCams[ii].Width() / (double)vCams[ii].Height()
@@ -296,11 +427,11 @@ int main( int argc, char* argv[] )
   if( bHaveIMU ) {
     pangolin::View& imuView = pangolin::CreateDisplay();
     imuView.SetLayout(pangolin::LayoutEqualVertical);
+    imuView.SetBounds(dImuViewBottom,1,0,dImuViewRight);
     imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel));
     imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo));
     imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag));
     pangolin::DisplayBase().AddDisplay(imuView);
-    imuView.SetBounds(dImuViewBottom,1,0,dImuViewRight);
   }
 
   // Define Camera Render Object (for view / scene browsing)
@@ -328,9 +459,10 @@ int main( int argc, char* argv[] )
 
   pangolin::Timer theTimer;
 
-  bCamsRunning = bHaveCam;//starting cameras just before starting GUI.
+  bCamsRunning = true;//starting cameras just before starting GUI.
   usleep(100);
   pangolin::GlTexture glTex[nNumCam];
+  std::vector<pangolin::GlTexture> glt;
   for(; !pangolin::ShouldQuit(); nFrame++)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -348,28 +480,32 @@ int main( int argc, char* argv[] )
 #endif
 
       for(int ii=0; ii<nNumCam; ++ii ) {
-
-        if(vImgCap[ii]->Size() == 0 )
+          //std::cout<<"frm = "<< nFrame<<std::endl;
+        //std::cout<< "img SIZE = "<< vImgArr[ii]->Size()<<std::endl;
+        if(vImgArr[ii]->Size() == 0)// || vImgs[ii].size() ==0)
           continue;
-        vCamMtx[ii].lock();
-        pb::Image img = *(vImgCap[ii]->at(0));
-//	pb::Image img = vImgs[ii];
+        pb::Image img = vImgArr[ii]->at(0);
+        //pb::Image img = vImgs[ii][0];
+        //pb::Image img( vImgs[ii]);
+        //Only initialise now we know format.
         GLenum imgFormat = img.Format();
         GLenum imgType = img.Type();
 
-        //Only initialise now we know format.
         if(!glTex[ii].tid) {
+            std::cout<<"in frm = "<< imgType<<std::endl;
           glTex[ii].Reinitialise(
                 vCams[ii].Width(), vCams[ii].Height(), imgFormat,
                 true, 0, imgFormat , imgType, 0
                 );
         }
         cameraView[ii].Activate();
+        std::cout<<"out frm = "<< imgType<<std::endl;
         glTex[ii].Upload(img.data(),
                          imgFormat,
                          imgType);
         glTex[ii].RenderToViewportFlipY();
-        vCamMtx[ii].unlock();
+
+    //vImgs.erase(vImgs.begin());
       }
     }
 
@@ -377,7 +513,7 @@ int main( int argc, char* argv[] )
     if(g_bLog) {
       // draw red circle on bottom left corner for visual cue
       if( ! ((nFrame / 30) %2) ) {
-        pangolin::DisplayBase().ActivatePixelOrthographic();
+        cameraView.ActivatePixelOrthographic();
         pangolin::GlState state;
         state.glDisable(GL_DEPTH_TEST);
         state.glDisable(GL_LIGHTING);
@@ -388,12 +524,12 @@ int main( int argc, char* argv[] )
 
     if(bHaveLIDAR)
     {
-      buf->Upload(ptp, vld.getPointsSize()*4);
-      colBuf->Upload(col, vld.getPointsSize());
+//        std::cout<<"siz = "<<sizeof(ptp)<<std::endl;
+      buf->Upload(ptp, sizeof(ptp));
+      colBuf->Upload(col, sizeof(col));
     }
 
     pangolin::FinishFrame();
-    usleep(10000);
   }
 
   bCamsRunning = false;

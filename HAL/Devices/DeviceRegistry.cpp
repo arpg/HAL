@@ -8,7 +8,7 @@
 #include <HAL/Car/CarDevice.h>
 
 #ifdef HAVE_TINYXML2
-#include <HAL/Utils/SimLauncher.h>
+  #include <HAL/Utils/SimLauncher.h>
 #endif
 
 namespace hal

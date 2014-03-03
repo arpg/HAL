@@ -17,7 +17,7 @@ using namespace hal;
 /////////////////////////////////////////////////////////////////////////////////////////
 // port defaults to 2368 if not provided.
 VelodyneDriver::VelodyneDriver(int port)
-    : m_running(false), m_callback(nullptr), m_port(port), m_socketDescriptor(0)
+    : m_port(port), m_running(false), m_callback(nullptr)
 {
     //open the socket and stuff.
     struct sockaddr_in si_me;
@@ -39,37 +39,28 @@ VelodyneDriver::VelodyneDriver(int port)
 /////////////////////////////////////////////////////////////////////////////////////////
 void VelodyneDriver::_ThreadFunc()
 {
-    pb::LidarMsg pbMsg;
 	struct sockaddr_in si_other;
 	char buf[BUFLEN];
 	int slen=sizeof(si_other);
 
     while( m_running ) {
-	pbMsg.Clear();
+	pb::LidarMsg pbMsg;
 
 	//TODO: all the code for recieving the packets and pack it into PbMsg.
 	if (recvfrom(m_socketDescriptor, buf, BUFLEN, 0, (sockaddr *)&si_other, (socklen_t *)&slen)==-1)
 	    throw DeviceException(strerror(errno));
 
 	//Now we start transfering the data to PbMsg.
-	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206.
+	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206. 
 	pbMsg.set_system_time(Tic());//before doing anything else.
 
 	pb::VectorMsg *pbVec = pbMsg.mutable_rotational_position();
 	pb::MatrixMsg *pbMatDist = pbMsg.mutable_distance();
 	pb::MatrixMsg *pbMatIntensity = pbMsg.mutable_intensity();
 	int offset=0; //This Variable will tell where data for block starts, each block will be of 100 bytes.
+	pbMatDist->set_rows(64);
+	pbMatIntensity->set_rows(64);
 
-
-
-    /* Data contains 12 blocks (6 upper, 6 lower), each block contains
-     * 32 lasers, we read data in this format. ALTHOUGH, each pair of upper
-     * and lower block have same rotational position, so it can be interpreted
-     * as 6 blocks of 64 lasers. LidarMsg should be thought of as a matrix of
-     * 64x6, each column representing block and each row laser in that block.
-     */
-    pbMatDist->set_rows(64);//64 lasers
-    pbMatIntensity->set_rows(64);
 	for(int block=0; block<12; block++)
 	{
 	    /*100, which consists of 2byte block id, 2 byte rotational position and 96 byts (32x3) of distance and intensity information from laser. Upper and lower block should alternate. */
@@ -111,7 +102,7 @@ void VelodyneDriver::_ThreadFunc()
 	}
 
 	// Code for packet recieving and packaging ends.
-
+	
 	//Now call the callback function with the data.
 	m_callback(pbMsg);
     }

@@ -29,7 +29,7 @@ Logger& Logger::GetInstance()
 Logger::Logger() :
     m_sFilename("proto.log"),
     m_bShouldRun(false),
-    m_nMaxBufferSize(100)
+    m_nMaxBufferSize(5000)
 {
 }
 

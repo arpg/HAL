@@ -38,13 +38,15 @@ void Velodyne::Init(const char *calibFileName, int numLasers)
   mp_Points = new float[mn_PointsSize];
   mp_Col = new unsigned char[mn_PointsSize];
   mp_Intensities = new float[mn_IntensitySize];
+  memset(mp_Points,0,mn_PointsSize*4);
+  memset(mp_Col,0,mn_PointsSize);
 
   ReadCalibData(calibFileName);
 }
 
 float *Velodyne::getPoints() const
 {
-  return mp_Points;
+    return mp_Points;
 }
 
 unsigned char *Velodyne::getCol() const
@@ -76,6 +78,11 @@ void Velodyne::setColMethod(const ColoringMethod &value)
 {
   me_ColMethod = value;
   SetupColorMethod();
+}
+
+int Velodyne::getPointsSize() const
+{
+    return mn_PointsSize;
 }
 
 void build_jet_map( int length, unsigned char *table )
@@ -337,13 +344,13 @@ void Velodyne::ConvertRangeToPoints(pb::LidarMsg& LidarData)
 {
   if((int)LidarData.distance().rows() != mn_NumLasers)
   {
-    std::cout<<"Dude!! Num of lasers should be equal in the packet recieved"
-               <<" and your initialization."<<std::endl;
+      std::cout<<"Dude!! You said there will be "<< mn_NumLasers << " lasers"
+               <<" but i am getting only "
+              <<(int)LidarData.distance().rows()<<std::endl;
     return;
   }
   ComputePoints(LidarData);
   ComputeIntensity(LidarData);
-  ComputeColor();
   md_TimeStamp = LidarData.system_time();
 }
 
@@ -394,16 +401,16 @@ void Velodyne::ComputePoints(pb::LidarMsg &LidarData)
       //if the distance is 120 or greater it's max range, we don't know if point is there or not.
       double distance = LidarData.distance().data(pt_idx);
       double distance_raw = distance;
-      if(distance==0 || distance >= 120)
+      if(distance==0)// || distance >= 120)
         continue;
 
       //getting a pointer to calibration data for this laser.
       VelodyneLaserCorrection vcl = vlc[laser];//vcl stands for Velodyne calibration of a laser.
 
       /* 1. Correct the distance, that is done by just adding the value with distCorrection (which is far point calibration at 25.04m).
-         *    This is the distance error along the ray which a laser has.
-             *    Distance from LidarMsg is already converted in meters, so was the correction factor in calibration data.
-             **/
+       *    This is the distance error along the ray which a laser has.
+       *    Distance from LidarMsg is already converted in meters, so was the correction factor in calibration data.
+       **/
       double dist_corr = vcl.distCorrection;
       distance += dist_corr;
       //printf("pt_id = %d\ndist=%.3lf, dist_corr=%.1lf, dist_cor = %.1lf\n", pt_idx, distance, dist_corr, vc[laser].distCorrection);
@@ -438,21 +445,21 @@ void Velodyne::ComputePoints(pb::LidarMsg &LidarData)
       yy = yy<0?-yy:yy;
 
       /* 4. Now, we correct for parameters distCorrectionX and distCorrectionY. Why we do this is unclear, but; what we know is what we do.
-         *    The idea here is that we have correction value for near points at x=2.4m and y=1.93m, we also have distCorrection for far point
-             *    calibration at 25.04m. So, to get the correction for a particular distance in x, we interpolate using values corresponding to x-axis
-             *    i.e. 2.4, distCorrectionX, 25.04, distCorrection (last two apply to both cases). Similarly for y-axis using 1.93,distCorrectionY,
-             *    25.04, distCorrection.
-             *    For better understanding of the interpolation formulae refer to Appendix F of the manual.
-             **/
+       *    The idea here is that we have correction value for near points at x=2.4m and y=1.93m, we also have distCorrection for far point
+       *    calibration at 25.04m. So, to get the correction for a particular distance in x, we interpolate using values corresponding to x-axis
+       *    i.e. 2.4, distCorrectionX, 25.04, distCorrection (last two apply to both cases). Similarly for y-axis using 1.93,distCorrectionY,
+       *    25.04, distCorrection.
+       *    For better understanding of the interpolation formulae refer to Appendix F of the manual.
+       **/
       //compute the correction via interpolation
       double corr_xx = vcl.distCorrectionX + (dist_corr - vcl.distCorrectionX) * (xx-2.4)/22.64;//25.04-2.4 = 22.64
       double corr_yy = vcl.distCorrectionY + (dist_corr - vcl.distCorrectionY) * (yy-1.93)/23.11;//25.04-1.93 = 23.11
 
       /* 5. Next task is to extract coordinates x, y and z.
-         *    To compute x and y cordinates we correct distance with corrections computed, then take projection on xy palne, then on respective axes.
-             *    Ofcourse we correct for horizontal offset as well, we are not stupid you know.
-             *    z is a good boy and calculating it is straight forward, projection of distance on z-axis and then correcting by vertOffset.
-             **/
+       *    To compute x and y cordinates we correct distance with corrections computed, then take projection on xy palne, then on respective axes.
+       *    Ofcourse we correct for horizontal offset as well, we are not stupid you know.
+       *    z is a good boy and calculating it is straight forward, projection of distance on z-axis and then correcting by vertOffset.
+       **/
       //If B=distance in the follwing three formulae, then To B or Not to B is the question.
       //The X-coordinate
       xy = (distance_raw + corr_xx)*cos_vert_corr;
@@ -469,56 +476,50 @@ void Velodyne::ComputePoints(pb::LidarMsg &LidarData)
       //Angle supplied by LidarData is in degrees, so to compute a rotational position we multiply angle by 100, then we multiply by 256 to reach the offset for that block, hence
       //multiplication by 25600.
       //Adding each laser gives us data worth of 4 floats, so we multiply laser by 4 to get exact position in array.
-      int idx = ((int)(LidarData.rotational_position().data(block)*100)*(4*mn_NumLasers) + laser*4);//
+      int idx = ((int)LidarData.rotational_position().data(block))*25600 + laser*4;//
+
       mp_Points[idx] = (float)xx;
       mp_Points[idx+1] = (float)yy;
       mp_Points[idx+2] = (float)zz;
       mp_Points[idx+3] = 1.0;
+      ComputeColor(idx);
     }
   }
 
 }
 
-void Velodyne::ComputeColor()
+void Velodyne::ComputeColor(int ii)
 {
   int colIdx=0;
   switch (me_ColMethod)
   {
   case intensity:
-    for (int ii = 0; ii < mn_IntensitySize; ++ii)
-    {
       colIdx = (int)(mp_Intensities[ii]*63);
       mp_Col[ii*4] = mp_ColMap[colIdx];
       mp_Col[ii*4+1] = mp_ColMap[colIdx+1];
       mp_Col[ii*4+2] = mp_ColMap[colIdx+2];
       mp_Col[ii*4+3] = 255;
-    }
     break;
   case height:
-    for (int ii = 2; ii < mn_PointsSize; ii+=4)//start from 2 as we only want to access z, not x and y.
-    {
-      colIdx = (int)(mp_Points[ii]*100);
-      mp_Col[ii-2] = mp_ColMap[colIdx];
-      mp_Col[ii-1] = mp_ColMap[colIdx+1];
-      mp_Col[ii] = mp_ColMap[colIdx+2];
-      mp_Col[ii+1] = 255;
-    }
+      colIdx = floor(mp_Points[ii+2]*100)*3;
+      mp_Col[ii] = mp_ColMap[colIdx];
+      mp_Col[ii+1] = mp_ColMap[colIdx+1];
+      mp_Col[ii+2] = mp_ColMap[colIdx+2];
+      mp_Col[ii+3] = 255;
+      break;
   case distance:
-    for (int ii = 0; ii < mn_PointsSize; ii+=4)
-    {
       //calculating distance, this will be in meter. max distance can be 119.999.... so max colIdx would be 119.
       colIdx = (int)(sqrt(mp_Points[ii]*mp_Points[ii] + mp_Points[ii+1]*mp_Points[ii+1] + mp_Points[ii+2]*mp_Points[ii+2] )/120);
       mp_Col[ii] = mp_ColMap[colIdx];
       mp_Col[ii+1] = mp_ColMap[colIdx+1];
       mp_Col[ii+2] = mp_ColMap[colIdx+2];
       mp_Col[ii+3] = 255;
-    }
+    break;
   default:
-    //This is the case none:
-    for (int ii = 1; ii < mn_PointsSize; ii+=4)
-    {
-      mp_Col[ii] = 255;
-    }
+      mp_Col[ii] = 0;
+      mp_Col[ii+1] = 255;
+      mp_Col[ii+2] = 0;
+      mp_Col[ii+3] = 255;
     break;
   }
 }

@@ -34,23 +34,25 @@ void Sleep(unsigned int time)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-MicroStrainDriver::MicroStrainDriver()
-    : mShouldRun(false)
+MicroStrainDriver::MicroStrainDriver(std::string portname,
+                                     bool capture_accel,
+                                     bool capture_gyro,
+                                     bool capture_mag,
+                                     bool capture_gps,
+                                     int gps_hz,
+                                     int imu_hz)
+    : mShouldRun(false),
+      m_bGetGPS(capture_gps),
+      m_bGetAccelerometerAHRS(capture_accel),
+      m_bGetGyroAHRS(capture_gyro),
+      m_bGetMagnetometerAHRS(capture_mag),
+      m_nHzGPS(gps_hz),
+      m_nHzAHRS(imu_hz),
+      m_sPortName(portname)
 {
-
-    // TODO(jmf): Actually fill this out from constructor
-
-    // TODO(jmf): Do a Posys driver out of these
-    m_bGetGPS  = false;
-    m_nHzGPS   = 1;
     m_bGetEulerAHRS			= false;
     m_bGetQuaternionAHRS	= false;
-
-    m_bGetAHRS = true;
-    m_nHzAHRS  = 200;
-    m_bGetAccelerometerAHRS = true;
-    m_bGetGyroAHRS	        = true;
-    m_bGetMagnetometerAHRS  = true;
+    m_bGetAHRS = capture_accel || capture_gyro || capture_mag;
     m_bGetTimeStampPpsAHRS  = true;
 }
 
@@ -234,13 +236,14 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
 ///////////////////////////////////////////////////////////////////////////////
 bool MicroStrainDriver::_Init()
 {
+
     // Device communication parameters
     const u32 device_id = 0;
     const u32 baudrate = 115200;
 
 
     // Start up device
-    if(mip_interface_init(device_id, baudrate, &mDeviceInterface,
+    if(mip_interface_init(device_id, m_sPortName, baudrate, &mDeviceInterface,
                           DEFAULT_PACKET_TIMEOUT_MS) != MIP_INTERFACE_OK) {
         return false;
     }
