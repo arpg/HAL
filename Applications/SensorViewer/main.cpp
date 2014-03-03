@@ -5,6 +5,7 @@
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Encoder/EncoderDevice.h>
+#include <HAL/LIDAR/LIDARDevice.h>
 
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
@@ -23,6 +24,7 @@ class SensorViewer {
  public:
   SensorViewer() : num_channels_(0), base_width_(0), base_height_(0),
                    has_camera_(false), has_imu_(false), has_posys_(false),
+                   has_encoder_(false), has_lidar_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
                    panel_height_(0),
                    logger_(pb::Logger::GetInstance())
@@ -201,6 +203,12 @@ class SensorViewer {
     has_encoder_ = true;
   }
 
+  void set_lidar(const std::string& lidar_uri)
+  {
+    lidar_ = hal::LIDAR(lidar_uri);
+    has_lidar_ = true;
+  }
+
  protected:
   void RegisterCallbacks() {
     if (has_posys_) {
@@ -219,6 +227,12 @@ class SensorViewer {
       encoder_.RegisterEncoderDataCallback(
             std::bind(&SensorViewer::Encoder_Handler, this, _1));
       std::cout << "- Registering Encoder device." << std::endl;
+    }
+
+    if (has_lidar_){
+      lidar_.RegisterLIDARDataCallback(
+            std::bind(&SensorViewer::LIDAR_Handler, this, _1));
+      std::cout << "- Registering LIDAR device." << std::endl;
     }
   }
 
@@ -288,9 +302,20 @@ class SensorViewer {
     }
   }
 
+  void LIDAR_Handler(pb::LidarMsg& LidarData)
+  {
+    //std::cout << "Got LIDAR data..." << std::endl;
+    if (logging_enabled_){
+      pb::Msg pbMsg;
+      pbMsg.set_timestamp(hal::Tic());
+      pbMsg.mutable_lidar()->Swap(&LidarData);
+      logger_.LogMessage(pbMsg);
+    }
+  }
+
  private:
   size_t num_channels_, base_width_, base_height_;
-  bool has_camera_, has_imu_, has_posys_, has_encoder_;
+  bool has_camera_, has_imu_, has_posys_, has_encoder_, has_lidar_;
   bool is_running_, is_stepping_;
   int frame_number_;
   int panel_height_;
@@ -298,6 +323,7 @@ class SensorViewer {
   hal::IMU imu_;
   hal::Encoder encoder_;
   hal::Posys posys_;
+  hal::LIDAR lidar_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   pb::Logger& logger_;
 };
@@ -309,6 +335,7 @@ int main(int argc, char* argv[]) {
   std::string imu_uri = cl_args.follow("", "-imu");
   std::string posys_uri = cl_args.follow("", "-posys");
   std::string encoder_uri = cl_args.follow("","-encoder");
+  std::string lidar_uri = cl_args.follow("","-lidar");
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
@@ -335,6 +362,11 @@ int main(int argc, char* argv[]) {
   if (!encoder_uri.empty()) {
     viewer.set_encoder(encoder_uri);
   }
+
+  if (!lidar_uri.empty()) {
+    viewer.set_lidar(lidar_uri);
+  }
+
   viewer.SetupGUI();
   viewer.Run();
 }
