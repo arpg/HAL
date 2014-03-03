@@ -162,7 +162,8 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
   while(nTries < 5 &&
        !m_Node.call_rpc(m_sSimNodeName, "RegsiterCamDevice", mReq, mRep, 100))
   {
-    std::cerr << "[NodeCamDriver] Error Call Rpc method of '" << m_sSimNodeName
+    std::cerr << "[NodeCamDriver/RegisterInHost] Error Call Rpc method of '"
+              << m_sSimNodeName
               << "'. Cannot connect to host!! Please make sure it is running!"
               << std::endl;
     sleep(1);
@@ -180,21 +181,24 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
 
     if( m_Node.subscribe(sTopicName) == false )
     {
-      std::cerr << "[NodeCamDriver] Error subscribing to '" << sTopicName
+      std::cerr << "[NodeCamDriver/RegisterInHost] Error subscribing to '"
+                << sTopicName
                 << "'. Please make sure "<<sTopicName<<" is running !!"
                 << std::endl;
       return false;
     }
     else
     {
-      std::cout <<"[NodeCamDriver] Subscribe to topic '"<<sTopicName
-                <<"' success!"<<std::endl;
+      std::cout << "[NodeCamDriver/RegisterInHost] Subscribe to topic '"
+                << sTopicName
+                << "' success!"<<std::endl;
     }
   }
   else
   {
-    std::cerr <<"[NodeCamDriver] Cannot register RPG to "<< m_sSimNodeName
-              <<std::endl;
+    std::cerr << "[NodeCamDriver/RegisterInHost] Cannot register RPG to "
+              << m_sSimNodeName
+              << std::endl;
     return false;
   }
 

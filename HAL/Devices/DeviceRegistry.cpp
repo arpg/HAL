@@ -79,8 +79,18 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     std::string sDriverName = "Node"; sDriverName.append( sDeviceType);
     hal::Uri simUri = uri;
     simUri.SetProperties("sim=" + sSimName);
-    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(simUri);
-    return dev;
+
+    auto pf = m_factories.find(sDriverName);
+    if(pf != m_factories.end()) {
+
+      std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(simUri);
+      return dev;
+    }
+    else{
+      throw DeviceException("Simulation Device for " + std::string(sDeviceType)
+                            + " was not found. Perhaps BUILD_" + sDriverName
+                            + "was off while building HAL.");
+    }
   }
 #endif  // HAVE_TINYXML2
 

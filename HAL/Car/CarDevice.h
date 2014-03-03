@@ -53,7 +53,7 @@ public:
 
   ///////////////////////////////////////////////////////////////
   virtual bool ApplyCommand( double flTorque, double flSteering ) {
-    m_car->ApplyCommand(flTorque,flSteering);
+    return m_car->ApplyCommand(flTorque,flSteering);
   }
 
 protected:
