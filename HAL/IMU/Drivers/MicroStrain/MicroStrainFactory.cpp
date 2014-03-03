@@ -24,7 +24,7 @@ public:
 
     std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
     {
-        std::string portname  = uri.properties.Get("porname", std::string("/dev/serial/microstrain"));
+        std::string portname  = uri.properties.Get("portname", std::string("/dev/serial/microstrain"));
         bool capture_accel = uri.properties.Get("accel", true);
         bool capture_gyro = uri.properties.Get("gyro", true);
         bool capture_mag = uri.properties.Get("mag", false);
