@@ -51,13 +51,11 @@ std::deque<pb::Image> vImgs;
 std::deque <std::mutex> vCamMtx;
 
 // For lidar
-void ConvertRangeToPose(pb::LidarMsg& LidarData, VelodyneCalib* vc);
 float *ptp;//[9216000];
 unsigned char *col;//[9216000];
 pangolin::GlBuffer *buf;
 pangolin::GlBuffer *colBuf;
-unsigned char colMap[6000];//2000(2.0m) * 3 (rgb)
-pb::Velodyne vld("/home/rpg/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
+pb::Velodyne vld;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
@@ -220,7 +218,7 @@ int main( int argc, char* argv[] )
     theIMU.RegisterIMUDataCallback(IMU_Handler);
     std::cout << "- Registering IMU device." << std::endl;
 
-    dCamViewTop = 0.5; dLidarViewLeft = 1/3;
+    dCamViewTop = 0.5; dLidarViewLeft = (double)1/3;
   }
 
 
@@ -243,13 +241,13 @@ int main( int argc, char* argv[] )
 
   hal::LIDAR theLIDAR;
   if( bHaveLIDAR ) {
+    vld.Init("/Users/jongnarr/Codes/CoreDev/HAL/Applications/LexusLogger/db.xml");
     theLIDAR = hal::LIDAR(sLIDAR);
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
 
-    dCamViewTop = 0.5; dImuViewRight = 1/3;
+    dCamViewTop = 0.5; dImuViewRight = (double)1/3;
   }
-
 
   ///-------------------- WINDOW INIT
   int nWindowHeight=768, nWindowWidth=1024;
@@ -277,11 +275,9 @@ int main( int argc, char* argv[] )
 
 
   // Create Smart viewports for each camera image that preserve aspect
-//  pangolin::CreatePanel("ui").SetBounds(0,0.1,0,1);
   pangolin::View& cameraView = pangolin::Display("Camera");
-  //cameraView.SetLayout(pangolin::LayoutEqualHorizontal);
   cameraView.SetLayout(pangolin::LayoutEqual);
-  cameraView.SetBounds(0.1,dCamViewTop,0.0,1.0);
+  cameraView.SetBounds(0.0,dCamViewTop,0.0,1.0);
   pangolin::DisplayBase().AddDisplay(cameraView);
   if(bHaveCam)
   {
