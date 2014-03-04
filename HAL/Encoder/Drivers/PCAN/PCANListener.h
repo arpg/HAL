@@ -366,9 +366,9 @@ private:
     if( RawMsg->id == Lex_FrontWheelOdom_id)
       ParsedMsg.EncRate_FL = (short)(((RawMsg->data[2] & 0x00FF)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_FrontWheelOdom_mul+Lex_FrontWheelOdom_offset;
     if( RawMsg->id == Lex_RearWheelOdom_id)
-      ParsedMsg.EncRate_RR = (double)(((RawMsg->data[0] & 0x003F)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
+      ParsedMsg.EncRate_RR = (short)(((RawMsg->data[0] & 0x003F)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
     if( RawMsg->id == Lex_RearWheelOdom_id)
-      ParsedMsg.EncRate_RL = (double)(((RawMsg->data[2] & 0x003F)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
+      ParsedMsg.EncRate_RL = (short)(((RawMsg->data[2] & 0x003F)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
 #if(true)
 //    if( RawMsg->id == Lex_SteeringWheel_id)
     {
