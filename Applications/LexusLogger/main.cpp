@@ -241,7 +241,7 @@ int main( int argc, char* argv[] )
 
   hal::LIDAR theLIDAR;
   if( bHaveLIDAR ) {
-    vld.Init("/Users/jongnarr/Codes/CoreDev/HAL/Applications/LexusLogger/db.xml");
+    vld.Init("/Users/jongnarr/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
     theLIDAR = hal::LIDAR(sLIDAR);
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
