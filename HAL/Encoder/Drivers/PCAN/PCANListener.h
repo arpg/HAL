@@ -38,24 +38,29 @@
 // 800 brake
 // 705,720 gear
 // 835 timer
-// 176,178
+// 176 front
+// ,178
 
-#define Lex_WheelOdom_id          178//0xAA
-#define Lex_WheelOdom_mul         1//0.01
-#define Lex_WheelOdom_offset      0//-67.67
-#define Lex_
-#define Lex_GearState_id          0x3BC
+#define Lex_FrontWheelOdom_id          176  //0xB0
+#define Lex_FrontWheelOdom_mul         0.01 // Km/h
+#define Lex_FrontWheelOdom_offset      0
+
+#define Lex_RearWheelOdom_id          178   //0xB2
+#define Lex_RearWheelOdom_mul         0.01  // Km/h
+#define Lex_RearWheelOdom_offset      0
+
+#define Lex_GearState_id            0x3BC
 
 #define Lex_SteeringWheel_id        0x25
 #define Lex_SteeringWheel_mul       1.5
-#define Lex_SteeringWheel_offset    0
-
+#define Lex_SteeringWheel_offset    -140
+// no zero data
 #define Lex_MemSteeringZero_id        0x25
 #define Lex_MemSteeringZero_mul       1.5
 #define Lex_MemSteeringZero_offset    0x800
 
 #define Lex_Pinion_id                 0x260
-#define Lex_Pinion_mul                0.001
+#define Lex_Pinion_mul                1//0.001
 #define Lex_Pinion_offset             0
 
 #include <HAL/IMU/IMUDriverInterface.h>
@@ -320,27 +325,28 @@ private:
       {
           data1 = ~data1 & upper_mask;
           data2 = ~data2;
-          result = (data2 + data1*256 + 1) * -1;
+          result = ((data2&0xFF) + (data1&0xFF)*256 + 1) * -1;
       } else {
-          result = data2 + data1*256;
+          result = (data2&0xFF) + (data1&0xFF)*256;
       }
       return result;
   }
-  int read_int_from_10_signed_bits(char data1, char data2)
+
+  int read_int_from_9_signed_bits(char data1, char data2)
   {
-      const uint8_t upper_mask = 0x03; // = 0000 1111
+      const uint8_t upper_mask = 0x01;
       data1 = data1 & upper_mask;
 
-      const uint8_t sign_test = 0x02; // = 0000 1000
+      const uint8_t sign_test = 0x01;
 
       int result;
       if (data1 & sign_test)
       {
           data1 = ~data1 & upper_mask;
           data2 = ~data2;
-          result = (data2 + data1*256 + 1) * -1;
+          result = ((data2&0xFF) + (data1&0xFF)*256 + 1) * -1;
       } else {
-          result = data2 + data1*256;
+          result = (data2&0xFF) + (data1&0xFF)*256;
       }
       return result;
   }
@@ -349,26 +355,31 @@ private:
     static CANParsedPkg ParsedMsg;
     Init_CANParsedPkg(ParsedMsg);
     if( RawMsg->id == Lex_YawRate_id)
-      ParsedMsg.YawRate = (double)(((RawMsg->data[0] & 0x0001)<<8)|(RawMsg->data[1]))*Lex_YawRate_mul+Lex_YawRate_offset;
+        ParsedMsg.YawRate = (short)(read_int_from_9_signed_bits(RawMsg->data[0],RawMsg->data[1]))*Lex_YawRate_mul+Lex_YawRate_offset;
     if( RawMsg->id == Lex_XAcc_id)
-      ParsedMsg.Acc_x = (double)(((RawMsg->data[2] & 0x0001)<<8)|(RawMsg->data[3]))*Lex_XAcc_mul+Lex_XAcc_offset;
+      ParsedMsg.Acc_x = (short)(read_int_from_9_signed_bits(RawMsg->data[2],RawMsg->data[3]))*Lex_XAcc_mul+Lex_XAcc_offset;
     if( RawMsg->id == Lex_YAcc_id)
-      ParsedMsg.Acc_y = (double)(((RawMsg->data[4] & 0x0001)<<8)|(RawMsg->data[5]))*Lex_YAcc_mul+Lex_YAcc_offset;
+      ParsedMsg.Acc_y = (short)(read_int_from_9_signed_bits(RawMsg->data[4],RawMsg->data[5]))*Lex_YAcc_mul+Lex_YAcc_offset;
 
-    if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FR = (double)(((RawMsg->data[0] & 0x007F)<<8)|(RawMsg->data[1]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
-    if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_FL = (double)(((RawMsg->data[2] & 0x007F)<<8)|(RawMsg->data[3]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
-    if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RR = (double)(((RawMsg->data[4] & 0x003F)<<8)|(RawMsg->data[5]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
-    if( RawMsg->id == Lex_WheelOdom_id)
-      ParsedMsg.EncRate_RL = (double)(((RawMsg->data[6] & 0x003F)<<8)|(RawMsg->data[7]))*Lex_WheelOdom_mul+Lex_WheelOdom_offset;
-#if(false)
-    if( RawMsg->id == Lex_WheelOdom_id)
-    {ParsedMsg.EncRate_RL = (double)RawMsg->data[0];
-    ParsedMsg.EncRate_RR = (double)RawMsg->data[1];
-    ParsedMsg.EncRate_FL = (double)RawMsg->data[2];
-    ParsedMsg.EncRate_FR = (double)RawMsg->data[3];
+    if( RawMsg->id == Lex_FrontWheelOdom_id)
+      ParsedMsg.EncRate_FR = (short)(((RawMsg->data[0] & 0x00FF)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_FrontWheelOdom_mul+Lex_FrontWheelOdom_offset;
+    if( RawMsg->id == Lex_FrontWheelOdom_id)
+      ParsedMsg.EncRate_FL = (short)(((RawMsg->data[2] & 0x00FF)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_FrontWheelOdom_mul+Lex_FrontWheelOdom_offset;
+    if( RawMsg->id == Lex_RearWheelOdom_id)
+      ParsedMsg.EncRate_RR = (double)(((RawMsg->data[0] & 0x003F)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
+    if( RawMsg->id == Lex_RearWheelOdom_id)
+      ParsedMsg.EncRate_RL = (double)(((RawMsg->data[2] & 0x003F)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
+#if(true)
+//    if( RawMsg->id == Lex_SteeringWheel_id)
+    {
+        std::cout << "\tD0:" << (RawMsg->data[0]&0xFF);
+        std::cout << "\tD1:" << (RawMsg->data[1]&0xFF);
+        std::cout << "\tD2:" << (RawMsg->data[2]&0xFF);
+        std::cout << "\tD3:" << (RawMsg->data[3]&0xFF);
+        std::cout << "\tD4:" << (RawMsg->data[4]&0xFF);
+        std::cout << "\tD5:" << (RawMsg->data[5]&0xFF);
+        std::cout << "\tD6:" << (RawMsg->data[6]&0xFF);
+        std::cout << std::endl;
     }
 #endif
     if( RawMsg->id == Lex_SteeringWheel_id)
@@ -377,7 +388,7 @@ private:
       ParsedMsg.MemSteeringZero = (double)(read_int_from_12_signed_bits(RawMsg->data[2],RawMsg->data[3]))*Lex_MemSteeringZero_mul+Lex_MemSteeringZero_offset;
 
     if( RawMsg->id == Lex_Pinion_id)
-      ParsedMsg.Pinion = (double)((((RawMsg->data[4] & 0x00FF)<<8)|(RawMsg->data[4]))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
+      ParsedMsg.Pinion = (short)((((RawMsg->data[3] & 0x00FF)<<8)|(RawMsg->data[4] & 0x00FF))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
 
     return ParsedMsg;
   }
@@ -389,7 +400,6 @@ private:
     pb::EncoderMsg  pbEncoder;
     CANMessage      RawPkg;
     CANParsedPkg    Pkt;
-
     while( m_Running ) {
 
       if( _ReadCANBus(&RawPkg) ) {
@@ -397,19 +407,25 @@ private:
         continue;
       }
 
-      Pkt = ParseLexusCanMessage(&RawPkg);
-      std::cout << "\t:" << RawPkg.id;
-//      std::cout << " Acc:" << Pkt.Acc_x << ",\t" << Pkt.Acc_y ;
-      std::cout << "\tYaw:" << Pkt.YawRate;
-      std::cout << "\tEnc1:" << Pkt.EncRate_FL;
-      std::cout << "\tEnc2:" << Pkt.EncRate_FR;
-      std::cout << "\tEnc3:" << Pkt.EncRate_RL;
-      std::cout << "\tEnc4:" << Pkt.EncRate_RR;
-      std::cout << "\tPin:" << Pkt.Pinion;
-//      std::cout << "\tStrZ:" << Pkt.MemSteeringZero;
-//      std::cout << "\tStrA: " << Pkt.SteeringAngle;
-      std::cout << std::endl;
+      if ((RawPkg.id == Lex_Pinion_id))
+      {
+          Pkt = ParseLexusCanMessage(&RawPkg);
+          std::cout << "\t:" << std::hex << RawPkg.id;
 
+#if(false)
+          std::cout << "\t Acc:" << Pkt.Acc_x << ",\t" << Pkt.Acc_y ;
+          std::cout << "\tYaw:" << Pkt.YawRate;
+          std::cout << "\tEncFL:" << Pkt.EncRate_FL;
+          std::cout << "\tEncFR:" << Pkt.EncRate_FR;
+          std::cout << "\tEncRL:" << Pkt.EncRate_RL;
+          std::cout << "\tEncRR:" << Pkt.EncRate_RR;
+
+          std::cout << "\tPin:" << Pkt.Pinion;
+//          std::cout << "\tStrZ:" << Pkt.MemSteeringZero;
+//          std::cout << "\tStrA: " << Pkt.SteeringAngle;
+          std::cout << std::endl;
+#endif
+}
       if( m_IMUCallback ) {
         pbIMU.Clear();
 
