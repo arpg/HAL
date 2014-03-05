@@ -11,7 +11,7 @@ namespace hal {
 class PCANIMUDriver : public IMUDriverInterface
 {
 public:
-    PCANIMUDriver(const std::string& sCom);
+    PCANIMUDriver(unsigned long int baudrate, const std::string& sCom);
     ~PCANIMUDriver();
     void RegisterIMUDataCallback(IMUDriverDataCallback Callback);
 

@@ -13,71 +13,15 @@
 #include <sys/time.h>
 #include <time.h>
 
-// ??? how should I include these header files?
 #include "PCANEncoderDriver.h"
 #include <HAL/IMU/Drivers/PCAN/PCANIMUDriver.h>
 
 #include <libpcan.h>
-//#include <pcan.h>
-#define B125K 125000
-#define B500K 500000
-#define B1M   1000000
-
-#define Lex_YawRate_id         0x24
-#define Lex_YawRate_mul     1//0.244
-#define Lex_YawRate_offset  0//-125
-
-#define Lex_XAcc_id            0x24
-#define Lex_XAcc_mul        1//0.03589
-#define Lex_XAcc_offset     0//-18.375
-
-#define Lex_YAcc_id            0x24
-#define Lex_YAcc_mul        1//0.03589
-#define Lex_YAcc_offset     0//-18.375
-// 548 brake id
-// 800 brake
-// 705,720 gear
-// 835 timer
-// 176 front
-// ,178
-
-#define Lex_FrontWheelOdom_id          176  //0xB0
-#define Lex_FrontWheelOdom_mul         0.01 // Km/h
-#define Lex_FrontWheelOdom_offset      0
-
-#define Lex_RearWheelOdom_id          178   //0xB2
-#define Lex_RearWheelOdom_mul         0.01  // Km/h
-#define Lex_RearWheelOdom_offset      0
-
-#define Lex_GearState_id            0x3BC
-
-#define Lex_SteeringWheel_id        0x25
-#define Lex_SteeringWheel_mul       1.5
-#define Lex_SteeringWheel_offset    -140
-// no zero data
-#define Lex_MemSteeringZero_id        0x25
-#define Lex_MemSteeringZero_mul       1.5
-#define Lex_MemSteeringZero_offset    0x800
-
-#define Lex_Pinion_id                 0x260
-#define Lex_Pinion_mul                1//0.001
-#define Lex_Pinion_offset             0
-
-#include <HAL/IMU/IMUDriverInterface.h>
-#include <HAL/Utils/TicToc.h>
-#include <HAL/Encoder/EncoderDriverInterface.h>
-
-struct CANMessage
-{
-    unsigned int id;       // 11/29 bit code
-    char  msgtype;         // bits of MSGTYPE_*
-    char  len;             // count of data bytes (0..8)
-    char  data[8];         // data bytes, up to 8
-    // TODO: findout how dgc_get_time() works then define timestamp type
-};
 
 struct CANParsedPkg
 {
+    enum CANParsedPkgType{tEncoder_F,tEncoder_R,tIMU,tSteeringAngle,tPinion,tNULL};
+    CANParsedPkgType PkgType;
     double YawRate;
     double EncRate_FL;
     double EncRate_FR;
@@ -88,9 +32,33 @@ struct CANParsedPkg
     double Acc_y;
     double SteeringAngle;
     double MemSteeringZero;
-    double Pinion;
-
+    double PinionAngle;
 };
+
+struct CANMessage
+{
+    unsigned int id;       // 11/29 bit code
+    char  msgtype;         // bits of MSGTYPE_*
+    char  len;             // count of data bytes (0..8)
+    char  data[8];         // data bytes, up to 8
+    // TODO: findout how dgc_get_time() works then define timestamp type
+};
+
+//#define HAVE_LEXUSISF12
+
+
+#ifdef HAVE_LEXUSISF12
+#include <HAL/Encoder/Drivers/PCAN/LexusISF2012.h>
+#endif
+
+#define B125K 125000
+#define B500K 500000
+#define B1M   1000000
+
+#include <HAL/IMU/IMUDriverInterface.h>
+#include <HAL/Utils/TicToc.h>
+#include <HAL/Encoder/EncoderDriverInterface.h>
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class PCANListener
@@ -136,13 +104,12 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  bool Connect(const char *path)
+  bool Connect(unsigned long int baudrate, std::string path)
   {
     // Default path is "/dev/pcan32"
     if( m_bIsConnected == false ) {
      //open the given path
-//      m_bIsConnected = _OpenCANBus(path, B500K);
-      m_bIsConnected = _OpenCANBus("/dev/pcan32", B500K);
+      m_bIsConnected = _OpenCANBus(path.c_str(), baudrate);
     }
     return m_bIsConnected;
   }
@@ -262,7 +229,7 @@ private:
 
   bool _OpenCANBus(const char* comPortPath,const int baudRate = B500K)
   {
-    int init_err, status_err;
+    int init_err=0, status_err=0;
     bool connection_flag = false;
     m_PortHandle = LINUX_CAN_Open(comPortPath, O_RDWR); // O_RDWR -> open the port in Blocking mode
     if(m_PortHandle) {
@@ -284,7 +251,8 @@ private:
       }
 
       status_err = CAN_Status(m_PortHandle);
-      if(init_err != 0) // || (status_err != 0))
+      std::cout << "CAN Status : " << status_err << "\n" << std::endl;
+      if(init_err != 0)
         std::cout << "CAN Status Error : CAN bus initialization failed.\n" << std::endl;
       else{
         std::cout << "CAN bus initialized successfully.\n" << std::endl;
@@ -297,101 +265,6 @@ private:
 }
 
 private:
-  CANParsedPkg Init_CANParsedPkg(CANParsedPkg pkg)
-  {
-    pkg.Acc_x = 0;
-    pkg.Acc_y = 0;
-    pkg.EncRate_FL = 0;
-    pkg.EncRate_FR = 0;
-    pkg.EncRate_RL = 0;
-    pkg.EncRate_RR = 0;
-    pkg.GearState = 0;
-    pkg.SteeringAngle = 0;
-    pkg.YawRate = 0;
-    pkg.MemSteeringZero = 0;
-    pkg.Pinion = 0;
-
-    return pkg;
-  }
-  int read_int_from_12_signed_bits(char data1, char data2)
-  {
-      const uint8_t upper_mask = 0x0F; // = 0000 1111
-      data1 = data1 & upper_mask;
-
-      const uint8_t sign_test = 0x08; // = 0000 1000
-
-      int result;
-      if (data1 & sign_test)
-      {
-          data1 = ~data1 & upper_mask;
-          data2 = ~data2;
-          result = ((data2&0xFF) + (data1&0xFF)*256 + 1) * -1;
-      } else {
-          result = (data2&0xFF) + (data1&0xFF)*256;
-      }
-      return result;
-  }
-
-  int read_int_from_9_signed_bits(char data1, char data2)
-  {
-      const uint8_t upper_mask = 0x01;
-      data1 = data1 & upper_mask;
-
-      const uint8_t sign_test = 0x01;
-
-      int result;
-      if (data1 & sign_test)
-      {
-          data1 = ~data1 & upper_mask;
-          data2 = ~data2;
-          result = ((data2&0xFF) + (data1&0xFF)*256 + 1) * -1;
-      } else {
-          result = (data2&0xFF) + (data1&0xFF)*256;
-      }
-      return result;
-  }
-  CANParsedPkg ParseLexusCanMessage(CANMessage* RawMsg)
-  {
-    static CANParsedPkg ParsedMsg;
-    Init_CANParsedPkg(ParsedMsg);
-    if( RawMsg->id == Lex_YawRate_id)
-        ParsedMsg.YawRate = (short)(read_int_from_9_signed_bits(RawMsg->data[0],RawMsg->data[1]))*Lex_YawRate_mul+Lex_YawRate_offset;
-    if( RawMsg->id == Lex_XAcc_id)
-      ParsedMsg.Acc_x = (short)(read_int_from_9_signed_bits(RawMsg->data[2],RawMsg->data[3]))*Lex_XAcc_mul+Lex_XAcc_offset;
-    if( RawMsg->id == Lex_YAcc_id)
-      ParsedMsg.Acc_y = (short)(read_int_from_9_signed_bits(RawMsg->data[4],RawMsg->data[5]))*Lex_YAcc_mul+Lex_YAcc_offset;
-
-    if( RawMsg->id == Lex_FrontWheelOdom_id)
-      ParsedMsg.EncRate_FR = (short)(((RawMsg->data[0] & 0x00FF)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_FrontWheelOdom_mul+Lex_FrontWheelOdom_offset;
-    if( RawMsg->id == Lex_FrontWheelOdom_id)
-      ParsedMsg.EncRate_FL = (short)(((RawMsg->data[2] & 0x00FF)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_FrontWheelOdom_mul+Lex_FrontWheelOdom_offset;
-    if( RawMsg->id == Lex_RearWheelOdom_id)
-      ParsedMsg.EncRate_RR = (short)(((RawMsg->data[0] & 0x003F)<<8)|(RawMsg->data[1] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
-    if( RawMsg->id == Lex_RearWheelOdom_id)
-      ParsedMsg.EncRate_RL = (short)(((RawMsg->data[2] & 0x003F)<<8)|(RawMsg->data[3] & 0x00FF))*Lex_RearWheelOdom_mul+Lex_RearWheelOdom_offset;
-#if(true)
-//    if( RawMsg->id == Lex_SteeringWheel_id)
-    {
-        std::cout << "\tD0:" << (RawMsg->data[0]&0xFF);
-        std::cout << "\tD1:" << (RawMsg->data[1]&0xFF);
-        std::cout << "\tD2:" << (RawMsg->data[2]&0xFF);
-        std::cout << "\tD3:" << (RawMsg->data[3]&0xFF);
-        std::cout << "\tD4:" << (RawMsg->data[4]&0xFF);
-        std::cout << "\tD5:" << (RawMsg->data[5]&0xFF);
-        std::cout << "\tD6:" << (RawMsg->data[6]&0xFF);
-        std::cout << std::endl;
-    }
-#endif
-    if( RawMsg->id == Lex_SteeringWheel_id)
-      ParsedMsg.SteeringAngle = (double)(read_int_from_12_signed_bits(RawMsg->data[0],RawMsg->data[1]))*Lex_SteeringWheel_mul+Lex_SteeringWheel_offset;
-    if( RawMsg->id == Lex_MemSteeringZero_id)
-      ParsedMsg.MemSteeringZero = (double)(read_int_from_12_signed_bits(RawMsg->data[2],RawMsg->data[3]))*Lex_MemSteeringZero_mul+Lex_MemSteeringZero_offset;
-
-    if( RawMsg->id == Lex_Pinion_id)
-      ParsedMsg.Pinion = (short)((((RawMsg->data[3] & 0x00FF)<<8)|(RawMsg->data[4] & 0x00FF))*Lex_Pinion_mul+Lex_Pinion_offset)*180/M_PI;
-
-    return ParsedMsg;
-  }
 
   /////////////////////////////////////////////////////////////////////////////////////////
   void _ThreadFunc()
@@ -399,86 +272,72 @@ private:
     pb::ImuMsg      pbIMU;
     pb::EncoderMsg  pbEncoder;
     CANMessage      RawPkg;
-    CANParsedPkg    Pkt;
+    CANParsedPkg    Pkg;
+#ifdef HAVE_LEXUSISF12
+    LexusISF12      Car;
+#endif
+
     while( m_Running ) {
 
       if( _ReadCANBus(&RawPkg) ) {
         std::cout << "Error reading CAN Bus port.\n" << std::endl;
         continue;
       }
-
-      if ((RawPkg.id == Lex_Pinion_id))
-      {
-          Pkt = ParseLexusCanMessage(&RawPkg);
-          std::cout << "\t:" << std::hex << RawPkg.id;
-
-#if(false)
-          std::cout << "\t Acc:" << Pkt.Acc_x << ",\t" << Pkt.Acc_y ;
-          std::cout << "\tYaw:" << Pkt.YawRate;
-          std::cout << "\tEncFL:" << Pkt.EncRate_FL;
-          std::cout << "\tEncFR:" << Pkt.EncRate_FR;
-          std::cout << "\tEncRL:" << Pkt.EncRate_RL;
-          std::cout << "\tEncRR:" << Pkt.EncRate_RR;
-
-          std::cout << "\tPin:" << Pkt.Pinion;
-//          std::cout << "\tStrZ:" << Pkt.MemSteeringZero;
-//          std::cout << "\tStrA: " << Pkt.SteeringAngle;
-          std::cout << std::endl;
+      Pkg.PkgType = CANParsedPkg::tNULL;
+#ifdef HAVE_LEXUSISF12
+      Pkg = Car.ParseLexusCanMessage(&RawPkg);
+//      std::cout << "\t:" << std::hex << RawPkg.id;
+      #if(false)
+          PrintLexusMsgs(Pkg);
+      #endif
 #endif
-}
-      if( m_IMUCallback ) {
+    if( m_IMUCallback && (Pkg.PkgType==CANParsedPkg::tIMU) ) {
         pbIMU.Clear();
 
         pbIMU.set_id(2); // changed the Id from 1 to 2
         pbIMU.set_device_time( hal::Tic() );
 
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
-        pbVec->add_data(Pkt.YawRate);
-        pbVec->add_data(Pkt.YawRate);
-        pbVec->add_data(Pkt.YawRate);
+        pbVec->add_data(Pkg.YawRate);
+        pbVec->add_data(Pkg.YawRate);
+        pbVec->add_data(Pkg.YawRate);
 
         pbVec = pbIMU.mutable_gyro();
         pbVec->add_data(0); //Gyro X
         pbVec->add_data(0); //Gyro Y
-        pbVec->add_data(Pkt.YawRate); //Gyro Z
+        pbVec->add_data(Pkg.YawRate); //Gyro Z
 
         (m_IMUCallback)(pbIMU);
-      }
-/*
-      if( m_EncoderCallback ) {
+    }
+
+    if( m_EncoderCallback && (Pkg.PkgType==CANParsedPkg::tEncoder_F) ) {
         pbEncoder.Clear();
         pbEncoder.set_device_time( hal::Tic() );
 
-//        // encoders
-//        pbEncoder.set_label(0, "ENC_RATE_FL");
-//        pbEncoder.set_data(0, Pkt.EncRate_FL);
-//        pbEncoder.set_label(1, "ENC_RATE_FR");
-//        pbEncoder.set_data(1, Pkt.EncRate_FR);
-//        pbEncoder.set_label(2, "ENC_RATE_RL");
-//        pbEncoder.set_data(2, Pkt.EncRate_RL);
-//        pbEncoder.set_label(3, "ENC_RATE_RR");
-//        pbEncoder.set_data(3, Pkt.EncRate_RR);
-
         // encoders
-        pbEncoder.set_label(0, "ENC_LF");
-        pbEncoder.set_data(0, Pkt.EncRate_FL);
-        pbEncoder.set_label(1, "ENC_RF");
-        pbEncoder.set_data(1, Pkt.EncRate_FR);
-        pbEncoder.set_label(2, "ENC_LB");
-        pbEncoder.set_data(2, Pkt.EncRate_RL);
-        pbEncoder.set_label(3, "ENC_RB");
-        pbEncoder.set_data(3, Pkt.EncRate_RR);
+        pbEncoder.set_label(0, "ENC_RATE_FL");
+        pbEncoder.set_data(0, Pkg.EncRate_FL);
+        pbEncoder.set_label(1, "ENC_RATE_FR");
+        pbEncoder.set_data(1, Pkg.EncRate_FR);
         (m_EncoderCallback)(pbEncoder);
-      }
-*/    }
-  }
+    }
 
-private:
+    if( m_EncoderCallback && (Pkg.PkgType==CANParsedPkg::tEncoder_R) ) {
+        pbEncoder.Clear();
+        pbEncoder.set_device_time( hal::Tic() );
+
+        pbEncoder.set_label(0, "ENC_RATE_RL");
+        pbEncoder.set_data(0, Pkg.EncRate_RL);
+        pbEncoder.set_label(1, "ENC_RATE_RR");
+        pbEncoder.set_data(1, Pkg.EncRate_RR);
+        (m_EncoderCallback)(pbEncoder);
+    }
+   }
+}
 
 private:
   bool                            m_bIsConnected;
   HANDLE                          m_PortHandle;
-
   bool                            m_Running;
   std::thread                     m_CallbackThread;
   hal::IMUDriverDataCallback           m_IMUCallback;
