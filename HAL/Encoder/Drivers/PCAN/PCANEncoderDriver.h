@@ -11,7 +11,7 @@ namespace hal {
 class PCANEncoderDriver : public EncoderDriverInterface
 {
 public:
-    PCANEncoderDriver(const std::string& sCom);
+    PCANEncoderDriver(unsigned long int baudrate, const std::string& sCom);
     ~PCANEncoderDriver();
     void RegisterEncoderDataCallback(EncoderDriverDataCallback Callback);
 
