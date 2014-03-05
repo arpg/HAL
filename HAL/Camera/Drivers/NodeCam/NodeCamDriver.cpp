@@ -15,6 +15,7 @@ NodeCamDriver::NodeCamDriver(const Uri& uri)
 
   //Default value is device Id as id will be used when name is not present.
   m_sDeviceName = uri.properties.Get<std::string>("name", m_sDeviceId);
+  m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
 
   // Initialize and create the node, if the node is initialized then register
   // the camera in simba.
@@ -37,35 +38,35 @@ NodeCamDriver::~NodeCamDriver()
 // capture images from host
 bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 {
-  // e.g. Proxy1/RCamera
-  std::string sTopicName =m_sSimNodeName+"/"+m_sDeviceName;
-
   CamMsg         Msg;
   CamMsg         TryMsg;
 
-  // here we use max try to avoid infinia wait
+  // here we use max try to avoid infinite wait
   int iMaxTry=5;
   bool bSuccessFlag = false;
-  while (bSuccessFlag==false||iMaxTry>0)
+  while (bSuccessFlag==false && iMaxTry>0)
   {
-    if(m_Node.receive(sTopicName, TryMsg)==true && TryMsg.time_step() == m_nTimeStep+1)
+    std::cout<<"Going in Battle"<<std::endl;
+    if(m_Node.receive(m_sTopic, Msg)==true )//&& TryMsg.time_step() == m_nTimeStep+1)
     {
-      Msg = TryMsg;
       bSuccessFlag = true;
-      m_nTimeStep = TryMsg.time_step();
     }
     else
     {
       iMaxTry--;
     }
+    usleep(1000);
+    std::cout<<"Battle's over"<<std::endl;
   }
 
   if(bSuccessFlag==false)
   {
     std::cout <<"[NodeCamDriver/Capture] Fail. Did not receive images form "
-              <<sTopicName<<std::endl;
+              <<m_sTopic<<std::endl;
     return false;
   }
+  else
+    std::cout<<"Got an Image."<<std::endl;
 
   m_nChannels = Msg.size();
 
@@ -157,6 +158,10 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
   RegisterNodeCamRepMsg mRep;
 
   //mReq.set_uri(uri.ToString()); // This is the future.
+
+  // TODO: Correct names.
+  m_sDeviceName = "RGB_LCamera@Robot@Proxy1";
+  m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
   mReq.set_uri(m_sDeviceName);
   int nTries=0;
   while(nTries < 5 &&
@@ -177,20 +182,18 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
     m_nImgHeight = mRep.width();
     m_nImgWidth = mRep.height();
 
-    std::string sTopicName =m_sSimNodeName+"/"+m_sDeviceName;
-
-    if( m_Node.subscribe(sTopicName) == false )
+    if( m_Node.subscribe(m_sTopic) == false )
     {
       std::cerr << "[NodeCamDriver/RegisterInHost] Error subscribing to '"
-                << sTopicName
-                << "'. Please make sure "<<sTopicName<<" is running !!"
+                << m_sTopic
+                << "'. Please make sure "<<m_sTopic<<" is running !!"
                 << std::endl;
       return false;
     }
     else
     {
       std::cout << "[NodeCamDriver/RegisterInHost] Subscribe to topic '"
-                << sTopicName
+                << m_sTopic
                 << "' success!"<<std::endl;
     }
   }

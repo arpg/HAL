@@ -8,7 +8,7 @@
 int main(/*int argc, char **argv*/)
 {
   hal::Camera cam("openni:[rgb=1,depth=1]//");
-  hal::Car car("car://");//Uri doesn't has any significance.
+//  hal::Car car("car://");//Uri doesn't has any significance.
   int winw = cam.NumChannels() * cam.Width();
   int winh = cam.Height();
 
@@ -23,7 +23,6 @@ int main(/*int argc, char **argv*/)
     container.AddDisplay(pangolin::CreateDisplay()
                          .SetAspect(cam.Width()/(double)cam.Height()));
   }
-  std::cout<<"num ch = "<<cam.NumChannels()<<std::endl;
 
   pangolin::GlTexture tex[cam.NumChannels()];
   bool run = true;
@@ -34,8 +33,11 @@ int main(/*int argc, char **argv*/)
     glColor3f(1,1,1);
 
     if(run) {
+      std::cout<<"Trying to capture"<<std::endl;
         if( !cam.Capture( *imgs) ) {
             run = false;
+            std::cout<<"No image recieved, Quiting."<<std::endl;
+            break;
         }
     }
 

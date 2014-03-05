@@ -40,6 +40,7 @@ private:
         std::string         m_sSimNodeName;
         std::string         m_sDeviceName;
         std::string         m_sDeviceId;
+        std::string         m_sTopic;
         int                 m_nTimeStep;
 };
 
