@@ -275,7 +275,7 @@ class SensorViewer {
                        IMUdata.mag().data(2));
     }
 
-    if (logging_enabled_) {
+    if (*logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_imu()->Swap(&IMUdata);
@@ -284,7 +284,8 @@ class SensorViewer {
   }
 
   void Posys_Handler(pb::PoseMsg& PoseData) {
-    if (logging_enabled_) {
+    std::cout << "Posys Data: " << PoseData.pose().data(0) << " - " << PoseData.pose().data(1) << " - " << PoseData.pose().data(2) << std::endl;
+    if (*logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_pose()->Swap(&PoseData);
@@ -294,7 +295,7 @@ class SensorViewer {
 
   void Encoder_Handler(pb::EncoderMsg& EncoderData) {
     std::cout << "print data" << std::endl;
-    if (logging_enabled_){
+    if (*logging_enabled_){
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_encoder()->Swap(&EncoderData);
@@ -305,7 +306,7 @@ class SensorViewer {
   void LIDAR_Handler(pb::LidarMsg& LidarData)
   {
     //std::cout << "Got LIDAR data..." << std::endl;
-    if (logging_enabled_){
+    if (*logging_enabled_){
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_lidar()->Swap(&LidarData);

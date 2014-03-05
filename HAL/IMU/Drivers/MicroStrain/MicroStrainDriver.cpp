@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
 
 #include "MicroStrainDriver.h"
@@ -212,7 +213,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
               }
             }
             if(mPosysCallback){
-              if(pbPoseMsg.has_pose() ) {
+              if(pbPoseMsg.has_pose()) {
                 mPosysCallback(pbPoseMsg);
               }
             }
@@ -283,7 +284,9 @@ bool MicroStrainDriver::_Init()
 void MicroStrainDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     mIMUCallback = callback;
-    _Init();
+    if(_Init() == false) {
+      throw DeviceException("Error initializing IMU.");
+    }
 }
 
 
