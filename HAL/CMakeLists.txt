@@ -22,7 +22,7 @@ find_package( PbMsgs 0.1 REQUIRED )
 find_package( Sophus REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED )
 find_package( TinyXML2 )
-find_package( PCAN )
+
 if(TinyXML2_FOUND)
   add_definitions(-DHAVE_TINYXML2)
 endif()
@@ -52,24 +52,24 @@ macro( add_to_hal_libraries )
       # Process targets correctly
       if (TARGET ${lib})
 
-	# If the library is NOT imported, ie is in this project, we
-	# want to depend on it directly rather than through its path
+  # If the library is NOT imported, ie is in this project, we
+  # want to depend on it directly rather than through its path
         get_target_property(is_lib_imported ${lib} IMPORTED)
-	if (NOT ${is_lib_imported})
-	  set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
-	else()
-	  # For imported targets, we just want to depend on the library directly
+  if (NOT ${is_lib_imported})
+    set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+  else()
+    # For imported targets, we just want to depend on the library directly
           get_target_property(libpath ${lib} LOCATION)
-	  if (libpath)
+    if (libpath)
             set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
 
-	    # This shouldn't really happen, but let's cover our bases.
-	  else()
-	    set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
-	  endif()
-	endif()
+      # This shouldn't really happen, but let's cover our bases.
+    else()
+      set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+    endif()
+  endif()
       else()			# Just add the direct path/flag to the list
-	set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+  set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
       endif()
     endforeach()
 endmacro()
@@ -94,6 +94,7 @@ endmacro()
 # Add Devices
 
 add_subdirectory( Devices )
+add_subdirectory( ThirdParty )
 add_subdirectory( Camera )
 add_subdirectory( IMU )
 add_subdirectory( Posys )
@@ -131,9 +132,6 @@ endif()
 if(TinyXML2_FOUND)
   include_directories( ${TinyXML2_INCLUDE_DIR} )
 endif()
-if(PCAN_FOUND)
-  include_directories( ${PCAN_INCLUDE_DIRS} )
-endif()
 
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
@@ -144,9 +142,6 @@ target_link_libraries( hal ${Boost_SYSTEM_LIBRARY} )
 
 if(TinyXML2_FOUND)
   target_link_libraries( hal ${TinyXML2_LIBRARIES} )
-endif()
-if(PCAN_FOUND)
-  target_link_libraries( hal ${PCAN_LIBRARIES} )
 endif()
 
 #message( "Boost system library: " ${Boost_SYSTEM_LIBRARY} )

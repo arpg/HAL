@@ -13,10 +13,11 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "PCANEncoderDriver.h"
+#include <libpcan.h>
+
 #include <HAL/IMU/Drivers/PCAN/PCANIMUDriver.h>
 
-#include <libpcan.h>
+#include "PCANEncoderDriver.h"
 
 struct CANParsedPkg
 {
@@ -44,12 +45,13 @@ struct CANMessage
     // TODO: findout how dgc_get_time() works then define timestamp type
 };
 
-//#define HAVE_LEXUSISF12
 
+#include <HAL/ThirdParty/ThirdPartyConfig.h>
 
-#ifdef HAVE_LEXUSISF12
-#include <HAL/Encoder/Drivers/PCAN/LexusISF2012.h>
+#ifdef PCAN_HAVE_LEXUSISF12
+#include <HAL/ThirdParty/ThirdParty/PCAN/LexusISF2012.h>
 #endif
+
 
 #define B125K 125000
 #define B500K 500000
