@@ -38,7 +38,7 @@ NodeCamDriver::~NodeCamDriver()
 // capture images from host
 bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 {
-  CamMsg         Msg;
+  pb::CameraMsg         Msg;
 
   // here we use max try to avoid infinite wait
   int iMaxTry=5;
@@ -64,43 +64,43 @@ bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
   else
     std::cout<<"Got an Image."<<std::endl;
 
-  m_nChannels = Msg.size();
+//  m_nChannels = Msg.size();
 
-  for(unsigned int ii = 0; ii != m_nChannels; ii++ )
-  {
-    const ImageMsg& Img = Msg.image(ii);
+//  for(unsigned int ii = 0; ii != m_nChannels; ii++ )
+//  {
+//    const ImageMsg& Img = Msg.image(ii);
 
-    if(Img.image_type()==1)//------------------------Gray
-    {
-      pb::ImageMsg* pbImg = vImages.add_image();
-      pbImg->set_timestamp( m_nTimeStep);
-      pbImg->set_width( m_nImgWidth );
-      pbImg->set_height( m_nImgHeight );
-      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
-      pbImg->set_format(pb::PB_LUMINANCE);
-      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight );
-    }
-    else if(Img.image_type()==2)//-------------------RGB
-    {
-      pb::ImageMsg* pbImg = vImages.add_image();
-      pbImg->set_timestamp( m_nTimeStep);
-      pbImg->set_width( m_nImgWidth );
-      pbImg->set_height( m_nImgHeight );
-      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-      pbImg->set_format(pb::PB_RGB);
-      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *3);
-    }
-    else if(Img.image_type()==5)//------------------Depth
-    {
-      pb::ImageMsg* pbImg = vImages.add_image();
-      pbImg->set_timestamp( m_nTimeStep);
-      pbImg->set_width( m_nImgWidth );
-      pbImg->set_height( m_nImgHeight );
-      pbImg->set_type(pb::PB_FLOAT);
-      pbImg->set_format(pb::PB_LUMINANCE);
-      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *4);
-    }
-  }
+//    if(Img.image_type()==1)//------------------------Gray
+//    {
+//      pb::ImageMsg* pbImg = vImages.add_image();
+//      pbImg->set_timestamp( m_nTimeStep);
+//      pbImg->set_width( m_nImgWidth );
+//      pbImg->set_height( m_nImgHeight );
+//      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
+//      pbImg->set_format(pb::PB_LUMINANCE);
+//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight );
+//    }
+//    else if(Img.image_type()==2)//-------------------RGB
+//    {
+//      pb::ImageMsg* pbImg = vImages.add_image();
+//      pbImg->set_timestamp( m_nTimeStep);
+//      pbImg->set_width( m_nImgWidth );
+//      pbImg->set_height( m_nImgHeight );
+//      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+//      pbImg->set_format(pb::PB_RGB);
+//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *3);
+//    }
+//    else if(Img.image_type()==5)//------------------Depth
+//    {
+//      pb::ImageMsg* pbImg = vImages.add_image();
+//      pbImg->set_timestamp( m_nTimeStep);
+//      pbImg->set_width( m_nImgWidth );
+//      pbImg->set_height( m_nImgHeight );
+//      pbImg->set_type(pb::PB_FLOAT);
+//      pbImg->set_format(pb::PB_LUMINANCE);
+//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *4);
+//    }
+//  }
 
   return true;
 }
@@ -156,7 +156,6 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
   //mReq.set_uri(uri.ToString()); // This is the future.
 
   // TODO: Correct names.
-  m_sDeviceName = "RGB_LCamera";
   m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
   mReq.set_uri(m_sDeviceName);
   int nTries=0;
