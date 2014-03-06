@@ -31,6 +31,13 @@ class IMU : public IMUDriverInterface
             Clear();
         }
 
+        inline void Reset()
+        {
+            Clear();
+            m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI, "Imu");
+            RegisterIMUDataCallback(m_callback);
+        }
+
         ///////////////////////////////////////////////////////////////
         void Clear()
         {
@@ -40,6 +47,7 @@ class IMU : public IMUDriverInterface
         ///////////////////////////////////////////////////////////////
         void RegisterIMUDataCallback(IMUDriverDataCallback callback)
         {
+          m_callback = callback;
             if( m_IMU ){
                 m_IMU->RegisterIMUDataCallback( callback );
             }else{
@@ -58,7 +66,7 @@ class IMU : public IMUDriverInterface
 protected:
     hal::Uri                                m_URI;
     std::shared_ptr<IMUDriverInterface>     m_IMU;
-
+    IMUDriverDataCallback m_callback;
 };
 
 } /* namespace */
