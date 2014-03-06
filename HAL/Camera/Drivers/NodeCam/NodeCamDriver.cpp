@@ -38,15 +38,13 @@ NodeCamDriver::~NodeCamDriver()
 // capture images from host
 bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 {
-  pb::CameraMsg         Msg;
-
   // here we use max try to avoid infinite wait
   int iMaxTry=5;
   bool bSuccessFlag = false;
   while (bSuccessFlag==false && iMaxTry>0){
     std::cout<<"Going in Battle"<<std::endl;
     std::cout<<m_sTopic<<std::endl;
-    if(m_Node.receive(m_sTopic, Msg)==true){
+    if(m_Node.receive(m_sTopic, vImages)==true){
       bSuccessFlag = true;
     }
     else{
@@ -64,7 +62,7 @@ bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
   else
     std::cout<<"Got an Image."<<std::endl;
 
-//  m_nChannels = Msg.size();
+  //  m_nChannels = Msg.size();
 
 //  for(unsigned int ii = 0; ii != m_nChannels; ii++ )
 //  {
@@ -152,12 +150,9 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
 {
   RegisterNodeCamReqMsg mReq;
   RegisterNodeCamRepMsg mRep;
-
-  //mReq.set_uri(uri.ToString()); // This is the future.
-
   // TODO: Correct names.
   m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
-  mReq.set_uri(m_sDeviceName);
+  mReq.set_uri(uri.ToString());
   int nTries=0;
   while(nTries < 5 &&
        !m_Node.call_rpc(m_sSimNodeName, "RegsiterCamDevice", mReq, mRep, 100))

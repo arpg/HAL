@@ -9,6 +9,7 @@ int main(/*int argc, char **argv*/)
 {
   hal::Camera cam("openni:[name=LCamera,rgb=1,depth=1]//");
 //  hal::Car car("car://");//Uri doesn't has any significance.
+  int numChannels = cam.NumChannels();
   int winw = cam.NumChannels() * cam.Width();
   int winh = cam.Height();
 
@@ -40,20 +41,21 @@ int main(/*int argc, char **argv*/)
             break;
         }
     }
-
-    for(size_t i=0; i<imgs->Size(); ++i ) {
-      pb::Image img = *(imgs->at(i));
-      if(!tex[i].tid) {
-        tex[i].Reinitialise(img.Width(), img.Height(),
+    if(imgs->Size()>0){
+      for(size_t i=0; i<imgs->Size(); ++i ) {
+        pb::Image img = *(imgs->at(i));
+        if(!tex[i].tid) {
+          tex[i].Reinitialise(img.Width(), img.Height(),
                               img.Format(), true, 0,
                               img.Format(), img.Type(), 0);
-      }
+        }
         container[i].Activate();
         tex[i].Upload(
-            img.data(),
-            img.Format(), img.Type()
-        );
+              img.data(),
+              img.Format(), img.Type()
+              );
         tex[i].RenderToViewportFlipY();
+      }
     }
     pangolin::FinishFrame();
   }
