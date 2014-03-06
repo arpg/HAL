@@ -272,7 +272,9 @@ private:
   void _ThreadFunc()
   {
     pb::ImuMsg      pbIMU;
-    pb::EncoderMsg  pbEncoder;
+    pb::EncoderMsg  pbEncoderRear;
+    pb::EncoderMsg  pbEncoderFront;
+    pb::EncoderMsg  pbSteering;
     CANMessage      RawPkg;
     CANParsedPkg    Pkg;
 #ifdef HAVE_LEXUSISF12
@@ -313,26 +315,38 @@ private:
     }
 
     if( m_EncoderCallback && (Pkg.PkgType==CANParsedPkg::tEncoder_F) ) {
-        pbEncoder.Clear();
-        pbEncoder.set_device_time( hal::Tic() );
+        pbEncoderFront.Clear();
+        pbEncoderFront.set_device_time( hal::Tic() );
 
         // encoders
-        pbEncoder.set_label(0, "ENC_RATE_FL");
-        pbEncoder.set_data(0, Pkg.EncRate_FL);
-        pbEncoder.set_label(1, "ENC_RATE_FR");
-        pbEncoder.set_data(1, Pkg.EncRate_FR);
-        (m_EncoderCallback)(pbEncoder);
+        pbEncoderFront.set_label(0, "ENC_RATE_FL");
+        pbEncoderFront.set_data(0, Pkg.EncRate_FL);
+        pbEncoderFront.set_label(1, "ENC_RATE_FR");
+        pbEncoderFront.set_data(1, Pkg.EncRate_FR);
+        (m_EncoderCallback)(pbEncoderFront);
     }
 
     if( m_EncoderCallback && (Pkg.PkgType==CANParsedPkg::tEncoder_R) ) {
-        pbEncoder.Clear();
-        pbEncoder.set_device_time( hal::Tic() );
+        pbEncoderRear.Clear();
+        pbEncoderRear.set_device_time( hal::Tic() );
 
-        pbEncoder.set_label(0, "ENC_RATE_RL");
-        pbEncoder.set_data(0, Pkg.EncRate_RL);
-        pbEncoder.set_label(1, "ENC_RATE_RR");
-        pbEncoder.set_data(1, Pkg.EncRate_RR);
-        (m_EncoderCallback)(pbEncoder);
+        pbEncoderRear.set_label(0, "ENC_RATE_RL");
+        pbEncoderRear.set_data(0, Pkg.EncRate_RL);
+        pbEncoderRear.set_label(1, "ENC_RATE_RR");
+        pbEncoderRear.set_data(1, Pkg.EncRate_RR);
+        (m_EncoderCallback)(pbEncoderRear);
+    }
+
+//    pbEncoder.label_size()
+//    pbEncoder.label().data(ii)
+
+    if( m_EncoderCallback && (Pkg.PkgType==CANParsedPkg::tSteeringAngle) ) {
+        pbSteering.Clear();
+        pbSteering.set_device_time( hal::Tic() );
+
+        pbSteering.set_label(0, "RAW_STEERING_DATA");
+        pbSteering.set_data(0, Pkg.SteeringAngle);
+        (m_EncoderCallback)(pbSteering);
     }
    }
 }

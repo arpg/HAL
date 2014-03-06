@@ -18,20 +18,27 @@ class Bicycle
 {
 private:
   double prev_time;
-  double time_in_sec(){return hal::Tic();}
 
 public:
   Bicycle(){
-    prev_time = time_in_sec();
+    prev_time = hal::Tic();;
+  }
+  Poses PoseReset(double curr_time)
+  {
+    prev_time = curr_time;
+    Poses currpose;
+    currpose.th = 0;
+    currpose.x = 0;
+    currpose.y = 0;
+    return currpose;
   }
 
-  Poses PoseUpdate(Poses prev_pose,double encoder_R,double encoder_L,double steering_angle)
+  Poses PoseUpdate(Poses prev_pose,double encoder_RR,double encoder_RL,double steering_angle,double curr_time)
   {
     steering_angle = (steering_angle-Steering_offset)*Steering_Coeff;
     // Forward velocity in m/s
-    double forward_velocity = ((encoder_L+encoder_R)*0.5)/3.6;
+    double forward_velocity = ((encoder_RL+encoder_RR)*0.5)/3.6;
     double tet_dot = forward_velocity/L_Wheel2wheel;
-    double curr_time = time_in_sec();
     if(curr_time <= prev_time){
       std::cout << "Bicycle Warning : problem with time step" << std::endl;
       return prev_pose;
