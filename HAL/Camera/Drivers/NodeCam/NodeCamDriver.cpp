@@ -8,8 +8,8 @@
 namespace hal
 {
 
-NodeCamDriver::NodeCamDriver(const Uri& uri)
-{
+NodeCamDriver::NodeCamDriver(const Uri& uri){
+  std::cout<<uri.PrintProperties()<<std::endl;
   m_sDeviceId = uri.properties.Get<std::string>("id","NodeCam");
   m_sSimNodeName = uri.properties.Get<std::string>("sim","LocalSim");
 
@@ -39,24 +39,20 @@ NodeCamDriver::~NodeCamDriver()
 bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 {
   CamMsg         Msg;
-  CamMsg         TryMsg;
 
   // here we use max try to avoid infinite wait
   int iMaxTry=5;
   bool bSuccessFlag = false;
-  while (bSuccessFlag==false && iMaxTry>0)
-  {
+  while (bSuccessFlag==false && iMaxTry>0){
     std::cout<<"Going in Battle"<<std::endl;
-    if(m_Node.receive(m_sTopic, Msg)==true )//&& TryMsg.time_step() == m_nTimeStep+1)
-    {
+    std::cout<<m_sTopic<<std::endl;
+    if(m_Node.receive(m_sTopic, Msg)==true){
       bSuccessFlag = true;
     }
-    else
-    {
+    else{
       iMaxTry--;
     }
-    usleep(1000);
-    std::cout<<"Battle's over"<<std::endl;
+    usleep(100000);
   }
 
   if(bSuccessFlag==false)
@@ -160,7 +156,7 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
   //mReq.set_uri(uri.ToString()); // This is the future.
 
   // TODO: Correct names.
-  m_sDeviceName = "RGB_LCamera@Robot@Proxy1";
+  m_sDeviceName = "RGB_LCamera";
   m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
   mReq.set_uri(m_sDeviceName);
   int nTries=0;
