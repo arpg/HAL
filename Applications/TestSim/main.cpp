@@ -9,7 +9,6 @@ int main(/*int argc, char **argv*/)
 {
   hal::Camera cam("openni:[name=LCamera,rgb=1,depth=0]//");
 //  hal::Car car("car://");//Uri doesn't has any significance.
-  int numChannels = cam.NumChannels();
   int winw = cam.NumChannels() * cam.Width();
   int winh = cam.Height();
 
@@ -25,7 +24,7 @@ int main(/*int argc, char **argv*/)
                          .SetAspect(cam.Width()/(double)cam.Height()));
   }
 
-  pangolin::GlTexture tex[cam.NumChannels()];
+  std::vector<pangolin::GlTexture> tex(cam.NumChannels());
   bool run = true;
   std::shared_ptr<pb::ImageArray> imgs = pb::ImageArray::Create();
   for (int frame = 0; !pangolin::ShouldQuit(); ++frame)
