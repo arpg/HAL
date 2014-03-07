@@ -95,3 +95,11 @@ class ZeroConf {
 };
 
 }  // end namespace hal
+
+// Stream operator overload for ZeroConfURL
+namespace std {
+inline ostream& operator<<(ostream& os, const hal::ZeroConfURL& u) {
+  os << u.host << ":" << u.port;
+  return os;
+}
+}

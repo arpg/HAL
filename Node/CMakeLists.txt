@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_P
 find_package(ZeroMQ)
 find_package(Protobuf)
 find_package(Boost COMPONENTS system thread)
+find_package(MINIGLOG REQUIRED)
 
 if( ZeroMQ_FOUND AND PROTOBUF_FOUND AND Boost_FOUND )
     set(should_build ON)
@@ -46,6 +47,7 @@ if( BUILD_NODE )
       ${Node_SOURCE_DIR}/..
       ${Node_BINARY_DIR}
       ${Node_SOURCE_DIR}
+      ${MINIGLOG_INCLUDE_DIRS}
       )
 
     set(PROJ_LIBRARIES
@@ -75,7 +77,7 @@ if( BUILD_NODE )
 
     add_library(${LIBRARY_NAME} ${NODE_HDRS} ${NODE_SRCS})
     target_link_libraries(${LIBRARY_NAME} ${PROJ_LIBRARIES})
-    target_link_libraries(${LIBRARY_NAME} ${Boost_SYSTEM_LIBRARY})
+    target_link_libraries(${LIBRARY_NAME} ${Boost_SYSTEM_LIBRARY} miniglog)
 
     # Create the NODEConfig.cmake file for the build tree.
     set(EXPORT_NODE_INC
@@ -89,7 +91,7 @@ if( BUILD_NODE )
       ${Node_BINARY_DIR}/NodeConfig.cmake @ONLY)
 
     # Add module to CMake package registery.
-    export(TARGETS ${LIBRARY_NAME}
+    export(TARGETS ${LIBRARY_NAME} miniglog
       FILE "${CMAKE_CURRENT_BINARY_DIR}/NodeTargets.cmake")
 
     option(EXPORT_NODE
