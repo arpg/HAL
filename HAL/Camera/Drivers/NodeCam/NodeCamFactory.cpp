@@ -1,10 +1,4 @@
 #include <HAL/Devices/DeviceFactory.h>
-
-// hack to enable sleep_for (GCC < 4.8)
-#ifndef _GLIBCXX_USE_NANOSLEEP
-#define _GLIBCXX_USE_NANOSLEEP
-#endif  // _GLIBCXX_USE_NANOSLEEP
-
 #include "NodeCamDriver.h"
 
 namespace hal
@@ -17,17 +11,20 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
+            {"id", "", "Device ID (Serve the purpose of UUID)."},
+            {"sim", "", "name of the simulator, which is also node name."},
+            {"name", "", "name of the camera. Id will be used if not set"},
         };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        NodeCamDriver* pDriver = new NodeCamDriver( uri.url );
+        NodeCamDriver* pDriver = new NodeCamDriver(uri);
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static NodeCamFactory g_NodeCamFactory("node");
+static NodeCamFactory g_NodeCamFactory("NodeCam");
 
 }

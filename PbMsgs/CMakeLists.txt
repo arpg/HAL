@@ -72,7 +72,8 @@ set( _PROTO_SRCS
     Pose.proto
     Encoder.proto
     Lidar.proto
-    Node2CamMessage.proto
+    NodeCamMessage.proto
+    NodeCar.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )
