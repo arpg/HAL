@@ -112,7 +112,7 @@ if( BUILD_NODE )
     ## Install headers / targets
     set( CMAKECONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}" )
 
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/NodeConfig.h"
       DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
     )
     install(TARGETS ${LIBRARY_NAME}
