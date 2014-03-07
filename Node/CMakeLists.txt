@@ -98,14 +98,12 @@ if( BUILD_NODE )
     configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in"
       "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY )
 
+    # Version information
+    configure_file("${PROJECT_NAME}ConfigVersion.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
 
     # Add module to CMake package registery.
-    get_target_property(miniglog_imported miniglog IMPORTED)
-    if (NOT miniglog_imported)
-      set(also_export_miniglog miniglog)
-    endif()
-
-    export(TARGETS ${LIBRARY_NAME} ${also_export_miniglog}
+    export(TARGETS ${LIBRARY_NAME}
       FILE "${CMAKE_CURRENT_BINARY_DIR}/NodeTargets.cmake")
 
     option(EXPORT_NODE
