@@ -96,6 +96,7 @@ bool LaunchSimulationIfNeeded(string &sSimName)
         <<"Simulator name is "<<sSimName<<endl
         <<"The command input is "<<sCommand<<endl
         <<"-------------------------------------------------------------------------------------------------"<<endl;
+        return true;
 
         // start sim world
         int pid = fork();

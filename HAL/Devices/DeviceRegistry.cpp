@@ -5,6 +5,7 @@
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
 #include <HAL/Posys/PosysDevice.h>
+#include <HAL/Car/CarDevice.h>
 
 #ifdef HAVE_TINYXML2
   #include <HAL/Utils/SimLauncher.h>
@@ -77,9 +78,19 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     //type passed to us, but then you knew that, didn't you.
     std::string sDriverName = "Node"; sDriverName.append( sDeviceType);
     hal::Uri simUri = uri;
-    simUri.SetProperties("host=" + sSimName);
-    std::shared_ptr<BaseDevice> dev = m_factories[sDriverName]->GetDevice(simUri);
-    return dev;
+    simUri.SetProperties("sim=" + sSimName);
+
+    auto pf = m_factories.find(sDriverName);
+    if(pf != m_factories.end()) {
+
+      std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(simUri);
+      return dev;
+    }
+    else{
+      throw DeviceException("Simulation Device for " + std::string(sDeviceType)
+                            + " was not found. Perhaps BUILD_" + sDriverName
+                            + "was off while building HAL.");
+    }
   }
 #endif  // HAVE_TINYXML2
 
@@ -116,5 +127,6 @@ template class DeviceRegistry<hal::EncoderDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
 template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
+template class DeviceRegistry<hal::CarDriverInterface>;
 
 }

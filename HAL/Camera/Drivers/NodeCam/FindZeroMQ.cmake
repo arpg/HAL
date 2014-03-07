@@ -7,14 +7,14 @@
 
 include(LibFindMacros)
 
-IF(UNIX)
+IF (UNIX)
 # Use pkg-config to get hints about paths
 libfind_pkg_check_modules(ZeroMQ_PKGCONF libzmq)
 
 # Include dir
     find_path(ZeroMQ_INCLUDE_DIR
             NAMES zmq.h
-            PATHS ${ZEROMQ_ROOT}/include ${ZeroMQ_PKGCONF_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}
+            PATHS ${ZEROMQ_ROOT}/include ${ZeroMQ_PKGCONF_INCLUDE_DIRS}
             )
 
 # Finally the library itself
@@ -25,7 +25,7 @@ libfind_pkg_check_modules(ZeroMQ_PKGCONF libzmq)
 ELSEIF (WIN32)
     find_path(ZeroMQ_INCLUDE_DIR
             NAMES zmq.h
-            PATHS ${ZEROMQ_ROOT}/include ${CMAKE_INCLUDE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}
+            PATHS ${ZEROMQ_ROOT}/include ${CMAKE_INCLUDE_PATH}
             )
 # Finally the library itself
     find_library(ZeroMQ_LIBRARY

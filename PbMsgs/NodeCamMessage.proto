@@ -1,15 +1,15 @@
-message RegisterCamReqMsg
+message RegisterNodeCamReqMsg
 {
-    optional bytes          name                   =1;
+    optional bytes          uri                   =1;
 }
 
-message RegisterCamRepMsg
+message RegisterNodeCamRepMsg
 {
     optional int32          time_step              = 1;
     optional int32          regsiter_flag          = 2;
     optional int32          width                  = 3;
     optional int32          height                 = 4;
-    optional int32          channel                = 5;
+    optional int32          channels               = 5;
 }
 
 message CamMsg

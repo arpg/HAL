@@ -1,8 +1,16 @@
-# Build SimulatedCarDriver
-set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/SimulatedCarDriver ${CMAKE_MODULE_PATH} )
-add_subdirectory( SimulatedCarDriver )
+macro(subdirlist result curdir)
+  file(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  set(dirlist "")
+  foreach(child ${children})
+    if(IS_DIRECTORY ${curdir}/${child})
+        set(dirlist ${dirlist} ${child})
+    endif()
+  endforeach()
+  set(${result} ${dirlist})
+endmacro()
 
-add_library( CarDriverRegistery CarDriverRegistery.cpp DriverList.h )
+subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Build the car driver registery library
-add_to_hal_libraries( CarDriverRegistery )
+foreach(subdir ${SUBDIRS})
+    add_subdirectory(${subdir})
+endforeach()

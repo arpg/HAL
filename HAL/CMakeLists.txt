@@ -114,7 +114,7 @@ add_subdirectory( IMU )
 add_subdirectory( Posys )
 add_subdirectory( Encoder )
 add_subdirectory( LIDAR )
-#add_subdirectory( Car )
+add_subdirectory( Car )
 add_subdirectory( Utils )
 
 #############################################################################
