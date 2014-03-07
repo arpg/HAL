@@ -334,8 +334,7 @@ bool node::advertise(const std::string& sTopic) {
 
     // propagate changes (quorum write)
     _PropagateResourceTable();
-    //                        _PrintResourceLocatorTable();
-    //                        printf("advertise complete");
+    // _PrintResourceLocatorTable();
     return true;
   }
 }
@@ -362,14 +361,10 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
     socket->setsockopt(ZMQ_SNDTIMEO,
                       &send_recv_max_wait_,
                       sizeof(send_recv_max_wait_));
-    // double dStartTime=_TicMS();
     try {
       if (socket->send(ZmqMsg)) {
-        // printf("Publish Protobuf success. used time %.2f ms",
-        // _TocMS(dStartTime));
         return true;
       } else {
-        // printf("Publish Protobuf Fail. used time %.2f ms", _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -397,10 +392,8 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
 
     try {
       if (socket->send(Msg)) {
-        // printf("Publish zmq success. used time %.2f ms. ", _TocMS(dStartTime));
         return true;
       } else {
-        // printf("Publish zmq failed. used time %.2f ms. ", _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -461,8 +454,6 @@ bool node::receive(const std::string& resource,
                        sizeof(send_recv_max_wait_));
     try {
       if (!socket->recv(&ZmqMsg)) {
-        // printf("[Node Receive] Receive Protobuf Fail. used time %.2f ms. ",
-        //        _TocMS(dStartTime));
         return false;
       }
     } catch(const zmq::error_t& error) {
@@ -576,7 +567,6 @@ void node::_GetResourceTableFunc(
 void node::GetResourceTableFunc(
     msg::GetTableRequest& req,
     msg::GetTableResponse& rep) {
-  // printf("GetResourc rep.urls_size() = %d", (int)rep.urls_size());
   msg::ResourceTable* pTable = rep.mutable_resource_table(); // add the resource table to the message
   pTable->set_version(resource_table_version_);
   pTable->set_checksum(_ResourceTableCRC());
@@ -585,7 +575,6 @@ void node::GetResourceTableFunc(
     msg::ResourceLocator* pMsg = pTable->add_urls();// add new url to end of table
     pMsg->set_resource(it->first);
     pMsg->set_address(it->second);
-    // printf("adding %s:%s", it->first.c_str(), it->second.c_str());
   }
   LOG(INFO) << "GetResourceTableFunc() called -- will send "
             << rep.resource_table().urls_size() << " resouces back";
@@ -611,10 +600,8 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
     const msg::ResourceLocator& m = req.urls_to_delete(ii);
     auto it = resource_table_.find(m.resource());
     if (it != resource_table_.end()) {
-      // printf("Deleting %s", m.resource().c_str());
       resource_table_.erase(it);
     } else{
-      // printf("Resource %s not found", m.resource().c_str());
     }
   }
 
@@ -636,7 +623,7 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
 
   // ok at this point we have updated our node table
   _PrintResourceLocatorTable();
-  //_PrintRpcSockets();
+  _PrintRpcSockets();
 }
 
 void node::_SetResourceTableFunc(msg::SetTableRequest& req,
@@ -677,7 +664,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
 
   // ok at this point we have updated our node table
   _PrintResourceLocatorTable();
-  printf("set resource table complete..");
+  LOG(INFO) << "SetResourceTable complete";
 }
 
 void node::HeartbeatThread() {
