@@ -5,7 +5,6 @@
 #include <iostream>
 
 #define Steering_Coeff    1
-#define Steering_offset   0
 #define L_Wheel2wheel     2.5  // in meters
 
 struct Poses{
@@ -35,7 +34,7 @@ public:
 
   Poses PoseUpdate(Poses prev_pose,double encoder_RR,double encoder_RL,double steering_angle,double curr_time)
   {
-    steering_angle = (steering_angle-Steering_offset)*Steering_Coeff;
+    steering_angle = steering_angle*Steering_Coeff;
     // Forward velocity in m/s
     double forward_velocity = ((encoder_RL+encoder_RR)*0.5)/3.6;
     double tet_dot = forward_velocity/L_Wheel2wheel;
