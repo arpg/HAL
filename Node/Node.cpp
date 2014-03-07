@@ -52,7 +52,7 @@ node::~node() {
 }
 
 void node::set_verbocity(int level) {
-  hal::PrintHandlerSetErrorLevel(level);
+  google::log_severity_global = level;
 }
 
 ///

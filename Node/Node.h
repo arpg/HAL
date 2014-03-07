@@ -43,7 +43,6 @@
 
 #include <Node/NodeConfig.h>
 #include <Node/NodeMessages.pb.h>
-#include <Node/PrintMessage.h>
 #include <Node/zmq.hpp>
 #include <Node/ZeroConf.h>
 

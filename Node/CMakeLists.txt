@@ -66,8 +66,8 @@ if( BUILD_NODE )
 
     PROTOBUF_GENERATE_CPP(PROTO_HDRS PROTO_SRCS NodeMessages.proto)
 
-    set(NODE_HDRS Node.h PrintMessage.h ZeroConf.h ${PROTO_HDRS})
-    set(NODE_SRCS Node.cpp PrintMessage.cpp ZeroConf.cpp ${PROTO_SRCS})
+    set(NODE_HDRS Node.h ZeroConf.h ${PROTO_HDRS})
+    set(NODE_SRCS Node.cpp ZeroConf.cpp ${PROTO_SRCS})
 
     if(ANDROID)
       list(APPEND NODE_HDRS android-ifaddrs/ifaddrs.h)
