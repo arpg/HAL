@@ -8,7 +8,7 @@ if(GIT_FOUND)
     INSTALL_COMMAND ""
     BUILD_IN_SOURCE ON
     )
-  set_target_properties(ThirdParty PROPERTIES EXCLUDE_FROM_ALL ON)
+  set_target_properties(ThirdPartyHAL PROPERTIES EXCLUDE_FROM_ALL ON)
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty)
