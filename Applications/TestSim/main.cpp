@@ -7,7 +7,7 @@
 
 int main(/*int argc, char **argv*/)
 {
-  hal::Camera cam("openni:[name=LCamera,rgb=1,depth=1]//");
+  hal::Camera cam("openni:[name=LCamera,rgb=1,depth=0]//");
 //  hal::Car car("car://");//Uri doesn't has any significance.
   int numChannels = cam.NumChannels();
   int winw = cam.NumChannels() * cam.Width();
