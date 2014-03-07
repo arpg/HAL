@@ -90,6 +90,15 @@ if( BUILD_NODE )
     configure_file(${Node_SOURCE_DIR}/NodeConfig.cmake.in
       ${Node_BINARY_DIR}/NodeConfig.cmake @ONLY)
 
+    set( EXPORT_LIB_INC_DIR "${LIB_INC_DIR}" )
+    configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY IMMEDIATE )
+
+    set( EXPORT_LIB_INC_DIR "\${${PROJECT_NAME}_CMAKE_DIR}/${REL_INCLUDE_DIR}" )
+    configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in"
+      "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY )
+
+
     # Add module to CMake package registery.
     get_target_property(miniglog_imported miniglog IMPORTED)
     if (NOT miniglog_imported)
@@ -103,7 +112,7 @@ if( BUILD_NODE )
       "Should the NODE package be exported for use by other software" ON)
 
     if(EXPORT_NODE)
-  export(PACKAGE ${PROJECT_NAME})
+      export(PACKAGE ${PROJECT_NAME})
     else()
       set(Node_DIR ${CMAKE_CURRENT_BINARY_DIR}) # For the examples
     endif()
