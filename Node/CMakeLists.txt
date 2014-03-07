@@ -91,7 +91,8 @@ if( BUILD_NODE )
       ${Node_BINARY_DIR}/NodeConfig.cmake @ONLY)
 
     # Add module to CMake package registery.
-    if (TARGET miniglog)
+    get_target_property(miniglog_imported miniglog IMPORTED)
+    if (NOT miniglog_imported)
       set(also_export_miniglog miniglog)
     endif()
 
