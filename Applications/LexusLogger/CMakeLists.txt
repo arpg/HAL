@@ -10,6 +10,7 @@ endif()
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
 find_package(SceneGraph QUIET)
+find_package(MINIGLOG QUIET)
 find_package(OpenCV2 QUIET)
 #find_package(TinyXML2 QUIET)
 
@@ -17,6 +18,12 @@ if(Pangolin_FOUND AND HAL_FOUND AND TinyXML2_FOUND )
     set(BUILD_LEXUSLOGGER OFF CACHE BOOL "Toggle building LexusLogger")
     
     if(BUILD_LEXUSLOGGER)
+	find_package(Protobuf REQUIRED)
+
+        include_directories(osm-engine/include gui-engine/include)
+        add_subdirectory(osm-engine)
+        add_subdirectory(gui-engine)
+
         add_executable( LexusLogger main.cpp )
 
         include_directories( ${HAL_INCLUDE_DIRS} )
@@ -26,8 +33,8 @@ if(Pangolin_FOUND AND HAL_FOUND AND TinyXML2_FOUND )
         target_link_libraries(LexusLogger ${Pangolin_LIBRARIES} )
         target_link_libraries(LexusLogger ${TINYXML2_LIBRARY})
         target_link_libraries(LexusLogger ${SceneGraph_LIBRARIES} )
-
+        target_link_libraries(LexusLogger gui-engine curl )
         add_dependencies( LexusLogger hal )                                              
-        add_dependencies( LexusLogger PbMsgs )   
+        add_dependencies( LexusLogger PbMsgs ) 
     endif()
 endif()
