@@ -48,7 +48,7 @@ struct CANMessage
 
 #include <HAL/ThirdParty/ThirdPartyConfig.h>
 
-#ifdef PCAN_HAVE_LEXUSISF12
+#ifdef HAL_HAVE_LEXUSISF12
 #include <HAL/ThirdParty/ThirdParty/PCAN/LexusISF2012.h>
 #endif
 

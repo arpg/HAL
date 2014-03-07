@@ -1,3 +1,4 @@
 #pragma once
 
-#cmakedefine PCAN_HAVE_LEXUSISF12
+#cmakedefine HAL_HAVE_TMIX
+#cmakedefine HAL_HAVE_LEXUSISF12

@@ -47,6 +47,7 @@ macro( add_to_hal_include_dirs )
     endforeach()
 endmacro()
 
+
 macro( add_to_hal_libraries )
     foreach( lib ${ARGN} )
       # Process targets correctly
@@ -74,6 +75,7 @@ macro( add_to_hal_libraries )
     endforeach()
 endmacro()
 
+
 macro( add_to_hal_sources )
     file(RELATIVE_PATH _relPath "${HAL_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
     foreach(_src ${ARGN})
@@ -88,6 +90,18 @@ endmacro()
 macro( hal_set_compile_flags file flags )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_SOURCES "${file}" )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_FLAGS "${flags}" )
+endmacro()
+
+
+macro(subdirlist result curdir)
+  file(GLOB children RELATIVE ${curdir} ${curdir}/*)
+  set(dirlist "")
+  foreach(child ${children})
+    if(IS_DIRECTORY ${curdir}/${child})
+        set(dirlist ${dirlist} ${child})
+    endif()
+  endforeach()
+  set(${result} ${dirlist})
 endmacro()
 
 #############################################################################
