@@ -6,12 +6,16 @@
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
+#include <HAL/Encoder/EncoderDevice.h>
 
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
 
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Matrix.h>
+
+/* related to OSM tiling */
+#include "gui-engine/include/pangolin_tile_view.h"
 
 /*SceneGraph, to use containers and stuff */
 #include <SceneGraph/SceneGraph.h>
@@ -39,11 +43,14 @@ pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGryo;
 pangolin::DataLog g_PlotLogMag;
 
+pangolin::DataLog g_PlotCarAccel;
+pangolin::DataLog g_PlotCarGyro;
+
 // Camera Variables
 bool bCamsRunning = false;
 std::vector<std::shared_ptr<pb::ImageArray> > vImgCap;
 std::vector<hal::Camera> vCams;
-std::deque<pb::Image> vImgs;
+std::vector<std::shared_ptr<pb::Image> > vImgs;
 // should be vector of mutex, but vector requires object to be movable, but
 // apparently mutex isn't, which makes sense. deque doesn't require movable
 // objects, hence is used. Also initialization is complicated, push_back and
@@ -60,12 +67,6 @@ pb::Velodyne vld;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void IMU_Handler(pb::ImuMsg& IMUdata)
 {
-  if( g_bLog ) {
-    pb::Msg pbMsg;
-    pbMsg.set_timestamp( hal::Tic() );
-    pbMsg.mutable_imu()->Swap(&IMUdata);
-    g_Logger.LogMessage(pbMsg);
-  }
   //    const pb::VectorMsg& pbVec = IMUdata.accel();
   //    printf("X: %5f    Y: %5f     Z: %5f\r",pbVec.data(0),pbVec.data(1),pbVec.data(2));
   if( IMUdata.has_accel() ) {
@@ -77,8 +78,55 @@ void IMU_Handler(pb::ImuMsg& IMUdata)
   if( IMUdata.has_mag() ) {
     g_PlotLogMag.Log( IMUdata.mag().data(0), IMUdata.mag().data(1), IMUdata.mag().data(2) );
   }
+  if( g_bLog ) {
+    pb::Msg pbMsg;
+    pbMsg.set_timestamp( hal::Tic() );
+    pbMsg.mutable_imu()->Swap(&IMUdata);
+    g_Logger.LogMessage(pbMsg);
+  }
+  //    const pb::VectorMsg& pbVec = IMUdata.accel();
 }
 
+void CarIMU_Handler(pb::ImuMsg& IMUdata)
+{
+  if( IMUdata.has_accel() ) {
+    g_PlotCarAccel.Log( IMUdata.accel().data(0), IMUdata.accel().data(1));
+  }
+  if( IMUdata.has_gyro() ) {
+    g_PlotCarGyro.Log( IMUdata.gyro().data(0) );
+  }
+  if( g_bLog ) {
+    pb::Msg pbMsg;
+    pbMsg.set_timestamp( hal::Tic() );
+    pbMsg.mutable_imu()->Swap(&IMUdata);
+    g_Logger.LogMessage(pbMsg);
+  }
+}
+
+void Encoder_Handler(pb::EncoderMsg &EncoderData)
+{
+  for (int ii = 0; ii < EncoderData.label_size(); ++ii)
+  {
+    if(EncoderData.label(ii) == "ENC_RATE_FL") {
+
+    }
+    else if(EncoderData.label(ii) == "ENC_RATE_FR") {
+
+    }
+    else if(EncoderData.label(ii) == "ENC_RATE_RL") {
+
+    }
+    else if(EncoderData.label(ii) == "ENC_RATE_RR") {
+
+    }
+  }
+  if( g_bLog ) {
+    pb::Msg pbMsg;
+    pbMsg.set_timestamp( hal::Tic() );
+    pbMsg.mutable_encoder()->Swap(&EncoderData);
+    g_Logger.LogMessage(pbMsg);
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Posys_Handler(pb::PoseMsg& PoseData)
@@ -137,8 +185,13 @@ void Camera_Handler(int id) {
     if(bCamsRunning){
       //std::cout<<"id="<<id<<std::flush;
       vCamMtx[id].lock();
-      bool success = vCams[id].Capture(*vImgCap[id]);
-//      vImgs[id] = *(vImgCap[id]->at(0));
+      std::shared_ptr<pb::ImageArray> temp = pb::ImageArray::Create();
+      bool success = vCams[id].Capture(*temp.get());
+      //bool success = vCams[id].Capture(*vImgCap[id]);
+      if(id != 0 || id+1 != temp->Ref().id())
+        continue;
+      vImgCap[id] = temp;
+      //*(vImgs[id].get()) = *(vImgCap[id]->at(0));
       vCamMtx[id].unlock();
 
       if(!success) {
@@ -151,6 +204,7 @@ void Camera_Handler(int id) {
           pb::Msg pbMsg;
           logMutex.lock();
           pbMsg.set_timestamp( hal::Tic() );
+          vImgCap[id]->Ref().set_id(id+1);
 //          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
           pbMsg.mutable_camera()->CopyFrom(vImgCap[id]->Ref());
           g_Logger.LogMessage(pbMsg);
@@ -173,8 +227,6 @@ int main( int argc, char* argv[] )
 {
 
   GetPot clArgs(argc,argv);
-  double dCamViewTop = 1, dImuViewBottom = 0, dLidarViewBottom = 0;
-  double dImuViewRight = 1, dLidarViewLeft = 0;
 
   ///-------------------- CAMERA INIT (Optional)
 
@@ -203,22 +255,35 @@ int main( int argc, char* argv[] )
       //vImgs.push_back(img);
     }
     vCamMtx.resize(nNumCam);
+    vImgs.resize(nNumCam);
     //if IMU and Lidar are present they would have to make space for camera.
-    dImuViewBottom = 0.5; dLidarViewBottom = 0.5;
   }
 
   ///-------------------- IMU INIT (Optional)
 
-  std::string sIMU = clArgs.follow("", "-imu" );
-  const bool bHaveIMU = !sIMU.empty();
+  std::vector<std::string> sIMU; sIMU.reserve(2);
+  sIMU.push_back( clArgs.follow("", "-imu" ));
+  const bool bHaveIMU = !sIMU[0].empty();
 
-  hal::IMU theIMU;
+  std::vector<hal::IMU> theIMU;
   if( bHaveIMU ) {
-    theIMU = hal::IMU(sIMU);
-    theIMU.RegisterIMUDataCallback(IMU_Handler);
-    std::cout << "- Registering IMU device." << std::endl;
+  sIMU.push_back(clArgs.follow("", "-imu"));
+  if(sIMU[0].compare(sIMU[1]) ==0)
+    sIMU.pop_back();
+  for (int ii = 0; ii < sIMU.size(); ++ii)
+  {
+    theIMU.push_back( hal::IMU(sIMU[ii]));
+    size_t bPcanPos = sIMU[ii].find("pcan");
+    if(bPcanPos == std::string::npos) {
+      theIMU[ii].RegisterIMUDataCallback(IMU_Handler);
+      std::cout << "- Registering IMU device." << std::endl;
+    }
+    else {
+      theIMU[ii].RegisterIMUDataCallback(CarIMU_Handler);
+      std::cout << "- Registering Car IMU device." << std::endl;
+    }
+  }
 
-    dCamViewTop = 0.5; dLidarViewLeft = (double)1/3;
   }
 
 
@@ -246,11 +311,22 @@ int main( int argc, char* argv[] )
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
 
-    dCamViewTop = 0.5; dImuViewRight = (double)1/3;
   }
 
+  ///-------------------- ENCODER INIT (Optional)
+  std::string sEncoder = clArgs.follow("","-encoder");
+  const bool bHaveEncoder = !sEncoder.empty();
+
+  hal::Encoder carEncoder;
+  if(bHaveEncoder) {
+    carEncoder = hal::Encoder(sEncoder);
+    carEncoder.RegisterEncoderDataCallback(Encoder_Handler);
+    std::cout << "- Registering Encoder device." << std::endl;
+  }
   ///-------------------- WINDOW INIT
   int nWindowHeight=768, nWindowWidth=1024;
+  double dCamViewBottom = 0.8, dCamViewLeft=0.6, dImuViewBottom = 0.6, dLidarViewTop = 1.0;
+  double dImuViewLeft = 0.6, dLidarViewRight = 0.6, dImuViewTop = 0.8;
 
   // Setup OpenGL Display (based on GLUT)
   pangolin::CreateWindowAndBind("Logging the Lexus, Yo!!",nWindowWidth,nWindowHeight);
@@ -273,11 +349,33 @@ int main( int argc, char* argv[] )
   SceneGraph::GLVbo glvbo(buf,0,colBuf);
   glgraph.AddChild(&glvbo);
 
+  // Define Camera Render Object (for view / scene browsing)
+  pangolin::OpenGlRenderState s_cam(
+        ProjectionMatrix(640,480,420,420,320,240,0.1,1000),
+        ModelViewLookAt(0,-12,4, 0,1,0, AxisZ)
+        );
+  pangolin::View& d_cam = pangolin::CreateDisplay();
+
+  SceneGraph::GLMesh carMesh;
+  if(bHaveLIDAR)//Add the 3d view only if LIDAR is to be seen
+  {
+    d_cam.SetBounds(0.0, dLidarViewTop, 0.0, dLidarViewRight)
+        .SetHandler(new Handler3D(s_cam))
+        .SetDrawFunction(SceneGraph::ActivateDrawFunctor(glgraph, s_cam));
+    d_cam.SetAspect(-640.0/480.0);
+    pangolin::DisplayBase().AddDisplay(d_cam);
+    carMesh.Init("/Users/jongnarr/Documents/02/3ds/02_lowpoly.3DS");
+    carMesh.SetPerceptable(true);
+    carMesh.SetScale(0.01);
+    carMesh.SetPose(0, 0, 1, M_PI/2, 0, M_PI);
+    carMesh.SetAlpha(0.4);
+    glgraph.AddChild(&carMesh);
+  }
+
 
   // Create Smart viewports for each camera image that preserve aspect
   pangolin::View& cameraView = pangolin::Display("Camera");
-  cameraView.SetLayout(pangolin::LayoutEqual);
-  cameraView.SetBounds(0.0,dCamViewTop,0.0,1.0);
+
   pangolin::DisplayBase().AddDisplay(cameraView);
   if(bHaveCam)
   {
@@ -287,32 +385,35 @@ int main( int argc, char* argv[] )
                               vCams[ii].Width() / (double)vCams[ii].Height()
                               ));
     }
+    cameraView.SetLayout(pangolin::LayoutEqualHorizontal);
+    cameraView.SetBounds(dCamViewBottom, 1.0,dCamViewLeft,1.0);
   }
 
   if( bHaveIMU ) {
-    pangolin::View& imuView = pangolin::CreateDisplay();
-    imuView.SetLayout(pangolin::LayoutEqualVertical);
-    imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel));
-    imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo));
-    imuView.AddDisplay( pangolin::CreatePlotter("Mag", &g_PlotLogMag));
-    pangolin::DisplayBase().AddDisplay(imuView);
-    imuView.SetBounds(dImuViewBottom,1,0,dImuViewRight);
+    for (int ii = 0; ii < sIMU.size(); ++ii)
+    {
+      size_t bPcanPos = sIMU[ii].find("pcan");
+      pangolin::View& imuView = pangolin::CreateDisplay();
+        imuView.SetLayout(pangolin::LayoutEqual);
+      if(bPcanPos == std::string::npos) {
+        imuView.AddDisplay( pangolin::CreatePlotter("Accel", &g_PlotLogAccel));
+        imuView.AddDisplay( pangolin::CreatePlotter("Gryo", &g_PlotLogGryo));
+      }
+      else {
+        imuView.AddDisplay(pangolin::CreatePlotter("CarAccel", &g_PlotCarAccel));
+        imuView.AddDisplay(pangolin::CreatePlotter("CarGyro", &g_PlotCarGyro));
+      }
+      imuView.SetBounds(dImuViewBottom, dImuViewTop,dImuViewLeft,1.0);
+    }
   }
 
-  // Define Camera Render Object (for view / scene browsing)
-  pangolin::OpenGlRenderState s_cam(
-        ProjectionMatrix(640,480,420,420,320,240,0.1,1000),
-        ModelViewLookAt(0,-12,4, 0,1,0, AxisZ)
-        );
-  pangolin::View& d_cam = pangolin::CreateDisplay();
-
-  if(bHaveLIDAR)//Add the 3d view only if LIDAR is to be seen
-  {
-    d_cam.SetBounds(dLidarViewBottom, 1, dLidarViewLeft, 1)
-        .SetHandler(new Handler3D(s_cam))
-        .SetDrawFunction(SceneGraph::ActivateDrawFunctor(glgraph, s_cam));
-    pangolin::DisplayBase().AddDisplay(d_cam);
-  }
+ // if ( bHavePosys ) {
+    pangolin::TileView tileView;
+    pangolin::DisplayBase().AddDisplay(tileView);
+    tileView.SetBounds(0.0,0.6,0.8,1.0);
+    tileView.SetZoom(17);
+    tileView.AddGPSPoint(38.903973,-77.048918);
+  //}
 
   bool bRun = true;
   bool bStep = false;

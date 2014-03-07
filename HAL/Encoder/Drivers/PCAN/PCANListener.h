@@ -302,13 +302,10 @@ private:
         pbIMU.set_device_time( hal::Tic() );
 
         pb::VectorMsg* pbVec = pbIMU.mutable_accel();
-        pbVec->add_data(Pkg.YawRate);
-        pbVec->add_data(Pkg.YawRate);
-        pbVec->add_data(Pkg.YawRate);
+        pbVec->add_data(Pkg.Acc_x);
+        pbVec->add_data(Pkg.Acc_y);
 
         pbVec = pbIMU.mutable_gyro();
-        pbVec->add_data(0); //Gyro X
-        pbVec->add_data(0); //Gyro Y
         pbVec->add_data(Pkg.YawRate); //Gyro Z
 
         (m_IMUCallback)(pbIMU);
