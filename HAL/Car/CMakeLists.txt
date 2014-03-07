@@ -1,2 +1,12 @@
-subdir_depends( Drivers )
-add_subdirectory( Drivers )
+set(HDRS
+    CarDevice.h
+    CarDriverInterface.h
+)
+
+add_to_hal_sources( ${HDRS} )
+
+install( FILES ${HDRS}
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Car
+)
+
+add_subdirectory(Drivers)

@@ -13,11 +13,12 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-par
 # Add to module path, so we can find our cmake modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH})
 
-find_package(ZeroMQ)
-find_package(Protobuf)
-find_package(Boost COMPONENTS system thread)
+find_package(ZeroMQ QUIET)
+find_package(Protobuf QUIET)
+find_package(Boost COMPONENTS system thread QUIET)
+find_package(MINIGLOG QUIET)
 
-if( ZeroMQ_FOUND AND PROTOBUF_FOUND AND Boost_FOUND )
+if(ZeroMQ_FOUND AND PROTOBUF_FOUND AND Boost_FOUND AND MINIGLOG_FOUND)
     set(should_build ON)
 else()
     set(should_build OFF)
@@ -46,6 +47,7 @@ if( BUILD_NODE )
       ${Node_SOURCE_DIR}/..
       ${Node_BINARY_DIR}
       ${Node_SOURCE_DIR}
+      ${MINIGLOG_INCLUDE_DIRS}
       )
 
     set(PROJ_LIBRARIES
@@ -75,7 +77,7 @@ if( BUILD_NODE )
 
     add_library(${LIBRARY_NAME} ${NODE_HDRS} ${NODE_SRCS})
     target_link_libraries(${LIBRARY_NAME} ${PROJ_LIBRARIES})
-    target_link_libraries(${LIBRARY_NAME} ${Boost_SYSTEM_LIBRARY})
+    target_link_libraries(${LIBRARY_NAME} ${Boost_SYSTEM_LIBRARY} miniglog)
 
     # Create the NODEConfig.cmake file for the build tree.
     set(EXPORT_NODE_INC
@@ -89,17 +91,46 @@ if( BUILD_NODE )
       ${Node_BINARY_DIR}/NodeConfig.cmake @ONLY)
 
     # Add module to CMake package registery.
-    export(TARGETS ${LIBRARY_NAME}
+    get_target_property(miniglog_imported miniglog IMPORTED)
+    if (NOT miniglog_imported)
+      set(also_export_miniglog miniglog)
+    endif()
+
+    export(TARGETS ${LIBRARY_NAME} ${also_export_miniglog}
       FILE "${CMAKE_CURRENT_BINARY_DIR}/NodeTargets.cmake")
 
     option(EXPORT_NODE
       "Should the NODE package be exported for use by other software" ON)
 
     if(EXPORT_NODE)
-	export(PACKAGE ${PROJECT_NAME})
+  export(PACKAGE ${PROJECT_NAME})
     else()
       set(Node_DIR ${CMAKE_CURRENT_BINARY_DIR}) # For the examples
     endif()
+
+    #######################################################
+    ## Install headers / targets
+    set( CMAKECONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}" )
+
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+      DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
+    )
+    install(TARGETS ${LIBRARY_NAME}
+      EXPORT "${PROJECT_NAME}Targets"
+      RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+      LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    )
+
+    #######################################################
+    ## Install CMake config
+
+    INSTALL(
+	FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+	      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
+
+    install( EXPORT "${PROJECT_NAME}Targets" DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
 
     add_subdirectory(Examples)
 endif()

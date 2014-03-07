@@ -1,0 +1,29 @@
+message PoseMsg
+{
+    repeated string               body_name        =1; // allow apply same command to several body
+    required double               time_step        =2;
+    required double               x                =3;
+    required double               y                =4;
+    required double               z                =5;
+    required double               p                =6;
+    required double               q                =7;
+    required double               r                =8;
+}
+
+
+message VehicleMsg
+{
+    required double          steering_angle        =1;
+    required double          desired_force         =2;
+}
+
+
+message RegisterControllerReqMsg
+{
+    optional bytes          topic        	   =1;
+}
+
+message RegisterControllerRepMsg
+{
+    optional bool           success                = 1;
+}
