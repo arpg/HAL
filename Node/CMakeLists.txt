@@ -91,7 +91,11 @@ if( BUILD_NODE )
       ${Node_BINARY_DIR}/NodeConfig.cmake @ONLY)
 
     # Add module to CMake package registery.
-    export(TARGETS ${LIBRARY_NAME} miniglog
+    if (TARGET miniglog)
+      set(also_export_miniglog miniglog)
+    endif()
+
+    export(TARGETS ${LIBRARY_NAME} ${also_export_miniglog}
       FILE "${CMAKE_CURRENT_BINARY_DIR}/NodeTargets.cmake")
 
     option(EXPORT_NODE
