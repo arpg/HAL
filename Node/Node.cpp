@@ -926,6 +926,12 @@ bool node::ConnectNode(const std::string& host, uint16_t port,
     LOG(ERROR) << "Failed when asking for remote node name";
     return false;
   }
+  if (rep->sender_name() == node_name_) {
+    LOG(WARNING) << "Tried to communicate with myself, node: '" << node_name_
+                 << "'. Not connecting.";
+    return false;
+  }
+
   LOG(INFO) << "\tHeard back from '" << rep->sender_name()
             << "' about " << rep->resource_table().urls_size() << " resources";
 
