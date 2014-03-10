@@ -10,11 +10,11 @@
 
 #include <stdio.h>
 
-int main() 
+int main()
 {
 
     hal::node n;
-//    n.set_verbocity( 3 ); // make some noise on errors
+    //    n.set_verbosity( 3 ); // make some noise on errors
     n.init("Node2");
 
     // subscribe to Node1's topic

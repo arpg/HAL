@@ -84,7 +84,7 @@ void NodeCarDriver::RegisterInHost() {
 }
 
 bool NodeCarDriver::InitNode() {
-  m_Node.set_verbocity(2); // make some noise on errors
+  m_Node.set_verbosity(2); // make some noise on errors
   if(m_Node.init(m_sDeviceName)==false)
   {
     std::cerr <<"[NodeCarDriver] Cannot init NodeCar '"<<m_sDeviceName<<"'"

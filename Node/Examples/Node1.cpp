@@ -43,7 +43,7 @@ int main( int, char** )
     // initialize node
     hal::node n;
 
-    n.set_verbocity(3); // be a bit noisy
+    n.set_verbosity(3); // be a bit noisy
     n.init( sNodeName );
 
     // set up a publisher

@@ -27,7 +27,7 @@ int main( int argc, char** argv )
 
     // initialize node
     hal::node n;
-    n.set_verbocity(nVerbosity); // be a bit noisy
+    n.set_verbosity(nVerbosity); // be a bit noisy
     if( n.init(sNodeName) == false ){
         return -1;
     }
