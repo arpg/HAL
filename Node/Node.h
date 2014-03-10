@@ -84,7 +84,7 @@ class node {
   ///        (if available)
   explicit node(bool use_auto_discovery = true);
   virtual ~node();
-  void set_verbocity(int nLevel);
+  void set_verbosity(int nLevel);
 
   ///
   /// Input: Node identifier
@@ -402,6 +402,8 @@ class node {
 
   // Has this Node been initialized yet?
   bool initialized_ = false;
+
+  int debug_level_ = 0;
 };
 
 }  // end namespace hal
