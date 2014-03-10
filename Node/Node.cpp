@@ -181,8 +181,8 @@ bool node::call_rpc(const std::string& node_name,
                     const google::protobuf::Message&  msg_req,
                     google::protobuf::Message& msg_rep,
                     unsigned int time_out) {
-  assert(init_done_);
   NodeSocket socket;
+  CHECK(init_done_);
 
   std::unique_lock<std::mutex> lock(mutex_); // careful
 
@@ -229,7 +229,8 @@ bool node::call_rpc(NodeSocket socket,
                     const google::protobuf::Message& msg_req,
                     google::protobuf::Message& msg_rep,
                     unsigned int nTimeoutMS) {
-  assert(init_done_);
+  CHECK(init_done_);
+
 
   // prepare to append function information (clip function name size)
   std::string sFName = function_name;
@@ -309,7 +310,7 @@ bool node::call_rpc(NodeSocket socket,
 bool node::advertise(const std::string& sTopic) {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -343,7 +344,7 @@ bool node::advertise(const std::string& sTopic) {
 bool node::publish(const std::string& sTopic, //< Input: Topic to write to
                    const google::protobuf::Message& Msg //< Input: Message to send
                    ) {
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -375,7 +376,7 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
 }
 
 bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -407,7 +408,7 @@ bool node::subscribe(const std::string& resource) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   std::string         sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it != topic_sockets_.end()) {
@@ -440,7 +441,7 @@ bool node::subscribe(const std::string& resource) {
 bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
   std::string sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
@@ -470,7 +471,7 @@ bool node::receive(const std::string& resource,
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
   std::string         sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
