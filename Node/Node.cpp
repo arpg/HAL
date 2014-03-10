@@ -24,6 +24,29 @@ static const std::string kRpcScheme = "rpc://";
 
 namespace hal {
 
+/// used to time socket communications
+struct TimedNodeSocket {
+  TimedNodeSocket() {}
+  TimedNodeSocket(const NodeSocket& socket) : socket(socket),
+                                              last_heartbeat_time(0.0) {}
+
+  TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
+    if (this == &RHS) {
+      return *this;
+    }
+    socket = RHS.socket;
+    last_heartbeat_time = RHS.last_heartbeat_time;
+    return *this;
+  }
+
+  void Tic() {
+    last_heartbeat_time = hal::Tic();
+  }
+
+  NodeSocket  socket;
+  double      last_heartbeat_time;
+};
+
 zmq::context_t* _InitSingleton() {
   // not ideal! we should apparently port away from avahi-compat... ug
   setenv("AVAHI_COMPAT_NOWARN", "1", 1);
@@ -181,8 +204,8 @@ bool node::call_rpc(const std::string& node_name,
                     const google::protobuf::Message&  msg_req,
                     google::protobuf::Message& msg_rep,
                     unsigned int time_out) {
-  NodeSocket socket;
   CHECK(init_done_);
+  TimedNodeSocket socket;
 
   std::unique_lock<std::mutex> lock(mutex_); // careful
 
@@ -199,28 +222,35 @@ bool node::call_rpc(const std::string& node_name,
   auto sockit = rpc_sockets_.find(node_name);
   if (sockit != rpc_sockets_.end()) {
     // socket is already open, lets use it
-    socket = sockit->second.socket;
+    socket = sockit->second;
   } else {
-    socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
+    socket = TimedNodeSocket(NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ)));
+
     // lets connect using the socket
     try {
-      socket->connect(("tcp://" + host_and_port).c_str());
+      socket.socket->connect(("tcp://" + host_and_port).c_str());
     } catch(const zmq::error_t& error) {
       return false;
     }
-    rpc_sockets_[node_name] = TimedNodeSocket(socket);
+    rpc_sockets_[node_name] = socket;
   }
 
   std::shared_ptr<std::mutex> socket_mutex = rpc_mutex(node_name);
+
+  if (!socket.socket->connected()) {
+    return false;
+  }
 
   // once we have socket, we can let the resource table change. yay
   // smart pointers
   lock.unlock();
 
-  // TODO: what happens if this client tries to Delete himself?
-
-  return call_rpc(socket, socket_mutex,
-                  function_name, msg_req, msg_rep, time_out);
+  bool success = call_rpc(socket.socket, socket_mutex,
+                          function_name, msg_req, msg_rep, time_out);
+  if (success) {
+    socket.Tic();
+  }
+  return success;
 }
 
 bool node::call_rpc(NodeSocket socket,
@@ -230,7 +260,7 @@ bool node::call_rpc(NodeSocket socket,
                     google::protobuf::Message& msg_rep,
                     unsigned int nTimeoutMS) {
   CHECK(init_done_);
-
+  CHECK(socket->connected());
 
   // prepare to append function information (clip function name size)
   std::string sFName = function_name;
@@ -255,8 +285,8 @@ bool node::call_rpc(NodeSocket socket,
   /** @todo Sockets should only be used by 1 thread ever... */
   std::lock_guard<std::mutex> lock(*socket_mutex);
   socket->setsockopt(ZMQ_SNDTIMEO,
-                    &send_recv_max_wait_,
-                    sizeof(send_recv_max_wait_));
+                     &send_recv_max_wait_,
+                     sizeof(send_recv_max_wait_));
 
   try {
     if (!socket->send(ZmqReq)) {
@@ -361,8 +391,8 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
     }
 
     socket->setsockopt(ZMQ_SNDTIMEO,
-                      &send_recv_max_wait_,
-                      sizeof(send_recv_max_wait_));
+                       &send_recv_max_wait_,
+                       sizeof(send_recv_max_wait_));
     try {
       if (socket->send(ZmqMsg)) {
         return true;
@@ -388,8 +418,8 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
     NodeSocket socket = it->second;
 
     socket->setsockopt(ZMQ_SNDTIMEO,
-                      &send_recv_max_wait_,
-                      sizeof(send_recv_max_wait_));
+                       &send_recv_max_wait_,
+                       sizeof(send_recv_max_wait_));
     // double dStartTime =_TicMS();
 
     try {
@@ -689,12 +719,12 @@ void node::HeartbeatThread() {
         if (!call_rpc(it->second.socket, rpc_mutex(it->first),
                       "Heartbeat", hbreq, hbrep, timeout)) {
           LOG(WARNING) << "Haven't heard from '" << it->first
-                       << "' for " << _Tic()-it->second.last_heartbeat_time
+                       << "' for " << _Toc(it->second.last_heartbeat_time)
                        << " ms seconds";
           continue;
         }
 
-        it->second.last_heartbeat_time = _Tic();
+        it->second.Tic();
 
         // if remote resource table is newer than ours...
         if (hbrep.version() > resource_table_version_) {

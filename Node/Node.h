@@ -70,6 +70,8 @@ extern std::vector<hal::node*> g_vNodes;
 
 namespace hal {
 
+struct TimedNodeSocket;
+
 // The port to use by default if we can't autodiscover
 #define NODE_DEFAULT_PORT 1776U
 
@@ -323,25 +325,6 @@ class node {
   void BuildDeleteFromTableRequest(msg::DeleteFromTableRequest* msg) const;
 
  private:
-  /// used to time socket communications
-  struct TimedNodeSocket {
-    TimedNodeSocket() {}
-    TimedNodeSocket(const NodeSocket& socketet) : socket(socketet),
-                                                  last_heartbeat_time(0.0) {}
-
-    TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
-      if (this == &RHS) {
-        return *this;
-      }
-      socket = RHS.socket;
-      last_heartbeat_time = RHS.last_heartbeat_time;
-      return *this;
-    }
-
-    NodeSocket  socket;
-    double      last_heartbeat_time;
-  };
-
   // NB a "resource" is a nodename, node/rpc or node/topic URL
   // resource to host:port map
   std::map<std::string, std::string> resource_table_;
