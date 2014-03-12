@@ -72,6 +72,9 @@ node::node(bool use_auto_discovery) : context_(nullptr),
 
 node::~node() {
   _BroadcastExit();
+  exiting_ = true;
+  rpc_thread_.join();
+  heartbeat_thread_.join();
 }
 
 void node::set_verbosity(int level) {
@@ -703,6 +706,7 @@ void node::HeartbeatThread() {
   std::string sAddr = _GetAddress(host_ip_, port_);
   LOG(debug_level_) << "Starting Heartbeat Thread at " << sAddr;
   while(1) {
+    bool should_sleep = true;
     // ping all nodes we haven't heard from recently
     std::unique_lock<std::mutex> lock(mutex_);
     for (auto it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
@@ -718,9 +722,16 @@ void node::HeartbeatThread() {
         hbreq.set_version(resource_table_version_);
         if (!call_rpc(it->second.socket, rpc_mutex(it->first),
                       "Heartbeat", hbreq, hbrep, timeout)) {
-          LOG(WARNING) << "Haven't heard from '" << it->first
-                       << "' for " << _Toc(it->second.last_heartbeat_time)
-                       << " ms seconds";
+          if (dElapsedTime > heartbeat_death_timeout_) {
+            LOG(WARNING) << "Haven't heard from '" << it->first
+                         << "' for " << dElapsedTime
+                         << " ms seconds. Disconnecting.";
+            lock.unlock();
+            DisconnectNode(it->first);
+            lock.lock();
+            should_sleep = false;
+            break;  // From inner loop, the iterator is now invalid.
+          }
           continue;
         }
 
@@ -758,7 +769,11 @@ void node::HeartbeatThread() {
       }
     }
     lock.unlock();
-    usleep(10000);
+    if (exiting_) return;
+    if (should_sleep) {
+      usleep(10000);
+    }
+    if (exiting_) return;
   }
 }
 
@@ -771,8 +786,11 @@ void node::RPCThread() {
     zmq::message_t ZmqReq;
 
     try {
-      if (!socket_->recv(&ZmqReq)) {
-        LOG(WARNING) << "RPC listener timed out";
+      static const int rpc_recv_max_wait_ = 3000;
+      socket_->setsockopt(ZMQ_RCVTIMEO, &rpc_recv_max_wait_,
+                          sizeof(rpc_recv_max_wait_));
+      while (!socket_->recv(&ZmqReq)) {
+        if (exiting_) return;
       }
     } catch(const zmq::error_t& error) {
       std::string sErr = error.what();

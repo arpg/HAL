@@ -371,6 +371,9 @@ class node {
   // Max timeout wait
   double get_resource_table_max_wait_;
   double heartbeat_wait_thresh_;
+
+  // Timeout w/o heartbeat before death is declared in seconds.
+  double heartbeat_death_timeout_ = 10.0;
   unsigned int resource_table_version_;
   mutable std::mutex mutex_;
 
@@ -387,6 +390,8 @@ class node {
   bool initialized_ = false;
 
   int debug_level_ = 0;
+
+  bool exiting_ = false;
 };
 
 }  // end namespace hal
