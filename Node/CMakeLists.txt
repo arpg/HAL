@@ -103,8 +103,9 @@ if( BUILD_NODE )
       "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
 
     # Add module to CMake package registery.
+    file( REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
     export(TARGETS ${LIBRARY_NAME}
-      APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/NodeTargets.cmake")
+      APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 
     option(EXPORT_NODE
       "Should the NODE package be exported for use by other software" ON)
