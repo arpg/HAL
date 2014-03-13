@@ -333,7 +333,7 @@ class node {
   std::map<std::string, NodeSocket> topic_sockets_;
 
   // nodename to socket map
-  std::map<std::string, TimedNodeSocket> rpc_sockets_;
+  std::map<std::string, std::shared_ptr<TimedNodeSocket> > rpc_sockets_;
 
   // Each socket should only be used by one thread at a time
   std::map<std::string, std::shared_ptr<std::mutex> > rpc_mutex_;
