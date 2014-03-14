@@ -19,6 +19,7 @@
 
 /*SceneGraph, to use containers and stuff */
 #include <SceneGraph/SceneGraph.h>
+#include <SceneGraph/GLMesh.h>
 #include <SceneGraph/PangolinGlCachedSizeableBuffer.h>
 
 /* Helper headers for Velodyne */
@@ -185,12 +186,12 @@ void Camera_Handler(int id) {
     if(bCamsRunning){
       //std::cout<<"id="<<id<<std::flush;
       vCamMtx[id].lock();
-      std::shared_ptr<pb::ImageArray> temp = pb::ImageArray::Create();
-      bool success = vCams[id].Capture(*temp.get());
-      //bool success = vCams[id].Capture(*vImgCap[id]);
-      if(id != 0 || id+1 != temp->Ref().id())
+//      std::shared_ptr<pb::ImageArray> temp = pb::ImageArray::Create();
+//      bool success = vCams[id].Capture(*temp.get());
+      bool success = vCams[id].Capture(*vImgCap[id]);
+/*      if(id != 0 || id+1 != temp->Ref().id())
         continue;
-      vImgCap[id] = temp;
+      vImgCap[id] = temp*/;
       //*(vImgs[id].get()) = *(vImgCap[id]->at(0));
       vCamMtx[id].unlock();
 
@@ -306,7 +307,7 @@ int main( int argc, char* argv[] )
 
   hal::LIDAR theLIDAR;
   if( bHaveLIDAR ) {
-    vld.Init("/Users/jongnarr/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
+    vld.Init("/home/rpg/Code/CoreDev/HAL/Applications/LexusLogger/db.xml");
     theLIDAR = hal::LIDAR(sLIDAR);
     theLIDAR.RegisterLIDARDataCallback(LIDAR_Handler);
     std::cout << "- Registering LIDAR device." << std::endl;
@@ -364,10 +365,10 @@ int main( int argc, char* argv[] )
         .SetDrawFunction(SceneGraph::ActivateDrawFunctor(glgraph, s_cam));
     d_cam.SetAspect(-640.0/480.0);
     pangolin::DisplayBase().AddDisplay(d_cam);
-    carMesh.Init("/Users/jongnarr/Documents/02/3ds/02_lowpoly.3DS");
+    carMesh.Init("/home/rpg/Downloads/02/3ds/02_lowpoly.3DS");
     carMesh.SetPerceptable(true);
     carMesh.SetScale(0.01);
-    carMesh.SetPose(0, 0, 1, M_PI/2, 0, M_PI);
+    carMesh.SetPose(0, 0, 0, M_PI/2, 0, M_PI);
     carMesh.SetAlpha(0.4);
     glgraph.AddChild(&carMesh);
   }
@@ -407,12 +408,12 @@ int main( int argc, char* argv[] )
     }
   }
 
- // if ( bHavePosys ) {
-    pangolin::TileView tileView;
-    pangolin::DisplayBase().AddDisplay(tileView);
-    tileView.SetBounds(0.0,0.6,0.8,1.0);
-    tileView.SetZoom(17);
-    tileView.AddGPSPoint(38.903973,-77.048918);
+  // if ( bHavePosys ) {
+    // pangolin::TileView tileView;
+    // pangolin::DisplayBase().AddDisplay(tileView);
+    // tileView.SetBounds(0.0,0.6,0.8,1.0);
+    // tileView.SetZoom(17);
+    // tileView.AddGPSPoint(38.903973,-77.048918);
   //}
 
   bool bRun = true;

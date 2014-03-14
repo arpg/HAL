@@ -20,7 +20,8 @@ if(Pangolin_FOUND AND HAL_FOUND AND TinyXML2_FOUND )
     if(BUILD_LEXUSLOGGER)
 	find_package(Protobuf REQUIRED)
 
-        include_directories(osm-engine/include gui-engine/include)
+        include_directories(osm-engine/include gui-engine/include
+			${osm_engine_BINARY_DIR})
         add_subdirectory(osm-engine)
         add_subdirectory(gui-engine)
 

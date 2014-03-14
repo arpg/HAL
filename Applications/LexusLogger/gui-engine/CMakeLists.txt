@@ -4,6 +4,7 @@ project( gui-engine )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include
                      ${Pangolin_INCLUDE_DIRS}
                      ${SceneGraph_INCLUDE_DIRS}
+		     ${osm_engine_BINARY_DIR}
                      ${HAL_INCLUDE_DIRS})
 
 set( HDRS
