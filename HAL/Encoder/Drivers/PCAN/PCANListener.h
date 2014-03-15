@@ -277,7 +277,7 @@ private:
     pb::EncoderMsg  pbSteering;
     CANMessage      RawPkg;
     CANParsedPkg    Pkg;
-#ifdef HAVE_LEXUSISF12
+#ifdef HAL_HAVE_LEXUSISF12
     LexusISF12      Car;
 #endif
 
@@ -288,7 +288,7 @@ private:
         continue;
       }
       Pkg.PkgType = CANParsedPkg::tNULL;
-#ifdef HAVE_LEXUSISF12
+#ifdef HAL_HAVE_LEXUSISF12
       Pkg = Car.ParseLexusCanMessage(&RawPkg);
 //      std::cout << "\t:" << std::hex << RawPkg.id;
       #if(false)
@@ -316,10 +316,10 @@ private:
         pbEncoderFront.set_device_time( hal::Tic() );
 
         // encoders
-        pbEncoderFront.set_label(0, "ENC_RATE_FL");
-        pbEncoderFront.set_data(0, Pkg.EncRate_FL);
-        pbEncoderFront.set_label(1, "ENC_RATE_FR");
-        pbEncoderFront.set_data(1, Pkg.EncRate_FR);
+        pbEncoderFront.add_label("ENC_RATE_FL");
+        pbEncoderFront.add_data(Pkg.EncRate_FL);
+        pbEncoderFront.add_label("ENC_RATE_FR");
+        pbEncoderFront.add_data(Pkg.EncRate_FR);
         (m_EncoderCallback)(pbEncoderFront);
     }
 
@@ -327,10 +327,10 @@ private:
         pbEncoderRear.Clear();
         pbEncoderRear.set_device_time( hal::Tic() );
 
-        pbEncoderRear.set_label(0, "ENC_RATE_RL");
-        pbEncoderRear.set_data(0, Pkg.EncRate_RL);
-        pbEncoderRear.set_label(1, "ENC_RATE_RR");
-        pbEncoderRear.set_data(1, Pkg.EncRate_RR);
+        pbEncoderRear.add_label("ENC_RATE_RL");
+        pbEncoderRear.add_data(Pkg.EncRate_RL);
+        pbEncoderRear.add_label("ENC_RATE_RR");
+        pbEncoderRear.add_data(Pkg.EncRate_RR);
         (m_EncoderCallback)(pbEncoderRear);
     }
 
@@ -341,8 +341,8 @@ private:
         pbSteering.Clear();
         pbSteering.set_device_time( hal::Tic() );
 
-        pbSteering.set_label(0, "RAW_STEERING_DATA");
-        pbSteering.set_data(0, Pkg.SteeringAngle);
+        pbSteering.add_label("RAW_STEERING_DATA");
+        pbSteering.add_data(Pkg.SteeringAngle);
         (m_EncoderCallback)(pbSteering);
     }
    }

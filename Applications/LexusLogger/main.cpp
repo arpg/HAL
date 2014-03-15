@@ -109,16 +109,21 @@ void Encoder_Handler(pb::EncoderMsg &EncoderData)
   for (int ii = 0; ii < EncoderData.label_size(); ++ii)
   {
     if(EncoderData.label(ii) == "ENC_RATE_FL") {
-
+      std::cout<<"Encoder FL = "<<EncoderData.data(ii)<<std::endl;
     }
     else if(EncoderData.label(ii) == "ENC_RATE_FR") {
-
+      std::cout<<"Encoder FR = "<<EncoderData.data(ii)<<std::endl;
     }
     else if(EncoderData.label(ii) == "ENC_RATE_RL") {
+      std::cout<<"Encoder RL = "<<EncoderData.data(ii)<<std::endl;
 
     }
     else if(EncoderData.label(ii) == "ENC_RATE_RR") {
+      std::cout<<"Encoder RR = "<<EncoderData.data(ii)<<std::endl;
 
+    }
+    else if(EncoderData.label(ii) == "RAW_STEERING_DATA") {
+      std::cout<<"Steering = "<<EncoderData.data(ii)<<std::endl;
     }
   }
   if( g_bLog ) {
