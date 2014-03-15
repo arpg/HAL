@@ -24,6 +24,29 @@ static const std::string kRpcScheme = "rpc://";
 
 namespace hal {
 
+/// used to time socket communications
+struct TimedNodeSocket {
+  TimedNodeSocket() {}
+  TimedNodeSocket(const NodeSocket& socket) : socket(socket),
+                                              last_heartbeat_time(0.0) {}
+
+  TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
+    if (this == &RHS) {
+      return *this;
+    }
+    socket = RHS.socket;
+    last_heartbeat_time = RHS.last_heartbeat_time;
+    return *this;
+  }
+
+  void Tic() {
+    last_heartbeat_time = hal::Tic();
+  }
+
+  NodeSocket  socket;
+  double      last_heartbeat_time;
+};
+
 zmq::context_t* _InitSingleton() {
   // not ideal! we should apparently port away from avahi-compat... ug
   setenv("AVAHI_COMPAT_NOWARN", "1", 1);
@@ -49,10 +72,13 @@ node::node(bool use_auto_discovery) : context_(nullptr),
 
 node::~node() {
   _BroadcastExit();
+  exiting_ = true;
+  rpc_thread_.join();
+  heartbeat_thread_.join();
 }
 
-void node::set_verbocity(int level) {
-  google::log_severity_global = level;
+void node::set_verbosity(int level) {
+  debug_level_ = level;
 }
 
 ///
@@ -95,7 +121,7 @@ bool node::init(std::string node_name) {
   g_vNodes.push_back(this);
 
   init_done_ = true;
-  LOG(INFO) << "Finished registering signals";
+  LOG(debug_level_) << "Finished registering signals";
 
   // RPC server socket
   socket_.reset(new zmq::socket_t(*context_, ZMQ_REP));
@@ -130,17 +156,18 @@ bool node::init(std::string node_name) {
 
   std::lock_guard<std::mutex> lock(mutex_);
   rpc_thread_ = std::thread(std::bind(&node::RPCThread, this));
+  usleep(100);  // Sleep to split log messages
   heartbeat_thread_ = std::thread(std::bind(&node::HeartbeatThread, this));
 
   // ask avahi who's around, and get their resource tables, also build our table
   _UpdateNodeRegistery();
-  LOG(INFO) << "Finished updating node registry";
+  LOG(debug_level_) << "Finished updating node registry";
 
-  LOG(INFO) << "Node '" << node_name_ << "' started at '" << host_ip_ << "'";
+  LOG(debug_level_) << "Node '" << node_name_ << "' started at " << host_ip_;
 
   // propagate changes
   _PropagateResourceTable();
-  LOG(INFO) << "Finished propagating resource table";
+  LOG(debug_level_) << "Finished propagating resource table";
 
   _PrintResourceLocatorTable();
 
@@ -180,8 +207,8 @@ bool node::call_rpc(const std::string& node_name,
                     const google::protobuf::Message&  msg_req,
                     google::protobuf::Message& msg_rep,
                     unsigned int time_out) {
-  assert(init_done_);
-  NodeSocket socket;
+  CHECK(init_done_);
+  std::shared_ptr<TimedNodeSocket> socket;
 
   std::unique_lock<std::mutex> lock(mutex_); // careful
 
@@ -198,28 +225,36 @@ bool node::call_rpc(const std::string& node_name,
   auto sockit = rpc_sockets_.find(node_name);
   if (sockit != rpc_sockets_.end()) {
     // socket is already open, lets use it
-    socket = sockit->second.socket;
+    socket = sockit->second;
   } else {
-    socket = NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ));
+    socket = std::make_shared<TimedNodeSocket>(
+        NodeSocket(new zmq::socket_t(*context_, ZMQ_REQ)));
+
     // lets connect using the socket
     try {
-      socket->connect(("tcp://" + host_and_port).c_str());
+      socket->socket->connect(("tcp://" + host_and_port).c_str());
     } catch(const zmq::error_t& error) {
       return false;
     }
-    rpc_sockets_[node_name] = TimedNodeSocket(socket);
+    rpc_sockets_[node_name] = socket;
   }
 
   std::shared_ptr<std::mutex> socket_mutex = rpc_mutex(node_name);
+
+  if (!socket->socket->connected()) {
+    return false;
+  }
 
   // once we have socket, we can let the resource table change. yay
   // smart pointers
   lock.unlock();
 
-  // TODO: what happens if this client tries to Delete himself?
-
-  return call_rpc(socket, socket_mutex,
-                  function_name, msg_req, msg_rep, time_out);
+  bool success = call_rpc(socket->socket, socket_mutex,
+                          function_name, msg_req, msg_rep, time_out);
+  if (success) {
+    socket->Tic();
+  }
+  return success;
 }
 
 bool node::call_rpc(NodeSocket socket,
@@ -228,7 +263,8 @@ bool node::call_rpc(NodeSocket socket,
                     const google::protobuf::Message& msg_req,
                     google::protobuf::Message& msg_rep,
                     unsigned int nTimeoutMS) {
-  assert(init_done_);
+  CHECK(init_done_);
+  CHECK(socket->connected());
 
   // prepare to append function information (clip function name size)
   std::string sFName = function_name;
@@ -253,8 +289,8 @@ bool node::call_rpc(NodeSocket socket,
   /** @todo Sockets should only be used by 1 thread ever... */
   std::lock_guard<std::mutex> lock(*socket_mutex);
   socket->setsockopt(ZMQ_SNDTIMEO,
-                    &send_recv_max_wait_,
-                    sizeof(send_recv_max_wait_));
+                     &send_recv_max_wait_,
+                     sizeof(send_recv_max_wait_));
 
   try {
     if (!socket->send(ZmqReq)) {
@@ -270,8 +306,7 @@ bool node::call_rpc(NodeSocket socket,
   zmq::message_t ZmqRep;
   double dStartTime = _TicMS();
 
-  socket->setsockopt(
-      ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
+  socket->setsockopt(ZMQ_RCVTIMEO, &nTimeoutMS, sizeof(nTimeoutMS));
 
   try{
     bool bStatus = false;
@@ -284,8 +319,8 @@ bool node::call_rpc(NodeSocket socket,
         double dTimeTaken = _TocMS(dStartTime);
         if (dTimeTaken >= nTimeoutMS) {
           // timeout... error receiving
-          LOG(INFO) << "Warning: Call timed out waiting for reply ("
-                    << dTimeTaken << " msms > " << nTimeoutMS << " msms).";
+          LOG(debug_level_) << "Warning: Call timed out waiting for reply ("
+                            << dTimeTaken << " ms > " << nTimeoutMS << " ms).";
           return false;
         }
         usleep(100); // wait a bit
@@ -308,7 +343,7 @@ bool node::call_rpc(NodeSocket socket,
 bool node::advertise(const std::string& sTopic) {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -322,7 +357,7 @@ bool node::advertise(const std::string& sTopic) {
     NodeSocket socket(new zmq::socket_t(*context_, ZMQ_PUB));
     int port = _BindRandomPort(socket);
     std::string sAddr = _GetAddress(host_ip_, port);
-    LOG(INFO) << "Publishing topic '" << sTopic << "' on " << sAddr;
+    LOG(debug_level_) << "Publishing topic '" << sTopic << "' on " << sAddr;
 
     // update node table and socket table
     // lock();
@@ -342,7 +377,7 @@ bool node::advertise(const std::string& sTopic) {
 bool node::publish(const std::string& sTopic, //< Input: Topic to write to
                    const google::protobuf::Message& Msg //< Input: Message to send
                    ) {
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -359,8 +394,8 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
     }
 
     socket->setsockopt(ZMQ_SNDTIMEO,
-                      &send_recv_max_wait_,
-                      sizeof(send_recv_max_wait_));
+                       &send_recv_max_wait_,
+                       sizeof(send_recv_max_wait_));
     try {
       if (socket->send(ZmqMsg)) {
         return true;
@@ -374,7 +409,7 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
 }
 
 bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
-  assert(init_done_);
+  CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
 
   // check if socket is already open for this topic
@@ -386,8 +421,8 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
     NodeSocket socket = it->second;
 
     socket->setsockopt(ZMQ_SNDTIMEO,
-                      &send_recv_max_wait_,
-                      sizeof(send_recv_max_wait_));
+                       &send_recv_max_wait_,
+                       sizeof(send_recv_max_wait_));
     // double dStartTime =_TicMS();
 
     try {
@@ -406,7 +441,7 @@ bool node::subscribe(const std::string& resource) {
   std::lock_guard<std::mutex> lock(mutex_);
 
   std::string         sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it != topic_sockets_.end()) {
@@ -416,8 +451,8 @@ bool node::subscribe(const std::string& resource) {
     // lets find this node's IP
     auto its = resource_table_.find(sTopicResource);
     if (its == resource_table_.end()) {
-      LOG(INFO) << "Resource '" << sTopicResource
-                << "' not found on cache table.";
+      LOG(debug_level_) << "Resource '" << sTopicResource
+                        << "' not found on cache table.";
       return false;
     }
     else {
@@ -439,7 +474,7 @@ bool node::subscribe(const std::string& resource) {
 bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
   std::string sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
@@ -469,7 +504,7 @@ bool node::receive(const std::string& resource,
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
   std::string         sTopicResource = kTopicScheme + resource;
-  assert(init_done_);
+  CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
@@ -576,8 +611,8 @@ void node::GetResourceTableFunc(
     pMsg->set_resource(it->first);
     pMsg->set_address(it->second);
   }
-  LOG(INFO) << "GetResourceTableFunc() called -- will send "
-            << rep.resource_table().urls_size() << " resouces back";
+  LOG(debug_level_) << "GetResourceTableFunc() called -- will send "
+                    << rep.resource_table().urls_size() << " resouces back";
   _PrintResourceLocatorTable();
   // ok at this point the NodeTable protobuf is ready to send back to the caller
 }
@@ -592,9 +627,9 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
                                        msg::DeleteFromTableResponse& rep) {
   std::lock_guard<std::mutex> lock(mutex_); // careful
 
-  LOG(INFO) << "DeleteFromResourceTableFunc() called by '"
-            << req.requesting_node_name() << "' to delete "
-            << req.urls_to_delete_size() << " resources";
+  LOG(debug_level_) << "DeleteFromResourceTableFunc() called by '"
+                    << req.requesting_node_name() << "' to delete "
+                    << req.urls_to_delete_size() << " resources";
   // _PrintResourceLocatorTable();
   for (int ii = 0; ii < req.urls_to_delete_size(); ++ii) {
     const msg::ResourceLocator& m = req.urls_to_delete(ii);
@@ -635,9 +670,9 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
                                 msg::SetTableResponse& rep) {
   std::lock_guard<std::mutex> lock(mutex_); // careful
 
-  LOG(INFO) << "SetResourceTableFunc() called by '"
-            << req.requesting_node_name() << "' to share "
-            << req.resource_table().urls_size() << " resources";
+  LOG(debug_level_) << "SetResourceTableFunc() called by '"
+                    << req.requesting_node_name() << "' to share "
+                    << req.resource_table().urls_size() << " resources";
 
   // open RPC socket if necessary -- e.g. if the client is new:
   _ConnectRpcSocket(req.requesting_node_name(), req.requesting_node_addr());
@@ -664,35 +699,49 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
 
   // ok at this point we have updated our node table
   _PrintResourceLocatorTable();
-  LOG(INFO) << "SetResourceTable complete";
+  LOG(debug_level_) << "SetResourceTable complete";
 }
 
 void node::HeartbeatThread() {
   std::string sAddr = _GetAddress(host_ip_, port_);
-  LOG(INFO) << "Starting Heartbeat Thread at " << sAddr;
+  LOG(debug_level_) << "Starting Heartbeat Thread at " << sAddr;
   while(1) {
+    bool should_sleep = true;
+
+
+    // Copy it so we don't have to lock while heartbeating
+    decltype(rpc_sockets_) sockets_copy;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      sockets_copy = rpc_sockets_;
+    }
+
     // ping all nodes we haven't heard from recently
-    std::unique_lock<std::mutex> lock(mutex_);
-    for (auto it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
-      double dElapsedTime = _Toc(it->second.last_heartbeat_time);
+    for (auto it = sockets_copy.begin() ; it != sockets_copy.end(); ++it) {
+      double dElapsedTime = _Toc(it->second->last_heartbeat_time);
       // haven't heard from this guy in a while
       if (dElapsedTime > heartbeat_wait_thresh_) {
-        LOG(INFO) << "sending heartbeat to '" << it->first << "'";
+        LOG(debug_level_) << "sending heartbeat to '" << it->first << "'";
         double timeout = get_resource_table_max_wait_ * 1e3;
 
         msg::HeartbeatRequest hbreq;
         msg::HeartbeatResponse hbrep;
         hbreq.set_checksum(_ResourceTableCRC());
         hbreq.set_version(resource_table_version_);
-        if (!call_rpc(it->second.socket, rpc_mutex(it->first),
+        if (!call_rpc(it->second->socket, rpc_mutex(it->first),
                       "Heartbeat", hbreq, hbrep, timeout)) {
-          LOG(WARNING) << "Haven't heard from '" << it->first
-                       << "' for " << _Tic()-it->second.last_heartbeat_time
-                       << " ms seconds";
+          if (dElapsedTime > heartbeat_death_timeout_) {
+            LOG(WARNING) << "Haven't heard from '" << it->first
+                         << "' for " << dElapsedTime
+                         << " ms seconds. Disconnecting.";
+            DisconnectNode(it->first);
+            should_sleep = false;
+            break;  // From inner loop, the iterator is now invalid.
+          }
           continue;
         }
 
-        it->second.last_heartbeat_time = _Tic();
+        it->second->Tic();
 
         // if remote resource table is newer than ours...
         if (hbrep.version() > resource_table_version_) {
@@ -711,7 +760,7 @@ void node::HeartbeatThread() {
           _BuildResourceTableMessage(*streq.mutable_resource_table());
           streq.set_requesting_node_name(node_name_);
           streq.set_requesting_node_addr(_GetAddress());
-          if (!call_rpc(it->second.socket, rpc_mutex(it->first),
+          if (!call_rpc(it->second->socket, rpc_mutex(it->first),
                         "SetResourceTable", streq, strep)) {
             LOG(ERROR) << "Sending resource table failed";
           }
@@ -725,22 +774,29 @@ void node::HeartbeatThread() {
         }
       }
     }
-    lock.unlock();
-    usleep(10000);
+    if (exiting_) {
+      return;
+    } else if (should_sleep) {
+      usleep(10000);
+    }
+    if (exiting_) return;
   }
 }
 
 void node::RPCThread() {
   std::string sAddr = _GetAddress(host_ip_, port_);
-  LOG(INFO) << "Starting RPC server at " << sAddr;
+  LOG(debug_level_) << "Starting RPC server at " << sAddr;
 
   while(1) {
     // wait for request
     zmq::message_t ZmqReq;
 
     try {
-      if (!socket_->recv(&ZmqReq)) {
-        LOG(WARNING) << "RPC listener timed out";
+      static const int rpc_recv_max_wait_ = 3000;
+      socket_->setsockopt(ZMQ_RCVTIMEO, &rpc_recv_max_wait_,
+                          sizeof(rpc_recv_max_wait_));
+      while (!socket_->recv(&ZmqReq)) {
+        if (exiting_) return;
       }
     } catch(const zmq::error_t& error) {
       std::string sErr = error.what();
@@ -753,7 +809,7 @@ void node::RPCThread() {
     std::string FuncName(
         static_cast<char*>(ZmqReq.data()) + sizeof(FuncNameSize), FuncNameSize);
 
-    LOG(INFO) << "Responding to '" << FuncName << "' RPC call";
+    LOG(debug_level_) << "Responding to '" << FuncName << "' RPC call";
 
     // prepare reply message
     unsigned int PbOffset = sizeof(FuncNameSize) + FuncNameSize;
@@ -825,7 +881,7 @@ uint32_t node::_ResourceTableCRC() {
 }
 
 void node::_PropagateResourceTable() {
-  LOG(INFO) << "Propagating resource table";
+  LOG(debug_level_) << "Propagating resource table";
   msg::SetTableRequest req;
   msg::SetTableResponse rep;
 
@@ -834,13 +890,13 @@ void node::_PropagateResourceTable() {
   req.set_requesting_node_addr(_GetAddress());
 
   for (auto it = rpc_sockets_.begin(); it != rpc_sockets_.end(); ++it) {
-    if (it->second.socket == socket_) {
+    if (it->second->socket == socket_) {
       continue; // don't send to self
     }
 
-    LOG(INFO) << "Calling node '" << it->first
-              << "' SetResourceTable rpc method";
-    if (!call_rpc(it->second.socket, rpc_mutex(it->first),
+    LOG(debug_level_) << "Calling node '" << it->first
+                      << "' SetResourceTable rpc method";
+    if (!call_rpc(it->second->socket, rpc_mutex(it->first),
                   "SetResourceTable", req, rep)) {
       LOG(ERROR) << "sending resource table";
     }
@@ -852,9 +908,10 @@ void node::_UpdateNodeRegistery() {
 
   std::vector<ZeroConfRecord> records;
   records = zero_conf_.BrowseForServiceType("_hermes._tcp");
-  LOG(INFO) << "Looking for hermes.tcp ";
+  LOG(debug_level_) << "Looking for hermes.tcp ";
   while(records.empty()) {
-    LOG(INFO) << "Waiting for _hermes._tcp to appear in ZeroConf registery";
+    LOG(debug_level_)
+        << "Waiting for _hermes._tcp to appear in ZeroConf registery";
     records = zero_conf_.BrowseForServiceType("_hermes._tcp");
     usleep(1000);
   }
@@ -867,14 +924,14 @@ void node::_UpdateNodeRegistery() {
     urls.insert(urls.end(), new_urls.begin(), new_urls.end());
   }
 
-  LOG(INFO) <<"Found " << urls.size() << " URLs for nodes";
+  LOG(debug_level_) <<"Found " << urls.size() << " URLs for nodes";
   std::string sMyAddr = _GetAddress();
   for (ZeroConfURL& url : urls) {
     std::string sAddr = _GetAddress(url.host, url.port);
     if (sAddr == sMyAddr) { // don't send a message to ourselves...
-      LOG(INFO) << "node at " << url << " (my URL)";
+      LOG(debug_level_) << "node at " << url << " (my URL)";
     } else{
-      LOG(INFO) << "node at " << url;
+      LOG(debug_level_) << "node at " << url;
     }
   }
 
@@ -904,7 +961,7 @@ bool node::ConnectNode(const std::string& host, uint16_t port,
                        msg::GetTableResponse* rep) {
   // Skip if we are already connected to this node
   if (resource_table_.count(_GetAddress(host, port))) return false;
-  LOG(INFO) << "Connecting to " << host << ":" << port;
+  LOG(debug_level_) << "Connecting to " << host << ":" << port;
 
   std::string zmq_addr = _ZmqAddress(host, port);
   NodeSocket socket(new zmq::socket_t(*context_, ZMQ_REQ));
@@ -913,8 +970,8 @@ bool node::ConnectNode(const std::string& host, uint16_t port,
   } catch(const zmq::error_t& error) {
     LOG(ERROR) << "zmq->connect() -- " << error.what();
   }
-  LOG(INFO) << "'" << node_name_ << "' connected to remote node: "
-            << host << ":" << port;
+  LOG(debug_level_) << "'" << node_name_ << "' connected to remote node: "
+                    << host << ":" << port;
 
   /// update our registery
   msg::GetTableRequest req;
@@ -926,11 +983,18 @@ bool node::ConnectNode(const std::string& host, uint16_t port,
     LOG(ERROR) << "Failed when asking for remote node name";
     return false;
   }
-  LOG(INFO) << "\tHeard back from '" << rep->sender_name()
-            << "' about " << rep->resource_table().urls_size() << " resources";
+  if (rep->sender_name() == node_name_) {
+    LOG(WARNING) << "Tried to communicate with myself, node: '" << node_name_
+                 << "'. Not connecting.";
+    return false;
+  }
+
+  LOG(debug_level_) << "\tHeard back from '" << rep->sender_name()
+                    << "' about " << rep->resource_table().urls_size()
+                    << " resources";
 
   // ok, now we have the nodes name to record his socket
-  rpc_sockets_[rep->sender_name()] = TimedNodeSocket(socket);
+  rpc_sockets_[rep->sender_name()] = std::make_shared<TimedNodeSocket>(socket);
   // push these into our resource table:
   for (const msg::ResourceLocator& r : rep->resource_table().urls()) {
     resource_table_[r.resource()] = r.address();
@@ -959,24 +1023,25 @@ void node::DisconnectNode(const std::string& node_name) {
   if (it == rpc_sockets_.end()) return;
 
   msg::DeleteFromTableResponse rep;
-  call_rpc(it->second.socket, rpc_mutex(it->first),
+  call_rpc(it->second->socket, rpc_mutex(it->first),
            "DeleteFromResourceTable", req, rep);
   rpc_sockets_.erase(it);
 }
 
 void node::_PrintResourceLocatorTable() {
-  LOG(INFO) << "--------------- RESOURCE TABLE (ver " << resource_table_version_
-            << ", crc " << _ResourceTableCRC() << ") --------------";
-  LOG(INFO) << "URL\t\tRESOURCE";
+  LOG(debug_level_) << "--------------- RESOURCE TABLE (ver "
+                    << resource_table_version_
+                    << ", crc " << _ResourceTableCRC() << ") --------------";
+  LOG(debug_level_) << "URL\t\tRESOURCE";
   for (auto it = resource_table_.begin() ; it != resource_table_.end(); ++it) {
-    LOG(INFO) << it->first << "\t\t" << it->second;
+    LOG(debug_level_) << it->first << "\t\t" << it->second;
   }
 }
 
 void node::_PrintRpcSockets() {
-  LOG(INFO) << "----------- RPC SOCKETS OPEN ----------------";
+  LOG(debug_level_) << "----------- RPC SOCKETS OPEN ----------------";
   for (auto it = rpc_sockets_.begin() ; it != rpc_sockets_.end(); ++it) {
-    LOG(INFO) << it->first;
+    LOG(debug_level_) << it->first;
   }
 }
 
@@ -1069,10 +1134,10 @@ void node::_ConnectRpcSocket(const std::string& node_name,
       std::string sErr = error.what();
       LOG(ERROR) << "Error zmq->connect() -- " << sErr;
     }
-    LOG(INFO) << "Connected to remote node: " << sZmqAddr;
+    LOG(debug_level_) << "Connected to remote node: " << sZmqAddr;
 
     // record the new connection
-    rpc_sockets_[node_name] = TimedNodeSocket(socket);
+    rpc_sockets_[node_name] = std::make_shared<TimedNodeSocket>(socket);
   }
 }
 
@@ -1112,14 +1177,19 @@ void node::_BroadcastExit() {
   msg::DeleteFromTableResponse rep;
 
   // ask all known nodes to remove us:
-  std::map<std::string, TimedNodeSocket> tmp = rpc_sockets_;
+  decltype(rpc_sockets_) tmp;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    tmp = rpc_sockets_;
+  }
   for (const auto& pair : tmp) {
-    if (pair.second.socket == socket_) continue;
-    LOG(INFO) << "[Node '" << node_name_
-              << "']  Calling DeleteFromResource to remove "
-              << req.urls_to_delete_size()
-              <<" resources";
-    if (!call_rpc(pair.second.socket, rpc_mutex(pair.first),
+    if (!pair.second->socket->connected() ||
+        pair.second->socket == socket_) continue;
+    LOG(debug_level_) << "[Node '" << node_name_
+                      << "']  Calling DeleteFromResource to remove "
+                      << req.urls_to_delete_size()
+                      <<" resources";
+    if (!call_rpc(pair.second->socket, rpc_mutex(pair.first),
                   "DeleteFromResourceTable", req, rep)) {
       LOG(ERROR) << "Calling remote DeleteFromResourceTable";
     }

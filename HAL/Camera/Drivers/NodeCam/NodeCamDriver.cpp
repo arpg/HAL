@@ -134,7 +134,7 @@ size_t NodeCamDriver::Height( size_t /*idx*/ ) const
 
 bool NodeCamDriver::InitNode()
 {
-  m_Node.set_verbocity(2); // make some noise on errors
+  m_Node.set_verbosity(2); // make some noise on errors
   if(m_Node.init(m_sDeviceName)==false)
   {
     std::cerr <<"[NodeCamDriver] Cannot init NodeCam '"<<m_sDeviceName<<"'"
@@ -199,4 +199,3 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
 }
 
 }
-

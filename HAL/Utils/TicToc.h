@@ -13,7 +13,7 @@
 
 #ifdef __MACH__
 #include <mach/clock.h>
-#include <mach/mach.h>
+#include <mach/mach_time.h>
 #endif
 
 namespace  hal
@@ -24,21 +24,26 @@ namespace  hal
 inline double Tic()
 {
 #ifdef __MACH__
-    clock_serv_t cclock;
-    mach_timespec_t mts;
-    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
-    clock_get_time(cclock, &mts);
-    mach_port_deallocate(mach_task_self(), cclock);
+  // From Apple Developer Q&A @
+  // https://developer.apple.com/library/mac/qa/qa1398/_index.html
 
-    return mts.tv_sec + mts.tv_nsec * 1e-9;
+  // This doesn't change, so we set it up once
+  static mach_timebase_info_data_t timebase;
+  if (timebase.denom == 0) {
+    mach_timebase_info(&timebase);
+  }
+
+  double secs = static_cast<double>(mach_absolute_time()) *
+      timebase.numer / timebase.denom * 1e-9;
+  return secs;
 #elif _POSIX_TIMERS > 0
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec + ts.tv_nsec * 1e-9;
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec + ts.tv_nsec * 1e-9;
 #else
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    return tv.tv_sec + 1e-6 * (tv.tv_usec);
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return tv.tv_sec + 1e-6 * (tv.tv_usec);
 #endif
 }
 

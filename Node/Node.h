@@ -70,6 +70,8 @@ extern std::vector<hal::node*> g_vNodes;
 
 namespace hal {
 
+struct TimedNodeSocket;
+
 // The port to use by default if we can't autodiscover
 #define NODE_DEFAULT_PORT 1776U
 
@@ -84,7 +86,7 @@ class node {
   ///        (if available)
   explicit node(bool use_auto_discovery = true);
   virtual ~node();
-  void set_verbocity(int nLevel);
+  void set_verbosity(int nLevel);
 
   ///
   /// Input: Node identifier
@@ -323,25 +325,6 @@ class node {
   void BuildDeleteFromTableRequest(msg::DeleteFromTableRequest* msg) const;
 
  private:
-  /// used to time socket communications
-  struct TimedNodeSocket {
-    TimedNodeSocket() {}
-    TimedNodeSocket(const NodeSocket& socketet) : socket(socketet),
-                                                  last_heartbeat_time(0.0) {}
-
-    TimedNodeSocket& operator=(const TimedNodeSocket& RHS) {
-      if (this == &RHS) {
-        return *this;
-      }
-      socket = RHS.socket;
-      last_heartbeat_time = RHS.last_heartbeat_time;
-      return *this;
-    }
-
-    NodeSocket  socket;
-    double      last_heartbeat_time;
-  };
-
   // NB a "resource" is a nodename, node/rpc or node/topic URL
   // resource to host:port map
   std::map<std::string, std::string> resource_table_;
@@ -350,7 +333,7 @@ class node {
   std::map<std::string, NodeSocket> topic_sockets_;
 
   // nodename to socket map
-  std::map<std::string, TimedNodeSocket> rpc_sockets_;
+  std::map<std::string, std::shared_ptr<TimedNodeSocket> > rpc_sockets_;
 
   // Each socket should only be used by one thread at a time
   std::map<std::string, std::shared_ptr<std::mutex> > rpc_mutex_;
@@ -388,6 +371,9 @@ class node {
   // Max timeout wait
   double get_resource_table_max_wait_;
   double heartbeat_wait_thresh_;
+
+  // Timeout w/o heartbeat before death is declared in seconds.
+  double heartbeat_death_timeout_ = 10.0;
   unsigned int resource_table_version_;
   mutable std::mutex mutex_;
 
@@ -402,6 +388,10 @@ class node {
 
   // Has this Node been initialized yet?
   bool initialized_ = false;
+
+  int debug_level_ = 0;
+
+  bool exiting_ = false;
 };
 
 }  // end namespace hal
