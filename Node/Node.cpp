@@ -364,6 +364,7 @@ bool node::advertise(const std::string& sTopic) {
     // std::lock_guard<std::mutex> lock(mutex_); // careful
     resource_table_[sTopicResource] = sAddr;
     topic_sockets_[sTopicResource] = socket;
+    topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
     //                        lock.unlock();
     //                        unlock();
 
@@ -377,35 +378,13 @@ bool node::advertise(const std::string& sTopic) {
 bool node::publish(const std::string& sTopic, //< Input: Topic to write to
                    const google::protobuf::Message& Msg //< Input: Message to send
                    ) {
-  CHECK(init_done_);
-  std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
-
-  // check if socket is already open for this topic
-  auto it = topic_sockets_.find(sTopicResource);
-  if (it == topic_sockets_.end()) {
-    // no socket found
-    return false;
-  } else {
-    NodeSocket socket = it->second;
     zmq::message_t ZmqMsg(Msg.ByteSize());
     if (!Msg.SerializeToArray(ZmqMsg.data(), Msg.ByteSize())) {
-      // error serializing protobuf to ZMQ message
+      LOG(WARNING) << "Conversion of protobuf message to ZMQ message for topic "
+                   << sTopic <<  " was not successfull";
       return false;
     }
-
-    socket->setsockopt(ZMQ_SNDTIMEO,
-                       &send_recv_max_wait_,
-                       sizeof(send_recv_max_wait_));
-    try {
-      if (socket->send(ZmqMsg)) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch(const zmq::error_t& error) {
-      return false;
-    }
-  }
+    return publish(sTopic,ZmqMsg);
 }
 
 bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
@@ -420,18 +399,16 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
   } else {
     NodeSocket socket = it->second;
 
+    std::lock_guard<std::mutex> lock(*topic_mutex_[sTopicResource]);
     socket->setsockopt(ZMQ_SNDTIMEO,
                        &send_recv_max_wait_,
                        sizeof(send_recv_max_wait_));
     // double dStartTime =_TicMS();
 
     try {
-      if (socket->send(Msg)) {
-        return true;
-      } else {
-        return false;
-      }
+      return socket->send(Msg);
     } catch(const zmq::error_t& error) {
+      LOG(WARNING) << "Error sending the message for topic " << sTopic;
       return false;
     }
   }
@@ -466,6 +443,7 @@ bool node::subscribe(const std::string& resource) {
         return false;
       }
       topic_sockets_[sTopicResource] = socket;
+      topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
       return true;
     }
   }
@@ -473,33 +451,13 @@ bool node::subscribe(const std::string& resource) {
 
 bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
-  std::string sTopicResource = kTopicScheme + resource;
-  CHECK(init_done_);
-  // check if socket is already open for this topic
-  auto it = topic_sockets_.find(sTopicResource);
-  if (it == topic_sockets_.end()) {
-    // no socket found
-    return false;
-  } else {
-    NodeSocket socket = it->second;
     zmq::message_t ZmqMsg;
 
-    socket->setsockopt(ZMQ_RCVTIMEO,
-                       &send_recv_max_wait_,
-                       sizeof(send_recv_max_wait_));
-    try {
-      if (!socket->recv(&ZmqMsg)) {
-        return false;
-      }
-    } catch(const zmq::error_t& error) {
-      return false;
-    }
-
+    receive(resource,ZmqMsg);
     if (!Msg.ParseFromArray(ZmqMsg.data(), ZmqMsg.size())) {
       return false;
     }
     return true;
-  }
 }
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
@@ -516,6 +474,7 @@ bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
 
     //                        double dStartTime=_TicMS();
 
+    std::lock_guard<std::mutex> lock(*topic_mutex_[sTopicResource]);
     socket->setsockopt(
         ZMQ_RCVTIMEO, &send_recv_max_wait_, sizeof(send_recv_max_wait_));
     try {
