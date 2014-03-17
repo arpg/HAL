@@ -35,7 +35,7 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
     }
 
     // TODO: define ensure macro or throw exception
-    std::cerr << "error: Channel index '" << idx
+    std::cerr << "HAL Error: Channel index '" << idx
               << "' out of bounds: did you split the image stream?"
               << std::endl;
     exit(1);
