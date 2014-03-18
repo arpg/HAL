@@ -3,6 +3,7 @@
  */
 #include "NodeCamDriver.h"
 #include "stdlib.h"
+#include <unistd.h>
 #include <HAL/Devices/DeviceException.h>
 
 namespace hal
