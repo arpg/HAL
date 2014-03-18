@@ -10,6 +10,8 @@
 #include <Node/Node.h>
 
 #include <stdio.h>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -37,7 +39,7 @@ int main( int argc, char** argv )
     int ii = 0;
     for( double t = 0.0; t < nUpTime; t+=dt ){
         cout << "\b\b" << sSpinner[ii++%4] << flush;
-        usleep(dt*1e6);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     printf( "'%s' Exiting cleanly\n", sNodeName.c_str() );
