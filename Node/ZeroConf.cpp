@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <cstring>
+#include <unistd.h>
 #include <stdio.h>
 
 #ifdef HAVE_DNSSD
@@ -16,8 +17,7 @@
 
 namespace hal {
 
-ZeroConf::ZeroConf() : dns_service_ref_(0),
-                       stop_thread_(false) {}
+ZeroConf::ZeroConf() : dns_service_ref_(0), stop_thread_(false) {}
 ZeroConf::~ZeroConf() {
   stop_thread_ = true;
   listen_to_server_thread_.join();
