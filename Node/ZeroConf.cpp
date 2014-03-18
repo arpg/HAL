@@ -7,6 +7,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <cstring>
+#include <unistd.h>
 #include <stdio.h>
 
 #ifdef HAVE_DNSSD
@@ -15,17 +17,10 @@
 
 namespace hal {
 
-ZeroConf::ZeroConf() : dns_service_ref_(0) {}
+ZeroConf::ZeroConf() : dns_service_ref_(0), stop_thread_(false) {}
 ZeroConf::~ZeroConf() {
-  listen_to_server_thread_.interrupt();
-  //            sleep(2);
-  //            listen_to_server_thread_.join();
-  //            printf("DNSServiceRefDeallocate(dns_service_ref_);\n");
-  //            DNSServiceRefDeallocate(dns_service_ref_);
-}
-
-inline void _HandleEvents2(void* pThis) {
-  ((ZeroConf*)pThis)->HandleEvents2();
+  stop_thread_ = true;
+  listen_to_server_thread_.join();
 }
 
 inline void _BrowseReplyCallback(
@@ -162,7 +157,7 @@ bool ZeroConf::RegisterService(
   }
 
   // ok now setup a thread that watches the avahi socket
-  listen_to_server_thread_ = boost::thread(_HandleEvents2, this);
+  listen_to_server_thread_ = std::thread(std::bind(&ZeroConf::HandleEvents2, this));
 
   return true;
 #else
@@ -323,15 +318,7 @@ void ZeroConf::HandleEvents2() {
       dns_service_ref_ ? DNSServiceRefSockFD(dns_service_ref_) : -1;
   int nfds = dns_sd_fd + 1;
   fd_set readfds;
-  bool bStopNow = false;
-
-  while (!bStopNow)  {
-    if (listen_to_server_thread_.interruption_requested()) {
-      printf("exiting thread\n");
-      return;
-    }
-
-
+  while (!stop_thread_) {
     // 1. Set up the fd_set as usual here.
     // This example client has no file descriptors of its own,
     // but a real application would call FD_SET to add them to the set here
@@ -354,15 +341,15 @@ void ZeroConf::HandleEvents2() {
       }
       if (err) {
         fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-        bStopNow = true;
+        stop_thread_ = true;
       }
     }
     else if (result == 0 && resolve_complete_) {
-      // bStopNow = true;
+      // stop_thread_ = true;
     }
     else{
       if (errno != EINTR) {
-        //                        bStopNow = 1;
+        //                        stop_thread_ = 1;
       }
       return;
     }
@@ -376,8 +363,8 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
   int nfds = dns_sd_fd + 1;
   fd_set readfds;
   struct timeval tv;
-  bool bStopNow = false;
-  while (!bStopNow) {
+  bool stop_thread_ = false;
+  while (!stop_thread_) {
     // 1. Set up the fd_set as usual here.
     // This example client has no file descriptors of its own,
     // but a real application would call FD_SET to add them to the set here
@@ -400,14 +387,13 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
       }
       if (err) {
         fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-        bStopNow = true;
+        stop_thread_ = true;
       }
     } else if (result == 0 && resolve_complete_) {
-      bStopNow = true;
+      stop_thread_ = true;
     } else{
-      // printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
       if (errno != EINTR) {
-        bStopNow = 1;
+        stop_thread_ = 1;
       }
     }
   }
