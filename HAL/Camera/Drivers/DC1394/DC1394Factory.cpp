@@ -12,7 +12,7 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"id","0","Camera id."},
+            {"idN","0","Camera id number."},
             {"mode","MONO8","Video mode: RGB8, MONO8, MONO16, FORMAT7_X"},
             {"size", "640x480", "Capture resolution."},
             {"roi", "0+0+640x480", "ROI resolution for Format7."},
@@ -24,7 +24,6 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        unsigned int nCamId     = uri.properties.Get<unsigned int>("id", 0);
         std::string sMode       = uri.properties.Get<std::string>("mode", "MONO8");
         ImageDim Dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
         ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
@@ -32,12 +31,29 @@ public:
         unsigned int nISO       = uri.properties.Get<unsigned int>("iso", 400);
         unsigned int nDMA       = uri.properties.Get<unsigned int>("dma", 4);
 
+        // Get IDs.
+        std::vector<unsigned int> vCamId;
+
+        while(true)
+        {
+            std::stringstream ss;
+            ss << "id" << vCamId.size();
+            const std::string key = ss.str();
+
+            if(!uri.properties.Contains(key)) {
+                break;
+            }
+
+            vCamId.push_back( uri.properties.Get<unsigned int>( key, 0 ) );
+        }
+
+        // Get ROI.
         if( ROI.w == 0 && ROI.h == 0 ) {
             ROI.w = Dims.x;
             ROI.h = Dims.y;
         }
 
-
+        // Get Mode.
         dc1394video_mode_t Mode;
 
         if( sMode.find( "FORMAT7" ) != std::string::npos ) {
@@ -93,7 +109,7 @@ public:
             }
         }
 
-
+        // Get speed.
         dc1394speed_t Speed;
         if( nISO == 100 ) {
             Speed = DC1394_ISO_SPEED_100;
@@ -106,7 +122,7 @@ public:
         }
 
         DC1394Driver* pDriver = new DC1394Driver(
-                    nCamId, Mode, ROI.x, ROI.y, ROI.w, ROI.h,
+                    vCamId, Mode, ROI.x, ROI.y, ROI.w, ROI.h,
                     fFPS, Speed, nDMA
                     );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
