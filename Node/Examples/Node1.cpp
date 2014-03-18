@@ -9,6 +9,8 @@
 #include <Node/Node.h>
 
 #include <stdio.h>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -61,7 +63,7 @@ int main( int, char** )
         PubMsg.set_value( gText );
         n.publish( "Node1Topic", PubMsg );
         cout << "Sending '" << gText << "'" << endl;
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     return 0;

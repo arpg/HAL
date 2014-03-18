@@ -9,6 +9,8 @@
 #include "ExampleMessage.pb.h"
 
 #include <stdio.h>
+#include <chrono>
+#include <thread>
 
 int main()
 {
@@ -48,7 +50,7 @@ int main()
             n.call_rpc( "Node1/RpcMethod", mMsg, mMsg );
         }
 
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     return 0;
