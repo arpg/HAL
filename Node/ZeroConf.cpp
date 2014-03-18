@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <cstring>
 #include <stdio.h>
 
 #ifdef HAVE_DNSSD
@@ -391,7 +392,6 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
     } else if (result == 0 && resolve_complete_) {
       stop_thread_ = true;
     } else{
-      // printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
       if (errno != EINTR) {
         stop_thread_ = 1;
       }
