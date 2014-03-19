@@ -101,7 +101,11 @@ class ZeroConf {
 // Stream operator overload for ZeroConfURL
 namespace std {
 inline ostream& operator<<(ostream& os, const hal::ZeroConfURL& u) {
-  os << u.host << ":" << u.port;
-  return os;
+  return os << u.host << ":" << u.port;
+}
+
+inline ostream& operator<<(ostream& os, const hal::ZeroConfRecord& r) {
+  return os << "(" << r.reg_type << ":" << r.service_name
+            << " @ " << r.domain << ")";
 }
 }

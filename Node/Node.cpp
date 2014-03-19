@@ -874,10 +874,12 @@ void node::_UpdateNodeRegistery() {
     records = zero_conf_.BrowseForServiceType("_hermes._tcp");
     usleep(1000);
   }
-
+  LOG(debug_level_) << "Found " << records.size() << " _hermes._tcp "
+                    << "records in ZeroConf";
   // Report all the nodes registered with Avahi:
   std::vector<ZeroConfURL> urls;
   for (const ZeroConfRecord& r : records) {
+    LOG(debug_level_) << "Resolving ZeroConf record: " << r;
     std::vector<ZeroConfURL> new_urls =
         zero_conf_.ResolveService(r.service_name, r.reg_type);
     urls.insert(urls.end(), new_urls.begin(), new_urls.end());
