@@ -154,7 +154,6 @@ bool node::init(std::string node_name) {
   this->provide_rpc("DeleteFromResourceTable",
                     &_DeleteFromResourceTableFunc, this);
 
-  std::lock_guard<std::mutex> lock(mutex_);
   rpc_thread_ = std::thread(std::bind(&node::RPCThread, this));
   usleep(100);  // Sleep to split log messages
   heartbeat_thread_ = std::thread(std::bind(&node::HeartbeatThread, this));
@@ -627,8 +626,6 @@ void node::_SetResourceTableFunc(msg::SetTableRequest& req,
 
 void node::SetResourceTableFunc(msg::SetTableRequest& req,
                                 msg::SetTableResponse& rep) {
-  std::lock_guard<std::mutex> lock(mutex_); // careful
-
   LOG(debug_level_) << "SetResourceTableFunc() called by '"
                     << req.requesting_node_name() << "' to share "
                     << req.resource_table().urls_size() << " resources";
@@ -637,6 +634,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
   _ConnectRpcSocket(req.requesting_node_name(), req.requesting_node_addr());
 
   // verify that the new clients resource table is newer than ours
+  std::lock_guard<std::mutex> lock(mutex_); // careful
   if (req.resource_table().version() <= resource_table_version_) {
     LOG(WARNING) << "'" << req.requesting_node_name()
                  << "' sent an outdated resource table with version "
@@ -844,11 +842,17 @@ void node::_PropagateResourceTable() {
   msg::SetTableRequest req;
   msg::SetTableResponse rep;
 
+  decltype(rpc_sockets_) tmp;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    tmp = rpc_sockets_;
+  }
+
   _BuildResourceTableMessage(*req.mutable_resource_table());
   req.set_requesting_node_name(node_name_);
   req.set_requesting_node_addr(_GetAddress());
 
-  for (auto it = rpc_sockets_.begin(); it != rpc_sockets_.end(); ++it) {
+  for (auto it = tmp.begin(); it != tmp.end(); ++it) {
     if (it->second->socket == socket_) {
       continue; // don't send to self
     }
