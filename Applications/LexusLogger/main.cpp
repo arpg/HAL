@@ -196,8 +196,8 @@ void Camera_Handler(int id) {
         //bRun = false;
       }
       else {
-	if(!bStarted)
-	    bStarted=true;
+        if(!bStarted)
+          bStarted=true;
         vCamMtx[id].lock();
         vImgCap[id] = temp;
         vCamMtx[id].unlock();
@@ -213,7 +213,7 @@ void Camera_Handler(int id) {
       }
     }
     else if(bStarted){
-	bRun=false;
+      bRun=false;
     }
     usleep(1000);
   }
