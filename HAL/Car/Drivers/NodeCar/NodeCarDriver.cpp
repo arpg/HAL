@@ -1,5 +1,6 @@
 #include "NodeCarDriver.h"
 #include <stdlib.h>
+#include <unistd.h>
 #include <HAL/Devices/DeviceException.h>
 #include <PbMsgs/NodeCar.pb.h>
 
@@ -61,7 +62,7 @@ bool NodeCarDriver::RegisterInHost(const Uri &uri) {
           m_sSimNodeName, "RegisterControllerDevice", req, rep)==false){
     std::cerr << "[NodeCarDriver/RegisterInHost()] RPC call to register car "
                  "controller failed" << std::endl;
-    sleep(0);
+    usleep(1000);
     nTries++;
   }
 
