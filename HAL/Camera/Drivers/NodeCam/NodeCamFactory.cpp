@@ -25,6 +25,6 @@ public:
 };
 
 // Register this factory by creating static instance of factory
-static NodeCamFactory g_NodeCamFactory("NodeCam");
+static NodeCamFactory g_NodeCamFactory("node");
 
 }

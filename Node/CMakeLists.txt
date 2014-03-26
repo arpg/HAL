@@ -15,10 +15,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_P
 
 find_package(ZeroMQ QUIET)
 find_package(Protobuf QUIET)
-find_package(Boost COMPONENTS system thread QUIET)
 find_package(MINIGLOG QUIET)
 
-if(ZeroMQ_FOUND AND PROTOBUF_FOUND AND Boost_FOUND AND MINIGLOG_FOUND)
+if(ZeroMQ_FOUND AND PROTOBUF_FOUND AND MINIGLOG_FOUND)
     set(should_build ON)
 else()
     set(should_build OFF)
@@ -54,7 +53,6 @@ if( BUILD_NODE )
       ${PROTOBUF_LIBRARY}
       ${ZeroMQ_LIBRARIES}
       ${AVAHI_LIBRARIES}
-      ${Boost_LIBRARIES}
       )
 
     if(DNSSD_FOUND)
@@ -77,7 +75,7 @@ if( BUILD_NODE )
 
     add_library(${LIBRARY_NAME} ${NODE_HDRS} ${NODE_SRCS})
     target_link_libraries(${LIBRARY_NAME} ${PROJ_LIBRARIES})
-    target_link_libraries(${LIBRARY_NAME} ${Boost_SYSTEM_LIBRARY} miniglog)
+    target_link_libraries(${LIBRARY_NAME} miniglog)
 
     # Create the NODEConfig.cmake file for the build tree.
     set(EXPORT_NODE_INC
@@ -134,9 +132,9 @@ if( BUILD_NODE )
     ## Install CMake config
 
     INSTALL(
-	FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
-	      "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-	DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
+  FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
 
     install( EXPORT "${PROJECT_NAME}Targets" DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
 

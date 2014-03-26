@@ -6,8 +6,9 @@
 #include <unistd.h>
 
 namespace hal {
-ProtoReaderDriver::ProtoReaderDriver(std::string filename, size_t imageID)
+ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID)
     : m_first(true),
+      m_camId(camID),
       m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) ) {
   m_reader.SetInitialImage(imageID);
   while( !ReadNextCameraMessage(m_nextMsg) ) {
@@ -32,7 +33,7 @@ ProtoReaderDriver::~ProtoReaderDriver() {
 
 bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg) {
   msg.Clear();
-  std::unique_ptr<pb::CameraMsg> readmsg = m_reader.ReadCameraMsg();
+  std::unique_ptr<pb::CameraMsg> readmsg = m_reader.ReadCameraMsg(m_camId);
   if(readmsg) {
     msg.Swap(readmsg.get());
     return true;

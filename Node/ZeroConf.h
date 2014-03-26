@@ -1,8 +1,9 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
-#include <boost/thread.hpp>
+#include <thread>
 #include <Node/NodeConfig.h>
 
 typedef struct _DNSServiceRef_t* DNSServiceRef;
@@ -91,7 +92,8 @@ class ZeroConf {
   std::vector<ZeroConfURL>  resolved_urls_;
   bool resolve_complete_;
   ZeroConfRecord record_;
-  boost::thread listen_to_server_thread_;
+  std::thread listen_to_server_thread_;
+  bool stop_thread_;
 };
 
 }  // end namespace hal
@@ -99,7 +101,11 @@ class ZeroConf {
 // Stream operator overload for ZeroConfURL
 namespace std {
 inline ostream& operator<<(ostream& os, const hal::ZeroConfURL& u) {
-  os << u.host << ":" << u.port;
-  return os;
+  return os << u.host << ":" << u.port;
+}
+
+inline ostream& operator<<(ostream& os, const hal::ZeroConfRecord& r) {
+  return os << "(" << r.reg_type << ":" << r.service_name
+            << " @ " << r.domain << ")";
 }
 }

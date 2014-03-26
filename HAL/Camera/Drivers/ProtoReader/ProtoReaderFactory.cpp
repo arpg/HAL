@@ -11,7 +11,8 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"startframe", "0", "First frame to capture."}
+            {"startframe", "0", "First frame to capture."},
+            {"id", "0", "Id of the camera in log."}
         };
     }
 
@@ -19,8 +20,10 @@ public:
     {
         const std::string file = ExpandTildePath(uri.url);
         size_t startframe  = uri.properties.Get("startframe", 0);
+        int camId = uri.properties.Get("id", -1);
 
-        ProtoReaderDriver* driver = new ProtoReaderDriver(file,startframe);
+        ProtoReaderDriver* driver =
+            new ProtoReaderDriver(file, camId,startframe);
         return std::shared_ptr<CameraDriverInterface>( driver );
     }
 };

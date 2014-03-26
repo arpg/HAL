@@ -7,7 +7,11 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <cstring>
+#include <unistd.h>
 #include <stdio.h>
+#include <iostream>
+#include <miniglog/logging.h>
 
 #ifdef HAVE_DNSSD
 #include <dns_sd.h>
@@ -15,17 +19,10 @@
 
 namespace hal {
 
-ZeroConf::ZeroConf() : dns_service_ref_(0) {}
+ZeroConf::ZeroConf() : dns_service_ref_(0), stop_thread_(false) {}
 ZeroConf::~ZeroConf() {
-  listen_to_server_thread_.interrupt();
-  //            sleep(2);
-  //            listen_to_server_thread_.join();
-  //            printf("DNSServiceRefDeallocate(dns_service_ref_);\n");
-  //            DNSServiceRefDeallocate(dns_service_ref_);
-}
-
-inline void _HandleEvents2(void* pThis) {
-  ((ZeroConf*)pThis)->HandleEvents2();
+  stop_thread_ = true;
+  listen_to_server_thread_.join();
 }
 
 inline void _BrowseReplyCallback(
@@ -41,7 +38,7 @@ inline void _BrowseReplyCallback(
   std::vector<ZeroConfRecord>& vRecords = *((std::vector<ZeroConfRecord>*)pUserData);
 
   if (nErrorCode != kDNSServiceErr_NoError) {
-    printf("error _BrowseReplyCallback() -- %d\n", nErrorCode);
+    LOG(ERROR) << "_BrowseReplyCallback() -- " << strerror(nErrorCode);
     return;
   }
 
@@ -83,16 +80,15 @@ inline void _ResolveReplyCallback(
     uint16_t txtLen,
     const unsigned char *txtRecord,
     void *pThis) {
-  ((ZeroConf*)pThis)->ResolveReplyCallback(
-      client,
-      nFlags,
-      ifIndex,
-      errorCode,
-      fullname,
-      hosttarget,
-      opaqueport,
-      txtLen,
-      txtRecord);
+  ((ZeroConf*)pThis)->ResolveReplyCallback(client,
+                                           nFlags,
+                                           ifIndex,
+                                           errorCode,
+                                           fullname,
+                                           hosttarget,
+                                           opaqueport,
+                                           txtLen,
+                                           txtRecord);
 }
 
 inline void _RegisterServiceCallback(
@@ -107,9 +103,8 @@ inline void _RegisterServiceCallback(
 #ifdef HAVE_DNSSD
   ZeroConfRecord *pRecord = (ZeroConfRecord*)pUserData;
   if (nErrorCode != kDNSServiceErr_NoError) {
-    printf("error in _RegisterServiceCallback\n");
-  }
-  else {
+    LOG(ERROR) << "Error in _RegisterServiceCallback";
+  } else {
     pRecord->service_name = sName;
     pRecord->reg_type     = sRegType;
     pRecord->domain      = sDomain ? sDomain : "local";
@@ -147,22 +142,17 @@ bool ZeroConf::RegisterService(
     // do renaming manually (since it doesn't work on linux)
     if (err == kDNSServiceErr_NameConflict) {
       return false;
-      /*
-        printf("%s in use!\n", sServiceName.c_str());
-        char buf[32];
-        snprintf(buf, 32, "%d", ++nServiceCount);
-        sServiceName = sName + "(" + buf + ")";
-      */
     }
   }
 
   if (err != kDNSServiceErr_NoError) {
-    printf("ERROR calling DNSServiceRegister() -- erro %d\n", err);
+    LOG(ERROR) << "Error calling DNSServiceRegister() -- "  << err;
     return false;
   }
 
   // ok now setup a thread that watches the avahi socket
-  listen_to_server_thread_ = boost::thread(_HandleEvents2, this);
+  listen_to_server_thread_ = std::thread(
+      std::bind(&ZeroConf::HandleEvents2, this));
 
   return true;
 #else
@@ -187,7 +177,7 @@ std::vector<ZeroConfRecord> ZeroConf::BrowseForServiceType(
           &vRecords // user data
                        );
   if (nErr != kDNSServiceErr_NoError) {
-    printf("error: BrowseForServiceType() -- %d\n", nErr);
+    LOG(ERROR) <<"BrowseForServiceType() failed --" << nErr;
   }
 
   // async interface:
@@ -213,30 +203,18 @@ std::vector<ZeroConfRecord> ZeroConf::BrowseForServiceType(
     int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
     if (result > 0) {
       DNSServiceErrorType err = kDNSServiceErr_NoError;
-      if (ServiceRef &&
-          FD_ISSET(dns_sd_fd, &readfds)) err = DNSServiceProcessResult(ServiceRef);
+      if (ServiceRef && FD_ISSET(dns_sd_fd, &readfds)) {
+        err = DNSServiceProcessResult(ServiceRef);
+      }
+
       if (err != kDNSServiceErr_NoError) {
-        printf("error looping %d\n", err);
+        LOG(ERROR) << "ZeroConf error: " << strerror(err);
         return vRecords;
       }
     } else if (result == 0)  {
       return vRecords;
-    }   else {
-      if (errno != EINTR) {
-        printf("error %s\n", strerror(errno));
-        return vRecords;
-      }
     }
   }
-
-  /*
-  // synchronous use of API requires we call ProcessResults now -- this will push results
-  // to our callback registered above
-  nErr = DNSServiceProcessResult(ServiceRef);
-  if (nErr) {
-  fprintf(stderr, "DNSServiceProcessResult returned %d\n", nErr);
-  }
-  */
 
   DNSServiceRefDeallocate(ServiceRef);
 #endif  // HAVE_DNSSD
@@ -298,6 +276,8 @@ void ZeroConf::ResolveReplyCallback(
   url.host = inet_ntoa(*in);
   url.port = PortAsNumber;
 
+  LG << "DNS resolved service URL " << url;
+
   // add to list if not seen already
   bool bInList = false;
   for (size_t ii = 0; ii < resolved_urls_.size(); ii++) {
@@ -306,10 +286,9 @@ void ZeroConf::ResolveReplyCallback(
       bInList = true;
     }
   }
-  if (bInList == false) {
+  if (!bInList) {
     resolved_urls_.push_back(url);
   }
-
 
   if (!(nFlags & kDNSServiceFlagsMoreComing)) {
     resolve_complete_ = true;
@@ -323,15 +302,7 @@ void ZeroConf::HandleEvents2() {
       dns_service_ref_ ? DNSServiceRefSockFD(dns_service_ref_) : -1;
   int nfds = dns_sd_fd + 1;
   fd_set readfds;
-  bool bStopNow = false;
-
-  while (!bStopNow)  {
-    if (listen_to_server_thread_.interruption_requested()) {
-      printf("exiting thread\n");
-      return;
-    }
-
-
+  while (!stop_thread_) {
     // 1. Set up the fd_set as usual here.
     // This example client has no file descriptors of its own,
     // but a real application would call FD_SET to add them to the set here
@@ -353,18 +324,12 @@ void ZeroConf::HandleEvents2() {
         err = DNSServiceProcessResult(dns_service_ref_);
       }
       if (err) {
-        fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-        bStopNow = true;
+        LOG(ERROR) << "DNSServiceProcessResult returned " << err;
+        stop_thread_ = true;
       }
     }
     else if (result == 0 && resolve_complete_) {
-      // bStopNow = true;
-    }
-    else{
-      if (errno != EINTR) {
-        //                        bStopNow = 1;
-      }
-      return;
+      // stop_thread_ = true;
     }
   }
 #endif  // HAVE_DNSSD
@@ -376,8 +341,8 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
   int nfds = dns_sd_fd + 1;
   fd_set readfds;
   struct timeval tv;
-  bool bStopNow = false;
-  while (!bStopNow) {
+  bool stop_thread_ = false;
+  while (!stop_thread_) {
     // 1. Set up the fd_set as usual here.
     // This example client has no file descriptors of its own,
     // but a real application would call FD_SET to add them to the set here
@@ -399,16 +364,11 @@ void ZeroConf::_HandleEvents(DNSServiceRef ServiceRef) {
         err = DNSServiceProcessResult(ServiceRef);
       }
       if (err) {
-        fprintf(stderr, "DNSServiceProcessResult returned %d\n", err);
-        bStopNow = true;
+        LOG(ERROR) << "DNSServiceProcessResult returned " << strerror(err);
+        stop_thread_ = true;
       }
     } else if (result == 0 && resolve_complete_) {
-      bStopNow = true;
-    } else{
-      // printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
-      if (errno != EINTR) {
-        bStopNow = 1;
-      }
+      stop_thread_ = true;
     }
   }
 #endif  // HAVE_DNSSD
