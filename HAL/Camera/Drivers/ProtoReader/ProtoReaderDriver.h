@@ -7,7 +7,7 @@ namespace hal {
 
 class ProtoReaderDriver : public CameraDriverInterface {
  public:
-  ProtoReaderDriver(std::string filename, size_t imageID);
+  ProtoReaderDriver(std::string filename, int camID, size_t imageID);
   ~ProtoReaderDriver();
 
   bool Capture( pb::CameraMsg& vImages );
@@ -26,6 +26,7 @@ class ProtoReaderDriver : public CameraDriverInterface {
   bool ReadNextCameraMessage(pb::CameraMsg& msg);
 
   bool                    m_first;
+  int                     m_camId;
   pb::Reader&             m_reader;
   pb::CameraMsg           m_nextMsg;
 

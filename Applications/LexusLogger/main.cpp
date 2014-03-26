@@ -189,29 +189,23 @@ void Camera_Handler(int id) {
     // Captures the image, if capture fails bRun=false
     // o.w. log data in case logging enabled.
     if(bCamsRunning){
-      //std::cout<<"id="<<id<<std::flush;
-      vCamMtx[id].lock();
-//      std::shared_ptr<pb::ImageArray> temp = pb::ImageArray::Create();
-//      bool success = vCams[id].Capture(*temp.get());
-      bool success = vCams[id].Capture(*vImgCap[id]);
-/*      if(id != 0 || id+1 != temp->Ref().id())
-        continue;
-      vImgCap[id] = temp*/;
-      //*(vImgs[id].get()) = *(vImgCap[id]->at(0));
-      vCamMtx[id].unlock();
+      std::shared_ptr<pb::ImageArray> temp = pb::ImageArray::Create();
+      bool success = vCams[id].Capture(*temp);
 
       if(!success) {
-        bRun = false;
+        //bRun = false;
       }
       else {
 	if(!bStarted)
 	    bStarted=true;
+        vCamMtx[id].lock();
+        vImgCap[id] = temp;
+        vCamMtx[id].unlock();
         if(g_bLog ) {
           pb::Msg pbMsg;
           logMutex.lock();
           pbMsg.set_timestamp( hal::Tic() );
           vImgCap[id]->Ref().set_id(id+1);
-//          pbMsg.mutable_camera()->Swap(&vImgCap[id]->Ref());
           pbMsg.mutable_camera()->CopyFrom(vImgCap[id]->Ref());
           g_Logger.LogMessage(pbMsg);
           logMutex.unlock();
@@ -221,7 +215,7 @@ void Camera_Handler(int id) {
     else if(bStarted){
 	bRun=false;
     }
-    usleep(3000);
+    usleep(1000);
   }
   std::cout<<"Camera "<< id << "stopped." <<std::endl;
 }

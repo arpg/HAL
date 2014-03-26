@@ -199,7 +199,7 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage() {
   }
 }
 
-std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg() {
+std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
   if( !m_bReadCamera ) {
     std::cerr << "warning: ReadCameraMsg was called but"
               << " ReadCamera variable is set to false! " << std::endl;
@@ -222,6 +222,12 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg() {
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
+
+  // message popped above might be some other id than the one wanted.
+  // this might cause some frame dropping.
+  if(id>=0 && pCameraMsg->id() != id) {
+    return nullptr;
+  }
 
   return pCameraMsg;
 }
