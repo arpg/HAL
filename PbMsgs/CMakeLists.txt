@@ -74,6 +74,7 @@ set( _PROTO_SRCS
     Lidar.proto
     NodeCamMessage.proto
     NodeCar.proto
+    BVP.proto
 )
 
 PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )

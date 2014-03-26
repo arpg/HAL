@@ -154,9 +154,8 @@ bool NodeCamDriver::RegisterInHost(const hal::Uri& uri)
   m_sTopic = m_sSimNodeName + "/" + m_sDeviceName;
   mReq.set_uri(uri.ToString());
   int nTries=0;
-  while(nTries < 5 &&
-       !m_Node.call_rpc(m_sSimNodeName, "RegsiterCamDevice", mReq, mRep, 100))
-  {
+  while(nTries < 5 && !m_Node.call_rpc(m_sSimNodeName, "RegsiterSensorDevice",
+                                       mReq, mRep, 100)){
     std::cerr << "[NodeCamDriver/RegisterInHost] Error Call Rpc method of '"
               << m_sSimNodeName
               << "'. Cannot connect to host!! Please make sure it is running!"
