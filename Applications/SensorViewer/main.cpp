@@ -172,7 +172,7 @@ class SensorViewer {
     try {
       camera_ = hal::Camera(cam_uri);
     } catch (const hal::DeviceException& e) {
-      std::cerr << "Camera failed to open!" << std::endl;
+      std::cerr << "SensorViewer: Camera failed to open! Exception: " << e.what() << std::endl;
       abort();
     }
     has_camera_ = true;
