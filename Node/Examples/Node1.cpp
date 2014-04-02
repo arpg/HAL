@@ -45,12 +45,13 @@ int main( int, char** )
     // initialize node
     hal::node n;
 
-    n.set_verbosity(3); // be a bit noisy
+    n.set_verbosity(2); // be a bit noisy
     n.init( sNodeName );
 
     // set up a publisher
     n.advertise( "Node1Topic" );
     cout << "Node1Topic advertized." << endl;
+    n.advertise("Node1Topic2");
 
     // set up a remote procedure call
     n.provide_rpc( "RpcMethod", &RpcMethod, NULL );
@@ -62,6 +63,7 @@ int main( int, char** )
         Msg PubMsg;
         PubMsg.set_value( gText );
         n.publish( "Node1Topic", PubMsg );
+        n.publish( "Node1Topic2", PubMsg );
         cout << "Sending '" << gText << "'" << endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

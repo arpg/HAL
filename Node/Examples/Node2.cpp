@@ -12,17 +12,33 @@
 #include <chrono>
 #include <thread>
 
+void Node1Topic2Callback(std::shared_ptr<google::protobuf::Message> mMsg) {
+  std::shared_ptr<Msg> msg;
+  msg = std::dynamic_pointer_cast<Msg>(mMsg);
+  printf("In Callback Got '%s'\n", msg->value().c_str());//'%s'.\n", mMsg.value().c_str());
+}
+
 int main()
 {
 
     hal::node n;
-    //    n.set_verbosity( 3 ); // make some noise on errors
+    n.set_verbosity( 2 ); // make some noise on errors
     n.init("Node2");
 
     // subscribe to Node1's topic
     if( n.subscribe( "Node1/Node1Topic" ) == false ) {
-        printf("Error subscribing to topic.\n");
+        printf("Error subscribing to Node1Topic.\n");
     }
+
+    // this is using callback.
+    if( n.subscribe( "Node1/Node1Topic2" ) == false ) {
+      printf("Error subscribing to Node1Topic2.\n");
+    }
+    std::function<void(std::shared_ptr<google::protobuf::Message>)> func_ptr =
+        Node1Topic2Callback;
+    if( !n.RegisterCallback<Msg>("Node1/Node1Topic2", Node1Topic2Callback))
+      printf("Topic ain't there, can't register callback\n");
+    printf("Registered I guess\n");
 
     if( n.advertise( "Node2Topic" ) == false ) {
         printf("Error subscribing to topic.\n");

@@ -14,13 +14,9 @@
 #include <boost/crc.hpp>  // for boost::crc_32_type
 
 #include <HAL/Utils/TicToc.h>
-#include <miniglog/logging.h>
 #include <Node/ZeroConf.h>
 
 std::vector<hal::node*> g_vNodes;
-
-static const std::string kTopicScheme = "topic://";
-static const std::string kRpcScheme = "rpc://";
 
 namespace hal {
 
@@ -75,6 +71,10 @@ node::~node() {
   exiting_ = true;
   rpc_thread_.join();
   heartbeat_thread_.join();
+  std::map<std::string,std::thread>::iterator it;
+  for(it = topic_thread_.begin(); it != topic_thread_.end(); ++it) {
+    it->second.join();
+  }
 }
 
 void node::set_verbosity(int level) {
@@ -368,6 +368,7 @@ bool node::advertise(const std::string& sTopic) {
     //                        unlock();
 
     // propagate changes (quorum write)
+    mutex_.unlock();
     _PropagateResourceTable();
     // _PrintResourceLocatorTable();
     return true;
@@ -452,26 +453,21 @@ bool node::receive(const std::string& resource,
                    google::protobuf::Message& Msg) {
     zmq::message_t ZmqMsg;
 
-    receive(resource,ZmqMsg);
-    if (!Msg.ParseFromArray(ZmqMsg.data(), ZmqMsg.size())) {
-      return false;
-    }
-    return true;
+    return receive(resource,ZmqMsg) && Msg.ParseFromArray(ZmqMsg.data(), ZmqMsg.size());
 }
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
-  std::string         sTopicResource = kTopicScheme + resource;
   CHECK(init_done_);
+  std::string         sTopicResource = kTopicScheme + resource;
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
-    // no socket found
+    LOG(debug_level_) << "Can't receive on topic '" << resource << "'. "
+                         "Did you subscribe to it?";
     return false;
   }
   else {
     NodeSocket socket = it->second;
-
-    //                        double dStartTime=_TicMS();
 
     std::lock_guard<std::mutex> lock(*topic_mutex_[sTopicResource]);
     socket->setsockopt(
@@ -479,6 +475,7 @@ bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
     try {
       return socket->recv(&ZmqMsg);
     } catch(const zmq::error_t& error) {
+      LOG(WARNING) << "Error receiving zmq packet: "<< error.what();
       return false;
     }
   }
@@ -803,6 +800,27 @@ void node::RPCThread() {
   }
 }
 
+void node::TopicThread(const std::string& resource)
+{
+  //this resource is without TopicScheme.
+  CHECK(init_done_);
+  LOG(debug_level_) << "Thread for '" << resource << "' started.";
+
+  std::string         sTopicResource = kTopicScheme + resource;
+
+  std::shared_ptr<TopicCallbackData> callback_data =
+      topic_callback_[sTopicResource];
+  std::shared_ptr<google::protobuf::Message> msg = callback_data->callback_msg_;
+
+  while(!exiting_) {
+    if(receive(resource, *msg.get())) {
+      callback_data->callback_(msg);
+    }
+    msg->Clear();
+  }
+  LOG(debug_level_) << "Thread for '" << resource << "' stopped.";
+}
+
 std::vector<std::string> node::GetSubscribeClientName() {
   std::lock_guard<std::mutex> lock(mutex_); // careful
 
@@ -1107,7 +1125,6 @@ void node::_ConnectRpcSocket(const std::string& node_name,
 }
 
 void node::NodeSignalHandler(int nSig) {
-  LOG(ERROR) << "NodeSignalHandler caught " << nSig;
   for (size_t ii = 0; ii < g_vNodes.size(); ++ii) {
     g_vNodes[ii]->_BroadcastExit();
   }
@@ -1116,6 +1133,7 @@ void node::NodeSignalHandler(int nSig) {
     case SIGTERM: LOG(ERROR) << "Caught SIGTERM"; break;
     case SIGSTOP: LOG(ERROR) << "Caught SIGSTOP"; break;
     case SIGSEGV: LOG(ERROR) << "Caught SIGSEGV"; break;
+    default:      LOG(ERROR) << "NodeSignalHandler caught "<< strsignal(nSig);
   }
   exit(-1);
 }

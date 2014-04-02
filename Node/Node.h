@@ -37,6 +37,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <miniglog/logging.h>
 
 #include <zmq.h>
 #include <google/protobuf/message.h>
@@ -45,6 +46,9 @@
 #include <Node/NodeMessages.pb.h>
 #include <Node/zmq.hpp>
 #include <Node/ZeroConf.h>
+
+static const std::string kTopicScheme = "topic://";
+static const std::string kRpcScheme = "rpc://";
 
 typedef std::shared_ptr<zmq::socket_t> NodeSocket;
 
@@ -56,11 +60,19 @@ typedef std::function<void(google::protobuf::Message&,
                            google::protobuf::Message&,
                            void *)> RPCFunction;
 
+typedef
+std::function<void(std::shared_ptr<google::protobuf::Message>)> TopicCallback;
+
 struct RPC {
   RPCFunction RpcFunc;
   google::protobuf::Message* ReqMsg;
   google::protobuf::Message* RepMsg;
   void* UserData;
+};
+
+struct TopicCallbackData {
+  TopicCallback callback_;
+  std::shared_ptr<google::protobuf::Message> callback_msg_;
 };
 
 namespace hal { class node; }
@@ -185,6 +197,38 @@ class node {
                zmq::message_t& ZmqMsg //< Output: ZMQ Output message
                );
 
+  //template<class CallbackMsg>
+  //bool RegisterCallback(const std::string& resource,
+  //                      std::function<void(CallbackMsg&)> func);
+  template<class CallbackMsg>
+  bool RegisterCallback(const std::string &resource,
+                        TopicCallback func) {
+    std::string sTopicResource = kTopicScheme + resource;
+
+    auto it = topic_sockets_.find(sTopicResource);
+    if(it == topic_sockets_.end()) {
+      LOG(WARNING) << "Topic '" << resource << "' hasn't been subsribed to.";
+      return false;
+    }
+
+    static_assert(
+          std::is_base_of<google::protobuf::Message, CallbackMsg>::value,
+          "Value provided for template is not a protobuf message.");
+    std::shared_ptr<google::protobuf::Message> msg =
+        std::make_shared<CallbackMsg>();
+    std::shared_ptr<TopicCallbackData> tcd =
+        std::make_shared<TopicCallbackData>();
+    tcd->callback_ = func;
+    tcd->callback_msg_ = msg;
+
+    topic_thread_[sTopicResource] = std::thread(
+          std::bind(&node::TopicThread, this, resource));
+    topic_callback_[sTopicResource] = tcd;
+
+    LOG(INFO) << "Registered callback for '" << sTopicResource << "'";
+    return true;
+  }
+
   /// Figure out the network name of this machine
   std::string _GetHostIP(const std::string& sPreferredInterface = "eth");
 
@@ -224,6 +268,7 @@ class node {
 
   void HeartbeatThread();
   void RPCThread();
+  void TopicThread(const std::string& resource);
 
   // this function return the name of all connect client
   std::vector<std::string> GetSubscribeClientName();
@@ -334,6 +379,10 @@ class node {
 
   // Each socket should only be used by one thread at a time
   std::map<std::string, std::shared_ptr<std::mutex> > topic_mutex_;
+
+  // Topic should have a thread if a callback is preferred for it.
+  std::map<std::string, std::thread> topic_thread_;
+  std::map<std::string, std::shared_ptr<TopicCallbackData> > topic_callback_;
 
   // nodename to socket map
   std::map<std::string, std::shared_ptr<TimedNodeSocket> > rpc_sockets_;
