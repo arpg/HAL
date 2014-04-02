@@ -102,25 +102,25 @@ DC1394Driver::DC1394Driver(
   }
 
   // Free the camera list.
-  dc1394_camera_free_list( pCameraList );
+  dc1394_camera_free_list(pCameraList);
 
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
 
     dc1394camera_t* pCam = m_vCam[ii];
 
-    printf("Configuring camera with GUID %llu ... ", pCam->guid );
+    printf("Configuring camera with GUID %lu ...\n", pCam->guid);
     fflush(stdout);
+
     dc1394_camera_reset(pCam);
 
     //----- Set ISO speed.
-    if(ISO >= DC1394_ISO_SPEED_800)
-    {
+    if(ISO >= DC1394_ISO_SPEED_800) {
       e = dc1394_video_set_operation_mode( pCam, DC1394_OPERATION_MODE_1394B );
       if( e != DC1394_SUCCESS )
         throw DeviceException("Could not set DC1394_OPERATION_MODE_1394B");
     }
 
-    e = dc1394_video_set_iso_speed( pCam, ISO);
+    e = dc1394_video_set_iso_speed(pCam, ISO);
     if( e != DC1394_SUCCESS )
       throw DeviceException("Could not set iso speed");
 
@@ -160,15 +160,13 @@ DC1394Driver::DC1394Driver(
     } else {
       // format 7 mode
 
-      // check that the required mode is actually supported
       dc1394format7mode_t Info;
+      Info.present = DC1394_TRUE;
 
-      e = dc1394_format7_get_mode_info( pCam, Mode, &Info);
+      // check that the required mode is actually supported
+      e = dc1394_format7_get_mode_info(pCam, Mode, &Info);
       if( e != DC1394_SUCCESS )
         throw DeviceException("Could not get format7 mode info");
-
-      if( Info.present == false )
-        throw DeviceException("Format7 mode info not present");
 
       // safely set the video mode
       e = dc1394_video_set_mode( pCam, Mode );

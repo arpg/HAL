@@ -16,7 +16,7 @@ class NodeCarDriver : public CarDriverInterface {
         virtual ~NodeCarDriver();
 
         bool ApplyCommand(double dTorque, double dSteering) override;
-        void RegisterInHost();
+        bool RegisterInHost(const Uri &uri);
 
         std::shared_ptr<CarDriverInterface> GetInputDevice() {
           return std::shared_ptr<CarDriverInterface>();
