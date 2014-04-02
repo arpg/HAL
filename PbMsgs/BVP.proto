@@ -18,7 +18,7 @@ message BVP_params
     repeated double          x_data              =5 [packed=true];
     repeated double          y_data              =6 [packed=true];
     repeated double          z_data              =7 [packed=true];
-    required int32           tau                 =8;
+    required uint32           tau                 =8;
 }
 
 message BVP_policy

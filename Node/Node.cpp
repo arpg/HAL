@@ -209,7 +209,7 @@ bool node::call_rpc(const std::string& node_name,
   CHECK(init_done_);
   std::shared_ptr<TimedNodeSocket> socket;
 
-  std::unique_lock<std::mutex> lock(mutex_); // careful
+  std::unique_lock<std::mutex> lock(mutex_);
 
   // make sure we know about this method
   std::string rpc_resource =  kRpcScheme + node_name + "/" + function_name;
@@ -340,38 +340,34 @@ bool node::call_rpc(NodeSocket socket,
 }
 
 bool node::advertise(const std::string& sTopic) {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   CHECK(init_done_);
   std::string sTopicResource = kTopicScheme + node_name_ + "/" + sTopic;
-
-  // check if socket is already open for this topic
-  auto it = topic_sockets_.find(sTopicResource);
-  if (it != topic_sockets_.end()) {
-    LOG(ERROR) << "resource socket is already open, return false";
-    return false;
-  } else {
-    // no socket open.. lets open a new one
-    // check if port is already in use
-    NodeSocket socket(new zmq::socket_t(*context_, ZMQ_PUB));
-    int port = _BindRandomPort(socket);
-    std::string sAddr = _GetAddress(host_ip_, port);
-    LOG(debug_level_) << "Publishing topic '" << sTopic << "' on " << sAddr;
-
-    // update node table and socket table
-    // lock();
-    // std::lock_guard<std::mutex> lock(mutex_); // careful
-    resource_table_[sTopicResource] = sAddr;
-    topic_sockets_[sTopicResource] = socket;
-    topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
-    //                        lock.unlock();
-    //                        unlock();
-
-    // propagate changes (quorum write)
-    _PropagateResourceTable();
-    // _PrintResourceLocatorTable();
-    return true;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    // check if socket is already open for this topic
+    auto it = topic_sockets_.find(sTopicResource);
+    if (it != topic_sockets_.end()) {
+      LOG(ERROR) << "resource socket is already open, return false";
+      return false;
+    }
   }
+
+  // no socket open.. lets open a new one
+  // check if port is already in use
+  NodeSocket socket(new zmq::socket_t(*context_, ZMQ_PUB));
+  int port = _BindRandomPort(socket);
+  std::string sAddr = _GetAddress(host_ip_, port);
+  LOG(debug_level_) << "Publishing topic '" << sTopic << "' on " << sAddr;
+
+  // update node table and socket table
+  {
+     std::lock_guard<std::mutex> lock(mutex_);
+     resource_table_[sTopicResource] = sAddr;
+     topic_sockets_[sTopicResource] = socket;
+     topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
+  }
+  _PropagateResourceTable();
+  return true;
 }
 
 bool node::publish(const std::string& sTopic, //< Input: Topic to write to
@@ -383,7 +379,7 @@ bool node::publish(const std::string& sTopic, //< Input: Topic to write to
                    << sTopic <<  " was not successfull";
       return false;
     }
-    return publish(sTopic,ZmqMsg);
+    return publish(sTopic, ZmqMsg);
 }
 
 bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
@@ -396,6 +392,7 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
     // no socket found
     return false;
   } else {
+    std::cerr << "else block" << std::endl;
     NodeSocket socket = it->second;
 
     std::lock_guard<std::mutex> lock(*topic_mutex_[sTopicResource]);
@@ -405,6 +402,7 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
     // double dStartTime =_TicMS();
 
     try {
+      std::cerr<<Msg.size();
       return socket->send(Msg);
     } catch(const zmq::error_t& error) {
       LOG(WARNING) << "Error sending the message for topic " << sTopic;
@@ -414,16 +412,18 @@ bool node::publish(const std::string& sTopic, zmq::message_t& Msg) {
 }
 
 bool node::subscribe(const std::string& resource) {
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  std::string         sTopicResource = kTopicScheme + resource;
   CHECK(init_done_);
-  // check if socket is already open for this topic
-  auto it = topic_sockets_.find(sTopicResource);
-  if (it != topic_sockets_.end()) {
-    LOG(ERROR) << "subscription for that topic already exists";
-    return false;
-  } else {
+  std::string sTopicResource = kTopicScheme + resource;
+  std::string resource_ip;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    // check if socket is already open for this topic
+    auto it = topic_sockets_.find(sTopicResource);
+    if (it != topic_sockets_.end()) {
+      LOG(ERROR) << "subscription for that topic already exists";
+      return false;
+    }
+
     // lets find this node's IP
     auto its = resource_table_.find(sTopicResource);
     if (its == resource_table_.end()) {
@@ -431,21 +431,22 @@ bool node::subscribe(const std::string& resource) {
                         << "' not found on cache table.";
       return false;
     }
-    else {
-      // create socket
-      NodeSocket socket(new zmq::socket_t(*context_, ZMQ_SUB));
-      // lets connect using the socket
-      try {
-        socket->setsockopt(ZMQ_SUBSCRIBE, NULL, 0);
-        socket->connect(("tcp://" + its->second).c_str());
-      } catch(const zmq::error_t& error) {
-        return false;
-      }
-      topic_sockets_[sTopicResource] = socket;
-      topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
-      return true;
-    }
+    resource_ip = "tcp://" + its->second;
   }
+
+  NodeSocket socket(new zmq::socket_t(*context_, ZMQ_SUB));
+  // lets connect using the socket
+  try {
+    socket->setsockopt(ZMQ_SUBSCRIBE, NULL, 0);
+    socket->connect(resource_ip.c_str());
+  } catch(const zmq::error_t& error) {
+    return false;
+  }
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  topic_sockets_[sTopicResource] = socket;
+  topic_mutex_[sTopicResource] = std::make_shared<std::mutex>();
+  return true;
 }
 
 bool node::receive(const std::string& resource,
@@ -460,15 +461,18 @@ bool node::receive(const std::string& resource,
 }
 
 bool node::receive(const std::string& resource, zmq::message_t& ZmqMsg) {
-  std::string         sTopicResource = kTopicScheme + resource;
+  std::string sTopicResource = kTopicScheme + resource;
+  std::cout<<sTopicResource<<std::endl;
   CHECK(init_done_);
   // check if socket is already open for this topic
   auto it = topic_sockets_.find(sTopicResource);
   if (it == topic_sockets_.end()) {
+    std::cout<<"Didn't find a thing"<<std::endl;
     // no socket found
     return false;
   }
   else {
+    std::cout<<"Found a thing"<<std::endl;
     NodeSocket socket = it->second;
 
     //                        double dStartTime=_TicMS();
@@ -594,7 +598,6 @@ void node::DeleteFromResourceTableFunc(msg::DeleteFromTableRequest& req,
     auto it = resource_table_.find(m.resource());
     if (it != resource_table_.end()) {
       resource_table_.erase(it);
-    } else{
     }
   }
 
@@ -634,7 +637,7 @@ void node::SetResourceTableFunc(msg::SetTableRequest& req,
   _ConnectRpcSocket(req.requesting_node_name(), req.requesting_node_addr());
 
   // verify that the new clients resource table is newer than ours
-  std::lock_guard<std::mutex> lock(mutex_); // careful
+  std::lock_guard<std::mutex> lock(mutex_);
   if (req.resource_table().version() <= resource_table_version_) {
     LOG(WARNING) << "'" << req.requesting_node_name()
                  << "' sent an outdated resource table with version "
@@ -974,23 +977,33 @@ void node::DisconnectNode(const std::string& node_name) {
   std::string topic_res = kTopicScheme + node_name;
   std::string rpc_res = kRpcScheme + node_name;
 
-  std::lock_guard<std::mutex> lock(mutex_);
-  for (auto it = resource_table_.begin(); it != resource_table_.end(); ) {
-    if (it->first.find(topic_res) != std::string::npos ||
-        it->first.find(rpc_res) != std::string::npos) {
-      resource_table_.erase(it++);
-    } else {
-      ++it;
+  std::shared_ptr<TimedNodeSocket> socket;
+  std::shared_ptr<std::mutex> socket_mutex;
+
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto it = resource_table_.begin(); it != resource_table_.end(); ) {
+      if (it->first.find(topic_res) != std::string::npos ||
+          it->first.find(rpc_res) != std::string::npos) {
+        resource_table_.erase(it++);
+      } else {
+        ++it;
+      }
     }
+
+    auto it = rpc_sockets_.find(node_name);
+    if (it == rpc_sockets_.end()) return;
+
+    socket = it->second;
+    socket_mutex = rpc_mutex(it->first);
   }
 
-  auto it = rpc_sockets_.find(node_name);
-  if (it == rpc_sockets_.end()) return;
-
   msg::DeleteFromTableResponse rep;
-  call_rpc(it->second->socket, rpc_mutex(it->first),
+  call_rpc(socket->socket, socket_mutex,
            "DeleteFromResourceTable", req, rep);
-  rpc_sockets_.erase(it);
+
+  std::lock_guard<std::mutex> lock(mutex_);
+  rpc_sockets_.erase(node_name);
 }
 
 void node::_PrintResourceLocatorTable() {
