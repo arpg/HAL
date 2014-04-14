@@ -64,5 +64,6 @@ class FileReaderDriver : public CameraDriverInterface {
   std::string                                     m_sTimeKeeper;
   std::string                                     m_sName;
   std::string                                     m_sId;
+  unsigned int                                    m_nFramesProcessed;
 };
 }  // end namespace hal

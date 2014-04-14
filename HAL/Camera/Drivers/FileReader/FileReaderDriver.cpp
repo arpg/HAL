@@ -24,7 +24,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
       m_nBufferSize(BufferSize),
       m_iCvImageReadFlags(cvFlags),
       m_sName(sName),
-      m_sId(idString){
+      m_sId(idString),
+      m_nFramesProcessed(0) {
   // clear variables if previously initialized
   m_vFileList.clear();
 
@@ -185,8 +186,10 @@ bool FileReaderDriver::_Read() {
   std::string sFileName;
 
   pb::CameraMsg vImages;
+  vImages.set_device_time(m_nFramesProcessed);
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
+    pbImg->set_timestamp(m_nFramesProcessed);
     sFileName = m_vFileList[ii][m_nCurrentImageIndex];
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
@@ -217,6 +220,7 @@ bool FileReaderDriver::_Read() {
   }
 
   m_nCurrentImageIndex++;
+  ++m_nFramesProcessed;
 
   // add images at the back of the queue
   m_qImageBuffer.push(vImages);
