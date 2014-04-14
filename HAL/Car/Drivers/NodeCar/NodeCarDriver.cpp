@@ -56,9 +56,7 @@ bool NodeCarDriver::RegisterInHost(const Uri &uri) {
   req.set_topic(m_sTopic);
   req.set_uri(uri.ToString());
   int nTries=0;
-  std::cout<<m_sSimNodeName<<std::endl;
-  std::cout<<m_sTopic<<std::endl;
-  while(nTries<10 && m_Node.call_rpc(
+  while(nTries<1000000000 && m_Node.call_rpc(
           m_sSimNodeName, "RegisterControllerDevice", req, rep)==false){
     std::cerr << "[NodeCarDriver/RegisterInHost()] RPC call to register car "
                  "controller failed" << std::endl;
@@ -80,6 +78,8 @@ bool NodeCarDriver::RegisterInHost(const Uri &uri) {
 
 bool NodeCarDriver::InitNode() {
   m_Node.set_verbosity(2); // make some noise on errors
+  std::cout<<"[NodDriver::InitNode] Sim Name: "<<m_sSimNodeName<<std::endl;
+  std::cout<<"[NodDriver::InitNode] Device Name: "<<m_sDeviceName<<std::endl;
   if(m_Node.init(m_sDeviceName)==false)
   {
     std::cerr <<"[NodeCarDriver] Cannot init NodeCar '"<<m_sDeviceName<<"'"
@@ -87,6 +87,7 @@ bool NodeCarDriver::InitNode() {
     return false;
   }
   std::cout<<"[NodeDriver:: InitNode] Device Topic: "<<m_sTopic<<std::endl;
+
   m_Node.advertise(m_sTopic);
 
   return true;

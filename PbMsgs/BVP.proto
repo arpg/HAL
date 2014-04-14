@@ -26,7 +26,9 @@ message BVP_policy
     repeated double          force               =1 [packed=true];
     repeated double          time                =2 [packed=true];
     repeated double          phi                 =3 [packed=true];
-    required int32           tau                 =4;
+    repeated double          start_param         =4 [packed=true];
+    repeated double          goal_param          =5 [packed=true];
+    required int32           tau                 =6;
 }
 
 message BVP_check
