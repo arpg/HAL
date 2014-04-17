@@ -36,6 +36,15 @@ message BVP_check
     required bool            need                =1;
 }
 
+message Heightmap
+{
+    required int32           row_count           =1;
+    required int32           col_count           =2;
+    repeated double          x_data              =3 [packed=true];
+    repeated double          y_data              =4 [packed=true];
+    repeated double          z_data              =5 [packed=true];
+}
+
 message RegisterBVPReqMsg
 {
     optional bytes          topic        	       =1;
