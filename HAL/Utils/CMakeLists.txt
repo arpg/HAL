@@ -1,7 +1,7 @@
-##    Node.h
 set(HDRS
     GetPot
     PropertyMap.h
+    Node.h
     StringUtils.h
     TicToc.h
     Uri.h
