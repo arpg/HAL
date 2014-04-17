@@ -9,7 +9,7 @@ if(BUILD_NodeCar)
   if(Node_FOUND AND PbMsgs_FOUND)
     set(DRIVER_SOURCES NodeCarDriver.cpp)
     set(DRIVER_HEADERS NodeCarDriver.h)
-
+    message("Node: ${Node_INCLUDE_DIRS}" )
     # add_to_hal_libraries add_to_hal_include_dirs not called as NodeCar
     # would have added Node related values.
     message("PbMsgs: ${PbMsgs_INCLUDE_DIRS}" )

@@ -1,6 +1,6 @@
 /*
-   \file NodeCamDriver.cpp
- */
+  \file NodeCamDriver.cpp
+*/
 #include "NodeCamDriver.h"
 #include "stdlib.h"
 #include <unistd.h>
@@ -65,41 +65,41 @@ bool NodeCamDriver::Capture( pb::CameraMsg& vImages )
 
   //  m_nChannels = Msg.size();
 
-//  for(unsigned int ii = 0; ii != m_nChannels; ii++ )
-//  {
-//    const ImageMsg& Img = Msg.image(ii);
+  //  for(unsigned int ii = 0; ii != m_nChannels; ii++ )
+  //  {
+  //    const ImageMsg& Img = Msg.image(ii);
 
-//    if(Img.image_type()==1)//------------------------Gray
-//    {
-//      pb::ImageMsg* pbImg = vImages.add_image();
-//      pbImg->set_timestamp( m_nTimeStep);
-//      pbImg->set_width( m_nImgWidth );
-//      pbImg->set_height( m_nImgHeight );
-//      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
-//      pbImg->set_format(pb::PB_LUMINANCE);
-//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight );
-//    }
-//    else if(Img.image_type()==2)//-------------------RGB
-//    {
-//      pb::ImageMsg* pbImg = vImages.add_image();
-//      pbImg->set_timestamp( m_nTimeStep);
-//      pbImg->set_width( m_nImgWidth );
-//      pbImg->set_height( m_nImgHeight );
-//      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-//      pbImg->set_format(pb::PB_RGB);
-//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *3);
-//    }
-//    else if(Img.image_type()==5)//------------------Depth
-//    {
-//      pb::ImageMsg* pbImg = vImages.add_image();
-//      pbImg->set_timestamp( m_nTimeStep);
-//      pbImg->set_width( m_nImgWidth );
-//      pbImg->set_height( m_nImgHeight );
-//      pbImg->set_type(pb::PB_FLOAT);
-//      pbImg->set_format(pb::PB_LUMINANCE);
-//      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *4);
-//    }
-//  }
+  //    if(Img.image_type()==1)//------------------------Gray
+  //    {
+  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      pbImg->set_timestamp( m_nTimeStep);
+  //      pbImg->set_width( m_nImgWidth );
+  //      pbImg->set_height( m_nImgHeight );
+  //      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
+  //      pbImg->set_format(pb::PB_LUMINANCE);
+  //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight );
+  //    }
+  //    else if(Img.image_type()==2)//-------------------RGB
+  //    {
+  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      pbImg->set_timestamp( m_nTimeStep);
+  //      pbImg->set_width( m_nImgWidth );
+  //      pbImg->set_height( m_nImgHeight );
+  //      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+  //      pbImg->set_format(pb::PB_RGB);
+  //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *3);
+  //    }
+  //    else if(Img.image_type()==5)//------------------Depth
+  //    {
+  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      pbImg->set_timestamp( m_nTimeStep);
+  //      pbImg->set_width( m_nImgWidth );
+  //      pbImg->set_height( m_nImgHeight );
+  //      pbImg->set_type(pb::PB_FLOAT);
+  //      pbImg->set_format(pb::PB_LUMINANCE);
+  //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *4);
+  //    }
+  //  }
 
   return true;
 }

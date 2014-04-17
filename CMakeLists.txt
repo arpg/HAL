@@ -19,9 +19,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory( PbMsgs )
 set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
 
-add_subdirectory(Node)
-set(NODE_DIR ${NODE_BINARY_DIR})
-
 add_subdirectory( HAL )
 set(HAL_DIR ${HAL_BINARY_DIR})
 
