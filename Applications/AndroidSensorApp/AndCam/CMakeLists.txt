@@ -4,9 +4,6 @@ project( AndCam )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable -Wno-unused-parameter")
 
-message("CMAKE_CXX_FLAGS : ${CMAKE_CXX_FLAGS}")
-message("CMAKE_C_FLAGS   : ${CMAKE_C_FLAGS}")
-
 find_package( HAL 0.1 REQUIRED )
 find_package( Node REQUIRED )
 find_package( MINIGLOG REQUIRED )
