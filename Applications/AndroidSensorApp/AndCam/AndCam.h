@@ -8,7 +8,6 @@
 #include <PbMsgs/NodeCamMessage.pb.h>
 #include <HAL/Camera/CameraDevice.h>
 
-
 std::string sNodeName("LocalSim");
 int gCounter = 0;
 int width, height, channels;
@@ -17,4 +16,4 @@ std::string topic("NodeCam");
 
 void RegsiterCamDevice(RegisterNodeCamReqMsg& req, RegisterNodeCamRepMsg& rep, void* UserData);
 void sendData(char *data, int w, int h, int format, int type);
-bool InitializeNode( void );
+bool InitializeNode(std::string IP, int port );
