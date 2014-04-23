@@ -5,12 +5,16 @@ cmake_minimum_required(VERSION 2.8)
 #   - LINK_LIBS: Library dependencies for NDK lib
 #   - DEPENDS: Targets to link against and depend on
 #   - JNI_SOURCES: JNI Sources
+#   - JNI_LIB: Name for JNI Library
 #   - CONDITIONS: Conditions for building this apk
 function(add_apk apk)
+  if (NOT ANDROID)
+    return()
+  endif()
   string(TOUPPER ${apk} APK)
 
   set(APK_OPTIONS)
-  set(APK_SINGLE_ARGS JNI_DIR)
+  set(APK_SINGLE_ARGS JNI_DIR JNI_LIB)
   set(APK_MULTI_ARGS DEPENDS CONDITIONS LINK_LIBS JNI_SOURCES)
   cmake_parse_arguments(apk
     "${APK_OPTIONS}"
@@ -53,6 +57,9 @@ function(add_apk apk)
 
   if(${cache_var})
     if(apk_JNI_DIR)
+      if(NOT apk_JNI_LIB)
+	message(FATAL_ERROR "JNI_LIB must be given to add_apk.")
+      endif()
       find_library(GNUSTL_SHARED_LIBRARY gnustl_shared)
 
       if(NOT GNUSTL_SHARED_LIBRARY)
@@ -96,7 +103,7 @@ function(add_apk apk)
       # - Add compile flags for C, CXX
 
       # - Add JNI sources
-      mk_append("LOCAL_MODULE := ${apk}")
+      mk_append("LOCAL_MODULE := ${apk_JNI_LIB}")
       foreach(jni_src ${apk_JNI_SOURCES})
 	mk_append("LOCAL_SRC_FILES += ${jni_src}")
       endforeach()
@@ -176,5 +183,6 @@ add_apk(AndroidSensorApp
   LINK_LIBS ${OpenCV2_JAVA_LIBRARY}
   JNI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/jni"
   JNI_SOURCES AndNodeCam.cpp
+  JNI_LIB AndNodeCam
   CONDITIONS OpenCV2_FOUND
   )
