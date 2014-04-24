@@ -21,7 +21,7 @@ def_apk(AndroidSensorApp
   DEPENDS hal calibu pbmsgs node miniglog AndCam
   LINK_LIBS ${OpenCV2_JAVA_LIBRARY}
   JNI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/jni"
-  JNI_SOURCES AndNodeCam.cpp
-  JNI_LIB AndNodeCam
+  JNI_SOURCES NativeSensorInterface.cpp
+  JNI_LIB NativeSensorInterface
   CONDITIONS OpenCV2_FOUND
   )
