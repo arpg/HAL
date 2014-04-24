@@ -4,12 +4,7 @@ if(ANDROID)
   find_package(AndroidKernel QUIET)
   find_package(GLUES QUIET)
 
-  if(AndroidKernel_FOUND AND GLUES_FOUND)
-    set(BUILD_KitKat ON CACHE BOOL "Build the KitKat camera driver")
-  elseif()
-    set(BUILD_KitKat OFF CACHE BOOL "Build the KitKat camera driver")
-  endif()
-
+  set(BUILD_KitKat OFF CACHE BOOL "Build the KitKat camera driver")
   if(BUILD_KitKat)
     add_to_hal_include_dirs(${AndroidKernel_INCLUDE_DIRS})
     add_to_hal_libraries(${AndroidKernel_LIBRARIES})
