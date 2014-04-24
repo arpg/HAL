@@ -1,11 +1,18 @@
 package edu.gwu.rpg.nativesensorinterface;
 
+/** The class for handling all JNI data interchange
+ *
+ * Naming convention:
+ *  - Java calls are CamelCase
+ *  - Native functions are lower_case_with_underlines
+ *  - Data methods are Post* (Image, Imu, etc.)
+ */
 public class NativeSensorInterface {
     private native void post_image(byte[] bytes);
-    private native void initialize(String IP, int port);
+    private native void initialize();
 
-    public void Init(String ip_address, int port) {
-        initialize(ip_address, port);
+    public void Initialize() {
+        initialize();
     }
 
     public void PostImage(byte[] bytes) {
@@ -20,7 +27,6 @@ public class NativeSensorInterface {
         System.loadLibrary("node");
         System.loadLibrary("calibu");
         System.loadLibrary("hal");
-        System.loadLibrary("AndCam");
         System.loadLibrary("NativeSensorInterface");
     }
 }
