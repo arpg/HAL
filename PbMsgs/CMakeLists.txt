@@ -97,8 +97,10 @@ if( BUILD_Velodyne )
     set( HDRS ${HDRS} Velodyne.h )
 endif()
 
-add_library( ${LIBRARY_NAME} ${SRCS} ${HDRS} )
-target_link_libraries(${LIBRARY_NAME} ${LINK_LIBS})
+include(def_library)
+def_library(${LIBRARY_NAME}
+  SOURCES ${SRCS} ${HDRS}
+  LINK_LIBS ${LINK_LIBS})
 
 #######################################################
 ## Create configure file for inclusion in library
