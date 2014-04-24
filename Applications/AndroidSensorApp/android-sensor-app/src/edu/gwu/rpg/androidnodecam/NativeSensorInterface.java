@@ -8,7 +8,7 @@ public class NativeSensorInterface {
         initialize(ip_address, port);
     }
 
-    public void PostImage( byte[] bytes ) {
+    public void PostImage(byte[] bytes) {
         post_image(bytes);
     }
 

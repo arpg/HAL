@@ -13,81 +13,33 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback {
+public class MainActivity extends Activity {
 
-     Camera mCamera;
-     SurfaceView mPreview;
-    NativeSensorInterface anc;
-     String ip_address;
-
+    private SurfaceView mPreview;
+    private NativeCameraInterface mCamera;
+    private NativeSensorInterface mNativeInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        anc = new NativeSensorInterface();
-        anc.Init("192.168.1.104", 5555);
-
+        mNativeInterface = new NativeSensorInterface();
+        mCamera = new NativeCameraInterface(mNativeInterface);
         mPreview = (SurfaceView)findViewById(R.id.preview);
-        mPreview.getHolder().addCallback(this);
+        mPreview.getHolder().addCallback(mCamera);
         mPreview.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-
-        mCamera = Camera.open();
-//        Parameters p = mCamera.getParameters();
-//        p.set("orientation", "portrait");
-//        mCamera.setParameters(p);
-        mCamera.setDisplayOrientation(90);
-
-        mCamera.setPreviewCallback( new Camera.PreviewCallback() {
-
-            @Override
-            public void onPreviewFrame(byte[] data, Camera camera) {
-                Camera.Parameters parameters = camera.getParameters();
-
-                int width = parameters.getPreviewSize().width;
-                int height = parameters.getPreviewSize().height;
-                byte[] toSend = new byte[width*height];
-                System.arraycopy(data, 0, toSend, 0, width*height);
-                anc.PostImage(toSend);
-            }
-        });
     }
-
 
     @Override
     public void onPause() {
         super.onPause();
-        mCamera.stopPreview();
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,
-            int height) {
-         Camera.Parameters params = mCamera.getParameters();
-            params.setPreviewSize(640, 480);
-            mCamera.setParameters(params);
-
-            mCamera.startPreview();
-
+        mCamera.stop();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mCamera.release();
+        mCamera.close();
     }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            mCamera.setPreviewDisplay(mPreview.getHolder());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {}
 }
