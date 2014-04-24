@@ -340,7 +340,8 @@ void Velodyne::ReadCalibData(const char *calibFileName)
   }
 }
 
-void Velodyne::ConvertRangeToPoints(pb::LidarMsg& LidarData)
+void Velodyne::ConvertRangeToPoints(const pb::LidarMsg& LidarData, //input
+                                    std::shared_ptr<LidarMsg> CorrectedData) //output
 {
   if((int)LidarData.distance().rows() != mn_NumLasers)
   {
@@ -349,19 +350,33 @@ void Velodyne::ConvertRangeToPoints(pb::LidarMsg& LidarData)
               <<(int)LidarData.distance().rows()<<std::endl;
     return;
   }
-  ComputePoints(LidarData);
-  ComputeIntensity(LidarData);
+  CorrectedData->set_system_time(LidarData.system_time());
+  CorrectedData->set_device_time(LidarData.device_time());
+  ComputePoints(LidarData, CorrectedData);
+  ComputeIntensity(LidarData, CorrectedData);
   md_TimeStamp = LidarData.system_time();
 }
 
-void Velodyne::ComputeIntensity(pb::LidarMsg& LidarData)
+void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
+                                std::shared_ptr<LidarMsg> Intensities)
 {
+
+  pb::MatrixMsg* pbMatIntensity;
+  if(Intensities != nullptr) {
+    pbMatIntensity = Intensities->mutable_intensity();
+    pbMatIntensity->set_rows(1);
+  }
+
   for (int block = 0; block < 6; ++block)
   {
     for (int laser = 0; laser < mn_NumLasers; ++laser)
     {
       VelodyneLaserCorrection vcl = vlc[laser];
       int pt_idx = block*mn_NumLasers + laser;
+      double distance = LidarData.distance().data(pt_idx);
+      if(distance==0)// || distance >= 120) //So that we have correspondance with points
+        continue;
+
       double intesity = LidarData.intensity().data(pt_idx);//intesity is not a spelling mistake, can confuse with enum, simpler this way.
       double dist_raw = LidarData.distance().data(pt_idx) * 500;//The way velodyne packet intended it, at 2mm unit.
 
@@ -376,13 +391,25 @@ void Velodyne::ComputeIntensity(pb::LidarMsg& LidarData)
 
       //Scale the intensity and then assign.
       int idx = ((int)(LidarData.rotational_position().data(block)*100) * mn_NumLasers) + laser;
-      mp_Intensities[idx] = (intesity - min_intensity)/(max_intensity-min_intensity);
+      double value = (intesity - min_intensity)/(max_intensity-min_intensity);
+      mp_Intensities[idx] = (float)value;
+      if(Intensities != nullptr)
+        pbMatIntensity->add_data(value);
     }
   }
 }
 
-void Velodyne::ComputePoints(pb::LidarMsg &LidarData)
+void Velodyne::ComputePoints(const pb::LidarMsg &LidarData,
+                             std::shared_ptr<LidarMsg> Points)
 {
+
+  pb::MatrixMsg* pbMatPoint;
+  if(Points != nullptr) {
+    pbMatPoint = Points->mutable_distance();
+    pbMatPoint->set_rows(4);
+    Points->mutable_rotational_position()->CopyFrom(
+          LidarData.rotational_position());
+  }
 
   //block contains upper and lower block, i.e. 64 lasers.
   for(int block=0; block<6; block++)
@@ -483,6 +510,14 @@ void Velodyne::ComputePoints(pb::LidarMsg &LidarData)
       mp_Points[idx+2] = (float)zz;
       mp_Points[idx+3] = 1.0;
       ComputeColor(idx);
+
+      if(Points != nullptr) {
+        pbMatPoint->add_data(xx);
+        pbMatPoint->add_data(yy);
+        pbMatPoint->add_data(zz);
+        pbMatPoint->add_data(1);
+      }
+
     }
   }
 

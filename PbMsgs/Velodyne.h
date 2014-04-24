@@ -67,7 +67,8 @@ public:
     void setColMethod(const ColoringMethod &value);
 
     /*Here lie the doers, the movers and the shakers */
-    void ConvertRangeToPoints(pb::LidarMsg& LidarData);
+    void ConvertRangeToPoints(const LidarMsg& LidarData,
+                              std::shared_ptr<LidarMsg> CorrectedData=nullptr);
 
     int getPointsSize() const;
     void setPointsSize(int value);
@@ -76,10 +77,11 @@ private:
     /* Methods */
     void ReadCalibData(const char *calibFileName);
     void SetupColorMethod();
-    void ComputePoints(pb::LidarMsg &LidarData);
-    void ComputePoints_Old(pb::LidarMsg &LidarData);
+    void ComputePoints(const LidarMsg& LidarData,
+                       std::shared_ptr<LidarMsg> Points);
     void ComputeColor(int ii);
-    void ComputeIntensity(pb::LidarMsg &LidarData);
+    void ComputeIntensity(const LidarMsg& LidarData,
+                          std::shared_ptr<LidarMsg> Intensities);
 
     /* Properties */
     int mn_NumLasers; //Num of lasers in Velodyne, for HDL-64E it's 64, for HDL-32E it's 32. Imagine that!!
