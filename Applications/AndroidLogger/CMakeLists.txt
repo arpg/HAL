@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(ANDROID_PACKAGE_NAME "edu.gwu.robotics")
-include( AndroidUtils )
-
 set( CMAKE_CXX_FLAGS "-std=c++11 -fpermissive ${CMAKE_CXX_FLAGS}" )
 
 # git://github.com/stevenlovegrove/Pangolin.git

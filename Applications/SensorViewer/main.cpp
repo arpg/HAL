@@ -100,11 +100,11 @@ class SensorViewer {
     pangolin::Timer timer;
     bool got_first_image = false;
     bool capture_success = false;
-    std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
+    std::shared_ptr<pb::ImageArray> last_images;
     for (; !pangolin::ShouldQuit(); ++frame_number_) {
       const bool go = is_running_ || pangolin::Pushed(is_stepping_);
-      usleep(20000);
 
+      std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glColor4f(1.0f,1.0f,1.0f,1.0f);
 
@@ -130,6 +130,10 @@ class SensorViewer {
 #endif
       }
 
+      // Just display the last images if we didn't get new ones.
+      if (!capture_success) {
+        images = last_images;
+      }
       if (got_first_image) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
           std::shared_ptr<pb::Image> img = images->at(ii);
@@ -165,6 +169,7 @@ class SensorViewer {
       }
 
       pangolin::FinishFrame();
+      last_images = images;
     }
   }
 

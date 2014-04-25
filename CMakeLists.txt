@@ -6,8 +6,7 @@ project( HAL )
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
 if(ANDROID)
-    set(ANDROID_PACKAGE_NAME "edu.gwu.robotics.hal")
-    include(AndroidUtils)
+    set(ANDROID_PACKAGE_NAME "edu.arpg.hal")
 endif()
 
 ################################################################################

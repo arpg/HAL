@@ -136,26 +136,21 @@ foreach(val RANGE ${len_c_o_s})
 endforeach()
 
 
-if( ANDROID )
-    list(APPEND INTERNAL_LIBS "z")
-endif()
-
 if(TinyXML2_FOUND)
   include_directories( ${TinyXML2_INCLUDE_DIR} )
 endif()
 
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
-add_library(hal ${HAL_SOURCES})
-target_link_libraries( hal ${INTERNAL_LIBS} )
-target_link_libraries( hal ${Boost_FILESYSTEM_LIBRARY} )
-target_link_libraries( hal ${Boost_SYSTEM_LIBRARY} )
+
+include(def_library)
+def_library(hal
+  SOURCES ${HAL_SOURCES}
+  LINK_LIBS ${INTERNAL_LIBS} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
 if(TinyXML2_FOUND)
   target_link_libraries( hal ${TinyXML2_LIBRARIES} )
 endif()
-
-#message( "Boost system library: " ${Boost_SYSTEM_LIBRARY} )
 
 #######################################################
 ## Create configure file for inclusion in library
