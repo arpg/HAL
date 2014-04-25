@@ -19,7 +19,13 @@ class Logger {
   Logger();
   ~Logger();
 
+  /** Create a new log in the given directory of the format sPrefix_<count>.
+   *
+   * <count> is increased by one for every new log file.
+   */
   std::string LogToFile(const std::string &sLogDir, const std::string &sPrefix);
+
+  /** Write a log to this specific file, overwriting any previous file. */
   void LogToFile(const std::string &fileName);
   void StopLogging();
   bool IsLogging();
