@@ -29,7 +29,8 @@ Logger& Logger::GetInstance()
 Logger::Logger() :
     m_sFilename("proto.log"),
     m_bShouldRun(false),
-    m_nMaxBufferSize(5000)
+    m_nMaxBufferSize(5000),
+    m_nMessagesWritten(0)
 {
 }
 
@@ -75,7 +76,6 @@ void Logger::ThreadFunc()
 
 
     ///-------------------- Run Logger
-    int frames = 0;
     while( m_bShouldRun ){
 
         {
@@ -105,11 +105,12 @@ void Logger::ThreadFunc()
         {
             std::unique_lock<std::mutex> lock(m_QueueMutex);
             m_qMessages.pop_front();
-            frames++;
+            ++m_nMessagesWritten;
         }
     }
 
-    std::cout << "Logger thread stopped. Wrote " << frames << " frames." << std::endl;
+    std::cout << "Logger thread stopped. Wrote " << m_nMessagesWritten
+              << " frames." << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -192,6 +193,11 @@ void Logger::SetMaxBufferSize(unsigned int nBufferSize)
 size_t Logger::buffer_size() const
 {
   return m_qMessages.size();
+}
+
+size_t Logger::messages_written() const
+{
+  return m_nMessagesWritten;
 }
 
 }
