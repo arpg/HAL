@@ -21,7 +21,9 @@ import android.widget.TextView;
  *  - Data methods are Post* (Image, Imu, etc.)
  */
 public class NativeSensorInterface {
-    private native void initialize();
+    private native void initialize(int width, int height);
+    private native int num_logged();
+    private native int num_queued();
     private native void post_image(long timestamp, byte[] bytes);
     private native void post_accel(long timestamp, float x, float y, float z);
     private native void post_gyro(long timestamp, float x, float y, float z);
@@ -48,15 +50,17 @@ public class NativeSensorInterface {
     private long mRealSensorTime, mRealTimeDiff;
     private SensorEventListener mGyroListener, mAccelListener;
     private LocationListener mLocationListener;
-    private TextView mGpsText, mGyroText, mAccelText, mImageText;
+    private TextView mGpsText, mGyroText, mAccelText, mImageText, mLogText;
+    private boolean mIsLogging;
 
     public NativeSensorInterface() {
         mGpsText = mGyroText = mAccelText = mImageText = null;
+        mIsLogging = false;
     }
 
     /** Initialize all the listeners */
-    public void initialize(Context ctx) {
-        initialize();
+    public void initialize(Context ctx, int img_width, int img_height) {
+        initialize(img_width, img_height);
         mHasInitialSensorEvent = false;
 
         mSensorManager =
@@ -89,8 +93,11 @@ public class NativeSensorInterface {
                                                          event.values[2]));
                     }
 
-                    post_accel(ts, event.values[0],
-                               event.values[1], event.values[2]);
+                    if (mIsLogging) {
+                        post_accel(ts, event.values[0],
+                                   event.values[1], event.values[2]);
+                    }
+                    updateLogText();
                 }
 
                 @Override
@@ -116,8 +123,11 @@ public class NativeSensorInterface {
                                                         event.values[2]));
                     }
 
-                    post_gyro(ts, event.values[0], event.values[1],
-                              event.values[2]);
+                    if (mIsLogging) {
+                        post_gyro(ts, event.values[0], event.values[1],
+                                  event.values[2]);
+                    }
+                    updateLogText();
                 }
 
                 @Override
@@ -138,11 +148,14 @@ public class NativeSensorInterface {
                                                        loc.getAccuracy()));
                     }
 
-                    post_gps(loc.getElapsedRealtimeNanos(),
-                             loc.getLatitude(),
-                             loc.getLongitude(),
-                             loc.getAltitude(),
-                             loc.getAccuracy());
+                    if (mIsLogging) {
+                        post_gps(loc.getElapsedRealtimeNanos(),
+                                 loc.getLatitude(),
+                                 loc.getLongitude(),
+                                 loc.getAltitude(),
+                                 loc.getAccuracy());
+                    }
+                    updateLogText();
                 }
 
                 @Override
@@ -170,11 +183,21 @@ public class NativeSensorInterface {
     }
 
     public void setTextViews(TextView gpsText, TextView gyroText,
-                             TextView accelText, TextView imageText) {
+                             TextView accelText, TextView imageText,
+                             TextView logText) {
         mGpsText = gpsText;
         mGyroText = gyroText;
         mAccelText = accelText;
         mImageText = imageText;
+        mLogText = logText;
+    }
+
+    public void setIsLogging(boolean v) {
+        mIsLogging = v;
+    }
+
+    public boolean isLogging() {
+        return mIsLogging;
     }
 
     public void stop() {
@@ -184,10 +207,20 @@ public class NativeSensorInterface {
     }
 
     public void postImage(long timestamp, byte[] bytes) {
-        post_image(timestamp, bytes);
+        if (mIsLogging) {
+            post_image(timestamp, bytes);
+        }
 
         if (mImageText != null) {
             mImageText.setText("Image at " + Long.toString(timestamp));
         }
+        updateLogText();
+    }
+
+    private void updateLogText() {
+        if (mLogText == null) return;
+        mLogText.setText(String.format("Logged %d messages with %d queued",
+                                       num_logged(),
+                                       num_queued()));
     }
 }

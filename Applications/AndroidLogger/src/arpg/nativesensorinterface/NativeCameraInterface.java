@@ -36,6 +36,14 @@ public class NativeCameraInterface
             });
     }
 
+    int getWidth() {
+        return mCamera.getParameters().getPreviewSize().width;
+    }
+
+    int getHeight() {
+        return mCamera.getParameters().getPreviewSize().height;
+    }
+
     public void stop() {
         mCamera.stopPreview();
     }
