@@ -131,7 +131,7 @@ class SensorViewer {
       }
 
       // Just display the last images if we didn't get new ones.
-      if (!capture_success) {
+      if (!go || !capture_success) {
         images = last_images;
       }
       if (got_first_image) {
