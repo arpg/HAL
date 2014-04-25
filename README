@@ -1,3 +1,13 @@
-HAL          -- Hardware Abstraction Layer. Contains devices and associated device drivers.
+HAL is a Hardware Abstraction Layer library that wraps many devices into a protobuf data structure. The code contains:
+
+HAL          -- Contains devices and associated device drivers like cameras, IMUs, GPS, etc.
 PbMsgs       -- Standard messages used by sensors, loggers, etc.
-Applications -- Tools for logging and reading logs
+Applications -- Tools for logging and reading logs.
+
+
+Feel free to report any bugs or issues at our GitHub portal. You can find us at:
+http://github.com/arpg/
+
+Main Developers:
+* Juan M. Falquez
+* Steven Lovegrove
