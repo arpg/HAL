@@ -189,4 +189,9 @@ void Logger::SetMaxBufferSize(unsigned int nBufferSize)
     m_nMaxBufferSize = nBufferSize;
 }
 
+size_t Logger::buffer_size() const
+{
+  return m_qMessages.size();
+}
+
 }

@@ -25,6 +25,7 @@ public:
     void StopLogging();
     bool IsLogging();
     void SetMaxBufferSize( unsigned int nBufferSize );
+    size_t buffer_size() const;
 
     bool LogMessage(const pb::Msg& message);
 
