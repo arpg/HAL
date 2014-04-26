@@ -49,9 +49,10 @@ extern "C" {
 
   JNIEXPORT void JNICALL
   Java_arpg_androidlogger_NativeSensorInterface_finish
-  (JNIEnv *env, jobject jobj)
+  (JNIEnv *env, jobject jobj, jboolean copy)
   {
     logger.StopLogging();
+    if (!copy) return;
 
     std::ifstream in(log_file, std::ios::binary | std::ios::in);
 

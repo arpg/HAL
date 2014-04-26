@@ -23,7 +23,7 @@ import android.widget.TextView;
  */
 public class NativeSensorInterface {
     private native void initialize(String files_dir, int width, int height);
-    private native void finish();
+    private native void finish(boolean shouldMoveLogToSD);
     private native String logfile();
     private native int num_logged();
     private native int num_queued();
@@ -204,8 +204,8 @@ public class NativeSensorInterface {
         return mIsLogging;
     }
 
-    public void stop() {
-        finish();
+    public void stop(boolean shouldMoveLogToSD) {
+        finish(shouldMoveLogToSD);
         mSensorManager.unregisterListener(mAccelListener);
         mSensorManager.unregisterListener(mGyroListener);
         mLocationManager.removeUpdates(mLocationListener);

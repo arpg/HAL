@@ -40,10 +40,16 @@
 		android:layout_height="fill_parent"
 		android:layout_gravity="right" 
 		android:gravity="right" >
-  <Button android:layout_width="wrap_content"
-	  android:layout_height="wrap_content"
-	  android:id="@+id/play_button"
-	  android:text="@string/record"
-	  android:background="#0f0" />
+    <Button android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:id="@+id/play_button"
+	    android:text="@string/record"
+	    android:background="#0f0" />
+
+    <ToggleButton android:layout_width="wrap_content"
+		  android:layout_height="wrap_content"
+		  android:textOn="Copy to SD"
+		  android:textOff="No copy to SD"
+		  android:id="@+id/move_to_sd" />
   </LinearLayout>
 </LinearLayout>

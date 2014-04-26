@@ -16,6 +16,7 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ToggleButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
@@ -44,6 +45,8 @@ public class MainActivity extends Activity {
 
         final Context ctx = this;
         mPlayButton = (Button)findViewById(R.id.play_button);
+        final ToggleButton shouldMoveButton =
+            (ToggleButton)findViewById(R.id.move_to_sd);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     mNativeInterface.
@@ -55,14 +58,14 @@ public class MainActivity extends Activity {
                         mPlayButton.setBackgroundColor(Color.RED);
                         mPlayButton.setText(getString(R.string.stop_record));
                     } else {
-                        mPlayButton.setBackgroundColor(Color.GREEN);
-                        mPlayButton.setText(getString(R.string.record));
-
                         Toast.makeText(ctx, "AndroidLogger stopping.",
                                        Toast.LENGTH_SHORT).show();
-                        mNativeInterface.stop();
+                        mNativeInterface.stop(shouldMoveButton.isChecked());
                         Toast.makeText(ctx, "AndroidLogger finished.",
                                        Toast.LENGTH_SHORT).show();
+
+                        mPlayButton.setBackgroundColor(Color.GREEN);
+                        mPlayButton.setText(getString(R.string.record));
                     }
                 }
             });
