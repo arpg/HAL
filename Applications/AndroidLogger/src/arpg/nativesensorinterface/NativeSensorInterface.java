@@ -54,18 +54,21 @@ public class NativeSensorInterface {
     private SensorEventListener mGyroListener, mAccelListener;
     private LocationListener mLocationListener;
     private TextView mGpsText, mGyroText, mAccelText, mImageText, mLogText;
-    private boolean mIsLogging;
+    private boolean mIsLogging, mIsPeanut;
 
     public NativeSensorInterface() {
         mGpsText = mGyroText = mAccelText = mImageText = null;
         mIsLogging = false;
+        mIsPeanut = false;
     }
 
     /** Initialize all the listeners */
-    public void initialize(Context ctx, int img_width, int img_height) {
+    public void initialize(Context ctx, int img_width, int img_height,
+                           boolean isPeanut) {
         initialize(ctx.getFilesDir().getAbsolutePath() + "/",
                    img_width, img_height);
         mHasInitialSensorEvent = false;
+        mIsPeanut = isPeanut;
 
         mSensorManager =
             (SensorManager) ctx.getSystemService(Context.SENSOR_SERVICE);
@@ -97,7 +100,7 @@ public class NativeSensorInterface {
                                                          event.values[2]));
                     }
 
-                    if (mIsLogging) {
+                    if (!mIsPeanut && mIsLogging) {
                         post_accel(ts, event.values[0],
                                    event.values[1], event.values[2]);
                     }
@@ -127,7 +130,7 @@ public class NativeSensorInterface {
                                                         event.values[2]));
                     }
 
-                    if (mIsLogging) {
+                    if (!mIsPeanut && mIsLogging) {
                         post_gyro(ts, event.values[0], event.values[1],
                                   event.values[2]);
                     }

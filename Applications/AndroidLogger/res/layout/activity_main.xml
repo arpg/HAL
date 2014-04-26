@@ -51,5 +51,10 @@
 		  android:textOn="Copy to SD"
 		  android:textOff="No copy to SD"
 		  android:id="@+id/move_to_sd" />
+    <ToggleButton android:layout_width="wrap_content"
+		  android:layout_height="wrap_content"
+		  android:textOn="Peanut"
+		  android:textOff="Not Peanut"
+		  android:id="@+id/is_peanut" />
   </LinearLayout>
 </LinearLayout>

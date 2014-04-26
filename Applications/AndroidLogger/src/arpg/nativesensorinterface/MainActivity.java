@@ -47,13 +47,23 @@ public class MainActivity extends Activity {
         mPlayButton = (Button)findViewById(R.id.play_button);
         final ToggleButton shouldMoveButton =
             (ToggleButton)findViewById(R.id.move_to_sd);
+        final ToggleButton isPeanutButton =
+            (ToggleButton)findViewById(R.id.is_peanut);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     mNativeInterface.
                         setIsLogging(!mNativeInterface.isLogging());
                     if (mNativeInterface.isLogging()) {
-                        mNativeInterface.initialize(ctx, mCamera.getWidth(),
-                                                    mCamera.getHeight());
+
+                        int width = mCamera.getWidth();
+                        int height = mCamera.getHeight();
+                        if (isPeanutButton.isChecked()) {
+                            height = 1168;
+                            width = 1280;
+                        }
+
+                        mNativeInterface.initialize(ctx, width, height,
+                                                    isPeanutButton.isChecked());
 
                         mPlayButton.setBackgroundColor(Color.RED);
                         mPlayButton.setText(getString(R.string.stop_record));
