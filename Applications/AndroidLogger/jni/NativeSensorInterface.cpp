@@ -1,22 +1,36 @@
 #include <stdint.h>
+#include <cstdio>
 #include <jni.h>
 #include <android/Log.h>
 #include <PbMsgs/Logger.h>
+#include <miniglog/logging.h>
 
 static pb::Logger& logger = pb::Logger::GetInstance();
-
+static std::string log_file;
 static pb::Msg msg;
 
 extern "C" {
   JNIEXPORT void JNICALL
   Java_arpg_androidlogger_NativeSensorInterface_initialize
-  (JNIEnv *env, jobject jobj, jint img_width, jint img_height)
+  (JNIEnv *env, jobject jobj, jstring output_dir,
+   jint img_width, jint img_height)
   {
-    logger.LogToFile("/data/data/arpg.androidlogger", "arpg");
+    const char* s = env->GetStringUTFChars(output_dir,NULL);
+    std::string dir = s;
+    env->ReleaseStringUTFChars(output_dir, s);
+
+    log_file = logger.LogToFile(dir, "arpg");
 
     pb::ImageMsg* img = msg.mutable_camera()->add_image();
     img->set_width(img_width);
     img->set_height(img_height);
+  }
+
+  JNIEXPORT jstring JNICALL
+  Java_arpg_androidlogger_NativeSensorInterface_logfile
+  (JNIEnv *env, jobject jobj)
+  {
+    return env->NewStringUTF(log_file.c_str());
   }
 
   JNIEXPORT jint JNICALL
@@ -31,6 +45,34 @@ extern "C" {
   (JNIEnv *env, jobject jobj)
   {
     return static_cast<jint>(logger.buffer_size());
+  }
+
+  JNIEXPORT void JNICALL
+  Java_arpg_androidlogger_NativeSensorInterface_finish
+  (JNIEnv *env, jobject jobj)
+  {
+    logger.StopLogging();
+
+    std::ifstream in(log_file, std::ios::binary | std::ios::in);
+
+    size_t last_slash = log_file.find_last_of('/');
+    std::string filename = ((last_slash == std::string::npos) ? log_file :
+                            log_file.substr(last_slash + 1));
+    std::string output_file = "/sdcard/" + filename;
+    std::ofstream out(output_file, std::ios::binary | std::ios::trunc);
+
+    LOG(INFO) << "Moving log from " << log_file << " to " << output_file;
+    out << in.rdbuf();
+    in.close();
+    out.close();
+
+    // In order to preserve the log ordering, but not waste space, we
+    // nuke the contents of the old log file.
+    std::ofstream old_log(log_file, std::ios::trunc);
+    old_log << 0;
+    old_log.close();
+
+    LOG(INFO) << "Done moving log.";
   }
 
   JNIEXPORT void JNICALL

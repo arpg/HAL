@@ -17,6 +17,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.util.Log;
 
 public class MainActivity extends Activity {
@@ -35,26 +36,33 @@ public class MainActivity extends Activity {
         TextureView texture = (TextureView)findViewById(R.id.preview);
         mCamera = new NativeCameraInterface(mNativeInterface, texture);
 
-        mNativeInterface.initialize(this, mCamera.getWidth(),
-                                    mCamera.getHeight());
-
         mNativeInterface.setTextViews((TextView)findViewById(R.id.gps_text),
                                       (TextView)findViewById(R.id.gyro_text),
                                       (TextView)findViewById(R.id.accel_text),
                                       (TextView)findViewById(R.id.image_text),
                                       (TextView)findViewById(R.id.log_text));
 
+        final Context ctx = this;
         mPlayButton = (Button)findViewById(R.id.play_button);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     mNativeInterface.
                         setIsLogging(!mNativeInterface.isLogging());
                     if (mNativeInterface.isLogging()) {
+                        mNativeInterface.initialize(ctx, mCamera.getWidth(),
+                                                    mCamera.getHeight());
+
                         mPlayButton.setBackgroundColor(Color.RED);
                         mPlayButton.setText(getString(R.string.stop_record));
                     } else {
                         mPlayButton.setBackgroundColor(Color.GREEN);
                         mPlayButton.setText(getString(R.string.record));
+
+                        Toast.makeText(ctx, "AndroidLogger stopping.",
+                                       Toast.LENGTH_SHORT).show();
+                        mNativeInterface.stop();
+                        Toast.makeText(ctx, "AndroidLogger finished.",
+                                       Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -64,7 +72,6 @@ public class MainActivity extends Activity {
     public void onPause() {
         super.onPause();
         mCamera.stop();
-        mNativeInterface.stop();
         mRenderer.stop();
     }
 

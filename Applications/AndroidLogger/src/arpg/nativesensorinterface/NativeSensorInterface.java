@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.TextView;
@@ -21,7 +22,9 @@ import android.widget.TextView;
  *  - Data methods are Post* (Image, Imu, etc.)
  */
 public class NativeSensorInterface {
-    private native void initialize(int width, int height);
+    private native void initialize(String files_dir, int width, int height);
+    private native void finish();
+    private native String logfile();
     private native int num_logged();
     private native int num_queued();
     private native void post_image(long timestamp, byte[] bytes);
@@ -60,7 +63,8 @@ public class NativeSensorInterface {
 
     /** Initialize all the listeners */
     public void initialize(Context ctx, int img_width, int img_height) {
-        initialize(img_width, img_height);
+        initialize(ctx.getFilesDir().getAbsolutePath() + "/",
+                   img_width, img_height);
         mHasInitialSensorEvent = false;
 
         mSensorManager =
@@ -201,6 +205,7 @@ public class NativeSensorInterface {
     }
 
     public void stop() {
+        finish();
         mSensorManager.unregisterListener(mAccelListener);
         mSensorManager.unregisterListener(mGyroListener);
         mLocationManager.removeUpdates(mLocationListener);
