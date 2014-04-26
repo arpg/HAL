@@ -93,11 +93,16 @@ extern "C" {
     img->set_timestamp(sec_ts);
     img->set_width(image_width);
     img->set_height(image_height);
+    img->set_format(pb::PB_LUMINANCE);
+
+    // Size of luminance portion of image for format NV16
+    int lum_size = image_width * image_height;
 
     int len = env->GetArrayLength(bytes);
-    img->mutable_data()->resize(len);
+    CHECK_GE(len, lum_size);  // Make sure the luminance is a subimage
 
-    env->GetByteArrayRegion(bytes, 0, len,
+    img->mutable_data()->resize(lum_size);
+    env->GetByteArrayRegion(bytes, 0, lum_size,
                             reinterpret_cast<jbyte*>(
                                 &img->mutable_data()->front()));
     logger.LogMessage(msg);
