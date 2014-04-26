@@ -90,19 +90,20 @@ void Logger::ThreadFunc() {
     const size_t size_bytes = msg.ByteSize();
     coded_output.WriteVarint32(size_bytes);
 
-    if(!msg.SerializeToCodedStream(&coded_output)) {
-      std::cerr << "HAL: Failed to serialize to coded stream." << std::endl;
+    if (!msg.IsInitialized()) {
+      LOG(WARNING) << "Message is not initialized missing fields ("
+                   << msg.InitializationErrorString() << "). Cannot serialize.";
+    } else if(!msg.SerializeToCodedStream(&coded_output)) {
+      LOG(WARNING) << "Failed to serialize to coded stream.";
     }
 
-    {
-      std::unique_lock<std::mutex> lock(m_QueueMutex);
-      m_qMessages.pop_front();
-      ++m_nMessagesWritten;
-    }
+    std::lock_guard<std::mutex> lock(m_QueueMutex);
+    m_qMessages.pop_front();
+    ++m_nMessagesWritten;
   }
 
   LOG(INFO) << "Logger thread stopped. Wrote " << m_nMessagesWritten
-            << " frames.";
+            << " frames to " << m_sFilename << ".";
 }
 
 bool Logger::LogMessage(const pb::Msg &message) {
@@ -129,6 +130,7 @@ void Logger::LogToFile(const std::string& filename) {
   LOG(INFO) << "Logger thread started...";
   StopLogging();
 
+  m_nMessagesWritten = 0;
   m_sFilename = filename;
   m_bShouldRun = true;
   m_WriteThread = std::thread(&Logger::ThreadFunc, this);
