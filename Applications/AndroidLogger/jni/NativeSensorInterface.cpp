@@ -8,6 +8,7 @@
 static pb::Logger& logger = pb::Logger::GetInstance();
 static std::string log_file;
 static pb::Msg msg;
+static int image_width = 0, image_height = 0;
 
 extern "C" {
   JNIEXPORT void JNICALL
@@ -20,10 +21,8 @@ extern "C" {
     env->ReleaseStringUTFChars(output_dir, s);
 
     log_file = logger.LogToFile(dir, "arpg");
-
-    pb::ImageMsg* img = msg.mutable_camera()->add_image();
-    img->set_width(img_width);
-    img->set_height(img_height);
+    image_width = img_width;
+    image_height = img_height;
   }
 
   JNIEXPORT jstring JNICALL
@@ -92,6 +91,8 @@ extern "C" {
 
     pb::ImageMsg* img = cam->add_image();
     img->set_timestamp(sec_ts);
+    img->set_width(image_width);
+    img->set_height(image_height);
 
     int len = env->GetArrayLength(bytes);
     img->mutable_data()->resize(len);
