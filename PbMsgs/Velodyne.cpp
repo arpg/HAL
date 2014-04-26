@@ -361,7 +361,7 @@ void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
                                 std::shared_ptr<LidarMsg> Intensities)
 {
 
-  pb::MatrixMsg* pbMatIntensity;
+  pb::MatrixMsg* pbMatIntensity = new pb::MatrixMsg;
   if(Intensities != nullptr) {
     pbMatIntensity = Intensities->mutable_intensity();
     pbMatIntensity->set_rows(1);
