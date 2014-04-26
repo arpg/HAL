@@ -34,6 +34,9 @@ public class NativeCameraInterface
                     mNativeInterface.postImage(mTimestamp, data);
                 }
             });
+        Camera.Parameters params = mCamera.getParameters();
+        params.setPreviewSize(640, 480);
+        mCamera.setParameters(params);
     }
 
     int getWidth() {
