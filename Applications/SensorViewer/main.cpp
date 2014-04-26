@@ -134,7 +134,7 @@ class SensorViewer {
       if (!go || !capture_success) {
         images = last_images;
       }
-      if (got_first_image) {
+      if (got_first_image && !images->Empty()) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
           std::shared_ptr<pb::Image> img = images->at(ii);
           if (!glTex[ii].tid && num_channels_) {
@@ -170,6 +170,7 @@ class SensorViewer {
 
       pangolin::FinishFrame();
       last_images = images;
+      std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
   }
 
