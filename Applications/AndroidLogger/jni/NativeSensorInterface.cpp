@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <cstdio>
 #include <jni.h>
-#include <android/Log.h>
+#include <android/log.h>
 #include <PbMsgs/Logger.h>
 #include <miniglog/logging.h>
 
