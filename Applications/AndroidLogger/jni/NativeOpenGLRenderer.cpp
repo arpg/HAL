@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <jni.h>
-#include <android/Log.h>
+#include <android/log.h>
 #include <GLES/gl.h>
 
 extern "C" {
