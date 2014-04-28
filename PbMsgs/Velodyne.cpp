@@ -361,7 +361,7 @@ void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
                                 std::shared_ptr<LidarMsg> Intensities)
 {
 
-  pb::MatrixMsg* pbMatIntensity = new pb::MatrixMsg;
+  pb::MatrixMsg* pbMatIntensity = nullptr;
   if(Intensities != nullptr) {
     pbMatIntensity = Intensities->mutable_intensity();
     pbMatIntensity->set_rows(1);
@@ -393,7 +393,7 @@ void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
       int idx = ((int)(LidarData.rotational_position().data(block)*100) * mn_NumLasers) + laser;
       double value = (intesity - min_intensity)/(max_intensity-min_intensity);
       mp_Intensities[idx] = (float)value;
-      if(Intensities != nullptr)
+      if(Intensities && pbMatIntensity)
         pbMatIntensity->add_data(value);
     }
   }
@@ -403,7 +403,7 @@ void Velodyne::ComputePoints(const pb::LidarMsg &LidarData,
                              std::shared_ptr<LidarMsg> Points)
 {
 
-  pb::MatrixMsg* pbMatPoint;
+  pb::MatrixMsg* pbMatPoint = nullptr;
   if(Points != nullptr) {
     pbMatPoint = Points->mutable_distance();
     pbMatPoint->set_rows(4);
@@ -511,7 +511,7 @@ void Velodyne::ComputePoints(const pb::LidarMsg &LidarData,
       mp_Points[idx+3] = 1.0;
       ComputeColor(idx);
 
-      if(Points != nullptr) {
+      if(Points != nullptr && pbMatPoint) {
         pbMatPoint->add_data(xx);
         pbMatPoint->add_data(yy);
         pbMatPoint->add_data(zz);
