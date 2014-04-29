@@ -122,6 +122,7 @@ file( RELATIVE_PATH REL_INCLUDE_DIR
     "${CMAKE_INSTALL_PREFIX}/include" )
 
 # Export library for easy inclusion from other cmake projects.
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 export( TARGETS ${LIBRARY_NAME}
         APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake" )
 
