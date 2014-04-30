@@ -41,7 +41,8 @@ public class MainActivity extends Activity {
                                       (TextView)findViewById(R.id.gyro_text),
                                       (TextView)findViewById(R.id.accel_text),
                                       (TextView)findViewById(R.id.image_text),
-                                      (TextView)findViewById(R.id.log_text));
+                                      (TextView)findViewById(R.id.log_text),
+                                      (TextView)findViewById(R.id.mag_text));
 
         final Context ctx = this;
         mPlayButton = (Button)findViewById(R.id.play_button);

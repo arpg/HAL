@@ -131,6 +131,28 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
+  Java_arpg_androidlogger_NativeSensorInterface_post_1mag
+  (JNIEnv *env, jobject jobj, jlong timestamp, jfloat x, jfloat y, jfloat z)
+  {
+    msg.Clear();
+
+    // Scale timestamp to seconds from nanoseconds
+    double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
+    msg.set_timestamp(sec_ts);
+
+    pb::ImuMsg* imu = msg.mutable_imu();
+    imu->set_id(0);
+    imu->set_device_time(sec_ts);
+
+    pb::VectorMsg* mag = imu->mutable_mag();
+    mag->add_data(x);
+    mag->add_data(y);
+    mag->add_data(z);
+
+    logger.LogMessage(msg);
+  }
+
+  JNIEXPORT void JNICALL
   Java_arpg_androidlogger_NativeSensorInterface_post_1gyro
   (JNIEnv *env, jobject jobj, jlong timestamp, jfloat x, jfloat y, jfloat z)
   {
