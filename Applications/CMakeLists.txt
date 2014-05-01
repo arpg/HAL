@@ -1,6 +1,3 @@
 add_subdirectory(SensorViewer)
-if (TinyXML2_FOUND)
-	add_subdirectory(LexusLogger)
-endif()
-add_subdirectory(TestSim)
+#add_subdirectory(TestSim)
 add_subdirectory(AndroidLogger)
