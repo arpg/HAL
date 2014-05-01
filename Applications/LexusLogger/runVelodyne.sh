@@ -1,1 +1,0 @@
-./LexusLogger -lidar velodyne://
