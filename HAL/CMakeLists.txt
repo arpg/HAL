@@ -161,6 +161,7 @@ export_package(HAL
   LIBRARY hal
   LIBRARIES hal
   INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
+  LINK_DIRS ${PbMsgs_BINARY_DIR}
   )
 
 #######################################################
