@@ -18,7 +18,7 @@ endif()
 # Find required libraries
 
 find_package( OpenCV2 REQUIRED )
-find_package( PbMsgs 0.1 REQUIRED )
+find_package( PbMsgs 2.0 REQUIRED )
 find_package( Sophus REQUIRED )
 find_package( Boost COMPONENTS system filesystem REQUIRED )
 find_package( TinyXML2 )
