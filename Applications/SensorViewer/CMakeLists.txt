@@ -9,6 +9,7 @@ endif()
 
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
+find_package(PbMsgs 2.0)
 
 find_package( OpenCV2 QUIET )
 
@@ -19,16 +20,17 @@ elseif(ANDROID)
   set(NO_LINK_WHOLE_ARCHIVE_FLAG -Wl,--no-whole-archive)
 endif()
 
-if(Pangolin_FOUND AND HAL_FOUND)
+if(Pangolin_FOUND AND HAL_FOUND AND PbMsgs_FOUND)
   add_executable( SensorViewer main.cpp )
 
   include_directories( ${HAL_INCLUDE_DIRS} )
-  include_directories( ${Pangolin_INCLUDE_DIRS} )
+  include_directories( ${Pangolin_INCLUDE_DIRS} 
+  		       ${PbMsgs_INCLUDE_DIRS})
   target_link_libraries(SensorViewer
     ${Pangolin_LIBRARIES}
     ${LINK_WHOLE_ARCHIVE_FLAG}
-    hal
+    ${HAL_LIBRARIES}
     ${NO_LINK_WHOLE_ARCHIVE_FLAG}
-    pbmsgs
+    ${PbMsgs_LIBRARIES}
     dl )
 endif()
