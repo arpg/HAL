@@ -5,6 +5,7 @@
 
 #include "MicroStrainDriver.h"
 
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "MIPSDK/mip_sdk.h"
 #include "MIPSDK/mip_gx3_35.h"
@@ -306,6 +307,7 @@ void MicroStrainDriver::_ThreadCaptureFunc()
     while(mShouldRun){
         mip_interface_update(&mDeviceInterface,true);
     }
+    mShouldRun = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -424,4 +426,3 @@ bool MicroStrainDriver::_ActivateGPS()
 
     return true;
 }
-

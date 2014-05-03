@@ -24,6 +24,10 @@ public:
     void _ErrorHandler(CPhidgetHandle spatial, int ErrorCode, const char *unknown);
     void _SpatialDataHandler(CPhidgetSpatialHandle spatial, CPhidgetSpatial_SpatialEventDataHandle *data, int count);
 
+  bool IsRunning() const override {
+    return false;
+  }
+
 private:
     CPhidgetSpatialHandle m_hSpatial;
     IMUDriverDataCallback m_ImuCallback;

@@ -15,6 +15,10 @@ public:
     ~NodeIMUDriver();
     void RegisterIMUDataCallback(IMUDriverDataCallback callback);
 
+  bool IsRunning() const override {
+    return m_running;
+  }
+
 private:
     void _ThreadFunc();
 

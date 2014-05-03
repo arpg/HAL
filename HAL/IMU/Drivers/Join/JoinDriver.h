@@ -16,6 +16,10 @@ class JoinDriver : public IMUDriverInterface {
     callback_ = callback;
   }
 
+  bool IsRunning() const override {
+    return input_imu_ && input_imu_->IsRunning();
+  }
+
  private:
   void HandleIMU(pb::ImuMsg& imu);
   inline bool InterpolateAccel(int* gyro_index, Eigen::VectorXd* vec) const;

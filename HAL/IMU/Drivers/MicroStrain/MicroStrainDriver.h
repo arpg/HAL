@@ -21,6 +21,9 @@ class MicroStrainDriver : public IMUDriverInterface
                           int  imu_hz);
         ~MicroStrainDriver();
         void RegisterIMUDataCallback(IMUDriverDataCallback callback);
+  bool IsRunning() const override {
+    return mShouldRun;
+  }
 
         // Auxiliary non-standard methods for Posys integration.
         static void RegisterPosysDataCallback(PosysDriverDataCallback callback);

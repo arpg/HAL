@@ -150,6 +150,9 @@ public:
     }
   }
 
+  bool IsRunning() const override {
+    return m_Running;
+  }
 
   ///////////////////////////////////////////////////////////////////////////////
   void SendCommandPacket(const int nSteering, const int nSpeed)
