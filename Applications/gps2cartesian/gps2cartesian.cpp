@@ -90,7 +90,6 @@ void gps_to_file(std::ofstream* fout, pb::PoseMsg& msg) {
         << cart_coords.y() << ","
         << cart_coords.z() << ","
         << cart_acc.sphericalError90() / 1.64 << "\n";
-  fout->flush();
 }
 
 int main(int argc, char *argv[]) {
@@ -121,9 +120,10 @@ int main(int argc, char *argv[]) {
   posys.RegisterPosysDataCallback(
       std::bind(gps_to_file, &fout, std::placeholders::_1));
 
-  while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+  while (posys.IsRunning()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
   fout.close();
+  LOG(INFO) << "Finished converting";
   return 0;
 }
