@@ -21,6 +21,7 @@ void ProtoReaderPosysDriver::_ThreadFunc()
             break;
         }
     }
+    m_running = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -38,5 +39,3 @@ void ProtoReaderPosysDriver::RegisterPosysDataCallback(PosysDriverDataCallback c
     m_running = true;
     m_callbackThread = std::thread( &ProtoReaderPosysDriver::_ThreadFunc, this );
 }
-
-

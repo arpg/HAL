@@ -11,14 +11,13 @@ namespace hal {
 
 typedef std::function<void (pb::PoseMsg&)> PosysDriverDataCallback;
 
-///////////////////////////////////////////////////////////////////////////////
+///
 /// Generic Posys Driver Interface
-class PosysDriverInterface : public DriverInterface
-{
-    public:
-        // Pure virtual functions driver writers must implement:
-        virtual ~PosysDriverInterface() {}
-        virtual void RegisterPosysDataCallback(PosysDriverDataCallback callback) = 0;
+class PosysDriverInterface : public DriverInterface {
+ public:
+  virtual ~PosysDriverInterface() {}
+  virtual void RegisterPosysDataCallback(PosysDriverDataCallback callback) = 0;
+  virtual bool IsRunning() const = 0;
 };
 
-} /* namespace */
+} /* namespace hal */

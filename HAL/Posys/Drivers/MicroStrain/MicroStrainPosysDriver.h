@@ -12,6 +12,9 @@ public:
     MicroStrainPosysDriver();
     ~MicroStrainPosysDriver();
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+  bool IsRunning() const override {
+    return true;
+  }
 };
 
 } /* namespace */
