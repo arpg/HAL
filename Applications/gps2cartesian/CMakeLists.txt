@@ -16,6 +16,7 @@ include_directories(
   ${GFLAGS_INCLUDE_DIR}
   ${MINIGLOG_INCLUDE_DIRS}
   )
+link_directories(${GeoCon_LINK_DIRS})
 
 set(LINK_LIBS
   ${HAL_LIBRARIES}
