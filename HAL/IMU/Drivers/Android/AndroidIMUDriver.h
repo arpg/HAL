@@ -18,6 +18,10 @@ class AndroidIMUDriver : public IMUDriverInterface {
   virtual ~AndroidIMUDriver();
   void RegisterIMUDataCallback(IMUDriverDataCallback callback) override;
 
+  bool IsRunning() const override {
+    return should_run_;
+  }
+
  private:
   void SensorLoop();
 

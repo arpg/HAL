@@ -15,6 +15,10 @@ public:
     ~PCANIMUDriver();
     void RegisterIMUDataCallback(IMUDriverDataCallback Callback);
 
+  bool IsRunning() const override {
+    return m_PCANListener.IsRunning();
+  }
+
 private:
     PCANListener&           m_PCANListener;
 };

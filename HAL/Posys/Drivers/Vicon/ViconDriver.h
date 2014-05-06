@@ -16,6 +16,10 @@ public:
     ~ViconDriver();
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
 
+  bool IsRunning() const override {
+    return m_bRunning;
+  }
+
 private:
     static void _ThreadFunction(ViconDriver *pVT);
     static void VRPN_CALLBACK _ViconHandler(void* uData, const vrpn_TRACKERCB tData);

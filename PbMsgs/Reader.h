@@ -99,6 +99,8 @@ class Reader {
   /// Return Header protobuf.
   const pb::Header& GetHeader() const { return m_Header; }
 
+  bool IsRunning() const { return m_bRunning; }
+
  private:
   /// Buffer from file.
   bool _BufferFromFile(const std::string &fileName);

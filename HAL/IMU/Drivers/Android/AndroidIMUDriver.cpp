@@ -48,7 +48,7 @@ void AndroidIMUDriver::SensorLoop() {
   ASensorEventQueue_setEventRate(event_queue_, magnetometer_, (1000L/60)*1000);
 
   pb::ImuMsg imu_msg;
-  while (1) {
+  while (should_run_) {
     // Read all pending events.
     int ident;
     int events;
@@ -84,6 +84,7 @@ void AndroidIMUDriver::SensorLoop() {
       }
     }
   }
+  should_run_ = false;
 }
 
 

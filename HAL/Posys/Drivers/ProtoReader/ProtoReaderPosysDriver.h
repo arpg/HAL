@@ -12,6 +12,9 @@ public:
     ProtoReaderPosysDriver(std::string filename);
     ~ProtoReaderPosysDriver();
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+  bool IsRunning() const override {
+    return m_running;
+  }
 
 private:
     void _ThreadFunc();

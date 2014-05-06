@@ -13,14 +13,15 @@ ProtoReaderIMUDriver::ProtoReaderIMUDriver(std::string filename)
 /////////////////////////////////////////////////////////////////////////////////////////
 void ProtoReaderIMUDriver::_ThreadFunc()
 {
-    while( m_running ) {
-        std::unique_ptr<pb::ImuMsg> readmsg = m_reader.ReadImuMsg();
-        if(readmsg) {
-            m_callback( *readmsg );
-        } else {
-            break;
-        }
+  while( m_running ) {
+    if (std::unique_ptr<pb::ImuMsg> readmsg = m_reader.ReadImuMsg()) {
+      m_callback( *readmsg );
+    } else {
+      break;
     }
+  }
+
+  m_running = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -40,5 +41,3 @@ void ProtoReaderIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback callbac
     m_running = true;
     m_callbackThread = std::thread( &ProtoReaderIMUDriver::_ThreadFunc, this );
 }
-
-

@@ -15,13 +15,16 @@ public:
                const std::string sFileTimestamp
                );
     ~CsvDriver();
-    
+
     void RegisterIMUDataCallback(IMUDriverDataCallback callback);
-    
+    bool IsRunning() const override {
+      return m_bShouldRun;
+    }
+
 private:
     void _ThreadCaptureFunc();
     bool _GetNextTime( double& dNextTime, double& dNextTimePPS );
-    
+
     bool                    m_bHaveAccel;
     bool                    m_bHaveGyro;
     bool                    m_bHaveMag;

@@ -30,6 +30,8 @@ void NodeIMUDriver::_ThreadFunc()
         }
         m_callback(pbMsg);
     }
+
+    m_running = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
