@@ -65,11 +65,9 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
 
 void Extract() {
   static const int kNoRange = -1;
-  // Parse types to extract
   std::vector<std::string> types;
   Split(FLAGS_extract_types, ',', &types);
 
-  // Parse frame range to extract or set to -1
   int frame_min = kNoRange, frame_max = kNoRange;
   std::vector<int> frames;
   Split(FLAGS_extract_frame_range, ',', &frames);
@@ -81,7 +79,6 @@ void Extract() {
         << "Minimum frame index must be less than max frame.";
   }
 
-  // Open the input file
   pb::Reader reader(FLAGS_in);
   if (FLAGS_extract_types.empty()) {
     reader.EnableAll();
@@ -93,17 +90,19 @@ void Extract() {
     }
   }
 
-  // Seek to range min
   int idx = 0;
-  for (; frame_min != kNoRange && idx < frame_min; ++idx) {
-    reader.ReadCameraMsg();
+  std::unique_ptr<pb::Msg> msg;
+  while (frame_min != kNoRange &&
+         idx < frame_min &&
+         (msg = reader.ReadMessage())) {
+    if (msg->has_camera()) {
+      ++idx;
+    }
   }
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
 
-  // While not at the range max
-  std::unique_ptr<pb::Msg> msg;
   while ((frame_max == kNoRange ||
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
