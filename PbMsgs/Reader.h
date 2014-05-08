@@ -42,7 +42,10 @@ class Reader {
   ///
   /// The "ReadCamera" static variable must be set to true if the
   /// reader is to queue camera messages.
-  std::unique_ptr<pb::CameraMsg> ReadCameraMsg(int id);
+  ///
+  /// @param id ID of camera to return. Negative number indicates that
+  ///           any camera messsage should be returned.
+  std::unique_ptr<pb::CameraMsg> ReadCameraMsg(int id = -1);
 
   /// Reads the next ENCODER message from the message queue. If the
   /// next message is NOT a ENCODER message, or the message queue is
@@ -100,6 +103,12 @@ class Reader {
   const pb::Header& GetHeader() const { return m_Header; }
 
   bool IsRunning() const { return m_bRunning; }
+
+  void Enable(MessageType type);
+  void Disable(MessageType type);
+  void EnableAll();
+  void DisableAll();
+  bool IsEnabled(MessageType type) const;
 
  private:
   /// Buffer from file.
