@@ -18,8 +18,6 @@ DEFINE_string(in, "", "Input log file.");
 DEFINE_string(out, "", "Output log file.");
 
 DEFINE_bool(extract, false, "Enable log subset extraction.");
-DEFINE_bool(cat, false, "Enable log concatenation.");
-
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
               "Options include \"cam\", \"imu\", and \"posys\".");
@@ -27,7 +25,7 @@ DEFINE_string(extract_frame_range, "",
               "Range (inclusive) of image frames to extract from the log. "
               "Should be a comma-separated pair, e.g \"0,200\"");
 
-DEFINE_string(cat_in, "",
+DEFINE_string(cat, "",
               "Comma-separated list of logs to concatenate together. ");
 
 /**
@@ -128,12 +126,12 @@ void Extract() {
 }
 
 /**
- * Concatenate all the messages from the 'cat_in' log files into a
+ * Concatenate all the messages from the 'cat' log files into a
  * single file.
  */
 void Cat() {
   std::vector<std::string> in;
-  Split(FLAGS_cat_in, ',', &in);
+  Split(FLAGS_cat, ',', &in);
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
@@ -152,7 +150,7 @@ int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  if (FLAGS_extract + FLAGS_cat != 1) {
+  if (FLAGS_extract + !FLAGS_cat.empty() != 1) {
     LOG(FATAL) << "Must choose one logtool task.";
   }
 
@@ -160,8 +158,7 @@ int main(int argc, char *argv[]) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     Extract();
-  } else if (FLAGS_cat) {
-    CHECK(!FLAGS_cat_in.empty()) << "cat_in files required for concatentation.";
+  } else if (!FLAGS_cat.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     Cat();
   }
