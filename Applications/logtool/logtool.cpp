@@ -28,6 +28,32 @@ DEFINE_string(extract_frame_range, "",
 DEFINE_string(cat, "",
               "Comma-separated list of logs to concatenate together. ");
 
+typedef std::function<bool(char)> TrimPred;
+
+inline std::string& LTrim(std::string& s, const TrimPred& pred) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), pred));
+  return s;
+}
+
+inline std::string& RTrim(std::string& s, const TrimPred& pred) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), pred).base(), s.end());
+  return s;
+}
+
+inline std::string& Trim(std::string& s, const TrimPred& pred) {
+  return LTrim(RTrim(s, pred), pred);
+}
+
+inline std::string& TrimWhitespace(std::string& s) {
+  TrimPred wspred = std::not1(std::ptr_fun<int, int>(std::isspace));
+  return LTrim(RTrim(s, wspred), wspred);
+}
+
+inline std::string& TrimQuotes(std::string& s) {
+  TrimPred qpred = [](char c) { return c != '\'' && c != '\"'; };
+  return LTrim(RTrim(s, qpred), qpred);
+}
+
 /**
  * Given a delim-separated string, split it into component elements.
  *
@@ -78,17 +104,17 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
 void Extract() {
   static const int kNoRange = -1;
   std::vector<std::string> types;
-  Split(FLAGS_extract_types, ',', &types);
+  Split(TrimQuotes(FLAGS_extract_types), ',', &types);
 
   int frame_min = kNoRange, frame_max = kNoRange;
   std::vector<int> frames;
-  Split(FLAGS_extract_frame_range, ',', &frames);
+  Split(TrimQuotes(FLAGS_extract_frame_range), ',', &frames);
   if (!frames.empty()) {
     CHECK_EQ(2, frames.size()) << "extract_frame_range must be frame PAIR";
     frame_min = frames[0];
     frame_max = frames[1];
-    CHECK_LT(frame_min, frame_max)
-        << "Minimum frame index must be less than max frame.";
+    CHECK_LE(frame_min, frame_max)
+        << "Minimum frame index must be <= than max frame index.";
   }
 
   pb::Reader reader(FLAGS_in);
@@ -105,16 +131,14 @@ void Extract() {
   int idx = 0;
   std::unique_ptr<pb::Msg> msg;
   while (frame_min != kNoRange &&
-         idx < frame_min &&
-         (msg = reader.ReadMessage())) {
-    if (msg->has_camera()) {
+         idx < frame_min) {
+    (msg = reader.ReadMessage());    if (msg->has_camera()) {
       ++idx;
     }
   }
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
-
   while ((frame_max == kNoRange ||
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
