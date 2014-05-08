@@ -18,6 +18,7 @@ DEFINE_string(in, "", "Input log file.");
 DEFINE_string(out, "", "Output log file.");
 
 DEFINE_bool(extract, false, "Enable log subset extraction.");
+DEFINE_bool(cat, false, "Enable log concatenation.");
 
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
@@ -26,6 +27,14 @@ DEFINE_string(extract_frame_range, "",
               "Range (inclusive) of image frames to extract from the log. "
               "Should be a comma-separated pair, e.g \"0,200\"");
 
+DEFINE_string(cat_in, "",
+              "Comma-separated list of logs to concatenate together. ");
+
+/**
+ * Given a delim-separated string, split it into component elements.
+ *
+ * Use a stringstream to convert to the destination type.
+ */
 template <typename T>
 inline void Split(const std::string& s, char delim,
                   std::vector<T>* elems) {
@@ -39,6 +48,10 @@ inline void Split(const std::string& s, char delim,
   }
 }
 
+/**
+ * Special case for string splitting, since it doesn't need an extra
+ * re-parsing through a stringstream.
+ */
 template<>
 inline void Split<std::string>(const std::string& s, char delim,
                                std::vector<std::string>* elems) {
@@ -63,6 +76,7 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
   return it->second;
 }
 
+/** Extract certain elements of a log to a separate log file. */
 void Extract() {
   static const int kNoRange = -1;
   std::vector<std::string> types;
@@ -113,14 +127,43 @@ void Extract() {
   }
 }
 
+/**
+ * Concatenate all the messages from the 'cat_in' log files into a
+ * single file.
+ */
+void Cat() {
+  std::vector<std::string> in;
+  Split(FLAGS_cat_in, ',', &in);
+
+  pb::Logger logger;
+  logger.LogToFile(FLAGS_out);
+  for (const std::string& log : in) {
+    pb::Reader reader(log);
+    reader.EnableAll();
+
+    std::unique_ptr<pb::Msg> msg;
+    while ((msg = reader.ReadMessage())) {
+      while (!logger.LogMessage(*msg)) {}
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
+
+  if (FLAGS_extract + FLAGS_cat != 1) {
+    LOG(FATAL) << "Must choose one logtool task.";
+  }
 
   if (FLAGS_extract) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     Extract();
+  } else if (FLAGS_cat) {
+    CHECK(!FLAGS_cat_in.empty()) << "cat_in files required for concatentation.";
+    CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
+    Cat();
   }
 
   return 0;
