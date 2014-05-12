@@ -155,7 +155,7 @@ void Extract() {
  */
 void Cat() {
   std::vector<std::string> in;
-  Split(FLAGS_cat, ',', &in);
+  Split(TrimQuotes(FLAGS_cat), ',', &in);
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
