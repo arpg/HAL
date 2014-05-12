@@ -34,8 +34,8 @@ public class NativeSensorInterface {
     private native void post_gps(long timestamp, double lat, double lon,
                                  double alt, float std);
 
-    private static final long MILLIS_BETWEEN_GPS_UPDATES = 1000 * 5; // 5 sec
-    private static final long METERS_BETWEEN_GPS_UPDATES = 5; // 5 meters
+    private static final long MILLIS_BETWEEN_GPS_UPDATES = 0; // 5 sec
+    private static final long METERS_BETWEEN_GPS_UPDATES = 0; // 5 meters
 
     private SensorManager mSensorManager;
     private LocationManager mLocationManager;
