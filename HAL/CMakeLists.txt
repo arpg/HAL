@@ -154,9 +154,13 @@ if(TinyXML2_FOUND)
   target_link_libraries( hal ${TinyXML2_LIBRARIES} )
 endif()
 
+# Get version from GIT tag.
+include(set_git_version)
+set_git_version(HAL_VERSION)
+
 export_package(HAL
   TARGETS hal
-  VERSION ${VERSION}
+  VERSION ${HAL_VERSION}
   LIBRARY hal
   LIBRARIES hal
   INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
