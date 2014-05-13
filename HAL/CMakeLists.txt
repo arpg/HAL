@@ -6,6 +6,7 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
 include(def_library)
 include(export_package)
+include(set_git_version)
 
 string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
 
@@ -155,7 +156,6 @@ if(TinyXML2_FOUND)
 endif()
 
 # Get version from GIT tag.
-include(set_git_version)
 set_git_version(HAL_VERSION)
 
 export_package(HAL
