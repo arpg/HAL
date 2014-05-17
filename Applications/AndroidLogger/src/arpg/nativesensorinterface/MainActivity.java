@@ -1,37 +1,30 @@
 package arpg.androidlogger;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.hardware.Camera;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ToggleButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
+import android.widget.ToggleButton;
 
 public class MainActivity extends Activity {
     private NativeCameraInterface mCamera;
     private NativeSensorInterface mNativeInterface;
     private NativeOpenGLRenderer mRenderer;
     private Button mPlayButton;
+    private Button mFlashButton;
+    private Boolean mFlashOn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mFlashOn = false;
         mRenderer = new NativeOpenGLRenderer();
         mNativeInterface = new NativeSensorInterface();
         TextureView texture = (TextureView)findViewById(R.id.preview);
@@ -50,6 +43,18 @@ public class MainActivity extends Activity {
             (ToggleButton)findViewById(R.id.move_to_sd);
         final ToggleButton isPeanutButton =
             (ToggleButton)findViewById(R.id.is_peanut);
+        mFlashButton = (Button) findViewById(R.id.flash_button);
+        mFlashButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View V) {
+                    mFlashOn = !mFlashOn;
+                    if (mFlashOn) {
+                        mCamera.flash_on();
+                    }
+                    else {
+                        mCamera.close();
+                    }
+                }
+                });
         mPlayButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     mNativeInterface.

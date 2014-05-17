@@ -90,7 +90,7 @@ public class NativeSensorInterface {
                     if (!mHasInitialSensorEvent) {
                         mHasInitialSensorEvent = true;
                         mInitialSensorTimestamp = event.timestamp;
-                        mRealSensorTime = SystemClock.elapsedRealtimeNanos();
+                        mRealSensorTime = SystemClock.elapsedRealtime();
                     }
 
                     long ts = event.timestamp - mInitialSensorTimestamp +
@@ -121,7 +121,7 @@ public class NativeSensorInterface {
                     if (!mHasInitialSensorEvent) {
                         mHasInitialSensorEvent = true;
                         mInitialSensorTimestamp = event.timestamp;
-                        mRealSensorTime = SystemClock.elapsedRealtimeNanos();
+                        mRealSensorTime = SystemClock.elapsedRealtime();
                     }
 
                     long ts = event.timestamp - mInitialSensorTimestamp +
@@ -151,7 +151,7 @@ public class NativeSensorInterface {
                     if (!mHasInitialSensorEvent) {
                         mHasInitialSensorEvent = true;
                         mInitialSensorTimestamp = event.timestamp;
-                        mRealSensorTime = SystemClock.elapsedRealtimeNanos();
+                        mRealSensorTime = SystemClock.elapsedRealtime();
                     }
 
                     long ts = event.timestamp - mInitialSensorTimestamp +
@@ -179,7 +179,7 @@ public class NativeSensorInterface {
                         String gpsStr =
                             "GPS at %d (%.2f, %.2f, %.2f) +/- %.2f";
                         mGpsText.setText(String.format(gpsStr,
-                                                       loc.getElapsedRealtimeNanos(),
+                                                       loc.getTime(),
                                                        loc.getLatitude(),
                                                        loc.getLongitude(),
                                                        loc.getAltitude(),
@@ -187,7 +187,7 @@ public class NativeSensorInterface {
                     }
 
                     if (mIsLogging) {
-                        post_gps(loc.getElapsedRealtimeNanos(),
+                        post_gps(loc.getTime(),
                                  loc.getLatitude(),
                                  loc.getLongitude(),
                                  loc.getAltitude(),

@@ -2,13 +2,11 @@ package arpg.androidlogger;
 
 import java.io.IOException;
 
-import android.content.Context;
-import android.hardware.Camera;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.os.SystemClock;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
-import android.util.Log;
 
 public class NativeCameraInterface
     implements TextureView.SurfaceTextureListener {
@@ -55,6 +53,12 @@ public class NativeCameraInterface
         mCamera.release();
     }
 
+    public void flash_on() {
+        Parameters p = mCamera.getParameters();
+        p.setFlashMode(Parameters.FLASH_MODE_TORCH);
+        mCamera.setParameters(p); 
+    }
+
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface,
                                           int width, int height) {
@@ -80,7 +84,7 @@ public class NativeCameraInterface
         if (!mHasInitialImage) {
             mHasInitialImage = true;
             mInitialTimestamp = surface.getTimestamp();
-            mRealImageTime = SystemClock.elapsedRealtimeNanos();
+            mRealImageTime = SystemClock.elapsedRealtime();
         }
         mTimestamp =
             surface.getTimestamp() - mInitialTimestamp + mRealImageTime;

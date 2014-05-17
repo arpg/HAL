@@ -48,6 +48,11 @@
 	    android:id="@+id/play_button"
 	    android:text="@string/record"
 	    android:background="#0f0" />
+    <Button android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:id="@+id/flash_button"
+	    android:text="@string/flash" />
+
 
     <ToggleButton android:layout_width="wrap_content"
 		  android:layout_height="wrap_content"

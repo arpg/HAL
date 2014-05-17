@@ -10,7 +10,7 @@ endif()
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
 
-find_package( OpenCV2 QUIET )
+find_package( OpenCV2 REQUIRED )
 
 if(APPLE AND NOT BUILD_SHARED_LIBS)
   set(LINK_WHOLE_ARCHIVE_FLAG -Wl,-all_load)
@@ -24,6 +24,7 @@ if(Pangolin_FOUND AND HAL_FOUND)
 
   include_directories( ${HAL_INCLUDE_DIRS} )
   include_directories( ${Pangolin_INCLUDE_DIRS} )
+  include_directories(${OpenCV2_INCLUDE_DIRS})
   target_link_libraries(SensorViewer
     ${Pangolin_LIBRARIES}
     ${LINK_WHOLE_ARCHIVE_FLAG}
