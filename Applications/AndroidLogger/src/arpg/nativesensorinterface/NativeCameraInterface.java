@@ -1,4 +1,4 @@
-package arpg.androidlogger;
+package arpg.nativesensorinterface;
 
 import java.io.IOException;
 
@@ -59,6 +59,12 @@ public class NativeCameraInterface
         mCamera.setParameters(p); 
     }
 
+    public void flash_off() {
+        Parameters p = mCamera.getParameters();
+        p.setFlashMode(Parameters.FLASH_MODE_OFF);
+        mCamera.setParameters(p); 
+    }
+    
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface,
                                           int width, int height) {

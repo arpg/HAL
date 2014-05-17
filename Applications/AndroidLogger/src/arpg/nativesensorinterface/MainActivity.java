@@ -1,4 +1,4 @@
-package arpg.androidlogger;
+package arpg.nativesensorinterface;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import arpg.nativesensorinterface.R;
 
 public class MainActivity extends Activity {
     private NativeCameraInterface mCamera;
@@ -51,7 +52,7 @@ public class MainActivity extends Activity {
                         mCamera.flash_on();
                     }
                     else {
-                        mCamera.close();
+                        mCamera.flash_off();
                     }
                 }
                 });

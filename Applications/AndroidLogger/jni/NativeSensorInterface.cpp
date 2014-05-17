@@ -12,7 +12,7 @@ static int image_width = 0, image_height = 0;
 
 extern "C" {
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_initialize
+  Java_arpg_nativesensorinterface_NativeSensorInterface_initialize
   (JNIEnv *env, jobject jobj, jstring output_dir,
    jint img_width, jint img_height)
   {
@@ -26,28 +26,28 @@ extern "C" {
   }
 
   JNIEXPORT jstring JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_logfile
+  Java_arpg_nativesensorinterface_NativeSensorInterface_logfile
   (JNIEnv *env, jobject jobj)
   {
     return env->NewStringUTF(log_file.c_str());
   }
 
   JNIEXPORT jint JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_num_1logged
+  Java_arpg_nativesensorinterface_NativeSensorInterface_num_1logged
   (JNIEnv *env, jobject jobj)
   {
     return static_cast<jint>(logger.messages_written());
   }
 
   JNIEXPORT jint JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_num_1queued
+  Java_arpg_nativesensorinterface_NativeSensorInterface_num_1queued
   (JNIEnv *env, jobject jobj)
   {
     return static_cast<jint>(logger.buffer_size());
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_finish
+  Java_arpg_nativesensorinterface_NativeSensorInterface_finish
   (JNIEnv *env, jobject jobj, jboolean copy)
   {
     logger.StopLogging();
@@ -76,7 +76,7 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_post_1image
+  Java_arpg_nativesensorinterface_NativeSensorInterface_post_1image
   (JNIEnv *env, jobject jobj, jlong timestamp, jbyteArray bytes)
   {
     msg.Clear();
@@ -109,7 +109,7 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_post_1accel
+  Java_arpg_nativesensorinterface_NativeSensorInterface_post_1accel
   (JNIEnv *env, jobject jobj, jlong timestamp, jfloat x, jfloat y, jfloat z)
   {
     msg.Clear();
@@ -131,7 +131,7 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_post_1mag
+  Java_arpg_nativesensorinterface_NativeSensorInterface_post_1mag
   (JNIEnv *env, jobject jobj, jlong timestamp, jfloat x, jfloat y, jfloat z)
   {
     msg.Clear();
@@ -153,7 +153,7 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_post_1gyro
+  Java_arpg_nativesensorinterface_NativeSensorInterface_post_1gyro
   (JNIEnv *env, jobject jobj, jlong timestamp, jfloat x, jfloat y, jfloat z)
   {
     msg.Clear();
@@ -175,7 +175,7 @@ extern "C" {
   }
 
   JNIEXPORT void JNICALL
-  Java_arpg_androidlogger_NativeSensorInterface_post_1gps
+  Java_arpg_nativesensorinterface_NativeSensorInterface_post_1gps
   (JNIEnv *env, jobject jobj, jlong timestamp, jdouble lat, jdouble lon,
    jdouble alt, jfloat std)
   {

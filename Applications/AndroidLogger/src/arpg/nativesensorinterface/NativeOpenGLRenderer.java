@@ -1,4 +1,4 @@
-package arpg.androidlogger;
+package arpg.nativesensorinterface;
 
 import android.opengl.GLSurfaceView;
 import javax.microedition.khronos.opengles.GL10;

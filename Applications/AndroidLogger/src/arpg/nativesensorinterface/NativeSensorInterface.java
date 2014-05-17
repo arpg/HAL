@@ -1,4 +1,4 @@
-package arpg.androidlogger;
+package arpg.nativesensorinterface;
 
 import android.content.Context;
 import android.hardware.Sensor;
