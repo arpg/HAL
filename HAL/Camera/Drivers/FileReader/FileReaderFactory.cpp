@@ -1,15 +1,12 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "FileReaderDriver.h"
 
-namespace hal
-{
+namespace hal {
 
-class FileReaderFactory : public DeviceFactory<CameraDriverInterface>
-{
+class FileReaderFactory : public DeviceFactory<CameraDriverInterface> {
 public:
     FileReaderFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
-    {
+        : DeviceFactory<CameraDriverInterface>(name) {
         Params() = {
             {"startframe", "0", "First frame to capture."},
             {"loop", "false", "Play beginning once finished."},
@@ -21,14 +18,14 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
-    {
+    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri) {
         size_t StartFrame  = uri.properties.Get("startframe", 0);
         bool Loop          = uri.properties.Get("loop", false);
         size_t BufferSize  = uri.properties.Get("buffer", 10);
         bool Grey          = uri.properties.Get("grey", false);
         std::string sName  = uri.properties.Get("name", std::string("FileCam"));
         std::string sId  = uri.properties.Get("id", std::string());
+        double frequency  = uri.properties.Get("frequency", 30.0);
         int cvFlags = Grey ? 0 : -1;
 
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');
@@ -38,9 +35,9 @@ public:
         }
 
         FileReaderDriver* filereader = new FileReaderDriver(
-                    Channels, StartFrame, Loop, BufferSize, cvFlags, sName, sId
-                    );
-        return std::shared_ptr<CameraDriverInterface>( filereader );
+            Channels, StartFrame, Loop, BufferSize, cvFlags,
+            frequency, sName, sId);
+        return std::shared_ptr<CameraDriverInterface>(filereader);
     }
 };
 
@@ -48,4 +45,4 @@ public:
 static FileReaderFactory g_FileReaderFactory("file");
 static FileReaderFactory g_FileReaderFactoryS("files");
 
-}
+}  // namespace hal
