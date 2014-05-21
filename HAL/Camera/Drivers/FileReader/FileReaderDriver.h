@@ -52,10 +52,9 @@ class FileReaderDriver : public CameraDriverInterface {
   unsigned int                                    m_nTail;
 
   std::queue< pb::CameraMsg >                     m_qImageBuffer;
-  std::vector< std::vector< std::string > >		m_vFileList;
+  std::vector< std::vector< std::string > >       m_vFileList;
   std::string                                     m_sBaseDir;
   unsigned int                                    m_nNumChannels;
-  unsigned int                                    m_nStartFrame;
   unsigned int                                    m_nCurrentImageIndex;
   bool                                            m_bLoop;
   unsigned int                                    m_nNumImages;

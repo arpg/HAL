@@ -68,7 +68,7 @@ inline std::vector<std::string> Expand(const std::string &s, char open='[', char
 inline std::string DirUp(const std::string& dir)
 {
     const size_t nLastSlash = dir.find_last_of('/');
-    
+
     if(nLastSlash != std::string::npos) {
         return dir.substr(0, nLastSlash);
     }else{
@@ -97,7 +97,7 @@ inline bool WildcardMatch(const std::string& query, const std::string& wildcard)
 {
     const char* psQuery = query.c_str();
     const char* psWildcard = wildcard.c_str();
-    
+
     while(*psWildcard)
     {
         if(*psWildcard=='?')
@@ -131,23 +131,22 @@ inline bool WildcardMatch(const std::string& query, const std::string& wildcard)
 inline bool WildcardFileList(const std::string& wildcard, std::vector<std::string>& file_vec)
 {
     size_t nLastSlash = wildcard.find_last_of('/');
-    
+
     std::string sPath;
     std::string sFileWc;
-    
+
     if(nLastSlash != std::string::npos) {
-        sPath =   wildcard.substr(0, nLastSlash);                  
+        sPath =   wildcard.substr(0, nLastSlash);
         sFileWc = wildcard.substr(nLastSlash+1, std::string::npos);
     }else{
         sPath = ".";
         sFileWc = wildcard;
     }
-    
+
     sPath = ExpandTildePath(sPath);
-        
+
     struct dirent **namelist;
     int n = scandir(sPath.c_str(), &namelist, 0, alphasort ); // sort alpha-numeric
-//    int n = scandir(sPath.c_str(), &namelist, 0, versionsort ); // sort aa1 < aa10 < aa100 etc.
     if (n >= 0){
         std::list<std::string> file_list;
         while( n-- ){
@@ -159,7 +158,7 @@ inline bool WildcardFileList(const std::string& wildcard, std::vector<std::strin
             free(namelist[n]);
         }
         free(namelist);
-        
+
         file_vec.reserve(file_list.size());
         file_vec.insert(file_vec.begin(), file_list.begin(), file_list.end());
         return file_vec.size() > 0;
