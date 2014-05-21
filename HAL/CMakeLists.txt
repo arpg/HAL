@@ -6,8 +6,9 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
 include(def_library)
 include(export_package)
+include(set_git_version)
 
-string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
+string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wextra")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -17,12 +18,11 @@ endif()
 #############################################################################
 # Find required libraries
 
-find_package( OpenCV2 REQUIRED )
-find_package( PbMsgs 2.0 REQUIRED )
-find_package( Sophus REQUIRED )
-find_package( Boost COMPONENTS system filesystem REQUIRED )
-find_package( TinyXML2 )
+find_package(OpenCV2 REQUIRED)
+find_package(PbMsgs 2.0 REQUIRED)
+find_package(Sophus REQUIRED)
 
+find_package(TinyXML2 QUIET)
 if(TinyXML2_FOUND)
   add_definitions(-DHAVE_TINYXML2)
 endif()
@@ -155,9 +155,12 @@ if(TinyXML2_FOUND)
   target_link_libraries( hal ${TinyXML2_LIBRARIES} )
 endif()
 
+# Get version from GIT tag.
+set_git_version(HAL_VERSION)
+
 export_package(HAL
   TARGETS hal
-  VERSION ${VERSION}
+  VERSION ${HAL_VERSION}
   LIBRARY hal
   LIBRARIES hal
   INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
