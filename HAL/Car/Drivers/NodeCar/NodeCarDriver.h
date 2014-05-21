@@ -25,11 +25,11 @@ class NodeCarDriver : public CarDriverInterface {
   bool InitNode();
 
  private:
-  node::node           m_Node;
-  std::string         m_sSimNodeName;
-  std::string         m_sDeviceName;
-  std::string         m_sDeviceId;
-  std::string         m_sTopic;
+  node::node          node_;
+  std::string         sim_name_;
+  std::string         device_name_;
+  std::string         device_id_;
+  std::string         node_topic_;
 };
 
 }
