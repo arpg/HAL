@@ -1,5 +1,3 @@
 #pragma once
 
-#define HAL_VERSION @HAL_VERSION@
-
 #include <HAL/ThirdParty/ThirdPartyConfig.h>

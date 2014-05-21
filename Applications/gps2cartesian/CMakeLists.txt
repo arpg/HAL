@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 2.8)
 
 include(def_executable)
 
-find_package(GeoCon QUIET)
-find_package(HAL QUIET)
-find_package(PbMsgs QUIET)
-find_package(GFlags QUIET)
-find_package(MINIGLOG QUIET)
+find_package(GeoCon)
+find_package(HAL)
+find_package(PbMsgs)
+find_package(GFlags)
+find_package(MINIGLOG)
 
 include_directories(
   ${HAL_INCLUDE_DIRS}

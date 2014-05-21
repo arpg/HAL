@@ -115,12 +115,12 @@ bool Logger::LogMessage(const pb::Msg &message) {
     LogToFile(m_sFilename);
   }
 
-  std::lock_guard<std::mutex> lock(m_QueueMutex);
   if(m_qMessages.size() >= m_nMaxBufferSize) {
     LOG(ERROR) << "Could not log message. Buffer is already at maximum size!";
     return false;
   }
 
+  std::lock_guard<std::mutex> lock(m_QueueMutex);
   m_qMessages.push_back(message);
   m_QueueCondition.notify_one();
   return true;

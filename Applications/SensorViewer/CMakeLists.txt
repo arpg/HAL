@@ -9,8 +9,9 @@ endif()
 
 find_package(Pangolin 0.1 QUIET)
 find_package(HAL 0.1 QUIET)
-find_package(PbMsgs 2.0 QUIET)
-find_package(OpenCV2 QUIET)
+find_package(PbMsgs 2.0)
+
+find_package( OpenCV2 QUIET )
 
 if(APPLE AND NOT BUILD_SHARED_LIBS)
   set(LINK_WHOLE_ARCHIVE_FLAG -Wl,-all_load)
@@ -23,8 +24,8 @@ if(Pangolin_FOUND AND HAL_FOUND AND PbMsgs_FOUND)
   add_executable( SensorViewer main.cpp )
 
   include_directories( ${HAL_INCLUDE_DIRS} )
-  include_directories( ${Pangolin_INCLUDE_DIRS}
-             ${PbMsgs_INCLUDE_DIRS})
+  include_directories( ${Pangolin_INCLUDE_DIRS} 
+  		       ${PbMsgs_INCLUDE_DIRS})
   target_link_libraries(SensorViewer
     ${Pangolin_LIBRARIES}
     ${LINK_WHOLE_ARCHIVE_FLAG}

@@ -26,7 +26,7 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
   }
 
   double Timestamp() const {
-    return message_.device_time();
+    return message_.image(0).timestamp();
   }
 
   std::shared_ptr<Image> at(int idx) const {
