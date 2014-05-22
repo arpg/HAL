@@ -18,7 +18,6 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
                                    size_t BufferSize, int cvFlags, std::string sName, std::string idString)
     : m_bShouldRun(false),
       m_nNumChannels(ChannelRegex.size()),
-      m_nStartFrame(StartFrame),
       m_nCurrentImageIndex(StartFrame),
       m_bLoop(Loop),
       m_nBufferSize(BufferSize),
@@ -42,7 +41,6 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
     std::vector< std::string >& vFiles = m_vFileList[ii];
 
     if(!hal::WildcardFileList(ChannelRegex[ii], vFiles)) {
-      //        if(!hal::FindFiles(ChannelRegex[ii], vFiles)){
       throw DeviceException("No files found from regexp", ChannelRegex[ii]);
     }
   }

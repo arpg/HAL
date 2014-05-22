@@ -53,7 +53,7 @@ include_directories( ${USER_INC} )
 if(ANDROID)
     # Override to use hosts protoc compiler
     unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
-    find_host_package( Protobuf REQUIRED)
+    find_host_package(Protobuf REQUIRED)
 endif()
 
 #######################################################
@@ -80,16 +80,16 @@ set( _PROTO_SRCS
     BVP.proto
 )
 
-PROTOBUF_GENERATE_CPP( PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS} )
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
 
-set( SRCS
+set(SRCS
     ${PROTO_SRCS}
     Logger.cpp
     Reader.cpp
     Image.cpp
    )
 
-set( HDRS
+set(HDRS
     ${PROTO_HDRS}
     Logger.h
     Reader.h
@@ -98,9 +98,9 @@ set( HDRS
     Pose.h
    )
 
-if( BUILD_Velodyne )
-    set( SRCS ${SRCS} Velodyne.cpp )
-    set( HDRS ${HDRS} Velodyne.h )
+if(BUILD_Velodyne)
+    set(SRCS ${SRCS} Velodyne.cpp)
+    set(HDRS ${HDRS} Velodyne.h)
 endif()
 
 def_library(${LIBRARY_NAME}
