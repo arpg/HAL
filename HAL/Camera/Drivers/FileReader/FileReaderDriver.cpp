@@ -193,8 +193,8 @@ bool FileReaderDriver::_Read() {
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
     double timestamp = _GetTimestamp(sFileName);
-    if(timestamp < 0) timestamp = m_nFramesProcessed;
-    if(device_timestamp < 0) device_timestamp = timestamp;
+    if (timestamp < 0) timestamp = m_nFramesProcessed;
+    if (device_timestamp < 0) device_timestamp = timestamp;
     pbImg->set_timestamp(timestamp);
 
     //        pb::ReadCvMat(cvImg, pbImg);
@@ -246,23 +246,32 @@ double FileReaderDriver::_GetNextTime() {
   // return m_qImageBuffer.front()[0].Map.GetProperty<double>(m_sTimeKeeper, 0);
 }
 
-double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const
-{
-  // Returns the timestamp encoded in a filename, or -1
+double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
+  // Returns the timestamp encoded in a filename, or -1.
+  //
+  // A timestamp is any valid number (starting with a digit) that appears in
+  // any position of the string. If there are several numbers, the largest one
+  // is returned.
+  // Examples:
+  // Camera_Left_12345.6789.jpg     returns 12345.6789
+  // 12345.6789.jpg                 returns 12345.6789
+  // m0001234.pgm                   returns 1234
+  // Camera_1_12345.6789.jpg        returns 12345.6789
+  // file.png                       returns -1
+
   double t = -1;
   const char* begin = sFileName.c_str();
-  for(std::string::size_type pos = 0; ; )
-  {
+  for(std::string::size_type pos = 0; ; ) {
     pos = sFileName.find_first_of("0123456789", pos);
-    if(pos == std::string::npos) break;
+    if (pos == std::string::npos) break;
 
     char* next_pos;
     double value = strtod(begin + pos, &next_pos);
-    if(next_pos == begin + pos) break; // could not parse
+    if (next_pos == begin + pos) break; // could not parse
     pos = next_pos - begin;
 
     // in the insidious case of several numbers, choose the largest one
-    if(value != HUGE_VAL && value > t) t = value;
+    if (value != HUGE_VAL && value > t) t = value;
   }
   return t;
 }
