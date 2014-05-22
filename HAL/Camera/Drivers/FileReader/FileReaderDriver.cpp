@@ -186,12 +186,16 @@ bool FileReaderDriver::_Read() {
   std::string sFileName;
 
   pb::CameraMsg vImages;
-  vImages.set_device_time(m_nFramesProcessed);
+  double device_timestamp = -1;
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
-    pbImg->set_timestamp(m_nFramesProcessed);
     sFileName = m_vFileList[ii][m_nCurrentImageIndex];
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
+
+    double timestamp = _GetTimestamp(sFileName);
+    if(timestamp < 0) timestamp = m_nFramesProcessed;
+    if(device_timestamp < 0) device_timestamp = timestamp;
+    pbImg->set_timestamp(timestamp);
 
     //        pb::ReadCvMat(cvImg, pbImg);
     pbImg->set_height(cvImg.rows);
@@ -218,6 +222,7 @@ bool FileReaderDriver::_Read() {
         (const char*)cvImg.data,
         cvImg.rows * cvImg.cols * cvImg.elemSize1() * cvImg.channels());
   }
+  vImages.set_device_time(device_timestamp);
 
   m_nCurrentImageIndex++;
   ++m_nFramesProcessed;
@@ -240,5 +245,27 @@ double FileReaderDriver::_GetNextTime() {
   return 0;
   // return m_qImageBuffer.front()[0].Map.GetProperty<double>(m_sTimeKeeper, 0);
 }
+
+double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const
+{
+  // Returns the timestamp encoded in a filename, or -1
+  double t = -1;
+  const char* begin = sFileName.c_str();
+  for(std::string::size_type pos = 0; ; )
+  {
+    pos = sFileName.find_first_of("0123456789", pos);
+    if(pos == std::string::npos) break;
+
+    char* next_pos;
+    double value = strtod(begin + pos, &next_pos);
+    if(next_pos == begin + pos) break; // could not parse
+    pos = next_pos - begin;
+
+    // in the insidious case of several numbers, choose the largest one
+    if(value != HUGE_VAL && value > t) t = value;
+  }
+  return t;
+}
+
 
 }
