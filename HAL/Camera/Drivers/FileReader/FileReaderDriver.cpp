@@ -259,22 +259,28 @@ double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
   // Camera_1_12345.6789.jpg        returns 12345.6789
   // file.png                       returns -1
 
+  // skip the path
+  std::string::size_type pos = sFileName.find_last_of("/\\");
+  if (pos == std::string::npos) pos = 0;
+
   double t = -1;
-  const char* begin = sFileName.c_str();
-  for(std::string::size_type pos = 0; ; ) {
-    pos = sFileName.find_first_of("0123456789", pos);
-    if (pos == std::string::npos) break;
+  const char* begin = sFileName.c_str() + pos;
+  const char* end = sFileName.c_str() + sFileName.size();
 
-    char* next_pos;
-    double value = strtod(begin + pos, &next_pos);
-    if (next_pos == begin + pos) break; // could not parse
-    pos = next_pos - begin;
+  for(const char* cur = begin; cur != end;) {
+    if (*cur < '0' || *cur > '9')
+      ++cur;
+    else {
+      char* next_pos;
+      double value = strtod(cur, &next_pos);
+      if (next_pos == cur) break; // could not parse
+      cur = next_pos;
 
-    // in the insidious case of several numbers, choose the largest one
-    if (value != HUGE_VAL && value > t) t = value;
+      // in the insidious case of several numbers, choose the largest one
+      if (value != HUGE_VAL && value > t) t = value;
+    }
   }
   return t;
 }
-
 
 }
