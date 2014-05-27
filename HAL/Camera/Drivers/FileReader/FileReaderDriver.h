@@ -36,6 +36,7 @@ class FileReaderDriver : public CameraDriverInterface {
   static void _ThreadCaptureFunc( FileReaderDriver* pFR );
   bool _Read();
   double _GetNextTime();
+  double _GetTimestamp(const std::string& sFileName) const;
 
  private:
   volatile bool                                   m_bShouldRun;

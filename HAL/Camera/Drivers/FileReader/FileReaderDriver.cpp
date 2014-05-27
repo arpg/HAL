@@ -184,12 +184,16 @@ bool FileReaderDriver::_Read() {
   std::string sFileName;
 
   pb::CameraMsg vImages;
-  vImages.set_device_time(m_nFramesProcessed);
+  double device_timestamp = -1;
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
-    pbImg->set_timestamp(m_nFramesProcessed);
     sFileName = m_vFileList[ii][m_nCurrentImageIndex];
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
+
+    double timestamp = _GetTimestamp(sFileName);
+    if (timestamp < 0) timestamp = m_nFramesProcessed;
+    if (device_timestamp < 0) device_timestamp = timestamp;
+    pbImg->set_timestamp(timestamp);
 
     //        pb::ReadCvMat(cvImg, pbImg);
     pbImg->set_height(cvImg.rows);
@@ -216,6 +220,7 @@ bool FileReaderDriver::_Read() {
         (const char*)cvImg.data,
         cvImg.rows * cvImg.cols * cvImg.elemSize1() * cvImg.channels());
   }
+  vImages.set_device_time(device_timestamp);
 
   m_nCurrentImageIndex++;
   ++m_nFramesProcessed;
@@ -237,6 +242,43 @@ double FileReaderDriver::_GetNextTime() {
   }
   return 0;
   // return m_qImageBuffer.front()[0].Map.GetProperty<double>(m_sTimeKeeper, 0);
+}
+
+double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
+  // Returns the timestamp encoded in a filename, or -1.
+  //
+  // A timestamp is any valid number (starting with a digit) that appears in
+  // any position of the string. If there are several numbers, the largest one
+  // is returned.
+  // Examples:
+  // Camera_Left_12345.6789.jpg     returns 12345.6789
+  // 12345.6789.jpg                 returns 12345.6789
+  // m0001234.pgm                   returns 1234
+  // Camera_1_12345.6789.jpg        returns 12345.6789
+  // file.png                       returns -1
+
+  // skip the path
+  std::string::size_type pos = sFileName.find_last_of("/\\");
+  if (pos == std::string::npos) pos = 0;
+
+  double t = -1;
+  const char* begin = sFileName.c_str() + pos;
+  const char* end = sFileName.c_str() + sFileName.size();
+
+  for(const char* cur = begin; cur != end;) {
+    if (*cur < '0' || *cur > '9')
+      ++cur;
+    else {
+      char* next_pos;
+      double value = strtod(cur, &next_pos);
+      if (next_pos == cur) break; // could not parse
+      cur = next_pos;
+
+      // in the insidious case of several numbers, choose the largest one
+      if (value != HUGE_VAL && value > t) t = value;
+    }
+  }
+  return t;
 }
 
 }
