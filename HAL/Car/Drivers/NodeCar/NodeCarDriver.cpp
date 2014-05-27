@@ -74,18 +74,19 @@ bool NodeCarDriver::RegisterInHost(const Uri &uri) {
 /// COMMANDS
 ///
 
-bool NodeCarDriver::ApplyCommand(double dTorque, double dSteering) {
+bool NodeCarDriver::ApplyCommand(double torque, double steering,
+                                 double command_time) {
   pb::VehicleMsg msg;
-  msg.set_steering_angle(dSteering);
-  msg.set_desired_force(dTorque);
-  msg.set_command_time(1.0/30.0);
-  int nTries = 0;
-  while (nTries < 5 && !node_.publish(node_topic_, msg)) {
+  msg.set_steering_angle(steering);
+  msg.set_desired_force(torque);
+  msg.set_command_time(command_time);
+  int tries = 0;
+  while (tries < 5 && !node_.publish(node_topic_, msg)) {
     LOG(ERROR) << "Not able to publish commands";
-    nTries++;
+    tries++;
   }
-  if (nTries<=5 && nTries!=0) {
-    LOG(debug_level_) << "Publishing successfull after" << nTries << "tries.";
+  if (tries<=5 && tries!=0) {
+    LOG(debug_level_) << "Publishing successfull after" << tries << "tries.";
   }
   return true;
 }
