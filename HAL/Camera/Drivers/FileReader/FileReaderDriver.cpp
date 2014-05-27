@@ -242,7 +242,6 @@ double FileReaderDriver::_GetNextTime() {
   }
   return (m_qImageBuffer.front().has_device_time() ?
           m_qImageBuffer.front().device_time() : 0);
-  // return m_qImageBuffer.front()[0].Map.GetProperty<double>(m_sTimeKeeper, 0);
 }
 
 double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
