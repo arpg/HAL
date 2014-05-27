@@ -17,7 +17,8 @@ class CarDriverInterface : public DriverInterface
 public:
   virtual ~CarDriverInterface() {}
 
-  virtual bool ApplyCommand( double flTorque, double flSteering ) = 0;
+  virtual bool ApplyCommand( double flTorque, double flSteering,
+                             double flCommand_time) = 0;
 };
 
 }
