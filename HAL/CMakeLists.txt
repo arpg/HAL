@@ -21,6 +21,7 @@ endif()
 find_package(OpenCV2 REQUIRED)
 find_package(PbMsgs 2.0 REQUIRED)
 find_package(Sophus REQUIRED)
+find_package(Protobuf REQUIRED)
 
 find_package(TinyXML2 QUIET)
 if(TinyXML2_FOUND)
@@ -146,13 +147,20 @@ endif()
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 
+set(HAL_LIBS
+  ${INTERNAL_LIBS}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  ${PROTOBUF_LIBRARIES}
+  )
+
 def_library(hal
   SOURCES ${HAL_SOURCES}
-  LINK_LIBS ${INTERNAL_LIBS} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY}
+  LINK_LIBS ${HAL_LIBS}
   PACKAGE HAL)
 
 if(TinyXML2_FOUND)
-  target_link_libraries( hal ${TinyXML2_LIBRARIES} )
+  target_link_libraries(hal PRIVATE ${TinyXML2_LIBRARIES})
 endif()
 
 # Get version from GIT tag.
