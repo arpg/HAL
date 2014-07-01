@@ -7,65 +7,74 @@ using namespace hal;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 {
-    if( err != FlyCapture2::PGRERROR_OK ) {
-       err.PrintErrorTrace();
-       throw DeviceException("Flycapture SDK exception!");
-    }
+  if( err != FlyCapture2::PGRERROR_OK ) {
+    err.PrintErrorTrace();
+    throw DeviceException("Flycapture SDK exception!");
+  }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FlycapDriver::FlycapDriver(
-        std::vector<unsigned int>& vID,
-        FlyCapture2::Mode Mode,
-        ImageRoi ROI
-        )
+    std::vector<unsigned int>& vID,
+    FlyCapture2::Mode Mode,
+    ImageRoi ROI
+    )
 {
-    // TODO(jmf)
-    // * Support other formats aside from format_7??
-    // * Have adjustable framerates?
-    // * Config some GPIO pins.. at least triggerIN and out?
-    // * Configure some image properties? gain, etc.
+  // TODO(jmf)
+  // * Support other formats aside from format_7??
+  // * Have adjustable framerates?
+  // * Config some GPIO pins.. at least triggerIN and out?
+  // * Configure some image properties? gain, etc.
+  // * This only work for blackflies... too much hardcoded.
 
-    // initialize
-    m_nImgWidth  = ROI.w;
-    m_nImgHeight = ROI.h;
+  // initialize
+  const int max_width = 1600;
+  const int max_height = 1200;
 
-    FlyCapture2::Error error;
+  m_nImgWidth  = ROI.w;
+  m_nImgHeight = ROI.h;
 
-    FlyCapture2::BusManager BusMgr;
-    unsigned int            nTotalCams;
+  FlyCapture2::Error error;
 
-    error = BusMgr.GetNumOfCameras( &nTotalCams );
-    _CheckError(error);
+  FlyCapture2::BusManager BusMgr;
+  unsigned int            nTotalCams;
 
-    if( nTotalCams == 0 ) {
-        throw DeviceException("No cameras found!");
-    }
+  error = BusMgr.GetNumOfCameras(&nTotalCams);
+  _CheckError(error);
 
-    if( nTotalCams < vID.size() ) {
-        throw DeviceException("Less cameras detected than those requested!");
-    }
+  if (nTotalCams == 0) {
+    throw DeviceException("No cameras found!");
+  }
 
-    unsigned int nNumCams;
-    // If no ids are provided, all cameras will be opened.
-    if( vID.empty() ) {
-        nNumCams = nTotalCams;
-    } else {
-        nNumCams = vID.size();
-    }
+  if (nTotalCams < vID.size()) {
+    throw DeviceException("Less cameras detected than those requested!");
+  }
 
-    // prepare Format 7 config
-    FlyCapture2::Format7ImageSettings F7Config;
-    F7Config.mode = Mode;
-    F7Config.height = m_nImgHeight;
-    F7Config.width = m_nImgWidth;
+  unsigned int nNumCams;
+  // If no ids are ovided, all cameras will be opened.
+  if (vID.empty()) {
+    nNumCams = nTotalCams;
+  } else {
+    nNumCams = vID.size();
+  }
+
+  // prepare Format 7 config
+  FlyCapture2::Format7ImageSettings F7Config;
+  F7Config.mode = Mode;
+  F7Config.height = m_nImgHeight;
+  F7Config.width = m_nImgWidth;
+  if (ROI.x == 0 && ROI.y == 0) {
+    F7Config.offsetX = max_width / 2 - m_nImgWidth / 2;
+    F7Config.offsetY = max_height / 2 - m_nImgHeight / 2;
+  } else {
     F7Config.offsetX = ROI.x;
     F7Config.offsetY = ROI.y;
-    F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
-    const unsigned int PacketSize = 1400;
+  }
+  F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
+  const unsigned int PacketSize = 1400;
 
-    /*
+  /*
     // image properties
     Property P_Shutter;
     P_Shutter.type = SHUTTER;
@@ -103,29 +112,34 @@ FlycapDriver::FlycapDriver(
     P_Sharpness.absValue = 0;
     */
 
-    for(unsigned int ii = 0; ii < nNumCams; ++ii) {
-        FlyCapture2::PGRGuid         GUID;
+  for(unsigned int ii = 0; ii < nNumCams; ++ii) {
+    FlyCapture2::PGRGuid         GUID;
 
-        // look for camera
-        if(vID.empty()) {
-            error = BusMgr.GetCameraFromIndex(ii, &GUID);
-            _CheckError(error);
-        } else {
-            error = BusMgr.GetCameraFromSerialNumber(vID[ii], &GUID);
-            _CheckError(error);
-        }
-        std::cout << "Setting up camera " << ii << std::endl;
+    // look for camera
+    if(vID.empty()) {
+      error = BusMgr.GetCameraFromIndex(ii, &GUID);
+      _CheckError(error);
+    } else {
+      error = BusMgr.GetCameraFromSerialNumber(vID[ii], &GUID);
+      _CheckError(error);
+    }
+    std::cout << "Setting up camera " << ii << std::endl;
 
-        // connect to camera
-        FlyCapture2::Camera* pCam = new FlyCapture2::Camera;
-        error = pCam->Connect(&GUID);
-        _CheckError(error);
+    // connect to camera
+    FlyCapture2::Camera* pCam = new FlyCapture2::Camera;
+    error = pCam->Connect(&GUID);
+    _CheckError(error);
 
-        // set video mode and framerate
-        error = pCam->SetFormat7Configuration( &F7Config, PacketSize );
-        _CheckError(error);
+    // set video mode and framerate
+    error = pCam->SetFormat7Configuration(&F7Config, PacketSize);
+    _CheckError(error);
 
-        /*
+    // set jumbo packet config
+
+
+
+
+    /*
         error = m_Cam1.SetProperty( &P_Shutter );
         CheckError(error);
         error = m_Cam1.SetProperty( &P_Exposure );
@@ -138,67 +152,66 @@ FlycapDriver::FlycapDriver(
         CheckError(error);
         */
 
-        /*
-        // prepare trigger. first camera always strobes, others get trigger.
-        if( ii == 0 ) {
-            FlyCapture2::TriggerMode Trigger;
+    /* */
+    // prepare trigger. first camera always strobes, others get trigger.
+    if (ii == 0 && false) {
+      FlyCapture2::TriggerMode Trigger;
 
-            // external trigger is disabled
-            Trigger.onOff = false;
-            Trigger.mode = 0;
-            Trigger.parameter = 0;
-            Trigger.source = 0;
+      // external trigger is disabled
+      Trigger.onOff = false;
+      Trigger.mode = 0;
+      Trigger.parameter = 0;
+      Trigger.source = 0;
 
-            // set trigger
-            error = pCam->SetTriggerMode( &Trigger );
-            _CheckError(error);
+      // set trigger
+      error = pCam->SetTriggerMode( &Trigger );
+      _CheckError(error);
 
-            // prepare strobe
-            FlyCapture2::StrobeControl Strobe;
+      // prepare strobe
+      FlyCapture2::StrobeControl Strobe;
 
-            // set GPIO pin direction to out
-            const unsigned int StrobeOut = 1;
-            pCam->SetGPIOPinDirection( StrobeOut, 1 );
+      // set GPIO pin direction to out
+      const unsigned int StrobeOut = 1;
+      pCam->SetGPIOPinDirection( StrobeOut, 1 );
 
-            // set GPIO as strobe
-            Strobe.onOff = true;
-            Strobe.source = StrobeOut;
-            Strobe.delay = 0;
-            Strobe.duration = 50;
-            Strobe.polarity = 0;
+      // set GPIO as strobe
+      Strobe.onOff = true;
+      Strobe.source = StrobeOut;
+      Strobe.delay = 0;
+      Strobe.duration = 50;
+      Strobe.polarity = 0;
 
-            error = pCam->SetStrobe( &Strobe );
-            _CheckError(error);
+      error = pCam->SetStrobe( &Strobe );
+      _CheckError(error);
+    } else {
+      FlyCapture2::TriggerMode Trigger;
 
-            m_vCams.push_back(pCam);
-        } else {
-            FlyCapture2::TriggerMode Trigger;
+      // set GPIO pin direction to in
+      const unsigned int TriggerIn = 0;
+      pCam->SetGPIOPinDirection(TriggerIn, 0);
 
-            // set GPIO pin direction to in
-            const unsigned int TriggerIn = 0;
-            pCam->SetGPIOPinDirection( TriggerIn, 0 );
+      // external trigger is enabled
+      Trigger.onOff = true;
+      Trigger.mode = 0;
+      Trigger.parameter = 0;
+      Trigger.source = TriggerIn;
 
-            // external trigger is enabled
-            Trigger.onOff = false;
-            Trigger.mode = 0;
-            Trigger.parameter = 0;
-            Trigger.source = TriggerIn;
-
-            // set trigger
-            error = pCam->SetTriggerMode( &Trigger );
-            _CheckError(error);
-
-            m_vCams.push_back(pCam);
-        }
-        */
-        m_vCams.push_back(pCam);
+      // set trigger
+      error = pCam->SetTriggerMode( &Trigger );
+      _CheckError(error);
     }
+    /* */
+    m_vCams.push_back(pCam);
+  }
 
-    // initiate transmission on all cameras
-    for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
-        error = m_vCams[ii]->StartCapture();
-        _CheckError(error);
-    }
+  //    const FlyCapture2::Camera** tmp = m_vCams.const_pointer;
+  //    FlyCapture2::Camera::StartSyncCapture(m_vCams.size(), tmp);
+
+  // initiate transmission on all cameras
+  for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
+    error = m_vCams[ii]->StartCapture();
+    //        _CheckError(error);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,60 +219,59 @@ FlycapDriver::~FlycapDriver()
 {
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool FlycapDriver::Capture(  pb::CameraMsg& vImages )
+bool FlycapDriver::Capture(pb::CameraMsg& vImages)
 {
-    FlyCapture2::Error error;
-\
-    for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
-        FlyCapture2::Image Image;
+  FlyCapture2::Error error;
 
-        error = m_vCams[ii]->RetrieveBuffer( &Image );
+  for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
+    FlyCapture2::Image Image;
 
-        if( error != FlyCapture2::PGRERROR_OK ) {
-            std::cerr << "HAL: Error grabbing image from camera." << std::endl;
-            std::cerr << "Error was: " << error.GetDescription() << std::endl;
-            return false;
-        } else {
+    error = m_vCams[ii]->RetrieveBuffer( &Image );
 
-            // set timestamp only from first camera
-            if( ii == 0 ) {
-                vImages.set_device_time( Image.GetMetadata().embeddedTimeStamp );
-            }
+    if( error != FlyCapture2::PGRERROR_OK ) {
+      std::cerr << "HAL: Error grabbing image from camera." << std::endl;
+      std::cerr << "Error was: " << error.GetDescription() << std::endl;
+      return false;
+    } else {
 
-            pb::ImageMsg* pbImg = vImages.add_image();
-            pbImg->set_width( Image.GetCols() );
-            pbImg->set_height( Image.GetRows() );
-            pbImg->set_data( Image.GetData(), Image.GetDataSize() );
-            pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-            pbImg->set_format( pb::PB_LUMINANCE );
-        }
+      // set timestamp only from first camera
+      if( ii == 0 ) {
+        vImages.set_device_time( Image.GetMetadata().embeddedTimeStamp );
+      }
+
+      pb::ImageMsg* pbImg = vImages.add_image();
+      pbImg->set_width( Image.GetCols() );
+      pbImg->set_height( Image.GetRows() );
+      pbImg->set_data( Image.GetData(), Image.GetDataSize() );
+      pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+      pbImg->set_format( pb::PB_LUMINANCE );
     }
-    return true;
+  }
+  return true;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string FlycapDriver::GetDeviceProperty(const std::string& /*sProperty*/)
 {
-    return std::string();
+  return std::string();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t FlycapDriver::NumChannels() const
 {
-    return m_vCams.size();
+  return m_vCams.size();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t FlycapDriver::Width( size_t /*idx*/ ) const
 {
-    return m_nImgWidth;
+  return m_nImgWidth;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t FlycapDriver::Height( size_t /*idx*/ ) const
 {
-    return m_nImgHeight;
+  return m_nImgHeight;
 }

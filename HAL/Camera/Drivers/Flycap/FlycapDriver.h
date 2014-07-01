@@ -12,28 +12,28 @@ namespace hal {
 
 class FlycapDriver : public CameraDriverInterface
 {
-    public:
-        FlycapDriver(std::vector<unsigned int>& vID,
-                     FlyCapture2::Mode Mode,
-                     ImageRoi ROI);
-        ~FlycapDriver();
+public:
+  FlycapDriver(std::vector<unsigned int>& vID,
+               FlyCapture2::Mode Mode,
+               ImageRoi ROI);
+  ~FlycapDriver();
 
-        bool Capture( pb::CameraMsg& vImages );
-        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+  bool Capture( pb::CameraMsg& vImages );
+  std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
-        std::string GetDeviceProperty(const std::string& sProperty);
+  std::string GetDeviceProperty(const std::string& sProperty);
 
-        size_t NumChannels() const;
-        size_t Width( size_t /*idx*/ = 0 ) const;
-        size_t Height( size_t /*idx*/ = 0 ) const;
-
-    private:
-        void _CheckError( FlyCapture2::Error error );
+  size_t NumChannels() const;
+  size_t Width( size_t /*idx*/ = 0 ) const;
+  size_t Height( size_t /*idx*/ = 0 ) const;
 
 private:
-        std::vector<FlyCapture2::Camera*>   m_vCams;
-        unsigned int                        m_nImgWidth;
-        unsigned int                        m_nImgHeight;
+  void _CheckError( FlyCapture2::Error error );
+
+private:
+  std::vector<FlyCapture2::Camera*>   m_vCams;
+  unsigned int                        m_nImgWidth;
+  unsigned int                        m_nImgHeight;
 
 };
 
