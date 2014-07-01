@@ -19,7 +19,6 @@ IMUDriverDataCallback   MicroStrainDriver::mIMUCallback = nullptr;
 PosysDriverDataCallback MicroStrainDriver::mPosysCallback = nullptr;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
-const double GRAVITY_MAGNITUDE = 9.80665;
 
 #define _LINUX
 

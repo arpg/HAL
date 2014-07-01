@@ -29,11 +29,10 @@ public:
         bool Grey          = uri.properties.Get("grey", false);
         std::string sName  = uri.properties.Get("name", std::string("FileCam"));
         std::string sId  = uri.properties.Get("id", std::string());
-//        double Frequency  = uri.properties.Get("frequency", 30.0); // default if not in files
         int cvFlags = Grey ? 0 : -1;
 
         std::vector<std::string> Channels = Expand(uri.url, '[', ']', ',');
-        
+
         for(std::string& s : Channels) {
             s = ExpandTildePath(s);
         }
@@ -42,7 +41,7 @@ public:
                     Channels, StartFrame, Loop, BufferSize, cvFlags, sName, sId
                     );
         return std::shared_ptr<CameraDriverInterface>( filereader );
-    }    
+    }
 };
 
 // Register this factory by creating static instance of factory
