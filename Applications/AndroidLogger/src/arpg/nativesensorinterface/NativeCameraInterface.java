@@ -35,6 +35,27 @@ public class NativeCameraInterface
                 }
             });
         Camera.Parameters params = mCamera.getParameters();
+        // Ideally we'd use fixed focus, but we'll settle for infinity or macro.
+        boolean found_fixed_focus = false;
+        boolean found_inf_focus = false;
+        boolean found_macro_focus = false;
+        for (String f : params.getSupportedFocusModes()) {
+            if (f.equals(Camera.Parameters.FOCUS_MODE_FIXED)) {
+                found_fixed_focus = true;
+            } else if (f.equals(Camera.Parameters.FOCUS_MODE_INFINITY)) {
+                found_inf_focus = true;
+            } else if (f.equals(Camera.Parameters.FOCUS_MODE_MACRO)) {
+                found_macro_focus = true;
+            }
+        }
+        if (found_fixed_focus) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
+        } else if (found_inf_focus) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+        } else if (found_macro_focus) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        }
+
         params.setPreviewSize(640, 480);
         mCamera.setParameters(params);
     }
