@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <PbMsgs/Messages.pb.h>
+#include <miniglog/logging.h>
 
 namespace pb {
 
@@ -20,7 +21,7 @@ void ReadCvMat(const cv::Mat& cvImage, pb::ImageMsg* pbImage) {
   } else if (cvImage.elemSize1() == 4) {
     pbImage->set_type(pb::PB_FLOAT);
   } else {
-    abort();
+    LOG(FATAL) << "Unknown image type";
   }
 
   if (cvImage.channels() == 1) {
@@ -28,7 +29,7 @@ void ReadCvMat(const cv::Mat& cvImage, pb::ImageMsg* pbImage) {
   } else if (cvImage.channels() == 3) {
     pbImage->set_format(pb::PB_RGB);
   } else {
-    abort();
+    LOG(FATAL) << "Unknown number of image channels";
   }
 }
 
