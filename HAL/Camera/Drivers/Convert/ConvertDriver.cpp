@@ -9,14 +9,16 @@ namespace hal
 
 ConvertDriver::ConvertDriver(
     std::shared_ptr<CameraDriverInterface> Input,
-    const std::string& sFormat
+    const std::string& sFormat,
+    double dRange
     )
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nCvType(0),
     m_nImgWidth(Input->Width()),
     m_nImgHeight(Input->Height()),
-    m_nNumChannels(Input->NumChannels())
+    m_nNumChannels(Input->NumChannels()),
+    m_dRange(dRange)
 {
 }
 
@@ -47,6 +49,7 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
       } else if(m_Message.image(0).format() == pb::PB_RGB) {
         m_nCvType = CV_32FC3;
       }
+      // float images are usually in range [0, 1]
     }
   }
 
@@ -73,7 +76,33 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
     cv::Mat dImg(m_nImgHeight, m_nImgWidth, CV_8UC1,
                    (void*)pbImg->data().data());
 
-    cv::cvtColor(sImg, dImg, CV_BGR2GRAY);
+    // note: cv::cvtColor cannot convert between depth types
+    cv::Mat aux;
+    switch(m_nCvType) {
+      case CV_8UC1:
+        std::copy(sImg.begin<unsigned char>(), sImg.end<unsigned char>(),
+                  dImg.begin<unsigned char>());
+        break;
+      case CV_8UC3:
+        cv::cvtColor(sImg, dImg, CV_RGB2GRAY); // add support for BGR?
+        break;
+      case CV_16UC1:
+        sImg.convertTo(aux, CV_64FC1);
+        aux.convertTo(dImg, CV_8UC1, 255. / m_dRange);
+        break;
+      case CV_16UC3:
+        sImg.convertTo(aux, CV_64FC3);
+        aux.convertTo(dImg, CV_8UC3, 255. / m_dRange);
+        cv::cvtColor(dImg, dImg, CV_RGB2GRAY);
+        break;
+      case CV_32FC1:
+        sImg.convertTo(dImg, CV_8UC1, 255. / m_dRange);
+        break;
+      case CV_32FC3:
+        sImg.convertTo(aux, CV_8UC3, 255. / m_dRange);
+        cv::cvtColor(aux, dImg, CV_RGB2GRAY);
+        break;
+    }
   }
 
   return true;

@@ -12,7 +12,8 @@ class ConvertDriver : public CameraDriverInterface
 {
 public:
     ConvertDriver(std::shared_ptr<CameraDriverInterface> Input,
-                   const std::string& sFormat
+                   const std::string& sFormat,
+                   double dRange
                  );
 
     bool Capture( pb::CameraMsg& vImages );
@@ -32,6 +33,7 @@ protected:
     unsigned int                            m_nImgWidth;
     unsigned int                            m_nImgHeight;
     unsigned int                            m_nNumChannels;
+    double                                  m_dRange;
 };
 
 }
