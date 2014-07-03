@@ -9,14 +9,16 @@ namespace hal
 
 ConvertDriver::ConvertDriver(
     std::shared_ptr<CameraDriverInterface> Input,
-    const std::string& sFormat
+    const std::string& sFormat,
+    double dRange
     )
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nCvType(0),
     m_nImgWidth(Input->Width()),
     m_nImgHeight(Input->Height()),
-    m_nNumChannels(Input->NumChannels())
+    m_nNumChannels(Input->NumChannels()),
+    m_dRange(dRange)
 {
 }
 
@@ -41,9 +43,6 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
       } else if(m_Message.image(0).format() == pb::PB_RGB) {
         m_nCvType = CV_16UC3;
       }
-      // unsigned short usually comes from infrared images. OpenNi uses
-      // the 10 least significant bits only (i.e. range of values is 0 - 1023)
-      m_dScale = 1023.;
     } else if(m_Message.image(0).type() == pb::PB_FLOAT) {
       if (m_Message.image(0).format() == pb::PB_LUMINANCE) {
         m_nCvType = CV_32FC1;
@@ -51,7 +50,6 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         m_nCvType = CV_32FC3;
       }
       // float images are usually in range [0, 1]
-      m_dScale = 1.;
     }
   }
 
@@ -90,18 +88,18 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         break;
       case CV_16UC1:
         sImg.convertTo(aux, CV_64FC1);
-        aux.convertTo(dImg, CV_8UC1, 255. / m_dScale);
+        aux.convertTo(dImg, CV_8UC1, 255. / m_dRange);
         break;
       case CV_16UC3:
         sImg.convertTo(aux, CV_64FC3);
-        aux.convertTo(dImg, CV_8UC3, 255. / m_dScale);
+        aux.convertTo(dImg, CV_8UC3, 255. / m_dRange);
         cv::cvtColor(dImg, dImg, CV_RGB2GRAY);
         break;
       case CV_32FC1:
-        sImg.convertTo(dImg, CV_8UC1, 255. / m_dScale);
+        sImg.convertTo(dImg, CV_8UC1, 255. / m_dRange);
         break;
       case CV_32FC3:
-        sImg.convertTo(aux, CV_8UC3, 255. / m_dScale);
+        sImg.convertTo(aux, CV_8UC3, 255. / m_dRange);
         cv::cvtColor(aux, dImg, CV_RGB2GRAY);
         break;
     }
