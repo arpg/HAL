@@ -32,6 +32,7 @@ protected:
     unsigned int                            m_nImgWidth;
     unsigned int                            m_nImgHeight;
     unsigned int                            m_nNumChannels;
+    double                                  m_dScale;
 };
 
 }
