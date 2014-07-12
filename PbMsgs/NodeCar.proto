@@ -11,7 +11,7 @@ message VehicleMsg
 message RegisterControllerReqMsg
 {
     optional bytes          topic        	   =1;
-    optional string    	    uri			         =2;
+    optional string    	    uri			   =2;
 }
 
 message RegisterControllerRepMsg

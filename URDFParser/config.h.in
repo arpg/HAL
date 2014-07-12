@@ -1,0 +1,3 @@
+#pragma once
+
+#define URDFPARSER_VERSION @VERSION_MAJOR@
