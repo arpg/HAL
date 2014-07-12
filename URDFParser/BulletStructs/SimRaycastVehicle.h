@@ -64,7 +64,7 @@ class SimRaycastVehicle : public Shape
 {
  public:
 
-  SimRaycastVehicle(std::string sName, vector<double> dParameters,
+  SimRaycastVehicle(std::string sName, std::vector<double> dParameters,
                     Eigen::Vector6d dPose){
     m_dParameters = dParameters;
     m_dPose = dPose;
@@ -119,7 +119,7 @@ class SimRaycastVehicle : public Shape
   /// GETTERS
   ////////////
 
-  vector<double> GetParameters(){
+  std::vector<double> GetParameters(){
     return m_dParameters;
   }
 
@@ -349,7 +349,7 @@ class SimRaycastVehicle : public Shape
 
   /// MEMBER VARIABLES
 
-  vector<double> m_dParameters;
+  std::vector<double> m_dParameters;
   Eigen::Vector6d m_FLWheelPose;
   Eigen::Vector6d m_FRWheelPose;
   Eigen::Vector6d m_BLWheelPose;

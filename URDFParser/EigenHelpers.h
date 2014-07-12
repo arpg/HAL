@@ -14,8 +14,6 @@ typedef std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> >
 Vector3dAlignedVec;
 }
 
-namespace std {
-
 inline Eigen::Matrix4d _Cart2T(double x, double y, double z,
                                double r, double p, double q) {
   Eigen::Matrix4d T;
@@ -115,7 +113,5 @@ inline Eigen::Matrix3d _Cart2R(const double& r, const double& p,
   R(2, 2) = cr * cp;
   return R;
 }
-
-}  // namespace std
 
 #endif  // URDFPARSER_EIGENHELPERS_H_
