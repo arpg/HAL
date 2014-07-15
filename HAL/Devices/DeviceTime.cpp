@@ -7,32 +7,35 @@
 
 #include <exception>
 #include <queue>
+#include <atomic>
 #include <chrono>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <iostream>
 
 namespace hal {
 namespace DeviceTime {
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Queue of Virtual Devices
-std::priority_queue< double,
-    std::vector<double>,
-    std::greater<double> >    QUEUE;
+static std::priority_queue<double,
+                           std::vector<double>,
+                           std::greater<double> > QUEUE;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Mutex Lock
-std::mutex                  MUTEX;
-std::condition_variable     CONDVAR;
+static std::mutex MUTEX;
+static std::condition_variable CONDVAR;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Wait for correct time to elapse if REALTIME is true
-bool                          REALTIME = false;
+static bool REALTIME = false;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// TO_READ can be used to step through and pause events
-unsigned long                 EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
+static std::atomic<uint64_t> EVENTS_TO_QUEUE(
+    std::numeric_limits<uint64_t>::max());
 
 ////////////////////////////////////////////////////////////////////////////////
 inline bool IsPaused()
@@ -51,7 +54,8 @@ void ResetTime()
 ////////////////////////////////////////////////////////////////////////////////
 double NextTime()
 {
-    if( QUEUE.size() == 0 ) {
+    std::lock_guard<std::mutex> lock(MUTEX);
+    if( QUEUE.empty() ) {
         return 0;
     } else {
         return QUEUE.top();
@@ -61,11 +65,10 @@ double NextTime()
 ////////////////////////////////////////////////////////////////////////////////
 void WaitForTime(double nextTime)
 {
-    std::unique_lock<std::mutex> lock(MUTEX);
-
     // check if timestamp is the top of the queue
     while( NextTime() < nextTime ) {
-        CONDVAR.wait( lock );
+      std::unique_lock<std::mutex> lock(MUTEX);
+      CONDVAR.wait( lock );
     }
 
     // TODO: Sleep for appropriate amount of time.
@@ -140,7 +143,7 @@ void UnpauseTime()
 {
     std::lock_guard<std::mutex> lock(MUTEX);
 
-    EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
+    EVENTS_TO_QUEUE = std::numeric_limits<uint64_t>::max();
 
     // notify waiting threads that a change in the QUEUE has occured
     CONDVAR.notify_all();
@@ -153,7 +156,7 @@ void TogglePauseTime()
 
     if(IsPaused()) {
         // unpause
-        EVENTS_TO_QUEUE = std::numeric_limits<unsigned long>::max();
+        EVENTS_TO_QUEUE = std::numeric_limits<uint64_t>::max();
         CONDVAR.notify_all();
     }else{
         // pause
