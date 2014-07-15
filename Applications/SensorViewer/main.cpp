@@ -15,7 +15,7 @@
 #include <PbMsgs/Matrix.h>
 
 pangolin::DataLog g_PlotLogAccel;
-pangolin::DataLog g_PlotLogGryo;
+pangolin::DataLog g_PlotLogGyro;
 pangolin::DataLog g_PlotLogMag;
 
 using std::placeholders::_1;
@@ -65,9 +65,16 @@ class SensorViewer {
     if (has_imu_) {
       pangolin::View& imuView = pangolin::CreateDisplay().
           SetLayout(pangolin::LayoutEqualVertical);
-      imuView.AddDisplay(pangolin::CreatePlotter("Accel", &g_PlotLogAccel));
-      imuView.AddDisplay(pangolin::CreatePlotter("Gryo", &g_PlotLogGryo));
-      imuView.AddDisplay(pangolin::CreatePlotter("Mag", &g_PlotLogMag));
+      g_PlotLogAccel.SetLabels({"Accel X", "Accel Y", "Accel Z"});
+      g_PlotLogGyro.SetLabels({"Gyro X", "Gyro Y", "Gyro Z"});
+      g_PlotLogMag.SetLabels({"Mag X", "Mag Y", "Mag Z"});
+
+      accel_plot_.reset(new pangolin::Plotter(&g_PlotLogAccel));
+      gyro_plot_.reset(new pangolin::Plotter(&g_PlotLogGyro));
+      mag_plot_.reset(new pangolin::Plotter(&g_PlotLogMag));
+      imuView.AddDisplay(*accel_plot_);
+      imuView.AddDisplay(*gyro_plot_);
+      imuView.AddDisplay(*mag_plot_);
 
       if (has_camera_) {
         cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
@@ -271,7 +278,7 @@ class SensorViewer {
                          IMUdata.accel().data(2));
     }
     if (IMUdata.has_gyro()) {
-      g_PlotLogGryo.Log(IMUdata.gyro().data(0),
+      g_PlotLogGyro.Log(IMUdata.gyro().data(0),
                         IMUdata.gyro().data(1),
                         IMUdata.gyro().data(2));
     }
@@ -332,6 +339,7 @@ class SensorViewer {
   hal::Posys posys_;
   hal::LIDAR lidar_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
+  std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;
   pb::Logger& logger_;
 };
 
