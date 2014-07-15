@@ -1,24 +1,23 @@
-#ifndef SIMWORLD_H
-#define SIMWORLD_H
+// Copyright (c) bminortx
+
+#ifndef URDFPARSER_SIMROBOTS_SIMWORLD_H_
+#define URDFPARSER_SIMROBOTS_SIMWORLD_H_
+
+#include <BulletStructs/ModelNode.h>
 
 #include <vector>
 #include <string>
-#include <iostream>
-#include <BulletStructs/ModelNode.h>
-
-using namespace std;
 
 // SimWorld is just a struct, really, holding the info we pulled frem the
 // world.xml file
 
-class SimWorld
-{
+class SimWorld {
  public:
-  vector<double>          m_vWorldPose;
-  vector<double>          m_vWorldNormal;
-  vector<double>          m_vRobotPose;
-  std::vector<ModelNode*> m_WorldNodes;
-  std::string             m_sMesh;
+  std::vector<double> simworld_pose_;
+  std::vector<double> simworld_normal_;
+  std::vector<double> simworld_robot_pose_;
+  std::vector<ModelNode*> simworld_models_;
+  std::string simworld_mesh_dir_;
 };
 
-#endif
+#endif  // URDFPARSER_SIMROBOTS_SIMWORLD_H_

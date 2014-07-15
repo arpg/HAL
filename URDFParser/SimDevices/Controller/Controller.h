@@ -1,54 +1,49 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+// Copyright (c) bminortx
 
+#ifndef URDFPARSER_SIMDEVICES_CONTROLLER_CONTROLLER_H_
+#define URDFPARSER_SIMDEVICES_CONTROLLER_CONTROLLER_H_
+
+#include <string>
 
 /*********************************
   * CONTROLLER
   * This is a superclass for all controllers
   ********************************/
 
-
-
-class Controller
-{
-public:
-
+class Controller {
+ public:
   /// SETTERS
-
-  void SetControllerName(string sControllerName){
-    m_sControllerName = sControllerName;
+  void SetControllerName(std::string sControllerName) {
+    controller_name_ = sControllerName;
   }
 
-  void SetRobotName(string sRobotName){
-    m_sRobotName = sRobotName;
+  void SetRobotName(std::string sRobotName) {
+    robot_name_ = sRobotName;
   }
 
   // Not sure what this does... keeping for now.
-  void SetProxyName(string sProxyName){
-    m_sProxyName = sProxyName;
+  void SetProxyName(std::string sProxyName) {
+    sim_name_ = sProxyName;
   }
 
   /// GETTERS
 
-  string GetControllerName(){
-    return m_sControllerName;
+  std::string GetControllerName() {
+    return controller_name_;
   }
 
-  string GetRobotName(){
-    return m_sRobotName;
+  std::string GetRobotName() {
+    return robot_name_;
   }
 
-  string GetProxyName(){
-    return m_sProxyName;
+  std::string GetProxyName() {
+    return sim_name_;
   }
-
 
   /// MEMBER VARIABLES
-
-  string m_sControllerName;
-  string m_sProxyName;
-  string m_sRobotName;
-
+  std::string controller_name_;
+  std::string sim_name_;
+  std::string robot_name_;
 };
 
-#endif // CONTROLLER_H
+#endif  // URDFPARSER_SIMDEVICES_CONTROLLER_CONTROLLER_H_

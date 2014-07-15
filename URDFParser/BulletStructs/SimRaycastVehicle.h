@@ -67,8 +67,8 @@ class SimRaycastVehicle : public Shape
   SimRaycastVehicle(std::string sName, std::vector<double> dParameters,
                     Eigen::Vector6d dPose){
     m_dParameters = dParameters;
-    m_dPose = dPose;
-    m_sName = sName;
+    model_pose_ = dPose;
+    model_name_ = sName;
     m_sBodyMesh = "NONE";
     m_sWheelMesh = "NONE";
     delay_time = 0;

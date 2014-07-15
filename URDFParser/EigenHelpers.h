@@ -1,3 +1,5 @@
+// Copyright (c) nimski & bminortx
+
 #ifndef URDFPARSER_EIGENHELPERS_H_
 #define URDFPARSER_EIGENHELPERS_H_
 

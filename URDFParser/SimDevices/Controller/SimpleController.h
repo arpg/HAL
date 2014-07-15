@@ -1,51 +1,26 @@
-#ifndef SIMPLECONTROLLER_H
-#define SIMPLECONTROLLER_H
+// Copyright (c) bminortx
 
-#include <SimDevices/SimDeviceInfo.h>
-#include "PbMsgs/SimMessages.pb.h"
+#ifndef URDFPARSER_SIMDEVICES_CONTROLLER_SIMPLECONTROLLER_H_
+#define URDFPARSER_SIMDEVICES_CONTROLLER_SIMPLECONTROLLER_H_
+
 #include <PbMsgs/Pose.pb.h>
+#include <SimDevices/SimDeviceInfo.h>
+#include <string>
+#include "PbMsgs/SimMessages.pb.h"
 
-class SimpleController: public SimDeviceInfo
-{
-public:
-
-  SimpleController(string sDeviceName, string sBodyName, string sRobotName){
+class SimpleController: public SimDeviceInfo {
+ public:
+  SimpleController(std::string sDeviceName,
+                   std::string sBodyName, std::string sRobotName) {
     SetDeviceName(sDeviceName);
     SetBodyName(sBodyName);
     SetRobotName(sRobotName);
-
     m_sDeviceType = "SimpleController";
   }
 
   ///////////////////////////////////////////////////
-
-  void UpdateCommand(pb::PoseMsg& Command){
-//    Eigen::Vector6d eCommand;
-//    eCommand<<Command.pose(0), Command.pose(1), Command.pose(2),
-//        Command.pose(3),Command.pose(4),Command.pose(5);
-//    vector<string> vBodyFullName;
-//    for(int j =0; j!= Command.body_name_size();j++){
-//      string sBodyFullName = Command.body_name(j);
-//      vBodyFullName.push_back(sBodyFullName);
-//    }
-//    m_eCommand.push_back(eCommand);
-//    m_vBodyFullName = vBodyFullName;
-//    if(eCommand[0]!=0 || eCommand[1]!=0 || eCommand[2]!=0 || eCommand[3]!=0 ||
-//       eCommand[4]!=0 || eCommand[5]!=0){
-//      m_bCommandIsLatestFlag = true;
-//    }
-//    else{
-//      m_bCommandIsLatestFlag = false;
-//    }
-//  }
-
-//  // mark if command is latest. if not, we will not send this command to statekeeper.
-//  bool                           m_bCommandIsLatestFlag;
-//  // body that will be applied latest command. In many Cases it will be pair body.
-//  vector<string>                 m_vBodyFullName;
-//  std::vector< Eigen::Vector6d > m_eCommand;
+  void UpdateCommand(const pb::PoseMsg& Command) {
   }
-
 };
 
-#endif // SIMROBOTCONTROLLER_H
+#endif  // URDFPARSER_SIMDEVICES_CONTROLLER_SIMPLECONTROLLER_H_

@@ -1,12 +1,17 @@
-#ifndef URDFPARSER_H
-#define URDFPARSER_H
+// Copyright (c) bminortx
 
-#include <vector>
+#ifndef URDFPARSER_URDFPARSER_H_
+#define URDFPARSER_URDFPARSER_H_
+
 #include <Eigen/Eigen>
 #include <miniglog/logging.h>
 #include <Node/Node.h>
 
-#include "TinyXMLTool.h"
+#include <vector>
+#include <map>
+#include <string>
+
+#include "URDFParser/TinyXMLTool.h"
 #include "BulletStructs/Shape.h"
 #include "BulletStructs/Constraint.h"
 #include "BulletStructs/SimRaycastVehicle.h"
@@ -22,60 +27,60 @@
 /// consider support for the strict URDF format in the future.
 /////////////////////////////////
 
-using namespace std;
+namespace Eigen {
 
-/// I'm not sure what this does yet, but here it is.
-namespace Eigen{
 typedef Matrix<double, 6, 1> Vector6d;
 }
 
-class URDFParser
-{
-public:
-  URDFParser(int debug_level);
+class URDFParser {
+ public:
+  explicit URDFParser(int debug_level);
   // Parses the world for the mesh and conditions.
-  bool ParseWorld(XMLDocument& doc, SimWorld& mSimWorld);
+  bool ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+                  std::shared_ptr<SimWorld> mSimWorld);
 
-  void GetMeshData(XMLDocument& pDoc,
-                   std::shared_ptr<HeightmapShape>& map_shape);
+  void GetMeshData(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+                   std::shared_ptr<HeightmapShape> map_shape);
 
   // ParseRobot really parses each of the robot parts, and then generates a set
   // of commands that the PhysicsEngine can use to create bullet objects.
-  bool ParseRobot(XMLDocument &doc, SimRobot &m_SimRobot, string sProxyName);
+  bool ParseRobot(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+                  std::shared_ptr<SimRobot> m_SimRobot,
+                  std::string sProxyName);
 
-  void ParseShape(string sRobotName, XMLElement *pElement);
+  void ParseShape(std::string sRobotName, tinyxml2::XMLElement *pElement);
 
-  void ParseJoint(string sRobotName, XMLElement *pElement);
+  void ParseJoint(std::string sRobotName, tinyxml2::XMLElement *pElement);
 
-  SimRaycastVehicle *ParseRaycastCar(string sRobotName, XMLElement *pElement);
+  SimRaycastVehicle *ParseRaycastCar(std::string sRobotName,
+                                     tinyxml2::XMLElement *pElement);
 
-  void ParseSensorShape(string sRobotName, XMLElement *pElement );
+  void ParseSensorShape(std::string sRobotName, tinyxml2::XMLElement *pElement);
 
-  bool ParseCommandLineForPickSensor(string sCommandLine);
+  bool ParseCommandLineForPickSensor(std::string sCommandLine);
 
-  vector<string> GetScemeFromString(string sCommandLine);
+  std::vector<std::string> GetSceneFromString(std::string sCommandLine);
 
   // ParseDevices uses the information given in the Robot.xml file to create the
   // sensor views that we see later in the Sim.
-  bool ParseDevices(XMLDocument& doc,
-                    SimDevices &m_SimDevices,
-                    string sProxyName);
+  bool ParseDevices(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+                    std::shared_ptr<SimDevices> m_SimDevices,
+                    std::string sProxyName);
 
   // This method is used in StateKeeper to initialize the position of every
   // object in the LocalSim.
   bool ParseWorldForInitRobotPose(const char* filename,
-                                 vector<Eigen::Vector6d>& vRobotInitPose);
+                                  std::vector<Eigen::Vector6d>& vRobotInitPose);
 
   std::vector<ModelNode*> GetModelNodes(
       std::map<std::string, ModelNode*> mNodes);
 
   ////////////////////////////////////////
 
-  std::map<std::string, ModelNode*> m_mModelNodes;
-  std::map<std::string, ModelNode*> m_mWorldNodes;
+  std::map<std::string, ModelNode*> robot_models_;
+  std::map<std::string, ModelNode*> world_models_;
   node::node node_;
   int debug_level_;
-
 };
 
-#endif // URDFPARSER_H
+#endif  // URDFPARSER_URDFPARSER_H_

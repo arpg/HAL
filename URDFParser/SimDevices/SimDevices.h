@@ -1,5 +1,7 @@
-#ifndef SIMDEVICES_H
-#define SIMDEVICES_H
+// Copyright (c) bminortx
+
+#ifndef URDFPARSER_SIMDEVICES_SIMDEVICES_H_
+#define URDFPARSER_SIMDEVICES_SIMDEVICES_H_
 
 // Superclass for devices
 #include <SimDevices/SimDeviceInfo.h>
@@ -11,34 +13,30 @@
 // All of our Sensors
 #include <SimDevices/Sensor/SimCamera.h>
 #include <SimDevices/Sensor/SimGPS.h>
-#include <SimDevices/Sensor/SimLaser2D.h>
-#include <SimDevices/Sensor/SimLaser3D.h>
 #include <SimDevices/Sensor/SimVicon.h>
 
-using namespace std;
+#include <map>
+#include <string>
+#include <vector>
 
-class SimDevices
-{
-
-public:
-
-  // Constructor
+class SimDevices {
+ public:
+  //  Constructor
   SimDevices();
 
-  // Initializers
+  //  Initializers
   void AddDevice(SimDeviceInfo* devInfo);
 
-  /// Update devices
+  // Update devices
   void UpdateSensors();
 
-  // GETTERS
-  vector<SimDeviceInfo*> GetAllRelatedDevices(string sDeviceBodyName);
-  vector<SimDeviceInfo*> GetOnDevices();
-  vector<SimDeviceInfo*> GetOnRelatedDevices(string sDeviceBodyName);
+  //  GETTERS
+  std::vector<SimDeviceInfo*> GetAllRelatedDevices(std::string sDeviceBodyName);
+  std::vector<SimDeviceInfo*> GetOnDevices();
+  std::vector<SimDeviceInfo*> GetOnRelatedDevices(std::string sDeviceBodyName);
 
-  // MEMBER VARIABLES
-  map<string, SimDeviceInfo*>  m_vSimDevices;
-
+  //  MEMBER VARIABLES
+  std::map<std::string, SimDeviceInfo*>  sim_device_map_;
 };
 
-#endif // SIMDEVICES_H
+#endif  // URDFPARSER_SIMDEVICES_SIMDEVICES_H_
