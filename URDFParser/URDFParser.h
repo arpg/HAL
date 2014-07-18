@@ -28,7 +28,6 @@
 /////////////////////////////////
 
 namespace Eigen {
-
 typedef Matrix<double, 6, 1> Vector6d;
 }
 
@@ -36,17 +35,17 @@ class URDFParser {
  public:
   explicit URDFParser(int debug_level);
   // Parses the world for the mesh and conditions.
-  bool ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+  bool ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
                   std::shared_ptr<SimWorld> mSimWorld);
 
-  void GetMeshData(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                   std::shared_ptr<HeightmapShape> map_shape);
+  void GetMeshData(tinyxml2::XMLDocument& pDoc,
+                   std::shared_ptr<HeightmapShape>& map_shape);
 
   // ParseRobot really parses each of the robot parts, and then generates a set
   // of commands that the PhysicsEngine can use to create bullet objects.
-  bool ParseRobot(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                  std::shared_ptr<SimRobot> m_SimRobot,
-                  std::string sProxyName);
+  bool ParseRobot(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+                  const std::string& sProxyName,
+                  std::shared_ptr<SimRobot> m_SimRobot);
 
   void ParseShape(std::string sRobotName, tinyxml2::XMLElement *pElement);
 

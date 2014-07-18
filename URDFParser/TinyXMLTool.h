@@ -6,9 +6,9 @@
 #include <vector>
 #include <string>
 
-#include "/usr/local/include/tinyxml2.h"
+#include <tinyxml2.h>
+#include <miniglog/logging.h>
 
-// ---------------------------------------------------------
 // get num from char
 inline std::vector<double> GenNumFromChar(const char* numbers) {
   std::vector<double> vNums;
@@ -32,10 +32,9 @@ inline std::vector<double> GenNumFromChar(const char* numbers) {
   return vNums;
 }
 
-// ------------------------------------------------------------
 inline bool GetXMLdoc(std::string sFileName, tinyxml2::XMLDocument& doc) {
   if (doc.LoadFile(sFileName.c_str()) != 0) {
-    std::cout << "Fatal Error! Cannot open %s. Please check if file is valid: "
+    LOG(FATAL) << "Fatal Error! Cannot open %s. Please check if file is valid: "
               << sFileName.c_str();
     exit(-1);
     return false;
@@ -43,15 +42,13 @@ inline bool GetXMLdoc(std::string sFileName, tinyxml2::XMLDocument& doc) {
   return true;
 }
 
-// -------------------------------------------------------------
 inline std::string GetAttribute(tinyxml2::XMLElement *pElement,
                            const char* cAttributeName) {
   const char* cAttribute = pElement->Attribute(cAttributeName);
   if (cAttribute == NULL) {
-    std::cout << "[URDFParser] Fatal error! cannot get attribute '"
-              << cAttributeName
-              << "' in xml file! Exit! Please check your Robot.xml file!"
-              << std::endl;
+    LOG(FATAL) << "[URDFParser] Fatal error! cannot get attribute '"
+               << cAttributeName
+               << "' in xml file! Exit! Please check your Robot.xml file!";
   }
   std::string sAttribute(cAttribute);
   return sAttribute;

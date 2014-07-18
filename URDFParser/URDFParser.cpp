@@ -6,10 +6,6 @@
 #include <string>
 #include <vector>
 
-////////////////////////////////////////////////////////////
-/// CONSTRUCTOR
-////////////////////////////////////////////////////////////
-
 URDFParser::URDFParser(int debug_level) {
   debug_level_ = debug_level;
 }
@@ -17,7 +13,7 @@ URDFParser::URDFParser(int debug_level) {
 ////////////////////////////////////////////////////////////
 /// PARSE WORLD.XML IN LocalSim
 ////////////////////////////////////////////////////////////
-bool URDFParser::ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
+bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
                             std::shared_ptr<SimWorld> mSimWorld) {
   tinyxml2::XMLElement *pParent = pDoc->RootElement();
   tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
@@ -27,12 +23,12 @@ bool URDFParser::ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
     const char* sRootContent = pElement->Name();
     if (strcmp(sRootContent, "base") == 0) {
       std::string sMesh(pElement->Attribute("mesh"));
-      mSimWorld->simworld_mesh_dir_ = sMesh;
-      mSimWorld->simworld_pose_ =
+      mSimWorld->mesh_dir_ = sMesh;
+      mSimWorld->pose_ =
           GenNumFromChar(pElement->Attribute("worldpose"));
-      mSimWorld->simworld_normal_ =
+      mSimWorld->normal_ =
           GenNumFromChar(pElement->Attribute("worldnormal"));
-      mSimWorld->simworld_robot_pose_ =
+      mSimWorld->robot_pose_ =
           GenNumFromChar(pElement->Attribute("robotpose"));
       std::vector<double> vLightPose =
           GenNumFromChar(pElement->Attribute("lightpose"));
@@ -40,19 +36,19 @@ bool URDFParser::ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
       world_models_[pLight->GetName()] = pLight;
       // ** There are several options for mesh design: **//
       //  1. Init world without mesh. Creates a flat plane.
-      if (mSimWorld->simworld_mesh_dir_ == "NONE") {
+      if (mSimWorld->mesh_dir_ == "NONE") {
         LOG(debug_level_) << "World's mesh type: "
-                          << mSimWorld->simworld_mesh_dir_;
+                          << mSimWorld->mesh_dir_;
         //  We can't just use a giant box here; the RaycastVehicle won't
         //  connect, and will go straight through.
         PlaneShape* pGround = new PlaneShape("Ground",
-                                             mSimWorld->simworld_normal_,
-                                             mSimWorld->simworld_pose_);
+                                             mSimWorld->normal_,
+                                             mSimWorld->pose_);
         world_models_[pGround->GetName()] = pGround;
-      } else if (mSimWorld->simworld_mesh_dir_ == "MATLAB") {
+      } else if (mSimWorld->mesh_dir_ == "MATLAB") {
         //  2. Init world from MATLAB height data.
         LOG(debug_level_) << "World's mesh type: "
-                          << mSimWorld->simworld_mesh_dir_;
+                          << mSimWorld->mesh_dir_;
         node_.init("URDF");
         while (!node_.subscribe("MATLAB/Heightmap")) {
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -79,12 +75,12 @@ bool URDFParser::ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
                                                        row_count, col_count,
                                                        X, Y, Z);
         world_models_[map_shape->GetName()] = map_shape;
-      } else if (mSimWorld->simworld_mesh_dir_ == "CSV") {
+      } else if (mSimWorld->mesh_dir_ == "CSV") {
         //  3. Fill the .xml with all of the values for the mesh file.
         //  That way, we won't have to keep importing them from MATLAB,
         //  which really takes forever.
         LOG(debug_level_) << "World's mesh type: "
-                          << mSimWorld->simworld_mesh_dir_;
+                          << mSimWorld->mesh_dir_;
         double row_count = ::atof(pElement->Attribute("row_count"));
         double col_count = ::atof(pElement->Attribute("col_count"));
         std::vector<double> x_data = GenNumFromChar(
@@ -110,25 +106,25 @@ bool URDFParser::ParseWorld(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
         //  4. We actually have a mesh.
         LOG(debug_level_) << "World's mesh type: mesh";
         LOG(debug_level_) << "Mesh directory: "
-                          << mSimWorld->simworld_mesh_dir_;
+                          << mSimWorld->mesh_dir_;
         MeshShape* pMesh = new MeshShape("map",
-                                         mSimWorld->simworld_mesh_dir_,
-                                         mSimWorld->simworld_pose_);
+                                         mSimWorld->mesh_dir_,
+                                         mSimWorld->pose_);
         world_models_[pMesh->GetName()] = pMesh;
       }
     }
     pElement = pElement->NextSiblingElement();
   }
   LOG(debug_level_) << "SUCCESS: World initialized";
-  mSimWorld->simworld_models_ = GetModelNodes(world_models_);
+  mSimWorld->models_ = GetModelNodes(world_models_);
   return true;
 }
 
 // This function serves as a shortcut; maybe we don't want to
 // have everything, you know? Just the data.
-void URDFParser::GetMeshData(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                             std::shared_ptr<HeightmapShape> map_shape) {
-  tinyxml2::XMLElement *pParent = pDoc->RootElement();
+void URDFParser::GetMeshData(tinyxml2::XMLDocument& pDoc,
+                             std::shared_ptr<HeightmapShape>& map_shape) {
+  tinyxml2::XMLElement *pParent = pDoc.RootElement();
   tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
   //  read high level parent (root parent)
   while (pElement) {
@@ -160,16 +156,16 @@ void URDFParser::GetMeshData(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
 /// The name of any robot body is: BodyName@RobotName@ProxyName
 /// The name of any robot joint is: JointName@RobotName@ProxyName
 ////////////////////////////////////////////////////////////
-bool URDFParser::ParseRobot(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                            std::shared_ptr<SimRobot> rSimRobot,
-                            std::string sProxyName) {
+bool URDFParser::ParseRobot(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+                            const std::string& sProxyName,
+                            std::shared_ptr<SimRobot> rSimRobot) {
   LOG(debug_level_) << "Parsing robot body:";
   tinyxml2::XMLElement *pParent = pDoc->RootElement();
   std::string sRobotName(GetAttribute(pParent, "name"));
   sRobotName = sProxyName;
 
   rSimRobot->SetName(sRobotName);
-  rSimRobot->SetRobotURDF(pDoc->ToDocument());
+  rSimRobot->SetRobotURDF(pDoc.get());
   rSimRobot->SetProxyName(sProxyName);
   tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
 

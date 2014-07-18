@@ -8,16 +8,12 @@
 #include <vector>
 #include <string>
 
-// SimWorld is just a struct, really, holding the info we pulled frem the
-// world.xml file
-
-class SimWorld {
- public:
-  std::vector<double> simworld_pose_;
-  std::vector<double> simworld_normal_;
-  std::vector<double> simworld_robot_pose_;
-  std::vector<ModelNode*> simworld_models_;
-  std::string simworld_mesh_dir_;
+struct SimWorld {
+  std::vector<double> pose_;
+  std::vector<double> normal_;
+  std::vector<double> robot_pose_;
+  std::vector<ModelNode*> models_;
+  std::string mesh_dir_;
 };
 
 #endif  // URDFPARSER_SIMROBOTS_SIMWORLD_H_
