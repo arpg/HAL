@@ -5,7 +5,6 @@
 
 #include <iostream>
 
-
 #define MAX_DEPTH 10000
 
 using namespace xn;
@@ -44,6 +43,40 @@ OpenNIDriver::OpenNIDriver(
 
     rc = m_Context.Init();
     CHECK_XN_RETURN(rc);
+
+    // get device ids
+    {
+      NodeInfoList DeviceNodeList;
+      rc = m_Context.EnumerateProductionTrees( XN_NODE_TYPE_DEVICE, NULL, DeviceNodeList, 0 );
+      CHECK_XN_RETURN(rc);
+
+      for(NodeInfoList::Iterator it = DeviceNodeList.Begin(); it != DeviceNodeList.End(); ++it) {
+        NodeInfo node = *it;
+
+        //idVendor/idProduct@BusID/DeviceId
+        // idVendor, idProduct, DeviceId: 4 hex digits
+        std::string info(node.GetCreationInfo());
+        std::string::size_type first = info.find('@');
+        long int serialno = 0;
+        if (first != std::string::npos)
+        {
+          ++first; // first BusID character
+          std::string::size_type mid = info.find('/', first);
+          if (mid != std::string::npos)
+          {
+            std::string sBus, sDevice;
+            sBus = info.substr(first, mid - first);
+            sDevice = info.substr(mid + 1);
+            long bus = std::stol(sBus);
+            long device = std::stol(sDevice);
+
+            // serialno 32 least significant bits: BusId, DeviceID
+            serialno = (bus << 16) | device;
+          }
+        }
+        m_SerialNos.push_back(serialno);
+      }
+    }
 
     if( bCaptureRGB ) {
         // Enumerate Image Generating nodes
