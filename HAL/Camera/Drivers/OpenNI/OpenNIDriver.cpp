@@ -228,6 +228,7 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_type(pb::PB_UNSIGNED_BYTE);
         pbImg->set_format(pb::PB_RGB);
         pbImg->set_data( metaData.RGB24Data(), metaData.DataSize() );
+        pbImg->set_serialno( m_SerialNos[i] );
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
@@ -239,6 +240,7 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_data( metaData.Data(), metaData.DataSize() );
         pbImg->set_type(pb::PB_UNSIGNED_SHORT);
         pbImg->set_format(pb::PB_LUMINANCE);
+        pbImg->set_serialno( m_SerialNos[i] );
         pb::ImageInfoMsg* pbImgInfo = pbImg->mutable_info();
         pbImgInfo->set_baseline( m_DepthBaselines[i] );
         pbImgInfo->set_focal_length( m_DepthFocalLengths[i] );
@@ -253,6 +255,7 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
         pbImg->set_data( metaData.Data(), metaData.DataSize() );
         pbImg->set_type(pb::PB_UNSIGNED_SHORT);
         pbImg->set_format(pb::PB_LUMINANCE);
+        pbImg->set_serialno( m_SerialNos[i] );
     }
 
     return true;
