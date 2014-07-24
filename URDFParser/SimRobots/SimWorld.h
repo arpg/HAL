@@ -12,7 +12,7 @@ struct SimWorld {
   std::vector<double> pose_;
   std::vector<double> normal_;
   std::vector<double> robot_pose_;
-  std::vector<ModelNode*> models_;
+  std::vector<std::shared_ptr<ModelNode> > models_;
   std::string mesh_dir_;
 };
 

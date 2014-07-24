@@ -35,7 +35,7 @@ class URDFParser {
  public:
   explicit URDFParser(int debug_level);
   // Parses the world for the mesh and conditions.
-  bool ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+  bool ParseWorld(const tinyxml2::XMLDocument& pDoc,
                   std::shared_ptr<SimWorld> mSimWorld);
 
   void GetMeshData(tinyxml2::XMLDocument& pDoc,
@@ -43,7 +43,7 @@ class URDFParser {
 
   // ParseRobot really parses each of the robot parts, and then generates a set
   // of commands that the PhysicsEngine can use to create bullet objects.
-  bool ParseRobot(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+  bool ParseRobot(tinyxml2::XMLDocument& pDoc,
                   const std::string& sProxyName,
                   std::shared_ptr<SimRobot> m_SimRobot);
 
@@ -62,22 +62,22 @@ class URDFParser {
 
   // ParseDevices uses the information given in the Robot.xml file to create the
   // sensor views that we see later in the Sim.
-  bool ParseDevices(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                    std::shared_ptr<SimDevices> m_SimDevices,
-                    std::string sProxyName);
+  bool ParseDevices(tinyxml2::XMLDocument& pDoc,
+                    const std::string sProxyName,
+                    std::shared_ptr<SimDevices> m_SimDevices);
 
   // This method is used in StateKeeper to initialize the position of every
   // object in the LocalSim.
   bool ParseWorldForInitRobotPose(const char* filename,
                                   std::vector<Eigen::Vector6d>& vRobotInitPose);
 
-  std::vector<ModelNode*> GetModelNodes(
-      std::map<std::string, ModelNode*> mNodes);
+  std::vector<std::shared_ptr<ModelNode> > GetModelNodes(
+      std::map<std::string, std::shared_ptr<ModelNode> > mNodes);
 
   ////////////////////////////////////////
 
-  std::map<std::string, ModelNode*> robot_models_;
-  std::map<std::string, ModelNode*> world_models_;
+  std::map<std::string, std::shared_ptr<ModelNode> > robot_models_;
+  std::map<std::string, std::shared_ptr<ModelNode> > world_models_;
   node::node node_;
   int debug_level_;
 };

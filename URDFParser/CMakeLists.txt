@@ -25,6 +25,7 @@ find_package( Pangolin REQUIRED )
 find_package( Calibu 0.1 REQUIRED )
 find_package( PbMsgs REQUIRED )
 find_package( TinyXML2 REQUIRED )
+find_package( Protobuf REQUIRED )
 find_package( OpenCV2 )
 
 list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_DIR}/.." )

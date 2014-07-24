@@ -37,7 +37,7 @@ class SimRobot {
     base_part_ = Base;
   }
 
-  void SetParts(std::vector<ModelNode*> vParts) {
+  void SetParts(std::vector<std::shared_ptr<ModelNode> > vParts) {
     if (parts_list_.size() == 0) {
       parts_list_ = vParts;
     } else {
@@ -98,7 +98,7 @@ class SimRobot {
     return vBodyName;
   }
 
-  std::vector<ModelNode*> GetParts() {
+  std::vector<std::shared_ptr<ModelNode> > GetParts() const {
     return parts_list_;
   }
 
@@ -123,10 +123,10 @@ class SimRobot {
  private:
   std::string robot_name_;
   std::string sim_name_;
-  std::vector<ModelNode*> parts_list_;
+  std::vector<std::shared_ptr<ModelNode> > parts_list_;
   bool statekeeper_status_;
   ModelNode* base_part_;
-  tinyxml2::XMLDocument*  robot_urdf_;
+  tinyxml2::XMLDocument* robot_urdf_;
   Eigen::Vector6d initial_pose_;
   Eigen::Vector6d urdf_pose_;
   int new_parts_bit_;

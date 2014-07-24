@@ -8,7 +8,7 @@
 using namespace std;
 
 const char* GenURIFromURDF(string sDeviceName, string sURDFPath){
-  XMLDocument doc;
+  tinyxml2::XMLDocument doc;
   if(doc.LoadFile(sURDFPath.c_str()) !=0){
     printf("[GenURIFromURDF] Fatal Error! Cannot open %s\n", sURDFPath.c_str());
     exit(-1);
@@ -16,8 +16,8 @@ const char* GenURIFromURDF(string sDeviceName, string sURDFPath){
   else{
     cout<<"Open file: "<<sURDFPath<<" success."<<endl;
   }
-  XMLElement *pParent=doc.RootElement();
-  XMLElement *pElement=pParent->FirstChildElement();
+  tinyxml2::XMLElement *pParent=doc.RootElement();
+  tinyxml2::XMLElement *pElement=pParent->FirstChildElement();
   string sURI; // final URI we need
   bool bInitDeviceFlag = false; // mark if we init device successfully
   // read high level parent (root parent)

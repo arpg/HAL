@@ -13,10 +13,10 @@ URDFParser::URDFParser(int debug_level) {
 ////////////////////////////////////////////////////////////
 /// PARSE WORLD.XML IN LocalSim
 ////////////////////////////////////////////////////////////
-bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+bool URDFParser::ParseWorld(const tinyxml2::XMLDocument& pDoc,
                             std::shared_ptr<SimWorld> mSimWorld) {
-  tinyxml2::XMLElement *pParent = pDoc->RootElement();
-  tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
+  const tinyxml2::XMLElement *pParent = pDoc.RootElement();
+  const tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
 
   //  read high level parent (root parent)
   while (pElement) {
@@ -32,7 +32,8 @@ bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
           GenNumFromChar(pElement->Attribute("robotpose"));
       std::vector<double> vLightPose =
           GenNumFromChar(pElement->Attribute("lightpose"));
-      LightShape* pLight = new LightShape("Light", vLightPose);
+      std::shared_ptr<LightShape> pLight =
+          std::make_shared<LightShape>("Light", vLightPose);
       world_models_[pLight->GetName()] = pLight;
       // ** There are several options for mesh design: **//
       //  1. Init world without mesh. Creates a flat plane.
@@ -41,9 +42,10 @@ bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
                           << mSimWorld->mesh_dir_;
         //  We can't just use a giant box here; the RaycastVehicle won't
         //  connect, and will go straight through.
-        PlaneShape* pGround = new PlaneShape("Ground",
-                                             mSimWorld->normal_,
-                                             mSimWorld->pose_);
+        std::shared_ptr<PlaneShape> pGround =
+            std::make_shared<PlaneShape>("Ground",
+                                         mSimWorld->normal_,
+                                         mSimWorld->pose_);
         world_models_[pGround->GetName()] = pGround;
       } else if (mSimWorld->mesh_dir_ == "MATLAB") {
         //  2. Init world from MATLAB height data.
@@ -71,9 +73,10 @@ bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
           Y.at(ii) = params.y_data().Get(ii);
           Z.at(ii) = params.z_data().Get(ii);
         }
-        HeightmapShape* map_shape = new HeightmapShape("map",
-                                                       row_count, col_count,
-                                                       X, Y, Z);
+        std::shared_ptr<HeightmapShape> map_shape =
+            std::make_shared<HeightmapShape>("map",
+                                             row_count, col_count,
+                                             X, Y, Z);
         world_models_[map_shape->GetName()] = map_shape;
       } else if (mSimWorld->mesh_dir_ == "CSV") {
         //  3. Fill the .xml with all of the values for the mesh file.
@@ -98,18 +101,20 @@ bool URDFParser::ParseWorld(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
           Y.at(ii) = y_data.at(ii);
           Z.at(ii) = z_data.at(ii);
         }
-        HeightmapShape* map_shape = new HeightmapShape("map",
-                                                       row_count, col_count,
-                                                       X, Y, Z);
+        std::shared_ptr<HeightmapShape> map_shape =
+            std::make_shared<HeightmapShape>("map",
+                                             row_count, col_count,
+                                             X, Y, Z);
         world_models_[map_shape->GetName()] = map_shape;
       } else {
         //  4. We actually have a mesh.
         LOG(debug_level_) << "World's mesh type: mesh";
         LOG(debug_level_) << "Mesh directory: "
                           << mSimWorld->mesh_dir_;
-        MeshShape* pMesh = new MeshShape("map",
-                                         mSimWorld->mesh_dir_,
-                                         mSimWorld->pose_);
+        std::shared_ptr<MeshShape> pMesh =
+            std::make_shared<MeshShape>("map",
+                                        mSimWorld->mesh_dir_,
+                                        mSimWorld->pose_);
         world_models_[pMesh->GetName()] = pMesh;
       }
     }
@@ -156,16 +161,16 @@ void URDFParser::GetMeshData(tinyxml2::XMLDocument& pDoc,
 /// The name of any robot body is: BodyName@RobotName@ProxyName
 /// The name of any robot joint is: JointName@RobotName@ProxyName
 ////////////////////////////////////////////////////////////
-bool URDFParser::ParseRobot(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
+bool URDFParser::ParseRobot(tinyxml2::XMLDocument& pDoc,
                             const std::string& sProxyName,
                             std::shared_ptr<SimRobot> rSimRobot) {
   LOG(debug_level_) << "Parsing robot body:";
-  tinyxml2::XMLElement *pParent = pDoc->RootElement();
+  tinyxml2::XMLElement *pParent = pDoc.RootElement();
   std::string sRobotName(GetAttribute(pParent, "name"));
   sRobotName = sProxyName;
 
   rSimRobot->SetName(sRobotName);
-  rSimRobot->SetRobotURDF(pDoc.get());
+  rSimRobot->SetRobotURDF(&pDoc);
   rSimRobot->SetProxyName(sProxyName);
   tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
 
@@ -197,9 +202,11 @@ bool URDFParser::ParseRobot(const std::shared_ptr<tinyxml2::XMLDocument>& pDoc,
             GenNumFromChar(pElement->Attribute("dimension"));
         const char* sType = pElement->Attribute("type");
         if (strcmp(sType, "Box") == 0) {
-          BoxShape* pBox = new BoxShape(sBodyName, vDimension[0], vDimension[1],
-                                        vDimension[2], iMass, 1, vPose);
-          rSimRobot->SetBase(pBox);
+          std::shared_ptr<BoxShape> pBox =
+              std::make_shared<BoxShape>(sBodyName, vDimension[0],
+                                         vDimension[1],
+                                         vDimension[2], iMass, 1, vPose);
+          rSimRobot->SetBase(pBox.get());
           LOG(debug_level_) << "Successfully built base for " << sBodyName;
           robot_models_[pBox->GetName()] = pBox;
         }
@@ -288,27 +295,31 @@ void URDFParser::ParseShape(std::string sRobotName,
     const char* sType = pElement->Attribute("type");
 
     if (strcmp(sType, "Box") == 0) {
-      BoxShape* pBox = new BoxShape(sBodyName, vDimension[0], vDimension[1],
+      std::shared_ptr<BoxShape> pBox =
+          std::make_shared<BoxShape>(sBodyName, vDimension[0], vDimension[1],
                                     vDimension[2], iMass, 1, vPose);
       robot_models_[pBox->GetName()] = pBox;
     } else if (strcmp(sType, "Cylinder") == 0) {
-      CylinderShape* pCylinder = new CylinderShape(sBodyName, vDimension[0],
-                                                   vDimension[1], iMass, 1,
-                                                   vPose);
+      std::shared_ptr<CylinderShape> pCylinder =
+          std::make_shared<CylinderShape>(sBodyName, vDimension[0],
+                                          vDimension[1], iMass, 1,
+                                          vPose);
       robot_models_[pCylinder->GetName()] = pCylinder;
     } else if (strcmp(sType, "Sphere") == 0) {
-      SphereShape* pSphere = new SphereShape(sBodyName, vDimension[0],
+      std::shared_ptr<SphereShape> pSphere =
+          std::make_shared<SphereShape>(sBodyName, vDimension[0],
                                              iMass, 1, vPose);
       robot_models_[pSphere->GetName()] = pSphere;
     } else if (strcmp(sType, "Plane") == 0) {
-      PlaneShape* pPlane = new PlaneShape(sBodyName, vDimension, vPose);
+      std::shared_ptr<PlaneShape> pPlane =
+          std::make_shared<PlaneShape>(sBodyName, vDimension, vPose);
       robot_models_[pPlane->GetName()] = pPlane;
     } else if (strcmp(sType, "Mesh") == 0) {
       std::string file_dir = pElement->Attribute("dir");
-      MeshShape* pMesh = new MeshShape(sBodyName, file_dir, vPose);
+      std::shared_ptr<MeshShape> pMesh =
+          std::make_shared<MeshShape>(sBodyName, file_dir, vPose);
       robot_models_[pMesh->GetName()] = pMesh;
     }
-
     LOG(debug_level_) << "SUCCESS: Built " << sBodyName;
   }
 }
@@ -382,10 +393,10 @@ void URDFParser::ParseJoint(std::string sRobotName,
       pivot << vPivot[0], vPivot[1], vPivot[2];
       Eigen::Vector3d axis;
       axis << vAxis[0], vAxis[1], vAxis[2];
-      HingeTwoPivot* pHinge = new HingeTwoPivot(
+      std::shared_ptr<HingeTwoPivot> pHinge = std::make_shared<HingeTwoPivot>(
           sJointName,
-          static_cast<Shape*>(robot_models_.find(sParentName)->second),
-          static_cast<Shape*>(robot_models_.find(sChildName)->second),
+          static_cast<Shape*>(robot_models_.find(sParentName)->second.get()),
+          static_cast<Shape*>(robot_models_.find(sChildName)->second.get()),
           pivot, Eigen::Vector3d::Zero(),
           axis, Eigen::Vector3d::Zero());
       pHinge->SetLimits(dLowerLimit, dUpperLimit,
@@ -458,11 +469,10 @@ void URDFParser::ParseJoint(std::string sRobotName,
         //  read next child (joint)
         pChild = pChild->NextSiblingElement();
       }
-
-      Hinge2* pHinge2 = new Hinge2(
+      std::shared_ptr<Hinge2> pHinge2 = std::make_shared<Hinge2>(
           sJointName,
-          static_cast<Shape*>(robot_models_.find(sParentName)->second),
-          static_cast<Shape*>(robot_models_.find(sChildName)->second),
+          static_cast<Shape*>(robot_models_.find(sParentName)->second.get()),
+          static_cast<Shape*>(robot_models_.find(sChildName)->second.get()),
           Anchor, Axis1, Axis2);
       pHinge2->SetLimits(1, 1, LowerLinearLimit, UpperLinearLimit,
                          LowerAngleLimit, UpperAngleLimit);
@@ -506,16 +516,16 @@ void URDFParser::ParseJoint(std::string sRobotName,
       //  If there is no child, it means the constraint is connected
       //  to the World
       if (sChildName.length() == 0) {
-        PToPOne* pPToP = new PToPOne(
+        std::shared_ptr<PToPOne> pPToP = std::make_shared<PToPOne>(
             sJointName,
-            static_cast<Shape*>(robot_models_.find(sParentName)->second),
+            static_cast<Shape*>(robot_models_.find(sParentName)->second.get()),
             eig_pivot_A);
         robot_models_[pPToP->GetName()] = pPToP;
       } else {
-        PToPTwo* pPToP = new PToPTwo(
+        std::shared_ptr<PToPTwo> pPToP = std::make_shared<PToPTwo>(
             sJointName,
-            static_cast<Shape*>(robot_models_.find(sParentName)->second),
-            static_cast<Shape*>(robot_models_.find(sChildName)->second),
+            static_cast<Shape*>(robot_models_.find(sParentName)->second.get()),
+            static_cast<Shape*>(robot_models_.find(sChildName)->second.get()),
             eig_pivot_A, eig_pivot_B);
         robot_models_[pPToP->GetName()] = pPToP;
       }
@@ -709,9 +719,10 @@ SimRaycastVehicle* URDFParser::ParseRaycastCar(std::string sRobotName,
 
   Eigen::Vector6d dPose;
   dPose << pose[0], pose[1], pose[2], pose[3], pose[4], pose[5];
-  SimRaycastVehicle* pRaycastVehicle = new SimRaycastVehicle(sRobotName,
-                                                             vParameters,
-                                                             dPose);
+  std::shared_ptr<SimRaycastVehicle> pRaycastVehicle =
+      std::make_shared<SimRaycastVehicle>(sRobotName,
+                                          vParameters,
+                                          dPose);
   if (body_mesh!= "NONE" && wheel_mesh!= "NONE") {
     pRaycastVehicle->SetMeshes(body_mesh, wheel_mesh, body_dim, wheel_dim);
   }
@@ -719,7 +730,7 @@ SimRaycastVehicle* URDFParser::ParseRaycastCar(std::string sRobotName,
   // Build the car here.
   robot_models_[sRobotName] = pRaycastVehicle;
   LOG(debug_level_) << "SUCCESS: Built RaycastVehicle " << sRobotName;
-  return pRaycastVehicle;
+  return pRaycastVehicle.get();
 }
 
 
@@ -746,7 +757,7 @@ void URDFParser::ParseSensorShape(std::string sRobotName,
     //  CREATE THE PHYSICS BODY
 
     Shape* parent = static_cast<Shape*>(
-        robot_models_.find(sParentName)->second);
+        robot_models_.find(sParentName)->second.get());
     Eigen::Vector6d parent_pose = parent->GetPose();
     std::vector<double> vDepthCameraPose;
     vDepthCameraPose.push_back(vPose[0]+parent_pose(0));
@@ -755,10 +766,11 @@ void URDFParser::ParseSensorShape(std::string sRobotName,
     vDepthCameraPose.push_back(vPose[3]+parent_pose(3));
     vDepthCameraPose.push_back(vPose[4]+parent_pose(4));
     vDepthCameraPose.push_back(vPose[5]+parent_pose(5));
-    BoxShape* pCameraBox = new BoxShape(sCameraName,
-                                        vDimension[0], vDimension[1],
-                                        vDimension[2], vMass[0], 1,
-                                        vDepthCameraPose);
+    std::shared_ptr<BoxShape> pCameraBox = std::make_shared<BoxShape>(
+        sCameraName,
+        vDimension[0], vDimension[1],
+        vDimension[2], vMass[0], 1,
+        vDepthCameraPose);
     robot_models_[pCameraBox->GetName()] = pCameraBox;
 
     //  CREATE THE PHYSICS CONSTRAINT
@@ -768,14 +780,12 @@ void URDFParser::ParseSensorShape(std::string sRobotName,
     std::string sCameraJointName = "SimCamJoint"+sCameraName;
     vPivot <<  -vPose[0], -vPose[1], -vPose[2];
     vAxis <<  1, 0, 0;
-    HingeTwoPivot* pCameraHinge =
-        new HingeTwoPivot(sCameraJointName,
-                          static_cast<Shape*>(robot_models_.
-                                               find(sParentName)->second),
-                          static_cast<Shape*>(robot_models_.
-                                               find(sCameraName)->second),
-                          Eigen::Vector3d::Zero(), vPivot,
-                          vAxis, vAxis);
+    std::shared_ptr<HingeTwoPivot> pCameraHinge =
+        std::make_shared<HingeTwoPivot>(
+            sCameraJointName,
+            static_cast<Shape*>(robot_models_.find(sParentName)->second.get()),
+            static_cast<Shape*>(robot_models_.find(sCameraName)->second.get()),
+            Eigen::Vector3d::Zero(), vPivot, vAxis, vAxis);
     pCameraHinge->SetLimits(-0.01, 0.01, 1, .1, 1);
     robot_models_[pCameraHinge->GetName()] = pCameraHinge;
     LOG(debug_level_) << "SUCCESS: Built sensor body";
@@ -785,10 +795,10 @@ void URDFParser::ParseSensorShape(std::string sRobotName,
 ////////////////////////////////////////////////////////////
 /// PARSE ROBOT.XML FOR DEVICES AND BUILD INTO LocalSim
 ////////////////////////////////////////////////////////////
-bool URDFParser::ParseDevices(std::shared_ptr<tinyxml2::XMLDocument> pDoc,
-                              std::shared_ptr<SimDevices> sim_devices,
-                              std::string sProxyName) {
-  tinyxml2::XMLElement *pParent = pDoc->RootElement();
+bool URDFParser::ParseDevices(tinyxml2::XMLDocument& pDoc,
+                              const std::string sProxyName,
+                              std::shared_ptr<SimDevices> sim_devices) {
+  tinyxml2::XMLElement *pParent = pDoc.RootElement();
   tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
   std::string sRobotName(GetAttribute(pParent, "name"));
   sRobotName = sProxyName;
@@ -940,10 +950,11 @@ bool URDFParser::ParseWorldForInitRobotPose(
 /// HELPER FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////
 
-std::vector<ModelNode*> URDFParser::GetModelNodes(
-    std::map<std::string, ModelNode*> mNodes) {
-  std::vector<ModelNode*> Nodes;
-  for (std::map<std::string, ModelNode*>::iterator it = mNodes.begin();
+std::vector<std::shared_ptr<ModelNode> > URDFParser::GetModelNodes(
+    std::map<std::string, std::shared_ptr<ModelNode> > mNodes) {
+  std::vector<std::shared_ptr<ModelNode> > Nodes;
+  for (std::map<std::string, std::shared_ptr<ModelNode> >::iterator it =
+           mNodes.begin();
        it!= mNodes.end(); it++) {
     Nodes.push_back(it->second);
   }
