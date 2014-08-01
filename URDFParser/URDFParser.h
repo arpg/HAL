@@ -12,12 +12,20 @@
 #include <string>
 
 #include "URDFParser/TinyXMLTool.h"
+// Common geometric shapes available in Bullet
 #include "BulletStructs/Shape.h"
+// Common joints and hinges in Bullet
 #include "BulletStructs/Constraint.h"
+// A four-wheeled vehicle with raycasting to calculate contact points
 #include "BulletStructs/SimRaycastVehicle.h"
+// Common devices and sensors found on a robot
 #include "SimDevices/SimDevices.h"
+// Class holding a robot's structure and functions
 #include "SimRobots/SimRobot.h"
+// Struct holding the conditions of the world
 #include "SimRobots/SimWorld.h"
+// Protobufs holding information crucial to controlling
+// a robot and constructing a navigable world
 #include "PbMsgs/CarPlanner.pb.h"
 
 /////////////////////////////////
@@ -58,18 +66,14 @@ class URDFParser {
 
   bool ParseCommandLineForPickSensor(std::string sCommandLine);
 
-  std::vector<std::string> GetSceneFromString(std::string sCommandLine);
+  void GetSceneFromString(std::string sCommandLine,
+                          std::vector<std::string>* scene);
 
   // ParseDevices uses the information given in the Robot.xml file to create the
   // sensor views that we see later in the Sim.
   bool ParseDevices(tinyxml2::XMLDocument& pDoc,
                     const std::string sProxyName,
                     std::shared_ptr<SimDevices> m_SimDevices);
-
-  // This method is used in StateKeeper to initialize the position of every
-  // object in the LocalSim.
-  bool ParseWorldForInitRobotPose(const char* filename,
-                                  std::vector<Eigen::Vector6d>& vRobotInitPose);
 
   std::vector<std::shared_ptr<ModelNode> > GetModelNodes(
       std::map<std::string, std::shared_ptr<ModelNode> > mNodes);

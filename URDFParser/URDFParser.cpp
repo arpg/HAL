@@ -251,30 +251,29 @@ bool URDFParser::ParseCommandLineForPickSensor(std::string sCommandLine) {
 }
 
 // get scene for init device
-std::vector<std::string> URDFParser::GetSceneFromString(
-    std::string sCommandLine) {
-  std::vector<std::string> vScene;
-
-  //  get scene by looking for "//"
-  while (sCommandLine.size()!= 0) {
-    std::string sScene =
-        sCommandLine.substr(0, sCommandLine.find_first_of("//")+1);
-    if (sScene.find("//")!= std::string::npos) {
-      LOG(debug_level_) << "[GetSceneFromStd::String] Get Scene: "
-                        << sScene;
-      vScene.push_back(sScene);
-    } else {
-      if (sCommandLine.size() == 0) {
-        return vScene;
+void URDFParser::GetSceneFromString(std::string sCommandLine,
+                                    std::vector<std::string>* scene) {
+  if (scene) {
+    //  get scene by looking for "//"
+    while (sCommandLine.size()!= 0) {
+      std::string sScene =
+          sCommandLine.substr(0, sCommandLine.find_first_of("//")+1);
+      if (sScene.find("//")!= std::string::npos) {
+        LOG(debug_level_) << "[GetSceneFromStd::String] Get Scene: "
+                          << sScene;
+        scene->push_back(sScene);
       } else {
-        LOG(debug_level_) << "[GetSceneFromStd::String] Fatal Error!"
-                          << " Invalid command line std::string "
-                          << sCommandLine;
-        exit(-1);
+        if (sCommandLine.size() == 0) {
+          return;
+        } else {
+          LOG(debug_level_) << "[GetSceneFromStd::String] Fatal Error!"
+                            << " Invalid command line std::string "
+                            << sCommandLine;
+          exit(-1);
+        }
       }
     }
   }
-  return vScene;
 }
 
 ////////////////////////////////////////////////////////////
@@ -907,43 +906,6 @@ bool URDFParser::ParseDevices(tinyxml2::XMLDocument& pDoc,
   }
   return true;
 }
-
-
-////////////////////////////////////////////////////////////////////////////
-/// PARSE WORLD.XML FOR STATEKEEPER
-////////////////////////////////////////////////////////////////////////////
-bool URDFParser::ParseWorldForInitRobotPose(
-    const char* filename,
-    std::vector<Eigen::Vector6d>& rvRobotInitPose) {
-
-  //  make sure the std::vector is empty
-  rvRobotInitPose.clear();
-
-  //  open xml document
-  tinyxml2::XMLDocument doc;
-  if (doc.LoadFile(filename) != 0) {
-    printf("Cannot open %s\n", filename);
-    return false;
-  }
-
-  tinyxml2::XMLElement *pParent = doc.RootElement();
-  tinyxml2::XMLElement *pElement = pParent->FirstChildElement();
-
-  //  read high level parent (root parent)
-  while (pElement) {
-    const char* sRootContent = pElement->Name();
-    if (strcmp(sRootContent, "robot") == 0) {
-      std::vector<double> vPose = GenNumFromChar(pElement->Attribute("pose"));
-      Eigen::Vector6d ePose;
-      ePose << vPose[0], vPose[1], vPose[2], vPose[3], vPose[4], vPose[5];
-      rvRobotInitPose.push_back(ePose);
-    }
-    pElement = pElement->NextSiblingElement();
-  }
-
-  return true;
-}
-
 
 
 ////////////////////////////////////////////////////////////////////////////
