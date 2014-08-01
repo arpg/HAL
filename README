@@ -2,6 +2,7 @@ HAL is a Hardware Abstraction Layer library that wraps many devices into a proto
 
 HAL          -- Contains devices and associated device drivers like cameras, IMUs, GPS, etc.
 PbMsgs       -- Standard messages used by sensors, loggers, etc.
+URDFParser   -- Constructs data classes for devices, robots, and environments described by URDF files
 Applications -- Tools for logging and reading logs.
 
 
