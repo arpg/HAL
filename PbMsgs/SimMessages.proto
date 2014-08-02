@@ -1,0 +1,132 @@
+///////////////////////// for state ///////////////////////////////////
+message Vector6Msg {
+    required double x = 1;
+    required double y = 2;
+    required double z = 3;
+    required double p = 4;
+    required double q = 5;
+    required double r = 6;
+}
+
+message Vector3Msg {
+    required double x = 1;
+    required double y = 2;
+    required double z = 3;
+}
+
+
+message Matrix33Msg {
+    required double x11 = 1;
+    required double x12 = 2;
+    required double x13 = 3;
+    required double x21 = 4;
+    required double x22 = 5;
+    required double x23 = 6;
+    required double x31 = 7;
+    required double x32 = 8;
+    required double x33 = 9;
+}
+
+//-------------------------------------------------------------------------------------------------------
+// message for body state
+message BodyStateMsg {
+    required string  body_name = 1;
+    required Vector3Msg origin = 2;
+    required Matrix33Msg basis = 3;
+    optional Vector3Msg linear_velocity = 4;  // save angular or linear velocity information
+    optional Vector3Msg angular_velocity = 5;  // save angular or linear velocity information
+}
+
+
+message URDFMsg {
+    optional string robot_name = 1; // robot name of urdf file. e.g. robot1@proxy1
+    optional bytes xml = 2; // const char* of tinyxml2 document
+    repeated bytes mesh = 3; // one URDF file may have several mesh files
+}
+
+
+//-------------------------------------------------------------------------------------------------------
+message RegisterLocalSimReqMsg {
+    required string proxy_name = 1;
+    optional URDFMsg urdf = 2; // send proxy's URDf to StateKeeper
+}
+
+message RegisterLocalSimRepMsg {
+    required string robot_name = 1;
+    required int32 time_step = 2;
+    required Vector6Msg init_pose = 3; // init pose for robot
+    repeated URDFMsg urdf = 4; // urdf of all previous robots in StateKeeper.
+}
+
+
+
+//-------------------------------------------------------------------------------------------------------
+message LocalSimAddNewRobotReqMsg {
+    required string robot_name = 1; // name of robot that want to be added
+    required URDFMsg urdf = 2; // urdf file of new robot
+    required Vector6Msg init_pose = 3; // initial pose of new robot's bodybase
+}
+
+message LocalSimAddNewRobotRepMsg {
+    optional string message = 1; // reply success message
+}
+
+
+//-------------------------------------------------------------------------------------------------------
+message LocalSimDeleteRobotReqMsg {
+    required string robot_name = 1; // name of robot that want to be delete
+}
+
+message LocalSimDeleteRobotRepMsg {
+    optional string message = 1; // reply success message
+}
+
+//-------------------------------------------------------------------------------------------------------
+// record the full state of a robot. include the state of all of its bodys.
+message RobotFullStateMsg {
+    required string robot_name = 1;
+    required int32  time_step = 2;
+    repeated BodyStateMsg body_state = 3;
+}
+
+// record robot full state (state of all robot's body)
+message WorldFullStateMsg {
+    repeated RobotFullStateMsg robot_state = 1;
+    required int32 time_step = 2;
+}
+
+///////////////////////// for Robot and LocalSim /////////////////////
+message RegisterRobotReqMsg {
+    required string name = 1;
+}
+
+message RegisterRobotRepMsg {
+    optional string message = 1;
+}
+
+/////////////////////////// For RPG device /////////////////////////
+// ------ For GPS --------
+message GPSReqMsg {
+    required string message = 1;
+}
+
+message GPSMsg {
+    required double x = 1;
+    required double y = 2;
+    required double z = 3;
+    required int32 time_step = 4;
+}
+
+// ------  For Node Cam -------
+message NodeCamMsg {
+    repeated NodeCamImageMsg image = 1;
+    required int32 time_step = 2;
+    optional int32 size = 3;
+}
+
+message NodeCamImageMsg {
+    optional bytes image = 1;
+    optional int32 image_type = 2;
+    optional int32 image_height = 3;
+    optional int32 image_width = 4;
+}

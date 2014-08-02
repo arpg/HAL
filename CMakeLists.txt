@@ -21,6 +21,9 @@ set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
 add_subdirectory( HAL )
 set(HAL_DIR ${HAL_BINARY_DIR})
 
+add_subdirectory( URDFParser )
+set(URDF_DIR ${URDF_BINARY_DIR})
+
 set( BUILD_APPLICATIONS true CACHE BOOL force )
 if( BUILD_APPLICATIONS )
     add_subdirectory( Applications )

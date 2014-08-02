@@ -1,0 +1,84 @@
+package pb;
+
+// This lists all of the Shapes that we can add to the
+// SimBA RenderEngine via Node.
+// Box, Cylinder, Sphere, Plane, Heightmap, Mesh, Light, Waypoint
+
+message BoxMsg {
+    required string name = 1;
+    required double x_length = 2;
+    required double y_length = 3;
+    required double z_length = 4;
+    required double mass = 5;
+    repeated double pose = 6 [packed=true];
+}
+
+message CylinderMsg {
+    required string name = 1;
+    required double radius = 2;
+    required double height = 3;
+    required double mass = 4;
+    repeated double pose = 5 [packed=true];
+}
+
+message SphereMsg {
+    required string name = 1;
+    required double radius = 2;
+    required double mass = 3;
+    repeated double pose = 4 [packed=true];
+}
+
+message PlaneMsg {
+    required string name = 1;
+    repeated double normal = 2 [packed=true]; // <x, y, z>
+    repeated double pose = 3 [packed=true]; // <x,y,z,r,p,q>
+}
+
+message HeightmapMsg {
+    required int32 row_count = 1;
+    required int32 col_count = 2;
+    repeated double x_data  = 3 [packed=true];
+    repeated double y_data  = 4 [packed=true];
+    repeated double z_data  = 5 [packed=true];
+}
+
+message MeshMsg {
+    required string name = 1;
+    required string file_dir = 2;
+    repeated double pose = 3 [packed=true];
+}
+
+message LightMsg {
+    required string name = 1;
+    repeated double position = 2 [packed=true]; // <x,y,z>
+}
+
+message WaypointMsg {
+    required string name = 1;
+    repeated double pose = 2 [packed=true]; // <x,y,z,r,p,q>
+    required double velocity = 3;
+}
+
+
+//////////
+// The SceneGraphMsg that holds anything.
+
+message SceneGraphMsg {
+    optional double timestamp = 1;
+    optional BoxMsg box = 2;
+    optional CylinderMsg cylinder = 3;
+    optional SphereMsg sphere = 4;
+    optional PlaneMsg plane = 5;
+    optional HeightmapMsg heightmap = 6;
+    optional MeshMsg mesh = 7;
+    optional LightMsg light = 8;
+    optional WaypointMsg waypoint = 9;
+}
+
+message RegisterRenderReqMsg {
+    required SceneGraphMsg new_objects = 1;
+}
+
+message RegisterRenderRepMsg {
+    optional bool success = 1;
+}

@@ -1,0 +1,67 @@
+package pb;
+
+// x, y, theta, vel
+message PlannerConfigMsg {
+    repeated double start_param = 1 [packed=true];
+    repeated double goal_param = 2 [packed=true];
+}
+
+message PlannerPolicyMsg {
+    repeated double force = 1 [packed=true];
+    repeated double phi = 2 [packed=true];
+    repeated double time = 3 [packed=true];
+}
+
+message PlannerStatusMsg {
+    required bool config_set = 1;
+    required bool mesh_set = 2;
+    required bool policy_set = 3;
+    required bool policy_failed = 4;
+}
+
+message PlannerHeightmapMsg {
+    required int32 row_count = 1;
+    required int32 col_count = 2;
+    repeated double x_data = 3 [packed=true];
+    repeated double y_data = 4 [packed=true];
+    repeated double z_data = 5 [packed=true];
+}
+
+message PlannerMotionSampleMsg {
+    repeated double x = 1 [packed=true];
+    repeated double y = 2 [packed=true];
+    repeated double z = 3 [packed=true];
+    repeated double r = 4 [packed=true];
+    repeated double p = 5 [packed=true];
+    repeated double q = 6 [packed=true];
+    repeated double velocity = 7 [packed=true];
+}
+
+message PlannerSplineMsg {
+    repeated double x_values = 1 [packed=true];
+    repeated double y_values = 2 [packed=true];
+    repeated double solved_goal_pose = 3 [packed=true];
+}
+
+message RegisterPlannerReqMsg {
+    optional PlannerConfigMsg config = 1;
+    optional PlannerPolicyMsg policy = 2;
+    optional PlannerStatusMsg status = 3;
+    optional PlannerHeightmapMsg heightmap = 4;
+    optional PlannerMotionSampleMsg motion_sample = 5;
+    optional PlannerSplineMsg spline = 6;
+    optional uint32 tau = 7;
+    required string req_node_name = 8;
+}
+
+message RegisterPlannerRepMsg {
+    optional PlannerConfigMsg config = 1;
+    optional PlannerPolicyMsg policy = 2;
+    optional PlannerStatusMsg status = 3;
+    optional PlannerHeightmapMsg heightmap = 4;
+    optional PlannerMotionSampleMsg motion_sample = 5;
+    optional PlannerSplineMsg spline = 6;
+    optional uint32 success = 7;
+    optional uint32 tau = 8;
+    optional string rep_node_name = 9;
+}
