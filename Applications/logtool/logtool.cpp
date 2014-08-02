@@ -6,8 +6,8 @@
 /**
  * logtool functionality
  *
- * - [ ] Extract a given set of frames
- * - [ ] Concatenate multiple logs
+ * - [X] Extract a given set of frames
+ * - [X] Concatenate multiple logs
  * - [ ] Reorder a log by timestamp
  * - [ ] Add an index
  * - [ ] Remove an index
