@@ -11,6 +11,7 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
+#include <miniglog/logging.h>
 
 namespace pb {
 
@@ -149,31 +150,40 @@ void Reader::_ThreadFunc() {
       continue;
     }
 
-    if( (pMsg->has_camera() && m_bReadCamera)
-        || (pMsg->has_encoder() && m_bReadEncoder)
-        || (pMsg->has_imu() && m_bReadIMU)
-        || (pMsg->has_lidar() && m_bReadLIDAR)
-        || (pMsg->has_pose() && m_bReadPosys)
-        ) {
+    bool has_camera  = pMsg->has_camera();
+    bool has_encoder = pMsg->has_encoder();
+    bool has_imu     = pMsg->has_imu();
+    bool has_lidar   = pMsg->has_lidar();
+    bool has_pose    = pMsg->has_pose();
 
-      if( pMsg->has_camera() ) {
-        m_qMessageTypes.push_back( Msg_Type_Camera );
-      }
-      if( pMsg->has_encoder() ) {
-        m_qMessageTypes.push_back( Msg_Type_Encoder );
-      }
-      if( pMsg->has_imu() ) {
-        m_qMessageTypes.push_back( Msg_Type_IMU );
-      }
-      if( pMsg->has_lidar() ) {
-        m_qMessageTypes.push_back( Msg_Type_LIDAR );
-      }
-      if( pMsg->has_pose() ) {
-        m_qMessageTypes.push_back( Msg_Type_Posys );
-      }
+    int num_message_types =
+        (has_camera + has_encoder + has_imu + has_lidar + has_pose);
+    if (num_message_types == 0) {
+      LOG(WARNING) << "Message with no known data types found";
+    } else if (num_message_types > 1) {
+      LOG(ERROR) << "Message with more than one data type found.";
+    }
 
+    MessageType msg_type;
+    if (has_camera) {
+      msg_type = Msg_Type_Camera;
+    } else if (has_encoder) {
+      msg_type = Msg_Type_Encoder;
+    } else if (has_imu) {
+      msg_type = Msg_Type_IMU;
+    } else if (has_lidar) {
+      msg_type = Msg_Type_LIDAR;
+    } else if (has_pose) {
+      msg_type = Msg_Type_Posys;
+    }
+
+    if ((has_camera  && m_bReadCamera)  ||
+        (has_encoder && m_bReadEncoder) ||
+        (has_imu     && m_bReadIMU)     ||
+        (has_lidar   && m_bReadLIDAR)   ||
+        (has_pose    && m_bReadPosys)) {
+      m_qMessageTypes.push_back(msg_type);
       m_qMessages.push_back(std::move(pMsg));
-
       m_ConditionQueued.notify_one();
     }
   }
@@ -225,7 +235,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
 
   // message popped above might be some other id than the one wanted.
   // this might cause some frame dropping.
-  if(id>=0 && pCameraMsg->id() != id) {
+  if(id >= 0 && pCameraMsg->id() != id) {
     return nullptr;
   }
 
@@ -376,5 +386,82 @@ bool Reader::SetInitialImage(size_t nImgID) {
   m_bShouldRun = true;
   m_ReadThread = std::thread( &Reader::_ThreadFunc, this );
   return true;
+}
+
+void Reader::EnableAll() {
+  m_bReadCamera = true;
+  m_bReadEncoder = true;
+  m_bReadIMU = true;
+  m_bReadLIDAR = true;
+  m_bReadPosys = true;
+}
+
+void Reader::DisableAll() {
+  m_bReadCamera = false;
+  m_bReadEncoder = false;
+  m_bReadIMU = false;
+  m_bReadLIDAR = false;
+  m_bReadPosys = false;
+}
+
+void Reader::Enable(MessageType type) {
+  switch (type) {
+    case Msg_Type_Camera:
+      m_bReadCamera = true;
+      break;
+    case Msg_Type_Encoder:
+      m_bReadEncoder = true;
+      break;
+    case Msg_Type_IMU:
+      m_bReadIMU = true;
+      break;
+    case Msg_Type_LIDAR:
+      m_bReadLIDAR = true;
+      break;
+    case Msg_Type_Posys:
+      m_bReadPosys = true;
+      break;
+    default:
+      LOG(FATAL) << "Incorrect message type given to Reader::Enable";
+  }
+}
+
+void Reader::Disable(MessageType type) {
+  switch (type) {
+    case Msg_Type_Camera:
+      m_bReadCamera = false;
+      break;
+    case Msg_Type_Encoder:
+      m_bReadEncoder = false;
+      break;
+    case Msg_Type_IMU:
+      m_bReadIMU = false;
+      break;
+    case Msg_Type_LIDAR:
+      m_bReadLIDAR = false;
+      break;
+    case Msg_Type_Posys:
+      m_bReadPosys = false;
+      break;
+    default:
+      LOG(FATAL) << "Incorrect message type given to Reader::Disable";
+  }
+}
+
+bool Reader::IsEnabled(MessageType type) const {
+  switch (type) {
+    case Msg_Type_Camera:
+      return m_bReadCamera;
+    case Msg_Type_Encoder:
+      return m_bReadEncoder;
+    case Msg_Type_IMU:
+      return m_bReadIMU;
+    case Msg_Type_LIDAR:
+      return m_bReadLIDAR;
+    case Msg_Type_Posys:
+      return m_bReadPosys;
+    default:
+      LOG(FATAL) << "Incorrect message type given to Reader::Disable";
+  }
 }
 }  // end namespace hal

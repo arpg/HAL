@@ -75,26 +75,25 @@ void Logger::ThreadFunc() {
     LOG(FATAL) << "HAL: Failed to serialize HEADER to coded stream.";
   }
 
-  ///-------------------- Run Logger
-  while (m_bShouldRun) {
+  while (m_bShouldRun || !m_qMessages.empty()) {
     {
       std::unique_lock<std::mutex> lock(m_QueueMutex);
-      m_QueueCondition.wait(lock, [this]() {
-          return !m_bShouldRun || !m_qMessages.empty();
-        });
-
-      if (!m_bShouldRun) break;
+      if (m_qMessages.empty()) {
+        m_QueueCondition.wait(lock, [this]() {
+            return !m_bShouldRun || !m_qMessages.empty();
+          });
+      }
     }
 
     pb::Msg& msg = m_qMessages.front();
-    const size_t size_bytes = msg.ByteSize();
-    coded_output.WriteVarint32(size_bytes);
-
-    if (!msg.IsInitialized()) {
+    if (msg.IsInitialized()) {
+      coded_output.WriteVarint32(msg.ByteSize());
+      if(!msg.SerializeToCodedStream(&coded_output)) {
+        LOG(WARNING) << "Failed to serialize to coded stream.";
+      }
+    } else {
       LOG(WARNING) << "Message is not initialized missing fields ("
                    << msg.InitializationErrorString() << "). Cannot serialize.";
-    } else if(!msg.SerializeToCodedStream(&coded_output)) {
-      LOG(WARNING) << "Failed to serialize to coded stream.";
     }
 
     std::lock_guard<std::mutex> lock(m_QueueMutex);
