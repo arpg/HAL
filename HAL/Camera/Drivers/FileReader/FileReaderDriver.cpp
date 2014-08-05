@@ -15,7 +15,10 @@ namespace hal {
 
 FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
                                    size_t StartFrame, bool Loop,
-                                   size_t BufferSize, int cvFlags, std::string sName, std::string idString)
+                                   size_t BufferSize, int cvFlags,
+                                   double frequency,
+                                   const std::string& sName,
+                                   const std::string& idString)
     : m_bShouldRun(false),
       m_nNumChannels(ChannelRegex.size()),
       m_nCurrentImageIndex(StartFrame),
@@ -24,7 +27,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
       m_iCvImageReadFlags(cvFlags),
       m_sName(sName),
       m_sId(idString),
-      m_nFramesProcessed(0) {
+      m_nFramesProcessed(0),
+      frequency_(frequency) {
   // clear variables if previously initialized
   m_vFileList.clear();
 
@@ -191,7 +195,7 @@ bool FileReaderDriver::_Read() {
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
     double timestamp = _GetTimestamp(sFileName);
-    if (timestamp < 0) timestamp = m_nFramesProcessed;
+    if (timestamp < 0) timestamp = m_nFramesProcessed / frequency_;
     if (device_timestamp < 0) device_timestamp = timestamp;
     pbImg->set_timestamp(timestamp);
 
