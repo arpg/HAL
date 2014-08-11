@@ -194,7 +194,10 @@ extern "C" {
     pose_vec->add_data(lat);
     pose_vec->add_data(lon);
     pose_vec->add_data(alt);
-    pose->set_std(std);
+
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3);
+    covariance.Diagonal() = std * std;
+    pose->set_covariance(covariance);
 
     logger.LogMessage(msg);
   }
