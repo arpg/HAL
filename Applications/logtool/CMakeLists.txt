@@ -7,6 +7,8 @@ find_package(PbMsgs)
 find_package(GFlags)
 find_package(MINIGLOG)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall  -Werror")
+
 include_directories(
   ${PbMsgs_INCLUDE_DIRS}
   ${GFLAGS_INCLUDE_DIR}
