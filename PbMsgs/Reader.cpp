@@ -463,5 +463,7 @@ bool Reader::IsEnabled(MessageType type) const {
     default:
       LOG(FATAL) << "Incorrect message type given to Reader::Disable";
   }
+
+  return false;
 }
 }  // end namespace hal
