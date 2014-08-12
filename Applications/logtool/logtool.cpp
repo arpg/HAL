@@ -157,8 +157,6 @@ inline void SaveImage(const std::string& out_dir,
 /** Extracts single images out of a log file. */
 void ExtractImages() {
   static const int kNoRange = -1;
-  std::vector<std::string> types;
-  Split("cam", ',', &types);
 
   int frame_min = kNoRange, frame_max = kNoRange;
   std::vector<int> frames;
@@ -172,15 +170,7 @@ void ExtractImages() {
   }
 
   pb::Reader reader(FLAGS_in);
-  if (FLAGS_extract_types.empty()) {
-    reader.EnableAll();
-  } else {
-    LOG(INFO) << "Extracting: ";
-    for (const std::string& type : types) {
-      LOG(INFO) << "\t" << type;
-      reader.Enable(MsgTypeForString(type));
-    }
-  }
+  reader.Enable(pb::Msg_Type_Camera);
 
   int idx = 0;
   std::unique_ptr<pb::Msg> msg;
