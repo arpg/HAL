@@ -1,5 +1,7 @@
 #include <gflags/gflags.h>
 #include <miniglog/logging.h>
+#include <opencv.hpp>
+#include <PbMsgs/Image.h>
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Reader.h>
 
@@ -7,17 +9,20 @@
  * logtool functionality
  *
  * - [X] Extract a given set of frames
+ * - [X] Extract a log into individual images.
  * - [X] Concatenate multiple logs
+ * - [ ] Concatenate multiple single images into a log
  * - [ ] Reorder a log by timestamp
  * - [ ] Add an index
  * - [ ] Remove an index
  * - [ ] Output index, header to human-readable format
  */
 
-DEFINE_string(in, "", "Input log file.");
-DEFINE_string(out, "", "Output log file.");
+DEFINE_string(in, "", "Input log file or input directory.");
+DEFINE_string(out, "", "Output log file or output directory.");
 
-DEFINE_bool(extract, false, "Enable log subset extraction.");
+DEFINE_bool(extract_log, false, "Enable log subset extraction.");
+DEFINE_bool(extract_images, false, "Enable image extraction to individual files.");
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
               "Options include \"cam\", \"imu\", and \"posys\".");
@@ -25,7 +30,7 @@ DEFINE_string(extract_frame_range, "",
               "Range (inclusive) of image frames to extract from the log. "
               "Should be a comma-separated pair, e.g \"0,200\"");
 
-DEFINE_string(cat, "",
+DEFINE_string(cat_logs, "",
               "Comma-separated list of logs to concatenate together. ");
 
 typedef std::function<bool(char)> TrimPred;
@@ -100,6 +105,99 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
   return it->second;
 }
 
+/** Save individual file based on pb:Image type. */
+inline void SaveImage(const std::string& out_dir,
+                      int channel_index,
+                      unsigned int frame_number,
+                      const pb::ImageMsg& image) {
+
+  // Convert index to string.
+  char index[10];
+  sprintf(index, "%02d", channel_index);
+  std::string file_prefix = out_dir + "/";
+  file_prefix = file_prefix + "channel" + index;
+
+  sprintf(index, "%05d", frame_number);
+
+  std::string filename;
+
+
+  // Use OpenCV to handle saving the file for us.
+  cv::Mat cv_image = pb::WriteCvMat(image);
+
+  if (image.type() == pb::Type::PB_FLOAT) {
+    // Save floats to our own "portable depth map" format.
+    filename = file_prefix + "_" + index + ".pdm";
+
+    std::ofstream file(filename.c_str(), std::ios::out | std::ios::binary);
+    file << "P7" << std::endl;
+    file << cv_image.cols << " " << cv_image.rows << std::endl;
+    const size_t size = cv_image.elemSize1() * cv_image.rows * cv_image.cols;
+    file << 4294967295 << std::endl;
+    file.write((const char*)cv_image.data, size);
+    file.close();
+  } else if (image.type() == pb::Type::PB_BYTE
+             || image.type() == pb::Type::PB_UNSIGNED_BYTE
+             || image.type() == pb::Type::PB_SHORT
+             || image.type() == pb::Type::PB_UNSIGNED_SHORT) {
+    // OpenCV only supports byte/short data types with 1/3 channel images.
+    filename = file_prefix + "_" + index + ".pgm";
+    cv::imwrite(filename, cv_image);
+  } else {
+    LOG(FATAL) << "Input image type not supported for extraction.";
+  }
+}
+
+/** Extracts single images out of a log file. */
+void ExtractImages() {
+  static const int kNoRange = -1;
+  std::vector<std::string> types;
+  Split(TrimQuotes(FLAGS_extract_types), ',', &types);
+
+  int frame_min = kNoRange, frame_max = kNoRange;
+  std::vector<int> frames;
+  Split(TrimQuotes(FLAGS_extract_frame_range), ',', &frames);
+  if (!frames.empty()) {
+    CHECK_EQ(2, frames.size()) << "extract_frame_range must be frame PAIR";
+    frame_min = frames[0];
+    frame_max = frames[1];
+    CHECK_LE(frame_min, frame_max)
+        << "Minimum frame index must be <= than max frame index.";
+  }
+
+  pb::Reader reader(FLAGS_in);
+  if (FLAGS_extract_types.empty()) {
+    reader.EnableAll();
+  } else {
+    LOG(INFO) << "Extracting: ";
+    for (const std::string& type : types) {
+      LOG(INFO) << "\t" << type;
+      reader.Enable(MsgTypeForString(type));
+    }
+  }
+
+  int idx = 0;
+  std::unique_ptr<pb::Msg> msg;
+  while (frame_min != kNoRange && idx < frame_min) {
+    if ((msg = reader.ReadMessage()) && msg->has_camera()) {
+      ++idx;
+    }
+  }
+
+  while ((frame_max == kNoRange ||
+          idx <= frame_max) &&
+         (msg = reader.ReadMessage())) {
+    if (msg->has_camera()) {
+      const pb::CameraMsg& cam_msg = msg->camera();
+      for (size_t ii = 0; ii < cam_msg.image_size(); ++ii) {
+        const pb::ImageMsg& img_msg = cam_msg.image(ii);
+        SaveImage(FLAGS_out, ii, idx, img_msg);
+      }
+      ++idx;
+    }
+  }
+}
+
 /** Extract certain elements of a log to a separate log file. */
 void Extract() {
   static const int kNoRange = -1;
@@ -130,9 +228,8 @@ void Extract() {
 
   int idx = 0;
   std::unique_ptr<pb::Msg> msg;
-  while (frame_min != kNoRange &&
-         idx < frame_min) {
-    (msg = reader.ReadMessage());    if (msg->has_camera()) {
+  while (frame_min != kNoRange && idx < frame_min) {
+    if ((msg = reader.ReadMessage()) && msg->has_camera()) {
       ++idx;
     }
   }
@@ -143,9 +240,11 @@ void Extract() {
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_camera()) {
+      if (!logger.LogMessage(*msg)) {
+        break;
+      }
       ++idx;
     }
-    while (!logger.LogMessage(*msg)) {}
   }
 }
 
@@ -155,7 +254,7 @@ void Extract() {
  */
 void Cat() {
   std::vector<std::string> in;
-  Split(TrimQuotes(FLAGS_cat), ',', &in);
+  Split(TrimQuotes(FLAGS_cat_logs), ',', &in);
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
@@ -174,15 +273,20 @@ int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  if (FLAGS_extract + !FLAGS_cat.empty() != 1) {
+  if (FLAGS_extract_log + FLAGS_extract_images
+      + !FLAGS_cat_logs.empty() != 1) {
     LOG(FATAL) << "Must choose one logtool task.";
   }
 
-  if (FLAGS_extract) {
+  if (FLAGS_extract_log) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     Extract();
-  } else if (!FLAGS_cat.empty()) {
+  } else if (FLAGS_extract_images) {
+    CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
+    CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
+    ExtractImages();
+  } else if (!FLAGS_cat_logs.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     Cat();
   }

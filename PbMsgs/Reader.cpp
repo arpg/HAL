@@ -461,7 +461,7 @@ bool Reader::IsEnabled(MessageType type) const {
     case Msg_Type_Posys:
       return m_bReadPosys;
     default:
-      LOG(FATAL) << "Incorrect message type given to Reader::Disable";
+      LOG(FATAL) << "Incorrect message type given to Reader::IsEnabled";
   }
 
   return false;
