@@ -62,7 +62,6 @@ void Logger::ThreadFunc() {
   const char magic_number[] = { '%', 'H', 'A', 'L' };
   coded_output.WriteRaw(magic_number,4);
 
-
   ///-------------------- Write Header Msg
   pb::Header hdr;
   hdr.set_version(PBMSGS_VERSION);
@@ -84,6 +83,8 @@ void Logger::ThreadFunc() {
           });
       }
     }
+
+    if (m_qMessages.empty()) continue;
 
     pb::Msg& msg = m_qMessages.front();
     if (msg.IsInitialized()) {
