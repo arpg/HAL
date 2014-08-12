@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <gflags/gflags.h>
 #include <miniglog/logging.h>
 #include <opencv.hpp>
@@ -112,15 +113,20 @@ inline void SaveImage(const std::string& out_dir,
                       const pb::ImageMsg& image) {
 
   // Convert index to string.
-  char index[10];
-  sprintf(index, "%02d", channel_index);
+  std::string index;
+  std::ostringstream convert;
+  convert << channel_index;
+  index = convert.str();
+
   std::string file_prefix = out_dir + "/";
   file_prefix = file_prefix + "channel" + index;
 
-  sprintf(index, "%05d", frame_number);
+  convert.str("");
+  convert.clear();
+  convert << std::fixed << std::setfill('0') << std::setw(5) << frame_number;
+  index = convert.str();
 
   std::string filename;
-
 
   // Use OpenCV to handle saving the file for us.
   cv::Mat cv_image = pb::WriteCvMat(image);
@@ -152,7 +158,7 @@ inline void SaveImage(const std::string& out_dir,
 void ExtractImages() {
   static const int kNoRange = -1;
   std::vector<std::string> types;
-  Split(TrimQuotes(FLAGS_extract_types), ',', &types);
+  Split("cam", ',', &types);
 
   int frame_min = kNoRange, frame_max = kNoRange;
   std::vector<int> frames;
@@ -199,7 +205,7 @@ void ExtractImages() {
 }
 
 /** Extract certain elements of a log to a separate log file. */
-void Extract() {
+void ExtractLog() {
   static const int kNoRange = -1;
   std::vector<std::string> types;
   Split(TrimQuotes(FLAGS_extract_types), ',', &types);
@@ -252,7 +258,7 @@ void Extract() {
  * Concatenate all the messages from the 'cat' log files into a
  * single file.
  */
-void Cat() {
+void CatLogs() {
   std::vector<std::string> in;
   Split(TrimQuotes(FLAGS_cat_logs), ',', &in);
 
@@ -281,14 +287,14 @@ int main(int argc, char *argv[]) {
   if (FLAGS_extract_log) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
-    Extract();
+    ExtractLog();
   } else if (FLAGS_extract_images) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
     ExtractImages();
   } else if (!FLAGS_cat_logs.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
-    Cat();
+    CatLogs();
   }
 
   return 0;
