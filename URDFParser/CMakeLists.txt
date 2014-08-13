@@ -17,16 +17,29 @@ ENDIF()
 #######################################################
 ## Find required dependencies
 
-find_package( Eigen3 REQUIRED )
-find_package( Node REQUIRED )
-find_package( MINIGLOG REQUIRED )
-find_package( SceneGraph REQUIRED )
-find_package( Pangolin REQUIRED )
-find_package( Calibu 0.1 REQUIRED )
-find_package( PbMsgs REQUIRED )
-find_package( TinyXML2 REQUIRED )
-find_package( Protobuf REQUIRED )
-find_package( OpenCV2 )
+find_package(Eigen3)
+find_package(Node)
+find_package(MINIGLOG)
+find_package(SceneGraph)
+find_package(Pangolin)
+find_package(Calibu 0.1)
+find_package(PbMsgs)
+find_package(TinyXML2)
+find_package(Protobuf)
+find_package(OpenCV2)
+
+set(URDF_CONDITIONS
+  EIGEN3_FOUND
+  Node_FOUND
+  MINIGLOG_FOUND
+  SceneGraph_FOUND
+  Pangolin_FOUND
+  Calibu_FOUND
+  PbMsgs_FOUND
+  TinyXML2_FOUND
+  PROTOBUF_FOUND
+  OpenCV2_FOUND
+  )
 
 list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_DIR}/.." )
 list( APPEND USER_INC   ${CMAKE_CURRENT_BINARY_DIR} )
@@ -57,7 +70,7 @@ include_directories( ${USER_INC} )
 if(ANDROID)
   # Override to use hosts protoc compiler
   unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
-  find_host_package(Protobuf REQUIRED)
+  find_host_package(Protobuf)
 endif()
 
 #######################################################
@@ -135,16 +148,18 @@ def_library(${LIBRARY_NAME}
   SOURCES ${SRCS} ${HDRS}
   LINK_LIBS ${LINK_LIBS}
   PACKAGE URDFParser
+  CONDITIONS ${URDF_CONDITIONS}
   )
 
-export_package(${PROJECT_NAME}
-  TARGETS ${LIBRARY_NAME}
-  VERSION ${VERSION}
-  LIBRARY ${LIBRARY_NAME}
-  LIBRARIES ${LIBRARY_NAME}
-  INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
-  )
-
+if(TARGET ${LIBRARY_NAME})
+  export_package(${PROJECT_NAME}
+    TARGETS ${LIBRARY_NAME}
+    VERSION ${VERSION}
+    LIBRARY ${LIBRARY_NAME}
+    LIBRARIES ${LIBRARY_NAME}
+    INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
+    )
+endif()
 #######################################################
 ## Create configure file for inclusion in library
 

@@ -76,6 +76,10 @@ class SensorViewer {
       imuView.AddDisplay(*gyro_plot_);
       imuView.AddDisplay(*mag_plot_);
 
+      accel_plot_->Track();
+      gyro_plot_->Track();
+      mag_plot_->Track();
+
       if (has_camera_) {
         cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
         imuView.SetBounds(pangolin::Attach::Pix(panel_height_), 1.0/3.0, 0.0, 1.0);

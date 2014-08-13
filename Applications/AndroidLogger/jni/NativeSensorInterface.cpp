@@ -2,8 +2,9 @@
 #include <cstdio>
 #include <jni.h>
 #include <android/log.h>
-#include <PbMsgs/Logger.h>
 #include <miniglog/logging.h>
+#include <PbMsgs/Logger.h>
+#include <PbMsgs/Matrix.h>
 
 static pb::Logger& logger = pb::Logger::GetInstance();
 static std::string log_file;
@@ -194,7 +195,10 @@ extern "C" {
     pose_vec->add_data(lat);
     pose_vec->add_data(lon);
     pose_vec->add_data(alt);
-    pose->set_std(std);
+
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3, 3);
+    covariance.diagonal().setConstant(std * std);
+    pb::WriteMatrix(covariance, pose->mutable_covariance());
 
     logger.LogMessage(msg);
   }
