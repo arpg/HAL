@@ -70,7 +70,8 @@ DC1394Driver::DC1394Driver(
     unsigned int            nHeight,
     float                   fFPS,
     dc1394speed_t           ISO,
-    unsigned int            nDMA
+    unsigned int            nDMA,
+    float                   fEXP
     )
 {
   dc1394error_t e;
@@ -235,10 +236,48 @@ DC1394Driver::DC1394Driver(
     }
 
 
-    //----- set DMA channels
+    //----- set DMA channels    //----- set DMA channels
+
     e = dc1394_capture_setup(pCam, nDMA, DC1394_CAPTURE_FLAGS_DEFAULT);
     if( e != DC1394_SUCCESS )
       throw DeviceException("Could not setup camera - check settings");
+
+    //----- set exposure
+    if (fEXP != FLT_MAX) {
+      dc1394bool_t ret_val1, ret_val2;
+      e = dc1394_feature_is_present(pCam, DC1394_FEATURE_EXPOSURE, &ret_val1);
+      e = dc1394_feature_has_absolute_control(pCam, DC1394_FEATURE_EXPOSURE, &ret_val2);
+
+      if (ret_val1 == DC1394_TRUE && ret_val2 == DC1394_TRUE) {
+
+        float vmin,vmax;
+        e = dc1394_feature_get_absolute_boundaries(pCam, DC1394_FEATURE_EXPOSURE, &vmin, &vmax);
+
+        if (fEXP < vmin || fEXP > vmax) {
+          std::cout << " - Exposure value out of bounds [" << vmin << "," << vmax << "]." << std::endl;
+        } else {
+          dc1394switch_t power;
+          e = dc1394_feature_get_power(pCam, DC1394_FEATURE_EXPOSURE, &power);
+          if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set exposure feature");
+
+          dc1394feature_mode_t feature_mode = DC1394_FEATURE_MODE_MANUAL;
+          e = dc1394_feature_set_mode(pCam, DC1394_FEATURE_EXPOSURE, feature_mode);
+          if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set exposure feature");
+
+          e = dc1394_feature_set_absolute_control(pCam, DC1394_FEATURE_EXPOSURE, power);
+          if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set exposure feature");
+
+          e = dc1394_feature_set_absolute_value(pCam, DC1394_FEATURE_EXPOSURE, fEXP);
+          if( e != DC1394_SUCCESS )
+            throw DeviceException("Could not set exposure value");
+        }
+      } else {
+        std::cout << " - Absolute exposure not supported." << std::endl;
+      }
+    }
 
     printf("OK.\n");
   }

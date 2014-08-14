@@ -18,7 +18,8 @@ public:
             {"roi", "0+0+640x480", "ROI resolution for Format7."},
             {"fps", "30.0", "Capture framerate."},
             {"iso", "800", "ISO speed."},
-            {"dma", "4", "Number of DMA channels."}
+            {"dma", "4", "Number of DMA channels."},
+            {"exp", "AUTO", "Sets exposure to absolute value."}
         };
     }
 
@@ -28,6 +29,7 @@ public:
         ImageDim Dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
         ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
         float fFPS              = uri.properties.Get<float>("fps", 30);
+        float fEXP              = uri.properties.Get<float>("exp", FLT_MAX);
         unsigned int nISO       = uri.properties.Get<unsigned int>("iso", 400);
         unsigned int nDMA       = uri.properties.Get<unsigned int>("dma", 4);
 
@@ -123,7 +125,7 @@ public:
 
         DC1394Driver* pDriver = new DC1394Driver(
                     vCamId, Mode, ROI.x, ROI.y, ROI.w, ROI.h,
-                    fFPS, Speed, nDMA
+                    fFPS, Speed, nDMA, fEXP
                     );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
