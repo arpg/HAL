@@ -1,5 +1,6 @@
 #pragma once
 
+#include <float.h>
 #include <dc1394/dc1394.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
@@ -17,7 +18,7 @@ public:
                unsigned int nTop, unsigned int nLeft,
                unsigned int nWidth, unsigned int nHeight,
                float fFPS, dc1394speed_t ISO,
-               unsigned int nDMA);
+               unsigned int nDMA, float fEXP);
 
   bool Capture( pb::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
