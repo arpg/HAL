@@ -301,7 +301,9 @@ class SensorViewer {
   }
 
   void Posys_Handler(pb::PoseMsg& PoseData) {
-    std::cout << "Posys Data: " << PoseData.pose().data(0) << " - " << PoseData.pose().data(1) << " - " << PoseData.pose().data(2) << std::endl;
+    std::cout << "Posys Data: " << PoseData.pose().data(0) << " - " <<
+                 PoseData.pose().data(1) << " - " << PoseData.pose().data(2) <<
+                 std::endl;
     if (*logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
@@ -311,7 +313,13 @@ class SensorViewer {
   }
 
   void Encoder_Handler(pb::EncoderMsg& EncoderData) {
-    std::cout << "print data" << std::endl;
+    std::cout << "Encoder: ";
+    for (int ii = 0; ii < EncoderData.label_size(); ++ii) {
+      std::cout << EncoderData.label(ii) << ": " << EncoderData.data(ii) <<
+                   ", ";
+    }
+    std::cout << std::endl;
+
     if (*logging_enabled_){
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
