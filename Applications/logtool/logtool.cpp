@@ -5,6 +5,7 @@
 #include <PbMsgs/Image.h>
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Reader.h>
+#include <unistd.h>
 
 /**
  * logtool functionality
@@ -232,14 +233,22 @@ void ExtractLog() {
 
   pb::Logger logger;
   logger.LogToFile(FLAGS_out);
+  const uint32_t max_buffer_size = 5000; // This is the default in logger.
+  logger.SetMaxBufferSize(max_buffer_size);
   while ((frame_max == kNoRange ||
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_camera()) {
-      if (!logger.LogMessage(*msg)) {
-        break;
-      }
       ++idx;
+    }
+
+    if (logger.buffer_size() == max_buffer_size) {
+      LOG(INFO) << "Hit max buffer size. Waiting 100ms.";
+      usleep(100000);
+    }
+
+    if (!logger.LogMessage(*msg)) {
+      break;
     }
   }
 }
