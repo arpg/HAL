@@ -242,9 +242,9 @@ void ExtractLog() {
       ++idx;
     }
 
-    if (logger.buffer_size() == max_buffer_size) {
+    while (logger.buffer_size() == max_buffer_size) {
       LOG(INFO) << "Hit max buffer size. Waiting 100ms.";
-      usleep(100000);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     if (!logger.LogMessage(*msg)) {
