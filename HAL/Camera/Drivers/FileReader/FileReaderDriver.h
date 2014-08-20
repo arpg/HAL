@@ -57,9 +57,10 @@ class FileReaderDriver : public CameraDriverInterface {
   std::vector< std::vector< std::string > >       m_vFileList;
   std::string                                     m_sBaseDir;
   unsigned int                                    m_nNumChannels;
-  unsigned int                                    m_nCurrentImageIndex;
+
+  // Current image index per channel
+  std::vector<unsigned int>                       m_nCurrentImageIndex;
   bool                                            m_bLoop;
-  unsigned int                                    m_nNumImages;
   unsigned int                                    m_nBufferSize;
   int                                             m_iCvImageReadFlags;
   std::string                                     m_sTimeKeeper;

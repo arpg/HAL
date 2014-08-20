@@ -21,7 +21,7 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
                                    const std::string& idString)
     : m_bShouldRun(false),
       m_nNumChannels(ChannelRegex.size()),
-      m_nCurrentImageIndex(StartFrame),
+      m_nCurrentImageIndex(m_nNumChannels, StartFrame),
       m_bLoop(Loop),
       m_nBufferSize(BufferSize),
       m_iCvImageReadFlags(cvFlags),
@@ -46,14 +46,6 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
 
     if(!hal::WildcardFileList(ChannelRegex[ii], vFiles)) {
       throw DeviceException("No files found from regexp", ChannelRegex[ii]);
-    }
-  }
-
-  // make sure each channel has the same number of images
-  m_nNumImages = m_vFileList[0].size();
-  for(unsigned int ii = 1; ii < m_nNumChannels; ii++){
-    if(m_vFileList[ii].size() != m_nNumImages){
-      throw DeviceException("Uneven number of files");
     }
   }
 
@@ -83,9 +75,11 @@ FileReaderDriver::~FileReaderDriver() {
 
 // Consumer
 bool FileReaderDriver::Capture(pb::CameraMsg& vImages) {
-  if(m_nCurrentImageIndex >= m_nNumImages &&
-      m_qImageBuffer.empty() && !m_bLoop) {
-    return false;
+  for (size_t i = 0; i < m_nNumChannels; ++i) {
+    if (m_nCurrentImageIndex[i] >= m_vFileList[i].size() &&
+        m_qImageBuffer.empty() && !m_bLoop) {
+      return false;
+    }
   }
 
   std::unique_lock<std::mutex> lock(m_Mutex);
@@ -176,25 +170,55 @@ bool FileReaderDriver::_Read() {
   //*************************************************************************
 
   // loop over if we finished our files!
-  if(m_nCurrentImageIndex == m_nNumImages) {
-    if(m_bLoop == true) {
-      m_nCurrentImageIndex = 0;  // Just start at the beginning
-    }else{
-      return false;
+  for (size_t i = 0; i < m_nNumChannels; ++i) {
+    if (m_nCurrentImageIndex[i] >= m_vFileList[i].size()) {
+      if (m_bLoop) {
+        m_nCurrentImageIndex.assign(m_nNumChannels, 0);
+        break;
+      } else {
+        return false;
+      }
     }
   }
 
   // now fetch the next set of images
-  std::string sFileName;
+  std::string filename;
+
+  static const double kNoTime = std::numeric_limits<double>::max();
+  double current_timestamp = kNoTime;
+
+  bool synced_channels = false;
+  while (!synced_channels) {
+    synced_channels = true;
+    for (unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
+      filename = m_vFileList[ii][m_nCurrentImageIndex[ii]];
+
+      double timestamp = _GetTimestamp(filename);
+      if (current_timestamp == kNoTime) {
+        current_timestamp = timestamp;
+      }
+
+      while (timestamp < current_timestamp) {
+        filename = m_vFileList[ii][++m_nCurrentImageIndex[ii]];
+        timestamp = _GetTimestamp(filename);
+      }
+
+      if (timestamp > current_timestamp) {
+        current_timestamp = timestamp;
+        synced_channels = false;
+        break;
+      }
+    }
+  }
 
   pb::CameraMsg vImages;
   double device_timestamp = -1;
-  for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
+  for (unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
-    sFileName = m_vFileList[ii][m_nCurrentImageIndex];
-    cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
+    filename = m_vFileList[ii][m_nCurrentImageIndex[ii]];
+    cv::Mat cvImg = _ReadFile(filename, m_iCvImageReadFlags);
 
-    double timestamp = _GetTimestamp(sFileName);
+    double timestamp = _GetTimestamp(filename);
     if (timestamp < 0) timestamp = m_nFramesProcessed / frequency_;
     if (device_timestamp < 0) device_timestamp = timestamp;
     pbImg->set_timestamp(timestamp);
@@ -226,7 +250,6 @@ bool FileReaderDriver::_Read() {
   }
   vImages.set_device_time(device_timestamp);
 
-  m_nCurrentImageIndex++;
   ++m_nFramesProcessed;
 
   // add images at the back of the queue
@@ -237,6 +260,9 @@ bool FileReaderDriver::_Read() {
   // send notification that the buffer is not empty
   m_cBufferEmpty.notify_one();
 
+  for (unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
+    ++m_nCurrentImageIndex[ii];
+  }
   return true;
 }
 
@@ -248,7 +274,7 @@ double FileReaderDriver::_GetNextTime() {
           m_qImageBuffer.front().device_time() : 0);
 }
 
-double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
+double FileReaderDriver::_GetTimestamp(const std::string& filename) const {
   // Returns the timestamp encoded in a filename, or -1.
   //
   // A timestamp is any valid number (starting with a digit) that appears in
@@ -262,12 +288,12 @@ double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {
   // file.png                       returns -1
 
   // skip the path
-  std::string::size_type pos = sFileName.find_last_of("/\\");
+  std::string::size_type pos = filename.find_last_of("/\\");
   if (pos == std::string::npos) pos = 0;
 
   double t = -1;
-  const char* begin = sFileName.c_str() + pos;
-  const char* end = sFileName.c_str() + sFileName.size();
+  const char* begin = filename.c_str() + pos;
+  const char* end = filename.c_str() + filename.size();
 
   for(const char* cur = begin; cur != end;) {
     if (*cur < '0' || *cur > '9')
