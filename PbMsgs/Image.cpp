@@ -163,7 +163,7 @@ int Image::Format() const {
 }
 
 long int Image::SerialNumber() const {
-  return msg_->serialno();
+  return msg_->serial_number();
 }
 
 double Image::Timestamp() const {
