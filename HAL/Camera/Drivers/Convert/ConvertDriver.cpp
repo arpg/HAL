@@ -69,6 +69,7 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
     pbImg->set_format( pb::PB_LUMINANCE );
     pbImg->mutable_data()->resize(m_nImgWidth*m_nImgHeight);
     pbImg->set_timestamp( m_Message.image(ii).timestamp() );
+    pbImg->set_serial_number( m_Message.image(ii).serial_number() );
 
     cv::Mat sImg(m_nImgHeight, m_nImgWidth, m_nCvType,
                    (void*)m_Message.mutable_image(ii)->data().data());

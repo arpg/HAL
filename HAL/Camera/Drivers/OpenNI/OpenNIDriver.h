@@ -41,6 +41,7 @@ class OpenNIDriver : public CameraDriverInterface
         std::vector<xn::DepthGenerator> m_DepthGenerators;
         std::vector<xn::ImageGenerator> m_ImageGenerators;
         std::vector<xn::IRGenerator>    m_IRGenerators;
+        std::vector<long int>           m_SerialNos;
 };
 
 }
