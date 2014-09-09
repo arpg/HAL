@@ -56,6 +56,12 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
+    inline bool Empty() const
+    {
+        return m_cam != nullptr;
+    }
+
+    ///////////////////////////////////////////////////////////////
     std::shared_ptr<CameraDriverInterface> GetInputDevice()
     {
         return m_cam->GetInputDevice();
