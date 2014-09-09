@@ -39,4 +39,5 @@ message ImageMsg {
     optional Format format = 5 [default = PB_RGB];
     optional double timestamp = 6;
     optional ImageInfoMsg info = 7;
+    optional uint32 serialno = 8;
 }

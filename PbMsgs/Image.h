@@ -62,6 +62,7 @@ class Image {
   virtual ~Image();
   unsigned int Width() const;
   unsigned int Height() const;
+  long int SerialNumber() const;
   int Type() const;
   int Format() const;
   double Timestamp() const;

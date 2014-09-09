@@ -162,6 +162,10 @@ int Image::Format() const {
   return msg_->format();
 }
 
+long int Image::SerialNumber() const {
+  return msg_->serialno();
+}
+
 double Image::Timestamp() const {
   return msg_->timestamp();
 }
