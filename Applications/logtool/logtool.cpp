@@ -186,7 +186,7 @@ void ExtractImages() {
          (msg = reader.ReadMessage())) {
     if (msg->has_camera()) {
       const pb::CameraMsg& cam_msg = msg->camera();
-      for (size_t ii = 0; ii < cam_msg.image_size(); ++ii) {
+      for (int ii = 0; ii < cam_msg.image_size(); ++ii) {
         const pb::ImageMsg& img_msg = cam_msg.image(ii);
         SaveImage(FLAGS_out, ii, idx, img_msg);
       }
