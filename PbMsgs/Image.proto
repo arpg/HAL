@@ -31,7 +31,6 @@ enum Format {
 }
 
 message ImageMsg {
-
     optional uint32 width = 1;
     optional uint32 height = 2;
     optional bytes data = 3;
@@ -39,5 +38,5 @@ message ImageMsg {
     optional Format format = 5 [default = PB_RGB];
     optional double timestamp = 6;
     optional ImageInfoMsg info = 7;
-    optional uint32 serial_number = 8;
+    optional uint64 serial_number = 8;
 }
