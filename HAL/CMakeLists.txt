@@ -4,6 +4,10 @@ set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
+# Policy CMP0023 allows to mix old and new interfaces of target_link_libraries
+cmake_policy(SET CMP0023 OLD)
+cmake_policy(SET CMP0022 OLD)
+
 include(def_library)
 include(export_package)
 include(set_git_version)
