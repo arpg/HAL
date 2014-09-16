@@ -14,7 +14,7 @@ public:
     : DeviceFactory<CameraDriverInterface>(name)
   {
     Params() = {
-      {"fmt", "MONO8", "Video format: MONO8, RGB8"},
+      {"fmt", "MONO8", "Output video format: MONO8, RGB8, BGR8"},
       {"range", "1", "Range of values of 16 and 32 bit images: ir (1023), "
                      "depth (4500) or numerical value"}
   };
@@ -28,6 +28,8 @@ public:
 
     if(sRange == "ir")
       dRange = 1023; // OpenNi uses the 10 l.s.bits only (range [0, 1023])
+    else if(sRange == "ir2")
+      dRange = 20000; // libfreenect2 uses this value
     else if(sRange == "depth")
       dRange = 4500; // max range (mm) of asus xtion pro live
     else {
