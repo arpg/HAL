@@ -15,6 +15,7 @@ ConvertDriver::ConvertDriver(
     )
   : m_Input(Input),
     m_sFormat(sFormat),
+    m_nOutCvType(-1),
     m_nNumChannels(Input->NumChannels()),
     m_dRange(dRange)
 {
