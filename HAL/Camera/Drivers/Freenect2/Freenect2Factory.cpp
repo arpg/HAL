@@ -11,7 +11,7 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
-            {"size", "640x480", "Capture resolution."},
+            {"size", "1920x1080", "Capture resolution."},
             {"rgb", "true", "Capture RGB image."},
             {"depth", "true", "Capture depth image."},
             {"ir", "false", "Capture infrared image."},
@@ -21,7 +21,7 @@ public:
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        ImageDim Dims       = uri.properties.Get("size", ImageDim(1024,576));
+        ImageDim Dims       = uri.properties.Get("size", ImageDim(1920,1080));
         bool bRGB           = uri.properties.Get("rgb", true);
         bool bDepth         = uri.properties.Get("depth", true);
         bool bIR            = uri.properties.Get("ir", false);
