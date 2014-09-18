@@ -1,0 +1,9 @@
+To use this driver:
+- Install libfreenect2 by doing:
+  git clone https://github.com/dorian3d/libfreenect2.git
+
+Remember to do make install.
+
+If runtime fails, make sure the Kinect2 is connected to a USB 3.0 port and that it is recognized by the system in the USB 3.0 SuperSpeed Bus. Note that if it appears in the USB 3.0 Hi-Speed Bus (which actually is USB 2.0), the camera will not work.
+ 
+In MacOs, it has been shown effective to plug the camera to the USB port first and then to the power.

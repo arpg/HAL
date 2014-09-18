@@ -57,7 +57,7 @@ OpenNIDriver::OpenNIDriver(
         // idVendor, idProduct, DeviceId: 4 hex digits
         std::string info(node.GetCreationInfo());
         std::string::size_type first = info.find('@');
-        long int serialno = 0;
+        uint64_t serialno = 0;
         if (first != std::string::npos)
         {
           ++first; // first BusID character
