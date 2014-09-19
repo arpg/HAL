@@ -96,7 +96,7 @@ bool URDFParser::ParseWorld(const tinyxml2::XMLDocument& pDoc,
         X.resize(row_count*col_count);
         Y.resize(row_count*col_count);
         Z.resize(row_count*col_count);
-        for (int ii = 0; ii < x_data.size(); ii++) {
+        for (size_t ii = 0; ii < x_data.size(); ii++) {
           X.at(ii) = x_data.at(ii);
           Y.at(ii) = y_data.at(ii);
           Z.at(ii) = z_data.at(ii);
