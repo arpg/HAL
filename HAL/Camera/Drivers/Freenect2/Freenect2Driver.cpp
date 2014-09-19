@@ -16,14 +16,15 @@
 using namespace hal;
 
 Freenect2Driver::Freenect2Driver(
-        unsigned int            nWidth,
-        unsigned int            nHeight,
-        bool                    bCaptureRGB,
-        bool                    bCaptureDepth,
-        bool                    bCaptureIR,
-        bool                    bColor)
+    unsigned int            nWidth,
+    unsigned int            nHeight,
+    bool                    bCaptureRGB,
+    bool                    bCaptureDepth,
+    bool                    bCaptureIR,
+    bool                    bColor,
+    bool                    bAlign)
   : m_nImgWidth(nWidth), m_nImgHeight(nHeight), m_bRGB(bCaptureRGB),
-    m_bDepth(bCaptureDepth), m_bIR(bCaptureIR), m_bColor(bColor)
+    m_bDepth(bCaptureDepth), m_bIR(bCaptureIR), m_bColor(bColor), m_bAlign(bAlign)
 {
   const int N = m_freenect2.enumerateDevices();
   if(N == 0) {
@@ -54,17 +55,40 @@ Freenect2Driver::Freenect2Driver(
       d->setColorFrameListener(listener.get());
       m_dimensions.push_back(std::make_pair(m_nImgWidth, m_nImgHeight));
     }
+
     if(bCaptureIR || bCaptureDepth) {
       d->setIrAndDepthFrameListener(listener.get());
       if(bCaptureIR) m_dimensions.push_back(std::make_pair(512, 424));
-      if(bCaptureDepth) m_dimensions.push_back(std::make_pair(512, 424));
+      if(bCaptureDepth) {
+        if(!bAlign) m_dimensions.push_back(std::make_pair(512, 424));
+        else m_dimensions.push_back(std::make_pair(m_nImgWidth, m_nImgHeight));
+      }
     }
-
+      
     m_devices.emplace_back(d);
     m_listeners.emplace_back(listener);
     m_lSerialNumbers.push_back(ParseSerialNumber(d->getSerialNumber()));
 
     d->start();
+  }
+
+  if(bAlign)
+  {
+    m_depthReg.reset(DepthRegistration::New(cv::Size(m_nImgWidth, m_nImgHeight),
+                                        cv::Size(512, 424),
+                                        cv::Size(512, 424),
+                                        0.5f, 20.0f, 0.015f,
+                                        DepthRegistration::CPU));
+
+    cv::Mat cameraMatrixColor, cameraMatrixDepth;
+    cameraMatrixColor = cv::Mat::zeros(3, 3, CV_64F);
+    cameraMatrixDepth = cv::Mat::zeros(3, 3, CV_64F);
+    m_depthReg->ReadDefaultCameraInfo(cameraMatrixColor, cameraMatrixDepth);
+
+    m_depthReg->init(cameraMatrixColor, cameraMatrixDepth,
+                   cv::Mat::eye(3, 3, CV_64F), cv::Mat::zeros(1, 3, CV_64F),
+                   cv::Mat::zeros(424, 512, CV_32F),
+                   cv::Mat::zeros(424, 512, CV_32F));
   }
 }
 
@@ -87,11 +111,15 @@ uint64_t Freenect2Driver::ParseSerialNumber(const std::string& serial)
 
 bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
 {
+  std::cout<<"capture images "<<std::endl;
   vImages.Clear();
   vImages.set_device_time(Tic());
 
   libfreenect2::FrameMap frames;
   libfreenect2::FrameMap::const_iterator fit;
+  bool bSaveRGB = false;
+  cv::Mat DepthMat;
+
   for(size_t i = 0; i < m_devices.size(); ++i) {
     m_listeners[i]->waitForNewFrame(frames);
     const double time = Tic();
@@ -123,6 +151,8 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
         else
           pbImg->set_data(trg.ptr<unsigned char>(), trg.rows * trg.cols * 3);
       }
+
+      bSaveRGB = true;
     }
 
     if((fit = frames.find(libfreenect2::Frame::Ir)) != frames.end()) {
@@ -140,22 +170,32 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
 
     if((fit = frames.find(libfreenect2::Frame::Depth)) != frames.end()) {
       const libfreenect2::Frame* frame = fit->second;
+      DepthMat = cv::Mat(frame->height, frame->width, CV_32FC1, frame->data);
+
+      if(bSaveRGB && m_bAlign)
+      {
+        if(m_nImgHeight != 424 || m_nImgWidth != 512)
+          m_depthReg->depthToRGBResolution(DepthMat, DepthMat);
+      }
+
+      // change rgb and depth image
       pb::ImageMsg* pbImg = vImages.add_image();
       pbImg->set_timestamp(time);
-      pbImg->set_width(frame->width);
-      pbImg->set_height(frame->height);
+      pbImg->set_width(DepthMat.cols);
+      pbImg->set_height(DepthMat.rows);
       pbImg->set_serial_number(m_lSerialNumbers[i]);
 
       pbImg->set_type(pb::PB_FLOAT);
       pbImg->set_format(pb::PB_LUMINANCE);
-      pbImg->set_data(frame->data, frame->width*frame->height*sizeof(float));
+      pbImg->set_data(DepthMat.data, DepthMat.cols * DepthMat.rows *
+                      sizeof(float));
     }
   }
 
   return true;
 }
 
-std::string Freenect2Driver::GetDeviceProperty(const std::string& sProperty)
+std::string Freenect2Driver::GetDeviceProperty(const std::string&)
 {
   return std::string();
 }
