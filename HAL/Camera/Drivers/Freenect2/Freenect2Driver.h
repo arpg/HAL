@@ -41,6 +41,8 @@ private:
   static uint64_t ParseSerialNumber(const std::string& serial);
 
 private:
+  static const unsigned int IR_IMAGE_WIDTH;
+  static const unsigned int IR_IMAGE_HEIGHT;
   unsigned int  m_nImgWidth;
   unsigned int  m_nImgHeight;
   bool          m_bRGB, m_bDepth, m_bIR, m_bColor, m_bAlign;
