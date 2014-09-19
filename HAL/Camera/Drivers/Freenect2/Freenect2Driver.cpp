@@ -108,21 +108,14 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
       else pbImg->set_format(pb::PB_LUMINANCE);
 
       const libfreenect2::Frame* frame = fit->second;
-      if(frame->height == m_nImgHeight && frame->width == m_nImgWidth &&
-         m_bColor)
-        pbImg->set_data(frame->data, frame->height * frame->width * 3);
-      else {
-        cv::Mat trg;
-        cv::Mat src(frame->height, frame->width, CV_8UC3, frame->data);
-        cv::resize(src, trg, cv::Size(m_nImgWidth, m_nImgHeight));
-        if(!m_bColor)
-        {
-          cv::cvtColor(trg, trg, CV_BGR2GRAY);
-          pbImg->set_data(trg.ptr<unsigned char>(), trg.rows * trg.cols);
-        }
-        else
-          pbImg->set_data(trg.ptr<unsigned char>(), trg.rows * trg.cols * 3);
-      }
+      cv::Mat trg(frame->height, frame->width, CV_8UC3, frame->data);
+      if(frame->height != m_nImgHeight || frame->width != m_nImgWidth)
+        cv::resize(trg, trg, cv::Size(m_nImgWidth, m_nImgHeight));
+      if(!m_bColor) cv::cvtColor(trg, trg, CV_BGR2GRAY);
+      cv::flip(trg, trg, 1);
+
+      pbImg->set_data(trg.ptr<unsigned char>(), trg.rows * trg.cols *
+                      trg.channels());
     }
 
     if((fit = frames.find(libfreenect2::Frame::Ir)) != frames.end()) {
@@ -135,7 +128,10 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
 
       pbImg->set_type(pb::PB_FLOAT);
       pbImg->set_format(pb::PB_LUMINANCE);
-      pbImg->set_data(frame->data, frame->width*frame->height*sizeof(float));
+
+      cv::Mat trg(frame->height, frame->width, CV_32F, frame->data);
+      cv::flip(trg, trg, 1);
+      pbImg->set_data(trg.ptr<float>(), trg.rows * trg.cols * sizeof(float));
     }
 
     if((fit = frames.find(libfreenect2::Frame::Depth)) != frames.end()) {
@@ -148,7 +144,10 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
 
       pbImg->set_type(pb::PB_FLOAT);
       pbImg->set_format(pb::PB_LUMINANCE);
-      pbImg->set_data(frame->data, frame->width*frame->height*sizeof(float));
+
+      cv::Mat trg(frame->height, frame->width, CV_32F, frame->data);
+      cv::flip(trg, trg, 1);
+      pbImg->set_data(trg.ptr<float>(), trg.rows * trg.cols * sizeof(float));
     }
   }
 
