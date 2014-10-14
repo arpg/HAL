@@ -1,11 +1,21 @@
 #include <iomanip>
+#include <unistd.h>
+
 #include <gflags/gflags.h>
 #include <miniglog/logging.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#endif
 #include <opencv.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include <PbMsgs/Image.h>
 #include <PbMsgs/Logger.h>
 #include <PbMsgs/Reader.h>
-#include <unistd.h>
 
 /**
  * logtool functionality

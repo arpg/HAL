@@ -1,4 +1,5 @@
 #include <pangolin/pangolin.h>
+#include <pangolin/glglut.h>
 #include <pangolin/timer.h>
 
 #include <HAL/Camera/CameraDevice.h>
