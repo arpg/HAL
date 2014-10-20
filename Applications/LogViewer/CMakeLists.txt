@@ -3,10 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror")
 
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ENDIF()
-
 # Add to module path, so we can find our cmake modules 
 find_package( Pangolin 0.1 QUIET )
 find_package( SceneGraph 0.1 QUIET )
