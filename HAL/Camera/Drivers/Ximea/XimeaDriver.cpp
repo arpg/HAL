@@ -1,254 +1,101 @@
 #include <iostream>
-
 #include "XimeaDriver.h"
 
 using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline void XimeaDriver::_CheckError( Ximea::Error err )
+inline void XimeaDriver::_CheckError( XI_RETURN err, std::string place)
 {
-  if( err != Ximea::PGRERROR_OK ) {
-    err.PrintErrorTrace();
+  if( err != XI_OK ) {
+    std::cout << "Error after" << place << " " << err << std::endl;
     throw DeviceException("Ximea SDK exception!");
   }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-XimeaDriver::XimeaDriver(
-    std::vector<unsigned int>& vID,
-    Ximea::Mode Mode,
+XimeaDriver::XimeaDriver(std::vector<unsigned int>& vID,
     ImageRoi ROI
     )
 {
-  // TODO(jmf)
-  // * Support other formats aside from format_7??
-  // * Have adjustable framerates?
-  // * Config some GPIO pins.. at least triggerIN and out?
-  // * Configure some image properties? gain, etc.
-  // * This only work for blackflies... too much hardcoded.
 
   // initialize
-  const int max_width = 1600;
-  const int max_height = 1200;
+  //const int max_width = 1600;
+  //const int max_height = 1200;
 
   m_nImgWidth  = ROI.w;
   m_nImgHeight = ROI.h;
 
-  Ximea::Error error;
+  XI_RETURN error = XI_OK;
 
-  Ximea::BusManager BusMgr;
-  unsigned int            nTotalCams;
+  // Get number of camera devices
+  error = xiGetNumberDevices(&dwNumberOfDevices);
+  _CheckError(error,"xiGetNumberDevices (no camera found)");
 
-  error = BusMgr.GetNumOfCameras(&nTotalCams);
-  _CheckError(error);
-
-  if (nTotalCams == 0) {
+  if (dwNumberOfDevices == 0) {
     throw DeviceException("No cameras found!");
   }
 
-  if (nTotalCams < vID.size()) {
+  if (dwNumberOfDevices < vID.size()) {
     throw DeviceException("Less cameras detected than those requested!");
   }
 
   unsigned int nNumCams;
   // If no ids are ovided, all cameras will be opened.
   if (vID.empty()) {
-    nNumCams = nTotalCams;
+    nNumCams = dwNumberOfDevices;
   } else {
     nNumCams = vID.size();
   }
 
-  // prepare Format 7 config
-  Ximea::Format7ImageSettings F7Config;
-  F7Config.mode = Mode;
-  F7Config.height = m_nImgHeight;
-  F7Config.width = m_nImgWidth;
-  if (ROI.x == 0 && ROI.y == 0) {
-    F7Config.offsetX = max_width / 2 - m_nImgWidth / 2;
-    F7Config.offsetY = max_height / 2 - m_nImgHeight / 2;
-  } else {
-    F7Config.offsetX = ROI.x;
-    F7Config.offsetY = ROI.y;
-  }
-  F7Config.pixelFormat = Ximea::PIXEL_FORMAT_MONO8;
-  const unsigned int PacketSize = 1400;
+  // Retrieving a handle to the camera device
+  error = xiOpenDevice(0, &xiH);
+  _CheckError(error,"xiOpenDevice");
 
-  /*
-    // image properties
-    Property P_Shutter;
-    P_Shutter.type = SHUTTER;
-    P_Shutter.onOff = true;
-    P_Shutter.autoManualMode = false;
-    P_Shutter.absControl = true;
-    P_Shutter.absValue = 8;
+  // Setting "exposure" parameter (10ms=10000us)
+  error = xiSetParamInt(xiH, XI_PRM_EXPOSURE, 10000);
+  _CheckError(error,"xiSetParam (exposure set)");
 
-    Property P_Exposure;
-    P_Exposure.type = AUTO_EXPOSURE;
-    P_Exposure.onOff = false;
-    P_Exposure.autoManualMode = false;
-    P_Exposure.absControl = true;
-    P_Exposure.absValue = -3.5;
+  error = xiStartAcquisition(xiH);
+  _CheckError(error,"xiStartAcquisition");
 
-    Property P_Gain;
-    P_Gain.type = GAIN;
-    P_Gain.onOff = true;
-    P_Gain.autoManualMode = false;
-    P_Gain.absControl = true;
-    P_Gain.absValue = 3;
-
-    Property P_Brightness;
-    P_Brightness.type = BRIGHTNESS;
-    P_Brightness.onOff = true;
-    P_Brightness.autoManualMode = false;
-    P_Brightness.absControl = false;
-    P_Brightness.absValue = 50;
-
-    Property P_Sharpness;
-    P_Sharpness.type = SHARPNESS;
-    P_Sharpness.onOff = true;
-    P_Sharpness.autoManualMode = false;
-    P_Sharpness.absControl = false;
-    P_Sharpness.absValue = 0;
-    */
-
-  for(unsigned int ii = 0; ii < nNumCams; ++ii) {
-    Ximea::PGRGuid         GUID;
-
-    // look for camera
-    if(vID.empty()) {
-      error = BusMgr.GetCameraFromIndex(ii, &GUID);
-      _CheckError(error);
-    } else {
-      error = BusMgr.GetCameraFromSerialNumber(vID[ii], &GUID);
-      _CheckError(error);
-    }
-    std::cout << "Setting up camera " << ii << std::endl;
-
-    // connect to camera
-    Ximea::Camera* pCam = new Ximea::Camera;
-    error = pCam->Connect(&GUID);
-    _CheckError(error);
-
-    // set video mode and framerate
-    error = pCam->SetFormat7Configuration(&F7Config, PacketSize);
-    _CheckError(error);
-
-    // set jumbo packet config
-
-
-
-
-    /*
-        error = m_Cam1.SetProperty( &P_Shutter );
-        CheckError(error);
-        error = m_Cam1.SetProperty( &P_Exposure );
-        CheckError(error);
-        error = m_Cam1.SetProperty( &P_Gain );
-        CheckError(error);
-        error = m_Cam1.SetProperty( &P_Brightness );
-        CheckError(error);
-        error = m_Cam1.SetProperty( &P_Sharpness );
-        CheckError(error);
-        */
-
-    /* */
-    // prepare trigger. first camera always strobes, others get trigger.
-    if (ii == 0 && false) {
-      Ximea::TriggerMode Trigger;
-
-      // external trigger is disabled
-      Trigger.onOff = false;
-      Trigger.mode = 0;
-      Trigger.parameter = 0;
-      Trigger.source = 0;
-
-      // set trigger
-      error = pCam->SetTriggerMode( &Trigger );
-      _CheckError(error);
-
-      // prepare strobe
-      Ximea::StrobeControl Strobe;
-
-      // set GPIO pin direction to out
-      const unsigned int StrobeOut = 1;
-      pCam->SetGPIOPinDirection( StrobeOut, 1 );
-
-      // set GPIO as strobe
-      Strobe.onOff = true;
-      Strobe.source = StrobeOut;
-      Strobe.delay = 0;
-      Strobe.duration = 50;
-      Strobe.polarity = 0;
-
-      error = pCam->SetStrobe( &Strobe );
-      _CheckError(error);
-    } else {
-      Ximea::TriggerMode Trigger;
-
-      // set GPIO pin direction to in
-      const unsigned int TriggerIn = 0;
-      pCam->SetGPIOPinDirection(TriggerIn, 0);
-
-      // external trigger is enabled
-      Trigger.onOff = true;
-      Trigger.mode = 0;
-      Trigger.parameter = 0;
-      Trigger.source = TriggerIn;
-
-      // set trigger
-      error = pCam->SetTriggerMode( &Trigger );
-      _CheckError(error);
-    }
-    /* */
-    m_vCams.push_back(pCam);
-  }
-
-  //    const Ximea::Camera** tmp = m_vCams.const_pointer;
-  //    Ximea::Camera::StartSyncCapture(m_vCams.size(), tmp);
-
-  // initiate transmission on all cameras
-  for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
-    error = m_vCams[ii]->StartCapture();
-    //        _CheckError(error);
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 XimeaDriver::~XimeaDriver()
 {
+    // Close device
+    if (xiH)
+        xiCloseDevice(xiH);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool XimeaDriver::Capture(pb::CameraMsg& vImages)
 {
-  Ximea::Error error;
+  XI_RETURN error = XI_OK;
 
-  for(unsigned int ii = 0; ii < m_vCams.size(); ++ii) {
-    Ximea::Image Image;
+  // image buffer
+  XI_IMG image;
+  memset(&image,0,sizeof(image));
+  image.size = sizeof(XI_IMG);
 
-    error = m_vCams[ii]->RetrieveBuffer( &Image );
+  error = xiGetImage(xiH, 5000, &image);
+  _CheckError(error,"xiGetImage");
 
-    if( error != Ximea::PGRERROR_OK ) {
-      std::cerr << "HAL: Error grabbing image from camera." << std::endl;
-      std::cerr << "Error was: " << error.GetDescription() << std::endl;
-      return false;
-    } else {
+  // set timestamp only from first camera
+  vImages.set_device_time( image.tsSec );
 
-      // set timestamp only from first camera
-      if( ii == 0 ) {
-        vImages.set_device_time( Image.GetMetadata().embeddedTimeStamp );
-      }
+  pb::ImageMsg* pbImg = vImages.add_image();
+  pbImg->set_width( image.width );
+  pbImg->set_height( image.height );
+  pbImg->set_data( image.bp, image.bp_size );
+  pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+  pbImg->set_format( pb::PB_LUMINANCE );
 
-      pb::ImageMsg* pbImg = vImages.add_image();
-      pbImg->set_width( Image.GetCols() );
-      pbImg->set_height( Image.GetRows() );
-      pbImg->set_data( Image.GetData(), Image.GetDataSize() );
-      pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-      pbImg->set_format( pb::PB_LUMINANCE );
-    }
-  }
-  return true;
+  if(error == XI_OK)
+    return true;
+  else
+    return false;
 }
 
 
@@ -261,7 +108,7 @@ std::string XimeaDriver::GetDeviceProperty(const std::string& /*sProperty*/)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t XimeaDriver::NumChannels() const
 {
-  return m_vCams.size();
+  return dwNumberOfDevices;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

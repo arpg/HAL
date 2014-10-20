@@ -46,7 +46,7 @@ public:
       ROI.h = Dims.y;
     }
 
-    Ximea::Mode Mode;
+    /*Ximea::Mode Mode;
     if( sMode == "FORMAT7_1" ) {
       Mode = Ximea::MODE_1;
     } else if( sMode == "FORMAT7_2" ) {
@@ -80,9 +80,9 @@ public:
     } else {
       Mode = Ximea::MODE_0;
     }
+*/
 
-
-    XimeaDriver* pDriver = new XimeaDriver(vID, Mode, ROI);
+    XimeaDriver* pDriver = new XimeaDriver(vID, ROI);
 
     return std::shared_ptr<CameraDriverInterface>( pDriver );
   }

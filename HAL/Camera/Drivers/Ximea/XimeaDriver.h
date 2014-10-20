@@ -14,7 +14,6 @@ class XimeaDriver : public CameraDriverInterface
 {
 public:
   XimeaDriver(std::vector<unsigned int>& vID,
-               Ximea::Mode Mode,
                ImageRoi ROI);
   ~XimeaDriver();
 
@@ -28,10 +27,12 @@ public:
   size_t Height( size_t /*idx*/ = 0 ) const;
 
 private:
-  void _CheckError( Ximea::Error error );
+  void _CheckError( XI_RETURN err, std::string place);
 
 private:
-  std::vector<Ximea::Camera*>   m_vCams;
+
+  DWORD                               dwNumberOfDevices = 0;
+  HANDLE                              xiH = NULL;
   unsigned int                        m_nImgWidth;
   unsigned int                        m_nImgHeight;
 
