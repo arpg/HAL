@@ -5,7 +5,7 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Utils/Uri.h>
 
-#include <m3api/xiApi.h>
+#include <xiApi.h>
 
 namespace hal {
 
@@ -13,28 +13,37 @@ namespace hal {
 class XimeaDriver : public CameraDriverInterface
 {
 public:
-  XimeaDriver(std::vector<unsigned int>& vID,
-               ImageRoi ROI);
+  XimeaDriver(std::vector<unsigned int>& vector_ids,
+              float fps,
+              XI_IMG_FORMAT mode,
+              ImageRoi roi);
+
   ~XimeaDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+  bool Capture(pb::CameraMsg& images);
 
-  std::string GetDeviceProperty(const std::string& sProperty);
+  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+    return std::shared_ptr<CameraDriverInterface>();
+  }
+
+  std::string GetDeviceProperty(const std::string& property);
 
   size_t NumChannels() const;
-  size_t Width( size_t /*idx*/ = 0 ) const;
-  size_t Height( size_t /*idx*/ = 0 ) const;
+
+  size_t Width(size_t /*idx*/ = 0) const;
+
+  size_t Height(size_t /*idx*/ = 0) const;
 
 private:
-  void _CheckError( XI_RETURN err, std::string place);
+  void _CheckError(XI_RETURN err, std::string place);
 
 private:
-
-  DWORD                               dwNumberOfDevices = 0;
-  HANDLE                              xiH = NULL;
-  unsigned int                        m_nImgWidth;
-  unsigned int                        m_nImgHeight;
+  size_t                              num_channels;
+  std::vector<HANDLE>                 cam_handle;
+  XI_IMG                              image;
+  XI_IMG_FORMAT                       image_format;
+  unsigned int                        image_width;
+  unsigned int                        image_height;
 
 };
 
