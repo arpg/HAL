@@ -29,7 +29,7 @@ public:
     if(sRange == "ir")
       dRange = 1023; // OpenNi uses the 10 l.s.bits only (range [0, 1023])
     else if(sRange == "ir2")
-      dRange = 65535; // max infrared value in libfreenect2
+      dRange = 20000; // libfreenect2 uses this value
     else if(sRange == "depth")
       dRange = 4500; // max range (mm) of asus xtion pro live
     else {
