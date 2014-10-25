@@ -22,7 +22,8 @@ DEFINE_int32(fps, 30, "Frames per second");
 int main(int argc, char *argv[])
 {
   // get params
-  google::SetUsageMessage("help");
+  google::SetUsageMessage("Read images from a HAL driver and send them over "
+                          "the network through Node.");
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   if(FLAGS_cam.empty())
