@@ -1,47 +1,55 @@
 #pragma once
 
-#include <HAL/Camera/CameraDriverInterface.h>
-#include <HAL/Utils/Uri.h>
-#include "NodeCamMessage.pb.h"
+#include <vector>
+#include <memory>
 #include <string>
+#include <chrono>
 
-#pragma GCC system_header
+#include <HAL/Camera/CameraDriverInterface.h>
 #include <Node/Node.h>
 
 namespace hal {
 
 class NodeCamDriver : public CameraDriverInterface
 {
- public:
-  NodeCamDriver(const hal::Uri &uri);
+public:
+    NodeCamDriver(const std::string& sLocalNode, const std::string& sRemoteNode,
+                  const std::string& sTopicName, double timeout);
+    ~NodeCamDriver();
 
-  virtual ~NodeCamDriver();
+    bool Capture( pb::CameraMsg& vImages );
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+        return std::shared_ptr<CameraDriverInterface>();
+    }
 
-  bool Capture( pb::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
-    return std::shared_ptr<CameraDriverInterface>();
-  }
+    std::string GetDeviceProperty(const std::string& sProperty);
 
-  std::string GetDeviceProperty(const std::string& sProperty);
+    size_t NumChannels() const;
+    size_t Width( size_t idx = 0 ) const;
+    size_t Height( size_t idx = 0 ) const;
 
-  bool InitNode();
-  bool RegisterInHost(const Uri& uri);
+private:
 
-  size_t NumChannels() const;
-  size_t Width( size_t /*idx*/ = 0 ) const;
-  size_t Height( size_t /*idx*/ = 0 ) const;
+    bool InitNode();
 
- private:
-  unsigned int        m_nImgHeight;
-  unsigned int        m_nImgWidth;
-  unsigned int        m_nChannels;
+    // Returns ms from epoch
+    std::chrono::milliseconds Now() const;
 
-  node::node           m_Node;
-  std::string         m_sSimNodeName;
-  std::string         m_sDeviceName;
-  std::string         m_sDeviceId;
-  std::string         m_sTopic;
-  int                 m_nTimeStep;
+    // Returns difference in seconds
+    double EllapsedSeconds(const std::chrono::milliseconds& begin,
+        const std::chrono::milliseconds& end) const;
+
+private:
+    node::node              m_Node;
+    std::string             m_sLocalNode;
+    std::string             m_sRemoteNode;
+    std::string             m_sTopicName;
+    double                  m_dTimeout; // seconds
+    std::string             m_sAddress; // RemoteNode/Topic
+    size_t                  m_nChannels;
+    std::vector<size_t>     m_nImgWidth;
+    std::vector<size_t>     m_nImgHeight;
 };
 
-}
+} /* namespace */
+
