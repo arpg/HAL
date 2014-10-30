@@ -159,7 +159,7 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
     _CheckError(error, "xiGetImage");
 
     // Set timestamp only from first camera.
-    images.set_device_time(image.tsUSec);
+    images.set_device_time(image.tsSec + 1e-9*image.tsUSec);
 
     pb_img->set_width(image.width);
     pb_img->set_height(image.height);
