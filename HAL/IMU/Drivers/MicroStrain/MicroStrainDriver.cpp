@@ -113,9 +113,10 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         mip_ahrs_1pps_timestamp_byteswap(&curr_ahrs_pps_timestamp);
 
                         pbImuMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
+                        pbImuMsg.set_system_time(hal::Tic());
+
                         // TODO It is probably better to use a differnent time specific for the GPS??
                         pbPoseMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
-                        pbImuMsg.set_system_time(hal::Tic());
                     }break;
 
                     // Scaled Accelerometer

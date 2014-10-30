@@ -9,6 +9,7 @@
 
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
+
 #include "DC1394Driver.h"
 
 
