@@ -115,6 +115,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         pbImuMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
                         // TODO It is probably better to use a differnent time specific for the GPS??
                         pbPoseMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
+                        pbImuMsg.set_system_time(hal::Tic());
                     }break;
 
                     // Scaled Accelerometer
@@ -125,9 +126,12 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
                         pb::VectorMsg* pbVec = pbImuMsg.mutable_accel();
-                        pbVec->add_data(curr_ahrs_accel.scaled_accel[0]);
-                        pbVec->add_data(curr_ahrs_accel.scaled_accel[1]);
-                        pbVec->add_data(curr_ahrs_accel.scaled_accel[2]);
+                        pbVec->add_data(curr_ahrs_accel.scaled_accel[0] *
+                            9.80665);
+                        pbVec->add_data(curr_ahrs_accel.scaled_accel[1] *
+                            9.80665);
+                        pbVec->add_data(curr_ahrs_accel.scaled_accel[2] *
+                            9.80665);
                     }break;
 
                     // Scaled Gyro
