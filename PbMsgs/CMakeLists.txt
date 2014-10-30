@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(PbMsgs)
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
@@ -10,9 +10,6 @@ include(export_package)
 string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall  -Werror")
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ENDIF()
 
 
 #######################################################
