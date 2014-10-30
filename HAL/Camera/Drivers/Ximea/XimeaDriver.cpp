@@ -1,4 +1,8 @@
 #include <iostream>
+
+#include <HAL/Devices/DeviceException.h>
+#include <HAL/Utils/TicToc.h>
+
 #include "XimeaDriver.h"
 
 using namespace hal;
@@ -158,7 +162,7 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
     error = xiGetImage(handle, 5000, &image);
     _CheckError(error, "xiGetImage");
 
-    // Set timestamp only from first camera.
+    // Set timestamp from camera.
     images.set_device_time(image.tsSec + 1e-9*image.tsUSec);
 
     pb_img->set_width(image.width);
@@ -176,6 +180,8 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
       std::cerr << "Image format not supported." << std::endl;
     }
   }
+
+  images.set_system_time(hal::Tic());
 
   return error == XI_OK ? true : false;
 }
