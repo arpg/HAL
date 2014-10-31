@@ -4,7 +4,9 @@
  */
 
 
+#include <bitset>
 #include <iostream>
+
 #include <dc1394/conversions.h>
 
 #include <HAL/Devices/DeviceException.h>
