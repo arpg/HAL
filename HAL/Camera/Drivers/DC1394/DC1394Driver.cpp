@@ -8,6 +8,7 @@
 #include <dc1394/conversions.h>
 
 #include <HAL/Devices/DeviceException.h>
+#include <HAL/Utils/TicToc.h>
 
 #include "DC1394Driver.h"
 
@@ -61,8 +62,7 @@ inline int DC1394Driver::_NearestValue(int value, int step, int min, int max)
 
 
 /////////////////////////////////////////////////////////////////////////////
-DC1394Driver::DC1394Driver(
-    std::vector<unsigned int>& vCamId,
+DC1394Driver::DC1394Driver(std::vector<unsigned int>& vCamId,
     dc1394video_mode_t      Mode,
     unsigned int            nTop,
     unsigned int            nLeft,
@@ -71,9 +71,12 @@ DC1394Driver::DC1394Driver(
     float                   fFPS,
     dc1394speed_t           ISO,
     unsigned int            nDMA,
-    float                   fEXP
-    )
+    float                   fEXP,
+    bool                    ptgrey_timestamp)
 {
+  m_PtGreyTimestamp = ptgrey_timestamp;
+  m_DeviceTimestampOffset = 0;
+  m_PreviousTimestamp = 0;
   dc1394error_t e;
 
   m_pBus = dc1394_new();
@@ -105,6 +108,7 @@ DC1394Driver::DC1394Driver(
   // Free the camera list.
   dc1394_camera_free_list(pCameraList);
 
+
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
 
     dc1394camera_t* pCam = m_vCam[ii];
@@ -131,6 +135,7 @@ DC1394Driver::DC1394Driver(
       // "regular" mode
 
       e = dc1394_video_set_mode( pCam, Mode);
+      std::cout << "Setting video mode to " << Mode << std::endl;
       if( e != DC1394_SUCCESS )
         throw DeviceException("Could not set video mode");
 
@@ -279,6 +284,26 @@ DC1394Driver::DC1394Driver(
       }
     }
 
+    if (ptgrey_timestamp) {
+      uint32_t frame_info_val = 0;
+      e = dc1394_get_control_register(pCam, 0x12F8, &frame_info_val);
+      if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not get FRAME_INFO value.");
+
+      frame_info_val |= (1 << 31) | 1;
+      e = dc1394_set_control_register(pCam, 0x12F8, frame_info_val);
+      if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not set FRAME_INFO value.");
+
+      frame_info_val = 0;
+      e = dc1394_get_control_register(pCam, 0x12F8, &frame_info_val);
+      if( e != DC1394_SUCCESS )
+        throw DeviceException("Could not get FRAME_INFO value.");
+
+      std::bitset<32> frame_info_bits(frame_info_val);
+      std::cerr << "FRAME_INFO: " << frame_info_bits << std::endl;
+    }
+
     printf("OK.\n");
   }
 
@@ -337,21 +362,45 @@ bool DC1394Driver::Capture( pb::CameraMsg& vImages )
     if( e != DC1394_SUCCESS )
       return false;
 
-    vImages.set_device_time( (double)pFrame->timestamp * 1E-6 );
-
     pbImg->set_width( m_nImageWidth );
     pbImg->set_height( m_nImageHeight );
     pbImg->set_data( pFrame->image, pFrame->image_bytes );
     pbImg->set_type( m_VideoType );
     pbImg->set_format( m_VideoFormat );
 
+    if (m_PtGreyTimestamp) {
+      double seconds = (pFrame->image[0] >> 1) & 0x7F;
+      double cycles = ((pFrame->image[0] & 1) << 12) | (pFrame->image[1] << 4) |
+          ((pFrame->image[2] & 0xF0) >> 4);
+      double offset = ((pFrame->image[2] & 0x0F) << 8) | pFrame->image[3];
+      double device_timestamp = seconds + cycles * 125e-6 +
+          offset * (1.0 / 24.576e6);
+
+      if (m_PreviousTimestamp == -1) {
+        m_DeviceTimestampOffset = 0;
+        m_PreviousTimestamp = device_timestamp;
+      } else if (device_timestamp <= m_PreviousTimestamp) {
+        m_DeviceTimestampOffset += 128.0;
+      }
+
+      m_PreviousTimestamp = device_timestamp;
+
+      std::cerr << "Captured with second:" << seconds << " cycles: " <<
+                   cycles << " offset: " << offset << " and t: " <<
+                   m_DeviceTimestampOffset + device_timestamp << std::endl;
+      vImages.set_device_time(
+            (double)(m_DeviceTimestampOffset + device_timestamp));
+    } else {
+      vImages.set_device_time( (double)pFrame->timestamp * 1E-6 );
+    }
+
+    vImages.set_system_time(hal::Tic());
+
     // Add image properties: gain, gamma, etc
     _SetImageMetaDataFromCamera( pbImg, m_vCam[ii] );
 
     e = dc1394_capture_enqueue( m_vCam[ii], pFrame );
   }
-
-
   return true;
 }
 

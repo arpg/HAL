@@ -3,7 +3,7 @@
 #include <memory>
 
 #include <HAL/Camera/CameraDriverInterface.h>
-
+#include <HAL/Utils/Uri.h>
 
 namespace hal
 {
@@ -13,7 +13,8 @@ class ConvertDriver : public CameraDriverInterface
 public:
     ConvertDriver(std::shared_ptr<CameraDriverInterface> Input,
                    const std::string& sFormat,
-                   double dRange
+                   double dRange,
+                   ImageDim dims
                  );
 
     bool Capture( pb::CameraMsg& vImages );
@@ -37,6 +38,7 @@ protected:
     std::vector<unsigned int>               m_nImgHeight;
     unsigned int                            m_nNumChannels;
     double                                  m_dRange;
+    ImageDim                                m_Dims;
 };
 
 }

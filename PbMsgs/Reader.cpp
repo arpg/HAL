@@ -228,6 +228,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
 
   std::unique_ptr<pb::CameraMsg> pCameraMsg(new pb::CameraMsg);
   pCameraMsg->Swap(m_qMessages.front()->mutable_camera());
+  pCameraMsg->set_system_time(m_qMessages.front()->timestamp());
 
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
@@ -292,6 +293,7 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg() {
 
   std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
   pImuMsg->Swap( pMessage->mutable_imu() );
+  pImuMsg->set_system_time(pMessage->timestamp());
   return pImuMsg;
 }
 
