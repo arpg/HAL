@@ -11,13 +11,15 @@ namespace hal
 ConvertDriver::ConvertDriver(
     std::shared_ptr<CameraDriverInterface> Input,
     const std::string& sFormat,
-    double dRange
+    double dRange,
+    ImageDim dims
     )
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nOutCvType(-1),
     m_nNumChannels(Input->NumChannels()),
-    m_dRange(dRange)
+    m_dRange(dRange),
+    m_Dims(dims)
 {
   for(size_t i = 0; i < Input->NumChannels(); ++i) {
     m_nImgWidth.push_back(Input->Width(i));
@@ -80,7 +82,8 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
   }
 
   // Prepare return images.
-  vImages.set_device_time( m_Message.device_time() );
+  vImages.set_device_time(m_Message.device_time());
+  vImages.set_system_time(m_Message.system_time());
 
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
@@ -90,19 +93,36 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
       continue;
     }
 
-    pbImg->set_width( m_nImgWidth[ii] );
-    pbImg->set_height( m_nImgHeight[ii] );
+    const bool resize_requested = (m_Dims.x != 0 || m_Dims.y != 0);
+    size_t final_width, final_height;
+    if (resize_requested) {
+      final_width = m_Dims.x;
+      final_height = m_Dims.y;
+    } else {
+      final_width = m_nImgWidth[ii];
+      final_height = m_nImgHeight[ii];
+    }
+    pbImg->set_width( final_width );
+    pbImg->set_height( final_height );
     pbImg->set_type( pb::PB_UNSIGNED_BYTE );
     pbImg->set_format( m_nOutPbType );
-    pbImg->mutable_data()->resize(m_nImgWidth[ii] * m_nImgHeight[ii] *
-                                  (m_nOutCvType == CV_8UC1 ? 1 : 3) );
+    pbImg->mutable_data()->resize(final_width * final_height *
+                                 (m_nOutCvType == CV_8UC1 ? 1 : 3) );
+
     pbImg->set_timestamp( m_Message.image(ii).timestamp() );
     pbImg->set_serial_number( m_Message.image(ii).serial_number() );
 
-    cv::Mat sImg(m_nImgHeight[ii], m_nImgWidth[ii], m_nCvType[ii],
+    cv::Mat s_origImg(m_nImgHeight[ii], m_nImgWidth[ii], m_nCvType[ii],
                    (void*)m_Message.mutable_image(ii)->data().data());
 
-    cv::Mat dImg(m_nImgHeight[ii], m_nImgWidth[ii], m_nOutCvType,
+    cv::Mat sImg;
+    if (resize_requested) {
+      cv::resize(s_origImg, sImg, cv::Size(final_width, final_height));
+    } else {
+      sImg = s_origImg;
+    }
+
+    cv::Mat dImg(final_height, final_width, m_nOutCvType,
                    (void*)pbImg->mutable_data()->data());
 
     // note: cv::cvtColor cannot convert between depth types and

@@ -18,7 +18,7 @@ public:
                unsigned int nTop, unsigned int nLeft,
                unsigned int nWidth, unsigned int nHeight,
                float fFPS, dc1394speed_t ISO,
-               unsigned int nDMA, float fEXP);
+               unsigned int nDMA, float fEXP, bool ptgrey_timestamp);
 
   bool Capture( pb::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
@@ -35,6 +35,11 @@ private:
 
 
 private:
+  // Point grey timestamp variables.
+  bool                              m_PtGreyTimestamp;
+  double                            m_DeviceTimestampOffset;
+  double                            m_PreviousTimestamp;
+
   dc1394_t*                         m_pBus;
   pb::Type                          m_VideoType;
   pb::Format                        m_VideoFormat;

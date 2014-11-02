@@ -19,7 +19,8 @@ public:
             {"fps", "30.0", "Capture framerate."},
             {"iso", "800", "ISO speed."},
             {"dma", "4", "Number of DMA channels."},
-            {"exp", "AUTO", "Sets exposure to absolute value."}
+            {"exp", "AUTO", "Sets exposure to absolute value."},
+            {"ptgrey_timestamp", "false", "use point grey device timestamp."}
         };
     }
 
@@ -32,6 +33,8 @@ public:
         float fEXP              = uri.properties.Get<float>("exp", FLT_MAX);
         unsigned int nISO       = uri.properties.Get<unsigned int>("iso", 400);
         unsigned int nDMA       = uri.properties.Get<unsigned int>("dma", 4);
+        bool ptgrey_timestamp
+            = uri.properties.Get<bool>("ptgrey_timestamp", false);
 
         // Get IDs.
         std::vector<unsigned int> vCamId;
@@ -125,8 +128,7 @@ public:
 
         DC1394Driver* pDriver = new DC1394Driver(
                     vCamId, Mode, ROI.x, ROI.y, ROI.w, ROI.h,
-                    fFPS, Speed, nDMA, fEXP
-                    );
+                    fFPS, Speed, nDMA, fEXP, ptgrey_timestamp);
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
