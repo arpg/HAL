@@ -35,7 +35,7 @@ class SensorViewer {
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
-    panel_height_ = 30;
+    panel_height_ = 60;
     int window_width = num_channels_ * base_width_;
     pangolin::OpenGlRenderState render_state;
     pangolin::Handler3D handler(render_state);
@@ -49,6 +49,8 @@ class SensorViewer {
     // Create panel.
     pangolin::CreatePanel("ui").
         SetBounds(0, pangolin::Attach::Pix(panel_height_), 0, 1.0);
+    limit_fps_.reset(new pangolin::Var<bool>("ui.Limit FPS", true,
+                                                   true));
     logging_enabled_.reset(new pangolin::Var<bool>("ui.Enable Logging",
                                                    false));
 
@@ -182,7 +184,10 @@ class SensorViewer {
 
       pangolin::FinishFrame();
       last_images = images;
-      std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+      if (*limit_fps_ == true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+      }
     }
   }
 
@@ -352,6 +357,7 @@ class SensorViewer {
   hal::Posys posys_;
   hal::LIDAR lidar_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
+  std::unique_ptr<pangolin::Var<bool> > limit_fps_;
   std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;
   pb::Logger& logger_;
 };
