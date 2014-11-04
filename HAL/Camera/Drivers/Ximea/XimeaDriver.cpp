@@ -111,6 +111,10 @@ XimeaDriver::XimeaDriver(
 
     // Setting "FPS" parameter.
     if (fps != 0) {
+      error = xiSetParamInt(handle, XI_PRM_ACQ_TIMING_MODE,
+                            XI_ACQ_TIMING_MODE_FRAME_RATE);
+      _CheckError(error, "xiSetParam (ACQ Timing)");
+
       float min_fps, max_fps;
       xiGetParamFloat(handle, XI_PRM_FRAMERATE XI_PRM_INFO_MIN, &min_fps);
       xiGetParamFloat(handle, XI_PRM_FRAMERATE XI_PRM_INFO_MAX, &max_fps);
@@ -119,9 +123,7 @@ XimeaDriver::XimeaDriver(
                   << max_fps << std::endl;
         throw DeviceException("Requested FPS not supported!");
       }
-      error = xiSetParamInt(handle, XI_PRM_ACQ_TIMING_MODE,
-                            XI_ACQ_TIMING_MODE_FRAME_RATE);
-      _CheckError(error, "xiSetParam (ACQ Timing)");
+
       error = xiSetParamFloat(handle, XI_PRM_FRAMERATE, fps);
       _CheckError(error, "xiSetParam (FPS)");
     }
@@ -168,12 +170,20 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
     pb_img->set_width(image.width);
     pb_img->set_height(image.height);
 
-    if (image_format == XI_MONO8) {
+    if (image_format == XI_RAW8) {
+      pb_img->set_data(image.bp, image_width * image_height);
+      pb_img->set_type(pb::PB_UNSIGNED_BYTE);
+      pb_img->set_format(pb::PB_LUMINANCE);
+    } else if (image_format == XI_RAW16) {
+      pb_img->set_data(image.bp, 2 * image_width * image_height);
+      pb_img->set_type(pb::PB_UNSIGNED_SHORT);
+      pb_img->set_format(pb::PB_LUMINANCE);
+    } else if (image_format == XI_MONO8) {
       pb_img->set_data(image.bp, image_width * image_height);
       pb_img->set_type(pb::PB_UNSIGNED_BYTE);
       pb_img->set_format(pb::PB_LUMINANCE);
     } else if (image_format == XI_MONO16) {
-      pb_img->set_data(image.bp, 2 *image_width * image_height);
+      pb_img->set_data(image.bp, 2 * image_width * image_height);
       pb_img->set_type(pb::PB_UNSIGNED_SHORT);
       pb_img->set_format(pb::PB_LUMINANCE);
     } else {

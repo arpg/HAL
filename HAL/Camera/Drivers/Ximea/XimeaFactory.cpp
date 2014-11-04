@@ -15,7 +15,7 @@ public:
     Params() = {
     {"idN", "0", "Camera serial number."},
     {"fps", "DEFAULT", "Capture framerate: 30, 60, 120"},
-    {"mode", "MONO8", "Video mode: MONO8, MONO16"},
+    {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16"},
     {"size", "640x480", "Capture resolution."},
     {"roi", "0+0+640x480", "ROI resolution."},
   };
@@ -48,7 +48,11 @@ public:
     }
 
     XI_IMG_FORMAT xi_mode;
-    if (mode == "MONO16") {
+    if (mode == "RAW8") {
+      xi_mode = XI_RAW8;
+    } else if (mode == "RAW16") {
+      xi_mode = XI_RAW16;
+    } else if (mode == "MONO16") {
       xi_mode = XI_MONO16;
     } else {
       xi_mode = XI_MONO8;
