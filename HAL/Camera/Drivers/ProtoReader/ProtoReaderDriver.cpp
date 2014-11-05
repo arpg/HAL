@@ -9,7 +9,7 @@ namespace hal {
 ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID)
     : m_first(true),
       m_camId(camID),
-      m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) ) {
+      m_reader(filename) {
   m_reader.SetInitialImage(imageID);
   while( !ReadNextCameraMessage(m_nextMsg) ) {
     std::cout << "HAL: Initializing proto-reader..." << std::endl;
