@@ -27,7 +27,7 @@ class ProtoReaderDriver : public CameraDriverInterface {
 
   bool                    m_first;
   int                     m_camId;
-  pb::Reader&             m_reader;
+  pb::Reader              m_reader;
   pb::CameraMsg           m_nextMsg;
 
   std::vector<size_t>     m_width;
