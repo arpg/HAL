@@ -2,7 +2,7 @@ find_package(Git)
 if(GIT_FOUND)
   include(ExternalProject)
   ExternalProject_Add(ThirdPartyHAL
-    GIT_REPOSITORY rpg@rpg.robotics.gwu.edu:git/ThirdPartyHAL
+    GIT_REPOSITORY arpg@arpg-web.colorado.edu:git/ThirdPartyHAL
     CONFIGURE_COMMAND cmake -E copy_directory . ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
