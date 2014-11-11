@@ -1,0 +1,12 @@
+The Join driver allows to join image streams from an arbitrary number of other HAL drivers.
+
+Usage:
+	join://<driver1>&<driver2>&...&<driverN>
+
+Example:
+	join://node://client1/images&node://client2/images
+
+Note that if used in the command line you need to escape the character '&' or to write all
+the driver line between quotes. Examples:
+  ./SensorViewer -cam join://node://client1/images\&node://client2/images
+  ./SensorViewer -cam "join://node://client1/images&node://client2/images"
