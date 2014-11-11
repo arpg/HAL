@@ -23,6 +23,8 @@ inline void XimeaDriver::_CheckError(
 XimeaDriver::XimeaDriver(
     std::vector<unsigned int>&  vector_ids,
     float                       fps,
+    int                         exp,
+    float                       gain,
     XI_IMG_FORMAT               mode,
     ImageRoi                    roi
   )
@@ -109,6 +111,30 @@ XimeaDriver::XimeaDriver(
       throw DeviceException("Image out of bounds!");
     }
 
+    // Setting "exposure" parameter (10ms=10000us).
+    int min_exp, max_exp;
+    xiGetParamInt(handle, XI_PRM_EXPOSURE XI_PRM_INFO_MIN, &min_exp);
+    xiGetParamInt(handle, XI_PRM_EXPOSURE XI_PRM_INFO_MAX, &max_exp);
+    if (exp < min_exp || exp > max_exp) {
+      std::cerr << "Exposure Values = Min: " << min_exp << " - Max: "
+                << max_exp << std::endl;
+      throw DeviceException("Requested EXPOSURE not supported!");
+    }
+    error = xiSetParamInt(handle, XI_PRM_EXPOSURE, exp);
+    _CheckError(error, "xiSetParam (exposure)");
+
+    // Setting "gain" parameter (10ms=10000us).
+    float min_gain, max_gain;
+    xiGetParamFloat(handle, XI_PRM_GAIN XI_PRM_INFO_MIN, &min_gain);
+    xiGetParamFloat(handle, XI_PRM_GAIN XI_PRM_INFO_MAX, &max_gain);
+    if (gain < min_gain || gain > max_gain) {
+      std::cerr << "Gain Values = Min: " << min_gain << " - Max: "
+                << max_gain << std::endl;
+      throw DeviceException("Requested GAIN not supported!");
+    }
+    error = xiSetParamFloat(handle, XI_PRM_GAIN, gain);
+    _CheckError(error, "xiSetParam (gain)");
+
     // Setting "FPS" parameter.
     if (fps != 0) {
       error = xiSetParamInt(handle, XI_PRM_ACQ_TIMING_MODE,
@@ -127,10 +153,6 @@ XimeaDriver::XimeaDriver(
       error = xiSetParamFloat(handle, XI_PRM_FRAMERATE, fps);
       _CheckError(error, "xiSetParam (FPS)");
     }
-
-    // Setting "exposure" parameter (10ms=10000us).
-    error = xiSetParamInt(handle, XI_PRM_EXPOSURE, 10000);
-    _CheckError(error, "xiSetParam (exposure)");
   }
 
   // Start acquisition.
