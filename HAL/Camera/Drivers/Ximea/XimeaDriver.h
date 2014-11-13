@@ -15,6 +15,8 @@ class XimeaDriver : public CameraDriverInterface
 public:
   XimeaDriver(std::vector<unsigned int>& vector_ids,
               float fps,
+              int exp,
+              float gain,
               XI_IMG_FORMAT mode,
               ImageRoi roi);
 
