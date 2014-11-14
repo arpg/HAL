@@ -220,7 +220,7 @@ void ExtractImu() {
         gyro_file << "0, 0, 0" << std::endl;
       }
 
-      if (imu_msg.has_accel()) {
+      if (imu_msg.has_mag()) {
         // Write the accel to the accel csv
         mag_file  << imu_msg.mag().data(0) << ", " <<
                      imu_msg.mag().data(1) << ", " <<
@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  if (FLAGS_extract_log + FLAGS_extract_images
+  if (FLAGS_extract_log + FLAGS_extract_images + FLAGS_extract_imu +
       + !FLAGS_cat_logs.empty() != 1) {
     LOG(FATAL) << "Must choose one logtool task.";
   }
