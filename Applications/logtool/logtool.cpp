@@ -167,6 +167,11 @@ inline void SaveImage(const std::string& out_dir,
 
 /** Extracts single images out of a log file. */
 void ExtractImu() {
+  std::ofstream accel_file("accel.txt", std::ios_base::trunc);
+  std::ofstream gyro_file("gyro.txt", std::ios_base::trunc);
+  std::ofstream mag_file("mag.txt", std::ios_base::trunc);
+  std::ofstream timestamp_file("timestamp.txt", std::ios_base::trunc);
+
   static const int kNoRange = -1;
 
   int frame_min = kNoRange, frame_max = kNoRange;
@@ -195,9 +200,38 @@ void ExtractImu() {
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_imu()) {
+      const pb::ImuMsg& imu_msg = msg->imu();
+      if (imu_msg.has_accel()) {
+        // Write the accel to the accel csv
+        accel_file  << imu_msg.accel().data(0) << ", " <<
+                       imu_msg.accel().data(1) << ", " <<
+                       imu_msg.accel().data(2) << std::endl;
+      } else {
+        accel_file << "0, 0, 0" << std::endl;
+      }
+
+      if (imu_msg.has_gyro()) {
+        // Write the accel to the accel csv
+        gyro_file  << imu_msg.gyro().data(0) << ", " <<
+                      imu_msg.gyro().data(1) << ", " <<
+                      imu_msg.gyro().data(2) << std::endl;
+      } else {
+        gyro_file << "0, 0, 0" << std::endl;
+      }
+
+      if (imu_msg.has_accel()) {
+        // Write the accel to the accel csv
+        mag_file  << imu_msg.mag().data(0) << ", " <<
+                     imu_msg.mag().data(1) << ", " <<
+                     imu_msg.mag().data(2) << std::endl;
+      } else {
+        mag_file << "0, 0, 0" << std::endl;
+      }
+
+      timestamp_file << imu_msg.system_time() << ", " <<
+                        imu_msg.device_time() << std::endl;
       // WRITE THE IMU
       ++idx;
-
     }
   }
 }
