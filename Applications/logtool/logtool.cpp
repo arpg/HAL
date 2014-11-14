@@ -35,6 +35,7 @@ DEFINE_string(out, "", "Output log file or output directory.");
 
 DEFINE_bool(extract_log, false, "Enable log subset extraction.");
 DEFINE_bool(extract_images, false, "Enable image extraction to individual files.");
+DEFINE_bool(extract_imu, false, "Enable IMU extraction to individual files.");
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
               "Options include \"cam\", \"imu\", and \"posys\".");
@@ -372,6 +373,10 @@ int main(int argc, char *argv[]) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
     ExtractImages();
+  } else if (FLAGS_extract_imu) {
+    CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
+    CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
+    ExtractImu();
   } else if (!FLAGS_cat_logs.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     CatLogs();
