@@ -166,6 +166,43 @@ inline void SaveImage(const std::string& out_dir,
 }
 
 /** Extracts single images out of a log file. */
+void ExtractImu() {
+  static const int kNoRange = -1;
+
+  int frame_min = kNoRange, frame_max = kNoRange;
+  std::vector<int> frames;
+  Split(TrimQuotes(FLAGS_extract_frame_range), ',', &frames);
+  if (!frames.empty()) {
+    CHECK_EQ(2, frames.size()) << "extract_frame_range must be frame PAIR";
+    frame_min = frames[0];
+    frame_max = frames[1];
+    CHECK_LE(frame_min, frame_max)
+        << "Minimum frame index must be <= than max frame index.";
+  }
+
+  pb::Reader reader(FLAGS_in);
+  reader.Enable(pb::Msg_Type_IMU);
+
+  int idx = 0;
+  std::unique_ptr<pb::Msg> msg;
+  while (frame_min != kNoRange && idx < frame_min) {
+    if ((msg = reader.ReadMessage()) && msg->has_camera()) {
+      ++idx;
+    }
+  }
+
+  while ((frame_max == kNoRange ||
+          idx <= frame_max) &&
+         (msg = reader.ReadMessage())) {
+    if (msg->has_imu()) {
+      // WRITE THE IMU
+      ++idx;
+
+    }
+  }
+}
+
+/** Extracts single images out of a log file. */
 void ExtractImages() {
   static const int kNoRange = -1;
 
