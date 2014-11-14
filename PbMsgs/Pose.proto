@@ -20,4 +20,6 @@ message PoseMsg {
 
      // position covariance. Ordered as the pose data is.
     optional MatrixMsg covariance = 5;
+
+    optional double system_time = 6;
 }

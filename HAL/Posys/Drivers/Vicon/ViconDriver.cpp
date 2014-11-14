@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <HAL/Utils/Uri.h>
+#include <HAL/Utils/TicToc.h>
 
 using namespace hal;
 
@@ -73,6 +74,7 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
 
     const double vicon_timestamp = tData.msg_time.tv_sec + (1e-6 * tData.msg_time.tv_usec);
     pbMsg.set_device_time( vicon_timestamp );
+    pbMsg.set_system_time( hal::Tic() );
 
     pbMsg.set_id( pObj->m_nId );
 
