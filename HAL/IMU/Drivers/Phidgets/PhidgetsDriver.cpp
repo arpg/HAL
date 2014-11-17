@@ -2,15 +2,9 @@
 
 #include <sys/time.h>
 
+#include <HAL/Utils/TicToc.h>
 
 namespace hal {
-
-inline double Tic()
-{
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return tv.tv_sec + 1e-6 * (tv.tv_usec);
-}
 
 //callback that will run if the Spatial is attached to the computer
 int CCONV AttachHandler(CPhidgetHandle spatial, void *userptr)
