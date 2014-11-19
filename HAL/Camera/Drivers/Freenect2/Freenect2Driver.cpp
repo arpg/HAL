@@ -189,6 +189,8 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
       cv::flip(trg, trg, 1);
       pbImg->set_data(trg.ptr<float>(), trg.rows * trg.cols * sizeof(float));
     }
+
+    m_listeners[i]->waitForNewFrame(frames);
   }
 
   return true;
