@@ -190,7 +190,7 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
       pbImg->set_data(trg.ptr<float>(), trg.rows * trg.cols * sizeof(float));
     }
 
-    m_listeners[i]->waitForNewFrame(frames);
+    m_listeners[i]->release(frames);
   }
 
   return true;
