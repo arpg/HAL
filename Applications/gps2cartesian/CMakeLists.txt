@@ -34,6 +34,8 @@ set(CONDITIONS
   MINIGLOG_FOUND
   )
 
+list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
+
 def_executable(gps2cartesian
   SOURCES gps2cartesian.cpp
   LINK_LIBS ${LINK_LIBS}
