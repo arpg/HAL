@@ -121,6 +121,7 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
 inline void SaveImage(const std::string& out_dir,
                       int channel_index,
                       unsigned int frame_number,
+                      double timestamp,
                       const pb::ImageMsg& image) {
 
   // Convert index to string.
@@ -134,7 +135,11 @@ inline void SaveImage(const std::string& out_dir,
 
   convert.str("");
   convert.clear();
-  convert << std::fixed << std::setfill('0') << std::setw(5) << frame_number;
+  if (timestamp == 0.)
+    convert << std::fixed << std::setfill('0') << std::setw(5) << frame_number;
+  else
+    convert << std::fixed << std::setfill('0') << std::setw(5) << frame_number
+            << "_" << std::setprecision(9) << timestamp;
   index = convert.str();
 
   std::string filename;
@@ -198,7 +203,7 @@ void ExtractImages() {
       const pb::CameraMsg& cam_msg = msg->camera();
       for (int ii = 0; ii < cam_msg.image_size(); ++ii) {
         const pb::ImageMsg& img_msg = cam_msg.image(ii);
-        SaveImage(FLAGS_out, ii, idx, img_msg);
+        SaveImage(FLAGS_out, ii, idx, cam_msg.system_time(), img_msg);
       }
       ++idx;
     }
