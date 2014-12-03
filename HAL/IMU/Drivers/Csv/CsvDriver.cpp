@@ -81,9 +81,6 @@ CsvDriver::CsvDriver(
     // push timestamp to VD queue
     hal::DeviceTime::PushTime( m_dNextTime );
 
-    // start capture thread
-    m_bShouldRun = true;
-    m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,6 +117,11 @@ CsvDriver::~CsvDriver()
 void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     m_IMUCallback = callback;
+    if( !m_DeviceThread.joinable() ) {
+        // start capture thread
+        m_bShouldRun = true;
+        m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
