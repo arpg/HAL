@@ -225,6 +225,7 @@ bool FileReaderDriver::_Read() {
         cvImg.rows * cvImg.cols * cvImg.elemSize1() * cvImg.channels());
   }
   vImages.set_device_time(device_timestamp);
+  vImages.set_system_time(device_timestamp);
 
   m_nCurrentImageIndex++;
   ++m_nFramesProcessed;
