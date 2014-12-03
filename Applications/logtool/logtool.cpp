@@ -35,6 +35,7 @@ DEFINE_string(out, "", "Output log file or output directory.");
 
 DEFINE_bool(extract_log, false, "Enable log subset extraction.");
 DEFINE_bool(extract_images, false, "Enable image extraction to individual files.");
+DEFINE_bool(extract_imu, false, "Enable IMU extraction to individual files.");
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
               "Options include \"cam\", \"imu\", and \"posys\".");
@@ -166,6 +167,79 @@ inline void SaveImage(const std::string& out_dir,
 }
 
 /** Extracts single images out of a log file. */
+void ExtractImu() {
+  std::ofstream accel_file(FLAGS_out + "/accel.txt", std::ios_base::trunc);
+  std::ofstream gyro_file(FLAGS_out + "/gyro.txt", std::ios_base::trunc);
+  std::ofstream mag_file(FLAGS_out + "/mag.txt", std::ios_base::trunc);
+  std::ofstream timestamp_file(FLAGS_out + "/timestamp.txt",
+                               std::ios_base::trunc);
+
+  static const int kNoRange = -1;
+
+  int frame_min = kNoRange, frame_max = kNoRange;
+  std::vector<int> frames;
+  Split(TrimQuotes(FLAGS_extract_frame_range), ',', &frames);
+  if (!frames.empty()) {
+    CHECK_EQ(2, frames.size()) << "extract_frame_range must be frame PAIR";
+    frame_min = frames[0];
+    frame_max = frames[1];
+    CHECK_LE(frame_min, frame_max)
+        << "Minimum frame index must be <= than max frame index.";
+  }
+
+  pb::Reader reader(FLAGS_in);
+  reader.Enable(pb::Msg_Type_IMU);
+
+  int idx = 0;
+  std::unique_ptr<pb::Msg> msg;
+  while (frame_min != kNoRange && idx < frame_min) {
+    if ((msg = reader.ReadMessage()) && msg->has_camera()) {
+      ++idx;
+    }
+  }
+
+  while ((frame_max == kNoRange ||
+          idx <= frame_max) &&
+         (msg = reader.ReadMessage())) {
+    if (msg->has_imu()) {
+      const pb::ImuMsg& imu_msg = msg->imu();
+      if (imu_msg.has_accel()) {
+        // Write the accel to the accel csv
+        accel_file  << imu_msg.accel().data(0) << ", " <<
+                       imu_msg.accel().data(1) << ", " <<
+                       imu_msg.accel().data(2) << std::endl;
+      } else {
+        accel_file << "0, 0, 0" << std::endl;
+      }
+
+      if (imu_msg.has_gyro()) {
+        // Write the accel to the accel csv
+        gyro_file  << imu_msg.gyro().data(0) << ", " <<
+                      imu_msg.gyro().data(1) << ", " <<
+                      imu_msg.gyro().data(2) << std::endl;
+      } else {
+        gyro_file << "0, 0, 0" << std::endl;
+      }
+
+      if (imu_msg.has_mag()) {
+        // Write the accel to the accel csv
+        mag_file  << imu_msg.mag().data(0) << ", " <<
+                     imu_msg.mag().data(1) << ", " <<
+                     imu_msg.mag().data(2) << std::endl;
+      } else {
+        mag_file << "0, 0, 0" << std::endl;
+      }
+
+      timestamp_file << std::fixed << std::setprecision(9) << imu_msg.system_time() << ", "
+                     << std::setprecision(9) << imu_msg.device_time()
+                     << std::endl;
+      // WRITE THE IMU
+      ++idx;
+    }
+  }
+}
+
+/** Extracts single images out of a log file. */
 void ExtractImages() {
   static const int kNoRange = -1;
 
@@ -288,7 +362,7 @@ int main(int argc, char *argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  if (FLAGS_extract_log + FLAGS_extract_images
+  if (FLAGS_extract_log + FLAGS_extract_images + FLAGS_extract_imu +
       + !FLAGS_cat_logs.empty() != 1) {
     LOG(FATAL) << "Must choose one logtool task.";
   }
@@ -301,6 +375,10 @@ int main(int argc, char *argv[]) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
     ExtractImages();
+  } else if (FLAGS_extract_imu) {
+    CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
+    CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
+    ExtractImu();
   } else if (!FLAGS_cat_logs.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     CatLogs();

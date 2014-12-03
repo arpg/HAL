@@ -132,9 +132,10 @@ void Reader::_ThreadFunc() {
     google::protobuf::io::CodedInputStream::Limit lim =
         coded_input.PushLimit(msg_size_bytes);
     std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
+//      This error message is inaccurate, so squelching it for now.
     if( !pMsg->ParseFromCodedStream(&coded_input) ) {
-      std::cerr << "HAL: Error while parsing from coded stream. "
-                << "Has the Proto file definitions changed?" << std::endl;
+//      std::cerr << "HAL: Error while parsing from coded stream. "
+//                << "Has the Proto file definitions changed?" << std::endl;
       break;
     }
     coded_input.PopLimit(lim);
