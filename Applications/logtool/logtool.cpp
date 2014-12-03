@@ -168,10 +168,11 @@ inline void SaveImage(const std::string& out_dir,
 
 /** Extracts single images out of a log file. */
 void ExtractImu() {
-  std::ofstream accel_file("accel.txt", std::ios_base::trunc);
-  std::ofstream gyro_file("gyro.txt", std::ios_base::trunc);
-  std::ofstream mag_file("mag.txt", std::ios_base::trunc);
-  std::ofstream timestamp_file("timestamp.txt", std::ios_base::trunc);
+  std::ofstream accel_file(FLAGS_out + "/accel.txt", std::ios_base::trunc);
+  std::ofstream gyro_file(FLAGS_out + "/gyro.txt", std::ios_base::trunc);
+  std::ofstream mag_file(FLAGS_out + "/mag.txt", std::ios_base::trunc);
+  std::ofstream timestamp_file(FLAGS_out + "/timestamp.txt",
+                               std::ios_base::trunc);
 
   static const int kNoRange = -1;
 
@@ -229,8 +230,9 @@ void ExtractImu() {
         mag_file << "0, 0, 0" << std::endl;
       }
 
-      timestamp_file << imu_msg.system_time() << ", " <<
-                        imu_msg.device_time() << std::endl;
+      timestamp_file << std::fixed << std::setprecision(9) << imu_msg.system_time() << ", "
+                     << std::setprecision(9) << imu_msg.device_time()
+                     << std::endl;
       // WRITE THE IMU
       ++idx;
     }
