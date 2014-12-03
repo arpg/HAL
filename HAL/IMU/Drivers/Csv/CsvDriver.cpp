@@ -39,7 +39,7 @@ CsvDriver::CsvDriver(
 
     if( sFileAccel.empty() == false ) {
         m_pFileAccel.open( sFileAccel.c_str() );
-        if( m_pFileTime.is_open() == false ) {
+        if( m_pFileAccel.is_open() == false ) {
             std::cerr << "IMULog: Couldn't open accel file '" << sFileAccel << "'" << std::endl;
         } else {
             m_bHaveAccel = true;
@@ -48,7 +48,7 @@ CsvDriver::CsvDriver(
 
     if( sFileGyro.empty() == false ) {
         m_pFileGyro.open( sFileGyro.c_str() );
-        if( m_pFileTime.is_open() == false ) {
+        if( m_pFileGyro.is_open() == false ) {
             std::cerr << "IMULog: Couldn't open gyro file '" << sFileGyro << "'" << std::endl;
         } else {
             m_bHaveGyro = true;
@@ -57,7 +57,7 @@ CsvDriver::CsvDriver(
 
     if( sFileMag.empty() == false ) {
         m_pFileMag.open( sFileMag.c_str() );
-        if( m_pFileTime.is_open() == false ) {
+        if( m_pFileMag.is_open() == false ) {
             std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;
         } else {
             m_bHaveMag = true;
@@ -81,9 +81,6 @@ CsvDriver::CsvDriver(
     // push timestamp to VD queue
     hal::DeviceTime::PushTime( m_dNextTime );
 
-    // start capture thread
-    m_bShouldRun = true;
-    m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,6 +117,11 @@ CsvDriver::~CsvDriver()
 void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     m_IMUCallback = callback;
+    if( !m_DeviceThread.joinable() ) {
+        // start capture thread
+        m_bShouldRun = true;
+        m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
