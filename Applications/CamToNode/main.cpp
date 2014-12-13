@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
   n.advertise(FLAGS_topic);
 
   LOG(INFO) << "Publishing images from node \"" << FLAGS_node
-            << "\" though topic \"" << FLAGS_topic << "\" at "
+            << "\" through topic \"" << FLAGS_topic << "\" at "
             << FLAGS_fps << " fps";
 
   // publish images
