@@ -6,9 +6,11 @@
 #include <unistd.h>
 
 namespace hal {
-ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID)
+ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID,
+                                     const std::vector<int>& channels)
     : m_first(true),
       m_camId(camID),
+      m_channelIds(channels),
       m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) ) {
   m_reader.SetInitialImage(imageID);
   while( !ReadNextCameraMessage(m_nextMsg) ) {
@@ -20,10 +22,21 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t ima
   time_t log_date((long)pbHdr.date());
   std::cout << "- Log dated " << ctime(&log_date);
 
-  m_numChannels = m_nextMsg.image_size();
-  for(size_t c=0; c < m_numChannels; ++c) {
-    m_width.push_back(m_nextMsg.image(c).width());
-    m_height.push_back(m_nextMsg.image(c).height());
+  if (channels.empty()) {
+    m_numChannels = m_nextMsg.image_size();
+    for(size_t c=0; c < m_numChannels; ++c) {
+      m_width.push_back(m_nextMsg.image(c).width());
+      m_height.push_back(m_nextMsg.image(c).height());
+    }
+  } else {
+    m_numChannels = 0;
+    for(int id : channels) {
+      if (id >= 0 && id < m_nextMsg.image_size()) {
+        ++m_numChannels;
+        m_width.push_back(m_nextMsg.image(id).width());
+        m_height.push_back(m_nextMsg.image(id).height());
+      }
+    }
   }
 }
 
@@ -50,7 +63,17 @@ bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages ) {
   } else {
     success = ReadNextCameraMessage(vImages);
   }
-  return success && vImages.image_size() > 0;
+  if (success && !m_channelIds.empty()) {
+    pb::CameraMsg vSubImages;
+    for (int id : m_channelIds) {
+      if (id >= 0 && id < vImages.image_size())
+        vSubImages.add_image()->Swap(vImages.mutable_image(id));
+    }
+    vImages.Swap(&vSubImages);
+    return true;
+  } else {
+    return success && vImages.image_size() > 0;
+  }
 }
 
 std::string ProtoReaderDriver::GetDeviceProperty(const std::string& sProperty) {
