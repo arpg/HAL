@@ -39,20 +39,23 @@ cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
       pbImage.type() == pb::PB_UNSIGNED_BYTE) {
     if (pbImage.format() == pb::PB_LUMINANCE) {
       nCvType = CV_8UC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == pb::PB_RGB ||
+               pbImage.format() == pb::PB_BGR) {
       nCvType = CV_8UC3;
     }
   } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
              pbImage.type() == pb::PB_SHORT) {
     if (pbImage.format() == pb::PB_LUMINANCE) {
       nCvType = CV_16UC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == pb::PB_RGB ||
+               pbImage.format() == pb::PB_BGR) {
       nCvType = CV_16UC3;
     }
   } else if (pbImage.type() == pb::PB_FLOAT) {
     if (pbImage.format() == pb::PB_LUMINANCE) {
       nCvType = CV_32FC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == pb::PB_RGB ||
+               pbImage.format() == pb::PB_BGR) {
       nCvType = CV_32FC3;
     }
   }
