@@ -38,6 +38,9 @@ set_property( GLOBAL PROPERTY P_INCLUDE_DIRS
 set_property( GLOBAL PROPERTY P_LIBRARIES
     ${PbMsgs_LIBRARIES} ${OpenCV2_LIBRARIES}
 )
+set_property( GLOBAL PROPERTY P_DEFINITIONS
+    ""
+)
 
 #############################################################################
 # HAL macros for driver writers.
@@ -95,6 +98,13 @@ macro( hal_set_compile_flags file flags )
 endmacro()
 
 
+macro( add_to_hal_definitions )
+    foreach(_def ${ARGN})
+      set_property( GLOBAL APPEND PROPERTY P_DEFINITIONS "${_def}")
+    endforeach()
+endmacro()
+
+
 macro(subdirlist result curdir)
   file(GLOB children RELATIVE ${curdir} ${curdir}/*)
   set(dirlist "")
@@ -126,6 +136,7 @@ set(LIB_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/.. )
 get_property( INTERNAL_INC  GLOBAL PROPERTY P_INCLUDE_DIRS)
 get_property( INTERNAL_LIBS GLOBAL PROPERTY P_LIBRARIES)
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES)
+get_property( HAL_DEFINITIONS GLOBAL PROPERTY P_DEFINITIONS)
 
 # this is a horrible hack in order to set compiler flag properties to individual files
 get_property( C_O_S GLOBAL PROPERTY COMPILER_OPTS_SOURCES)
@@ -147,6 +158,7 @@ endif()
 
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
+add_definitions(${HAL_DEFINITIONS})
 
 set(HAL_LIBS
   ${INTERNAL_LIBS}
