@@ -3,7 +3,7 @@ find_package(OpenCL QUIET)
 
 if(OpenCV2_FOUND)
     add_to_hal_libraries( ${OpenCV2_LIBRARIES} )
-    add_to_hal_include_dirs( ${OpenCV2_INCLUDE_DIR} ${OPENCL_INCLUDE_DIRS} )
+    add_to_hal_include_dirs( ${OpenCV2_INCLUDE_DIR} )
     add_to_hal_sources(
         AlignDriver.h AlignDriver.cpp AlignFactory.cpp 
         depth_registration.h depth_registration.cpp
