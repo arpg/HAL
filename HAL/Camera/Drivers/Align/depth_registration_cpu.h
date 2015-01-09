@@ -19,7 +19,7 @@
 #ifndef __DEPTH_REGISTRATION_CPU_H__
 #define __DEPTH_REGISTRATION_CPU_H__
 
-#include <libfreenect2/depth_registration.h>
+#include "depth_registration.h"
 
 class DepthRegistrationCPU : public DepthRegistration
 {
