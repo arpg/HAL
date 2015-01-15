@@ -21,7 +21,9 @@
  * logtool functionality
  *
  * - [X] Extract a given set of frames
- * - [X] Extract a log into individual images.
+ * - [X] Extract a log into individual images
+ * - [X] Extract imu from a log and save it as csv
+ * - [X] Extract posys from a log and save it as csv
  * - [X] Concatenate multiple logs
  * - [ ] Concatenate multiple single images into a log
  * - [ ] Reorder a log by timestamp
@@ -36,6 +38,7 @@ DEFINE_string(out, "", "Output log file or output directory.");
 DEFINE_bool(extract_log, false, "Enable log subset extraction.");
 DEFINE_bool(extract_images, false, "Enable image extraction to individual files.");
 DEFINE_bool(extract_imu, false, "Enable IMU extraction to individual files.");
+DEFINE_bool(extract_posys, false, "Enable Posys extraction to individual files.");
 DEFINE_string(extract_types, "",
               "Comma-separated list of types to extract from log. "
               "Options include \"cam\", \"imu\", and \"posys\".");
@@ -171,7 +174,7 @@ inline void SaveImage(const std::string& out_dir,
   }
 }
 
-/** Extracts single images out of a log file. */
+/** Extracts imu out of a log file. */
 void ExtractImu() {
   std::ofstream accel_file(FLAGS_out + "/accel.txt", std::ios_base::trunc);
   std::ofstream gyro_file(FLAGS_out + "/gyro.txt", std::ios_base::trunc);
@@ -241,6 +244,77 @@ void ExtractImu() {
       // WRITE THE IMU
       ++idx;
     }
+  }
+}
+
+/** Extracts posys out of a log file. */
+void ExtractPosys() {
+  static const int kNoRange = -1;
+  int frame_min = kNoRange, frame_max = kNoRange;
+  std::vector<int> frames;
+  Split(TrimQuotes(FLAGS_extract_frame_range), ',', &frames);
+  if (!frames.empty()) {
+    CHECK_EQ(2, frames.size()) << "extract_frame_range must be frame PAIR";
+    frame_min = frames[0];
+    frame_max = frames[1];
+    CHECK_LE(frame_min, frame_max)
+        << "Minimum frame index must be <= than max frame index.";
+  }
+
+  pb::Reader reader(FLAGS_in);
+  reader.Enable(pb::Msg_Type_Posys);
+
+  int idx = 0;
+  std::unique_ptr<pb::Msg> msg;
+  while (frame_min != kNoRange && idx < frame_min) {
+    if ((msg = reader.ReadMessage()) && msg->has_camera()) {
+      ++idx;
+    }
+  }
+
+  // A csv file is created per object with names object00.csv, object01.csv, etc
+  // Each csv file contains these columns (depending on data):
+  // 1. System timestamp
+  // 2. Device timestamp
+  // 3. Object id
+  // 4. Pose type
+  // 5. Size of pose data (this must be consistent with Pose type)
+  // 6. Pose data (as many columns as previous field says)
+  // 7. Size of covariance data (>= 0)
+  // 8. Covariance data (as many columns as previous field says)
+  // The redundancy in items 4 and 5 is due to the RAW pose type that can
+  // contain any number of elements.
+
+  // object id, csv file
+  std::map<int, std::shared_ptr<std::ofstream>> files;
+  while ((frame_max == kNoRange ||
+          idx <= frame_max) &&
+         (msg = reader.ReadMessage())) {
+    if (msg->has_pose()) {
+      const pb::PoseMsg& pose_msg = msg->pose();
+      std::shared_ptr<std::ofstream>& file = files[pose_msg.id()];
+
+      if (!file) {
+        std::stringstream filename;
+        filename << FLAGS_out << "/object" << std::setw(2) << std::setfill('0')
+                 << pose_msg.id() << ".csv";
+        file.reset(new std::ofstream(filename.str().c_str()));
+      }
+
+      *file << std::fixed << std::setprecision(9) << pose_msg.system_time()
+            << ", " << std::setprecision(9) << pose_msg.device_time()
+            << ", " << pose_msg.id() << ", " << pose_msg.type()
+            << ", " << pose_msg.pose().data_size() << ",";
+      for (int i = 0; i < pose_msg.pose().data_size(); ++i)
+        *file << pose_msg.pose().data(i) << ",";
+      *file << " " << pose_msg.covariance().data_size();
+      if (pose_msg.covariance().data_size() > 0) {
+        for (int i = 0; i < pose_msg.covariance().data_size(); ++i)
+          *file << "," << pose_msg.covariance().data(i);
+      }
+      *file << std::endl;
+    }
+    ++idx;
   }
 }
 
@@ -368,7 +442,7 @@ int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
 
   if (FLAGS_extract_log + FLAGS_extract_images + FLAGS_extract_imu +
-      + !FLAGS_cat_logs.empty() != 1) {
+      + FLAGS_extract_posys + !FLAGS_cat_logs.empty() != 1) {
     LOG(FATAL) << "Must choose one logtool task.";
   }
 
@@ -384,6 +458,10 @@ int main(int argc, char *argv[]) {
     CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
     CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
     ExtractImu();
+  } else if (FLAGS_extract_posys) {
+    CHECK(!FLAGS_in.empty()) << "Input file required for extraction.";
+    CHECK(!FLAGS_out.empty()) << "Output directory required for extraction.";
+    ExtractPosys();
   } else if (!FLAGS_cat_logs.empty()) {
     CHECK(!FLAGS_out.empty()) << "Output file required for extraction.";
     CatLogs();
