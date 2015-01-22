@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 project(URDFParser)
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
@@ -135,7 +135,7 @@ list(APPEND URDFPARSER_HDRS
 list(APPEND HRDS
   ${SIMDEVICES_HDRS}         ${SIMDEVICES_CONTROLLER_HDRS}
   ${SIMDEVICES_SENSOR_HDRS}  ${SIMROBOTS_HDRS}
-  ${URDFPARSER_HDRS} 
+  ${URDFPARSER_HDRS}
   )
 
 #######################################################
