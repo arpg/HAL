@@ -20,6 +20,19 @@ Scalar radians(const Scalar& deg) {
   return deg * M_PI / 180.;
 }
 
+double pose_std(const pb::PoseMsg& msg) {
+  if (msg.has_covariance()) {
+    // mean of stds
+    double sum = 0.;
+    for (int i = 0; i < msg.covariance().data_size();
+         i += msg.covariance().rows() + 1) {
+      sum += sqrt(msg.covariance().data(i));
+    }
+    return sum / msg.covariance().rows();
+  } else
+    return 0;
+}
+
 void gps_to_file(std::ofstream* fout, pb::PoseMsg& msg) {
   CHECK_NOTNULL(fout);
   if (msg.type() != pb::PoseMsg::LatLongAlt) {
@@ -38,7 +51,7 @@ void gps_to_file(std::ofstream* fout, pb::PoseMsg& msg) {
   MSP::CCS::CartesianCoordinates cart_coords;
   MSP::CCS::Accuracy cart_acc;
   converter->to_local(
-      radians(pose.data(1)), radians(pose.data(0)), pose.data(2), msg.std(),
+      radians(pose.data(1)), radians(pose.data(0)), pose.data(2), pose_std(msg),
       &cart_coords, &cart_acc);
 
   *fout << msg.device_time() << ","
