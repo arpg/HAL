@@ -307,9 +307,12 @@ class SensorViewer {
   }
 
   void Posys_Handler(pb::PoseMsg& PoseData) {
-    std::cout << "Posys Data: " << PoseData.pose().data(0) << " - " <<
-                 PoseData.pose().data(1) << " - " << PoseData.pose().data(2) <<
-                 std::endl;
+    std::cout << "Posys Id: " << PoseData.id() << ". Data: ";
+    for (int ii = 0; ii < PoseData.pose().data_size(); ++ii) {
+      std::cout << PoseData.pose().data(ii) << " ";
+    }
+    std::cout << std::endl;
+
     if (*logging_enabled_) {
       pb::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
