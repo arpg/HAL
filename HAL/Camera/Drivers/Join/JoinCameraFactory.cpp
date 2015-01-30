@@ -1,13 +1,13 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include "JoinDriver.h"
+#include "JoinCameraDriver.h"
 
 namespace hal
 {
 
-class JoinFactory : public DeviceFactory<CameraDriverInterface>
+class JoinCameraFactory : public DeviceFactory<CameraDriverInterface>
 {
 public:
-  JoinFactory(const std::string& name)
+  JoinCameraFactory(const std::string& name)
     : DeviceFactory<CameraDriverInterface>(name)
   {
     Params() = {};
@@ -35,7 +35,7 @@ public:
       throw DeviceException("No input cameras given to join");
     }
 
-    JoinDriver* pDriver = new JoinDriver(cameras);
+    JoinCameraDriver* pDriver = new JoinCameraDriver(cameras);
     return std::shared_ptr<CameraDriverInterface>( pDriver );
   }
 
@@ -60,6 +60,6 @@ public:
 };
 
 // Register this factory by creating static instance of factory
-static JoinFactory g_JoinFactory("join");
+static JoinCameraFactory g_JoinCameraFactory("join");
 
 }

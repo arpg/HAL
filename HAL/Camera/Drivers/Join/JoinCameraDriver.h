@@ -12,12 +12,12 @@
 
 namespace hal {
 
-class JoinDriver : public CameraDriverInterface
+class JoinCameraDriver : public CameraDriverInterface
 {
 public:
-  JoinDriver(
+  JoinCameraDriver(
       const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras);
-  virtual ~JoinDriver();
+  virtual ~JoinCameraDriver();
 
   bool Capture( pb::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
