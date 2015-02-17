@@ -29,6 +29,14 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
     return message_.device_time();
   }
 
+  double DeviceTime() const {
+    return message_.device_time();
+  }
+
+  double SystemTime() const {
+    return message_.system_time();
+  }
+
   std::shared_ptr<Image> at(int idx) const {
     if (idx < Size()) {
       return std::make_shared<Image>(message_.image(idx), shared_from_this());
