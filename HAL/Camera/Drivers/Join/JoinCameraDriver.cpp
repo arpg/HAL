@@ -7,11 +7,11 @@
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
 
-#include "JoinDriver.h"
+#include "JoinCameraDriver.h"
 
 using namespace hal;
 
-JoinDriver::JoinDriver(
+JoinCameraDriver::JoinCameraDriver(
     const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras)
   : m_Cameras(cameras)
 {
@@ -30,12 +30,12 @@ JoinDriver::JoinDriver(
   }
 }
 
-JoinDriver::~JoinDriver()
+JoinCameraDriver::~JoinCameraDriver()
 {
 }
 
-void
-JoinDriver::WorkTeam::addWorker(std::shared_ptr<CameraDriverInterface>& cam)
+void JoinCameraDriver::WorkTeam::addWorker(
+    std::shared_ptr<CameraDriverInterface>& cam)
 {
   const size_t workerId = m_ImageData.size();
   {
@@ -43,12 +43,13 @@ JoinDriver::WorkTeam::addWorker(std::shared_ptr<CameraDriverInterface>& cam)
     m_ImageData.push_back(pb::CameraMsg());
     m_bWorkerDone.push_back(true);
   }
-  m_Workers.emplace_back(std::thread(&JoinDriver::WorkTeam::Worker, this,
+  m_Workers.emplace_back(std::thread(&JoinCameraDriver::WorkTeam::Worker, this,
                                      std::ref(cam), workerId));
 }
 
-void JoinDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
-                                  size_t workerId)
+void
+JoinCameraDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
+                                   size_t workerId)
 {
   for (;;) {
     waitForWork(workerId);
@@ -57,20 +58,20 @@ void JoinDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
   }
 }
 
-void JoinDriver::WorkTeam::waitForWork(size_t workerId)
+void JoinCameraDriver::WorkTeam::waitForWork(size_t workerId)
 {
   std::unique_lock<std::mutex> lock(m_Mutex);
   if( m_bWorkerDone[workerId] ) m_WorkerCond.wait(lock);
 }
 
-void JoinDriver::WorkTeam::workerDone(size_t workerId)
+void JoinCameraDriver::WorkTeam::workerDone(size_t workerId)
 {
   std::lock_guard<std::mutex> lock(m_Mutex);
   m_bWorkerDone[workerId] = true;
   m_MasterCond.notify_one();
 }
 
-bool JoinDriver::Capture( pb::CameraMsg& vImages )
+bool JoinCameraDriver::Capture( pb::CameraMsg& vImages )
 {
   vImages.Clear();
   const double time = Tic();
@@ -88,7 +89,7 @@ bool JoinDriver::Capture( pb::CameraMsg& vImages )
   return true;
 }
 
-std::vector<pb::CameraMsg>& JoinDriver::WorkTeam::process()
+std::vector<pb::CameraMsg>& JoinCameraDriver::WorkTeam::process()
 {
   std::unique_lock<std::mutex> lock(m_Mutex);
   std::fill(m_bWorkerDone.begin(), m_bWorkerDone.end(), false);
@@ -100,22 +101,22 @@ std::vector<pb::CameraMsg>& JoinDriver::WorkTeam::process()
   return m_ImageData;
 }
 
-std::string JoinDriver::GetDeviceProperty(const std::string&)
+std::string JoinCameraDriver::GetDeviceProperty(const std::string&)
 {
   return std::string();
 }
 
-size_t JoinDriver::NumChannels() const
+size_t JoinCameraDriver::NumChannels() const
 {
   return m_nNumChannels;
 }
 
-size_t JoinDriver::Width( size_t idx ) const
+size_t JoinCameraDriver::Width( size_t idx ) const
 {
   return m_nImgWidth[idx];
 }
 
-size_t JoinDriver::Height( size_t idx ) const
+size_t JoinCameraDriver::Height( size_t idx ) const
 {
   return m_nImgHeight[idx];
 }
