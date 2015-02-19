@@ -4,17 +4,40 @@
 #endif  // _GLIBCXX_USE_NANOSLEEP
 
 #include "NodeEncoderDriver.h"
+#include <HAL/Devices/DeviceException.h>
 
 using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-NodeEncoderDriver::NodeEncoderDriver(const std::string& sHost)
-    : m_host(sHost), m_running(false), m_callback(nullptr)
+NodeEncoderDriver::NodeEncoderDriver(const std::string& sLocalNode,
+                                     const std::string& sRemoteNode,
+                                     const std::string& sTopicName)
+    : m_local_node(sLocalNode), m_remote_node(sRemoteNode), m_topic(sTopicName),
+      m_sAddress(sRemoteNode + "/" + sTopicName),
+      m_running(false), m_callback(nullptr)
 {
-    if( m_node.Subscribe("Encoder", sHost) == false ) {
-        std::cerr << "HAL: Error subscribing to remote node." << std::endl;
+  m_node.set_verbosity(2);
+  if(m_node.init(m_local_node))
+  {
+    if(m_node.subscribe(m_sAddress))
+    {
+      // this initiates the number of channels and image dimensions
+      // pb::CameraMsg vImages;
+      // Capture(vImages);
     }
+    else
+    {
+      throw DeviceException("NodeEncoderDriver could not subscribe to \"" +
+                            m_sAddress + "\"");
+    }
+  }
+  else
+  {
+    throw DeviceException("NodeEncoderDriver could not initiatate node \"" +
+                          m_local_node + "\"");
+  }
+
 }
 
 
@@ -24,9 +47,10 @@ void NodeEncoderDriver::_ThreadFunc()
     pb::EncoderMsg pbMsg;
     while( m_running ) {
         pbMsg.Clear();
-        if( m_node.ReadBlocking("Encoder", pbMsg) == false ) {
-            std::cerr << "HAL: Error reading node publisher." << std::endl;
-            continue;
+
+        bool ok = m_node.receive(m_sAddress, pbMsg);
+        while (!ok) {
+          ok = m_node.receive(m_sAddress, pbMsg);
         }
         m_callback(pbMsg);
     }

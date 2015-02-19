@@ -22,8 +22,20 @@ public:
 
     std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
     {
-        NodeEncoderDriver* pDriver = new NodeEncoderDriver( uri.url );
-        return std::shared_ptr<EncoderDriverInterface>( pDriver );
+        std::string local_node = uri.properties.Get<std::string>(
+              "name", "nodeencoder");
+
+        // parse url: remote/topic
+        std::string::size_type p = uri.url.find('/');
+        if(p != std::string::npos && p > 0 && p < uri.url.length() - 1)
+        {
+          std::string remote_node = uri.url.substr(0, p);
+          std::string topic = uri.url.substr(p + 1);
+          return std::shared_ptr<EncoderDriverInterface>
+              (new NodeEncoderDriver(local_node, remote_node, topic));
+        }
+        else
+          throw DeviceException("NodeEncoderDriver: ill-formed URI");
     }
 };
 
