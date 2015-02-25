@@ -97,6 +97,10 @@ class Image {
     return *(RowPtr(row) + col);
   }
 
+  const timestamp( void ) {
+    return msg_->timestamp();
+  }
+
  protected:
   const ImageMsg* msg_;
 

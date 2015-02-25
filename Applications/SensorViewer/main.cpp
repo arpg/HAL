@@ -32,6 +32,10 @@ class SensorViewer {
   {
   }
 
+  void start_paused( void ) {
+    is_running_ = false;
+  }
+
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
@@ -370,6 +374,8 @@ int main(int argc, char* argv[]) {
   std::string posys_uri = cl_args.follow("", "-posys");
   std::string encoder_uri = cl_args.follow("","-encoder");
   std::string lidar_uri = cl_args.follow("","-lidar");
+  bool start_paused_ = cl_args.search("-p");
+
 
 #ifdef ANDROID
   if (cam_uri.empty()) {
@@ -381,6 +387,8 @@ int main(int argc, char* argv[]) {
 #endif
 
   SensorViewer viewer;
+  if (start_paused_)
+    viewer.start_paused();
   if (!cam_uri.empty()) {
     viewer.set_camera(cam_uri);
   }
