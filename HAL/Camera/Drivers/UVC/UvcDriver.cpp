@@ -14,7 +14,8 @@ UvcDriver::UvcDriver()
 {
 //    Start(0,0,NULL);
 //    Start(0x0c45,0x62f1,NULL); // Sonix
-    Start(0x03e7,0x1811,NULL); // Twizzler
+  //Start(0x03e7,0x1811,NULL); // Twizzler
+    Start(0x8086, 0x0a66, NULL);
 }
 
 UvcDriver::~UvcDriver()
@@ -50,9 +51,9 @@ bool UvcDriver::SetExposure(int nExposure)
 
 void UvcDriver::Start(int vid, int pid, char* sn)
 {
-    width_ = 640*2;
+    width_ = 640;
     height_ = 480;
-    fps_ = 45;
+    fps_ = 30;
     
     if(ctx_) {
         Stop();
@@ -87,7 +88,7 @@ void UvcDriver::Start(int vid, int pid, char* sn)
     uvc_stream_ctrl_t ctrl;
     uvc_error_t mode_err = uvc_get_stream_ctrl_format_size(
                 devh_, &ctrl,
-                UVC_COLOR_FORMAT_GRAY8,
+                UVC_COLOR_FORMAT_YUYV,
                 width_, height_,
                 fps_);
     
@@ -102,7 +103,8 @@ void UvcDriver::Start(int vid, int pid, char* sn)
     }
     
 //    uvc_error_t stream_err = uvc_start_iso_streaming(devh_, &ctrl, &UvcDriver::ImageCallbackAdapter, this);
-    uvc_error_t stream_err = uvc_start_iso_streaming(devh_, &ctrl, NULL, this);
+    //uvc_error_t stream_err = uvc_start_iso_streaming(devh_, &ctrl, NULL, this);
+    uvc_error_t stream_err = uvc_start_streaming(devh_, &ctrl, NULL, this, 0);
     
     if (stream_err != UVC_SUCCESS) {
         uvc_perror(stream_err, "uvc_start_iso_streaming");
