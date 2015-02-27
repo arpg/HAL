@@ -106,6 +106,7 @@ class SensorViewer {
   }
 
   void Run() {
+    double last_capture = hal::Tic();
     RegisterCallbacks();
 
     std::vector<pangolin::GlTexture> glTex(num_channels_);
@@ -186,7 +187,10 @@ class SensorViewer {
       last_images = images;
 
       if (*limit_fps_ == true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        double capture_time = hal::TocMS(last_capture);
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+                                      30 - (int)capture_time));
+        last_capture = hal::Tic();
       }
     }
   }
