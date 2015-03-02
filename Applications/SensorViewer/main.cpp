@@ -27,7 +27,7 @@ class SensorViewer {
                    has_camera_(false), has_imu_(false), has_posys_(false),
                    has_encoder_(false), has_lidar_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
-                   panel_height_(0),
+                   panel_width_(0),
                    logger_(pb::Logger::GetInstance())
   {
   }
@@ -35,34 +35,35 @@ class SensorViewer {
   virtual ~SensorViewer() {}
 
   void SetupGUI() {
-    panel_height_ = 60;
+    panel_width_ = 100;
     int window_width = num_channels_ * base_width_;
     pangolin::OpenGlRenderState render_state;
     pangolin::Handler3D handler(render_state);
     pangolin::CreateWindowAndBind("SensorViewer",
-                                  window_width,
+                                  panel_width_ + window_width,
                                   base_height_ * (has_imu_ ? 3.0/2.0 : 1.0));
 
     glPixelStorei(GL_PACK_ALIGNMENT,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 
     // Create panel.
-    pangolin::CreatePanel("ui").
-        SetBounds(0, pangolin::Attach::Pix(panel_height_), 0, 1.0);
+    pangolin::View& panelView = pangolin::CreatePanel("ui").
+        SetBounds(0, 1.0, 0, pangolin::Attach::Pix(panel_width_));
+    fps_.reset(new pangolin::Var<int>("ui.FPS", 30, 1, 120));
     limit_fps_.reset(new pangolin::Var<bool>("ui.Limit FPS", true,
                                                    true));
-    logging_enabled_.reset(new pangolin::Var<bool>("ui.Enable Logging",
+    logging_enabled_.reset(new pangolin::Var<bool>("ui.LOG",
                                                    false));
 
     // Create Smart viewports for each camera image that preserve aspect.
     pangolin::View& cameraView = pangolin::Display("camera");
     cameraView.SetLayout(pangolin::LayoutEqual);
-    cameraView.SetBounds(pangolin::Attach::Pix(panel_height_), 1.0, 0, 1.0);
+    cameraView.SetBounds(0, 1.0, pangolin::Attach::Pix(panel_width_), 1.0);
     pangolin::DisplayBase().AddDisplay(cameraView);
 
     for (size_t ii = 0; ii < num_channels_; ++ii) {
       cameraView.AddDisplay(pangolin::CreateDisplay().
-                            SetAspect((double)camera_.Width() / camera_.Height()));
+                        SetAspect((double)camera_.Width() / camera_.Height()));
     }
 
     if (has_imu_) {
@@ -84,8 +85,12 @@ class SensorViewer {
       mag_plot_->Track();
 
       if (has_camera_) {
-        cameraView.SetBounds(1.0/3.0, 1.0, 0.0, 1.0);
-        imuView.SetBounds(pangolin::Attach::Pix(panel_height_), 1.0/3.0, 0.0, 1.0);
+        cameraView.SetBounds(1.0/3.0, 1.0,
+                             pangolin::Attach::Pix(panel_width_), 1.0);
+        imuView.SetBounds(0, 1.0/3.0,
+                          0, 1.0);
+        panelView.SetBounds(1.0/3.0, 1.0, 0,
+                            pangolin::Attach::Pix(panel_width_));
       }
     }
 
@@ -106,6 +111,7 @@ class SensorViewer {
   }
 
   void Run() {
+    double last_capture = hal::Tic();
     RegisterCallbacks();
 
     std::vector<pangolin::GlTexture> glTex(num_channels_);
@@ -186,7 +192,10 @@ class SensorViewer {
       last_images = images;
 
       if (*limit_fps_ == true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        double capture_time = hal::TocMS(last_capture);
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+                                static_cast<int>(1000/(*fps_) - capture_time)));
+        last_capture = hal::Tic();
       }
     }
   }
@@ -195,7 +204,8 @@ class SensorViewer {
     try {
       camera_ = hal::Camera(cam_uri);
     } catch (const hal::DeviceException& e) {
-      std::cerr << "SensorViewer: Camera failed to open! Exception: " << e.what() << std::endl;
+      std::cerr << "SensorViewer: Camera failed to open! Exception: "
+                << e.what() << std::endl;
       abort();
     }
     has_camera_ = true;
@@ -353,14 +363,15 @@ class SensorViewer {
   bool has_camera_, has_imu_, has_posys_, has_encoder_, has_lidar_;
   bool is_running_, is_stepping_;
   int frame_number_;
-  int panel_height_;
+  int panel_width_;
   hal::Camera camera_;
   hal::IMU imu_;
   hal::Encoder encoder_;
   hal::Posys posys_;
   hal::LIDAR lidar_;
-  std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
+  std::unique_ptr<pangolin::Var<int> >  fps_;
   std::unique_ptr<pangolin::Var<bool> > limit_fps_;
+  std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;
   pb::Logger& logger_;
 };
