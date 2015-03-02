@@ -35,9 +35,9 @@
  * @defgroup device Device handling and enumeration
  * @brief Support for finding, inspecting and opening UVC devices
  */
+#include "../include/libuvc_ex/libuvc.h"
+#include "../include/libuvc_ex/libuvc_internal.h"
 
-#include "libuvc/libuvc.h"
-#include "libuvc/libuvc_internal.h"
 
 int uvc_already_open(uvc_context_t *ctx, struct libusb_device *usb_dev);
 void uvc_free_devh(uvc_device_handle_t *devh);
@@ -817,8 +817,10 @@ uvc_error_t uvc_release_if(uvc_device_handle_t *devh, int idx) {
      but sometimes (e.g. on Darwin) it doesn't. Thus, we do it explicitly here.
      This is needed to de-initialize certain cameras. */
   libusb_set_interface_alt_setting(devh->usb_devh, idx, 0);
+   UVC_DEBUG(" libusb altsetting 0 set");
   ret = libusb_release_interface(devh->usb_devh, idx);
 
+   UVC_DEBUG("interface %d released from libusb", idx);
   if (UVC_SUCCESS == ret) {
     /* Reattach any kernel drivers that were disabled when we claimed this interface */
     ret = libusb_attach_kernel_driver(devh->usb_devh, idx);
@@ -1414,10 +1416,10 @@ void uvc_free_devh(uvc_device_handle_t *devh) {
 void uvc_close(uvc_device_handle_t *devh) {
   UVC_ENTER();
   uvc_context_t *ctx = devh->dev->ctx;
-
+  fprintf(stderr, "%s: Stopping streams()\n", __FILE__); 
   if (devh->streams)
     uvc_stop_streaming(devh);
-
+  fprintf(stderr, "%s: Releasing IFs \n", __FILE__); 
   uvc_release_if(devh, devh->info->ctrl_if.bInterfaceNumber);
 
   /* If we are managing the libusb context and this is the last open device,
@@ -1427,13 +1429,17 @@ void uvc_close(uvc_device_handle_t *devh) {
   if (ctx->own_usb_ctx && ctx->open_devices == devh && devh->next == NULL) {
     ctx->kill_handler_thread = 1;
     libusb_close(devh->usb_devh);
+    fprintf(stderr, "%s: Waiting on handler thread to join()\n", __FILE__); 
     pthread_join(ctx->handler_thread, NULL);
   } else {
     libusb_close(devh->usb_devh);
   }
 
+  fprintf(stderr, "%s: DL_DELETEing \n", __FILE__); 
+ 
   DL_DELETE(ctx->open_devices, devh);
-
+  fprintf(stderr, "%s: Unreffing device \n", __FILE__); 
+ 
   uvc_unref_device(devh->dev);
 
   uvc_free_devh(devh);

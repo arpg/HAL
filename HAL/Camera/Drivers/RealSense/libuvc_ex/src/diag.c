@@ -35,9 +35,8 @@
  * @defgroup diag Diagnostics
  * @brief Interpretation of devices, error codes and negotiated stream parameters
  */
-
-#include "libuvc/libuvc.h"
-#include "libuvc/libuvc_internal.h"
+#include "../include/libuvc_ex/libuvc.h"
+#include "../include/libuvc_ex/libuvc_internal.h"
 
 /** @internal */
 typedef struct _uvc_error_msg {

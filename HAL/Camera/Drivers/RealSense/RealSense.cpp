@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <unistd.h>
+
 namespace hal {
 
 RealSenseDriver::RealSenseDriver()
@@ -197,17 +199,18 @@ void RealSenseDriver::Start(int vid, int pid, char* sn)
 
 void RealSenseDriver::Stop()
 {
-    if(devh_rgb) {
-        uvc_stop_streaming(devh_rgb);
-	uvc_close(devh_rgb);
-        devh_rgb = 0;
+  std::cout << "Stopping RealSense driver" << std::endl;
+
+  /*
+    if(streamh_rgb) {
+        uvc_stream_close(streamh_rgb);
     }
 
-    if(devh_d) {
-        uvc_stop_streaming(devh_d);
-	uvc_close(devh_d);
-        devh_d = 0;
+    if(streamh_d) {
+        uvc_stream_close(streamh_d);
     }
+  */
+    std::cout << "Closed streams" << std::endl;
 
     if (frame_rgb) {
         uvc_free_frame(frame_rgb);
@@ -218,11 +221,24 @@ void RealSenseDriver::Stop()
         uvc_free_frame(frame_d);
         frame_d = 0;
     }
-    
+  
+    std::cout << "Released frames" << std::endl;
+
     /* Release the device descriptor, shutdown UVC */
+    uvc_close(devh_rgb);
+    uvc_close(devh_d);
+
+    std::cout << "Closed devices" << std::endl;
+
+    
     uvc_unref_device(dev_);
+    std::cout << "Unreffed device" << std::endl;
+
+
     uvc_exit(ctx_);
     dev_ = 0;
+
+    std::cout << "Stop of RealSense driver complete" << std::endl;
  
 }
 
@@ -250,12 +266,20 @@ bool RealSenseDriver::Capture( pb::CameraMsg& vImages )
 	    //Convert the YUYV to RGB
             pimg->set_data(rgb->data, width_ * height_ * 3); //RGB uint8_t
 
+	    uvc_free_frame(rgb);
+
         }else{
             std::cout << "No RGB data..." << std::endl;
         }
         
     }
 
+
+    /*
+    if (rgb)
+      uvc_free_frame(rgb);
+    */
+    
     /*Pick up the depth image */
     err = uvc_stream_get_frame(streamh_d, &frame, 0); //wait for the next RGB frame
     if(err!= UVC_SUCCESS) {
@@ -273,7 +297,14 @@ bool RealSenseDriver::Capture( pb::CameraMsg& vImages )
             std::cout << "No depth data..." << std::endl;
         }
         
-    }              
+    }
+    
+    /*
+    if (frame)
+      uvc_free_frame(frame);
+    */
+
+    
     return true;
 }
 

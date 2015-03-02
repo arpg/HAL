@@ -3,7 +3,9 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif    	
+
+#define UVC_DEBUGGING
 
 #include <stdio.h> // FILE
 #include <libusb-1.0/libusb.h>

@@ -36,8 +36,8 @@
  * @brief Tools for creating, managing and consuming video streams
  */
 
-#include "libuvc/libuvc.h"
-#include "libuvc/libuvc_internal.h"
+#include "../include/libuvc_ex/libuvc.h"
+#include "../include/libuvc_ex/libuvc_internal.h"
 
 #ifdef _MSC_VER
 
@@ -605,6 +605,7 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
     }
     break;
   case LIBUSB_TRANSFER_CANCELLED: 
+    UVC_DEBUG("transfer cancelled, status = %d", transfer->status);
   case LIBUSB_TRANSFER_ERROR:
   case LIBUSB_TRANSFER_NO_DEVICE: {
     int i;

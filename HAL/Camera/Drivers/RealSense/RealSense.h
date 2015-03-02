@@ -3,7 +3,7 @@
 #include <memory>
 #include <HAL/Camera/CameraDriverInterface.h>
 
-#include "libuvc/libuvc.h"
+#include "libuvc_ex/include/libuvc_ex/libuvc.h"
 
 namespace hal
 {

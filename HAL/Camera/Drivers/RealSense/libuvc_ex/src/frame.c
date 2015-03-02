@@ -35,8 +35,9 @@
  * @defgroup frame Frame processing
  * @brief Tools for managing frame buffers and converting between image formats
  */
-#include "libuvc/libuvc.h"
-#include "libuvc/libuvc_internal.h"
+
+#include "../include/libuvc_ex/libuvc.h"
+#include "../include/libuvc_ex/libuvc_internal.h"
 
 /** @internal */
 uvc_error_t uvc_ensure_frame_size(uvc_frame_t *frame, size_t need_bytes) {
