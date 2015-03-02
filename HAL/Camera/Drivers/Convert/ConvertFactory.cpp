@@ -17,7 +17,8 @@ public:
       {"fmt", "MONO8", "Output video format: MONO8, RGB8, BGR8"},
       {"range", "1", "Range of values of 16 and 32 bit images: ir (1023), "
                      "depth (4500) or numerical value"},
-      {"size", "0x0", "Capture resolution (0x0 for unused)."}
+      {"size", "0x0", "Capture resolution (0x0 for unused)."},
+      {"channel", "-1", "Particular channel to convert (-1 for all)."}
   };
   }
 
@@ -26,6 +27,7 @@ public:
     std::string sFormat = uri.properties.Get<std::string>("fmt", "MONO8");
     std::string sRange = uri.properties.Get<std::string>("range", "1");
     ImageDim dims = uri.properties.Get<ImageDim>("size", ImageDim(0, 0));
+    int channel = uri.properties.Get<int>("channel", -1);
     double dRange;
 
     if(sRange == "ir")
@@ -45,7 +47,8 @@ public:
     std::shared_ptr<CameraDriverInterface> Input =
         DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
 
-    ConvertDriver* pDriver = new ConvertDriver( Input, sFormat, dRange, dims );
+    ConvertDriver* pDriver = new ConvertDriver( Input, sFormat, dRange, dims,
+                                                channel);
     return std::shared_ptr<CameraDriverInterface>( pDriver );
   }
 };

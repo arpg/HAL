@@ -12,18 +12,35 @@ ConvertDriver::ConvertDriver(
     std::shared_ptr<CameraDriverInterface> Input,
     const std::string& sFormat,
     double dRange,
-    ImageDim dims
-    )
+    ImageDim dims,
+    int channel)
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nOutCvType(-1),
     m_nNumChannels(Input->NumChannels()),
     m_dRange(dRange),
-    m_Dims(dims)
+    m_Dims(dims),
+    m_iChannel(channel)
 {
+  // Set the correct image size on the output interface, considering the request
+  // to resize the images
   for(size_t i = 0; i < Input->NumChannels(); ++i) {
     m_nImgWidth.push_back(Input->Width(i));
     m_nImgHeight.push_back(Input->Height(i));
+    m_nOrigImgWidth.push_back(Input->Width(i));
+    m_nOrigImgHeight.push_back(Input->Height(i));
+
+    if (m_iChannel != -1) {
+      if (m_iChannel != i) {
+        continue;
+      }
+    }
+
+    const bool resize_requested = (m_Dims.x != 0 || m_Dims.y != 0);
+    if (resize_requested) {
+      m_nImgWidth[i] = m_Dims.x;
+      m_nImgHeight[i] = m_Dims.y;
+    }
   }
 
   // Guess output color coding
@@ -88,6 +105,15 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
     pb::ImageMsg* pbImg = vImages.add_image();
 
+    // If the user has specified to convert a single channel only,
+    // gate it here
+    if (m_iChannel != -1) {
+      if (m_iChannel != ii) {
+        *pbImg = m_Message.image(ii);
+        continue;
+      }
+    }
+
     if( m_nCvType[ii] == -1 ) { // this image cannot be converted
       *pbImg = m_Message.image(ii);
       continue;
@@ -99,8 +125,8 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
       final_width = m_Dims.x;
       final_height = m_Dims.y;
     } else {
-      final_width = m_nImgWidth[ii];
-      final_height = m_nImgHeight[ii];
+      final_width = m_nOrigImgWidth[ii];
+      final_height = m_nOrigImgHeight[ii];
     }
     pbImg->set_width( final_width );
     pbImg->set_height( final_height );
@@ -112,12 +138,14 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
     pbImg->set_timestamp( m_Message.image(ii).timestamp() );
     pbImg->set_serial_number( m_Message.image(ii).serial_number() );
 
-    cv::Mat s_origImg(m_nImgHeight[ii], m_nImgWidth[ii], m_nCvType[ii],
+    cv::Mat s_origImg(m_nOrigImgHeight[ii], m_nOrigImgWidth[ii], m_nCvType[ii],
                    (void*)m_Message.mutable_image(ii)->data().data());
 
     cv::Mat sImg;
     if (resize_requested) {
       cv::resize(s_origImg, sImg, cv::Size(final_width, final_height));
+      m_nImgWidth[ii] = final_width;
+      m_nImgHeight[ii] = final_height;
     } else {
       sImg = s_origImg;
     }

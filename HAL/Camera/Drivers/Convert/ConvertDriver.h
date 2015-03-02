@@ -14,8 +14,8 @@ public:
     ConvertDriver(std::shared_ptr<CameraDriverInterface> Input,
                    const std::string& sFormat,
                    double dRange,
-                   ImageDim dims
-                 );
+                   ImageDim dims,
+                  int channel);
 
     bool Capture( pb::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
@@ -35,10 +35,13 @@ protected:
     int                                     m_nOutCvType;
     pb::Format                              m_nOutPbType;
     std::vector<unsigned int>               m_nImgWidth;
+    std::vector<unsigned int>               m_nOrigImgWidth;
     std::vector<unsigned int>               m_nImgHeight;
+    std::vector<unsigned int>               m_nOrigImgHeight;
     unsigned int                            m_nNumChannels;
     double                                  m_dRange;
     ImageDim                                m_Dims;
+    int                                     m_iChannel;
 };
 
 }
