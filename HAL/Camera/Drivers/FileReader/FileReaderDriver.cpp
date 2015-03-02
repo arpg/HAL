@@ -53,7 +53,11 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
   m_nNumImages = m_vFileList[0].size();
   for(unsigned int ii = 1; ii < m_nNumChannels; ii++){
     if(m_vFileList[ii].size() != m_nNumImages){
-      throw DeviceException("Uneven number of files");
+      std::stringstream sstm;
+      sstm << "Uneven number of files. Count for camera " << ii << ": " <<
+              m_vFileList[ii].size() << " vs count for camera 0: " <<
+              m_nNumImages;
+      throw DeviceException(sstm.str());
     }
   }
 

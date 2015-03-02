@@ -15,22 +15,24 @@ public:
     Params() = {
     {"idN", "0", "Camera serial number."},
     {"fps", "DEFAULT", "Capture framerate: [1, 150]"},
-    {"exp", "10000", "Exposure time (microseconds): [1,1000000]"},
-    {"gain", "0", "Gain (dB): [-2.4, 12.0]"},
+    {"exp", "0", "Exposure time (microseconds): [1,1000000] (0: AUTO)"},
+    {"gain", "0.5", "Gain (dB): [-2.4, 12.0]"},
     {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16"},
     {"size", "640x480", "Capture resolution."},
     {"roi", "0+0+640x480", "ROI resolution."},
+    {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
   };
   }
 
   std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
   {
     float fps               = uri.properties.Get<float>("fps", 0);
-    int exp                 = uri.properties.Get<int>("exp", 10000);
-    float gain              = uri.properties.Get<float>("gain", 0);
+    int exp                 = uri.properties.Get<int>("exp", 0);
+    float gain              = uri.properties.Get<float>("gain", 0.5);
     std::string mode        = uri.properties.Get<std::string>("mode", "MONO8");
     ImageDim dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
     ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
+    int sync                = uri.properties.Get<int>("sync", 0);
 
     std::vector<unsigned int> vector_ids;
 
@@ -63,7 +65,7 @@ public:
     }
 
     XimeaDriver* pDriver = new XimeaDriver(vector_ids, fps, exp, gain, xi_mode,
-                                           ROI);
+                                           ROI, sync);
 
     return std::shared_ptr<CameraDriverInterface>(pDriver);
   }

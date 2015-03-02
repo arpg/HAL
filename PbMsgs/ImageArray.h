@@ -29,7 +29,11 @@ class ImageArray : public std::enable_shared_from_this<ImageArray> {
     return message_.device_time();
   }
 
-  double system_time() const {
+  double DeviceTime() const {
+    return message_.device_time();
+  }
+
+  double SystemTime() const {
     return message_.system_time();
   }
 
