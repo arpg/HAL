@@ -63,9 +63,9 @@ int main(int argc, char *argv[])
     // calculate time to sleep
     auto end_ms = std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count();
-    auto sleep_ms = period_ms - (end_ms - start_ms);
-    if(period_ms > 0)
-      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+    if(end_ms - start_ms < period_ms)
+      std::this_thread::sleep_for(std::chrono::milliseconds
+                                  (period_ms - (end_ms - start_ms)));
   }
 
   return 0;
