@@ -12,25 +12,25 @@ inline float lerp(unsigned char a, unsigned char b, float t)
 
 RectifyDriver::RectifyDriver(
     std::shared_ptr<CameraDriverInterface> input,
-    const calibu::CameraRig& rig
+    const std::shared_ptr<calibu::Rig<double>> rig
     )
   : m_input(input)
 {
   // Convert rig to vision frame.
-  calibu::CameraRig new_rig;
+  std::shared_ptr<calibu::Rig<double>> new_rig(new calibu::Rig<double>());
   new_rig = calibu::ToCoordinateConvention(rig, calibu::RdfVision);
 
   // Generate lookup tables for stereo rectify.
-  m_vLuts.resize(new_rig.cameras.size());
-  for(size_t i=0; i< new_rig.cameras.size(); ++i) {
-    const calibu::CameraModel& cam = new_rig.cameras[i].camera;
-    m_vLuts[i] = calibu::LookupTable(cam.Width(), cam.Height());
+  m_vLuts.resize(new_rig->cameras_.size());
+  for(size_t i=0; i< new_rig->cameras_.size(); ++i) {
+    const std::shared_ptr<calibu::CameraInterface<double>> cam = new_rig->cameras_[i];
+    m_vLuts[i] = calibu::LookupTable(cam->Width(), cam->Height());
   }
 
-  if(rig.cameras.size() == 2) {
+  if(rig->cameras_.size() == 2) {
     m_cam = calibu::CreateScanlineRectifiedLookupAndCameras(
-        new_rig.cameras[1].T_wc.inverse()* new_rig.cameras[0].T_wc,
-        new_rig.cameras[0].camera, new_rig.cameras[1].camera,
+        new_rig->cameras_[1]->Pose().inverse()* new_rig->cameras_[0]->Pose(),
+        new_rig->cameras_[0], new_rig->cameras_[1],
         m_T_nr_nl,
         m_vLuts[0], m_vLuts[1]
         );

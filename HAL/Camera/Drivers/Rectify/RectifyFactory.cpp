@@ -1,7 +1,7 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "RectifyDriver.h"
 
-#include <calibu/cam/CameraXml.h>
+#include <calibu/cam/camera_xml.h>
 
 namespace hal
 {
@@ -38,8 +38,8 @@ public:
             filename = (dir.empty() ? "" : dir + "/") + filename;
         }
 
-        calibu::CameraRig rig = calibu::ReadXmlRig( filename );
-        if(rig.cameras.size() != 2) {
+        std::shared_ptr<calibu::Rig<double>> rig = calibu::ReadXmlRig( filename );
+        if(rig->cameras_.size() != 2) {
             throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
         }
 
