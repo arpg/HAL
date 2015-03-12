@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project( HAL )
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 1)
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
+set(HAL_VERSION_MAJOR 0)
+set(HAL_VERSION_MINOR 1)
+set(HAL_VERSION ${HAL_VERSION_MAJOR}.${HAL_VERSION_MINOR})
 
 # Policy CMP0023 allows to mix old and new interfaces of target_link_libraries
 cmake_policy(SET CMP0023 OLD)
@@ -163,9 +163,6 @@ def_library(hal
 if(TinyXML2_FOUND)
   target_link_libraries(hal PRIVATE ${TinyXML2_LIBRARIES})
 endif()
-
-# Get version from GIT tag.
-set_git_version(HAL_VERSION)
 
 export_package(HAL
   TARGETS hal
