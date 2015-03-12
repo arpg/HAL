@@ -1,9 +1,9 @@
 find_package(Node QUIET)
+find_package(MINIGLOG QUIET)
+find_package(ZeroMQPP QUIET)
 
 
-if(Node_FOUND)
-  find_package(MINIGLOG REQUIRED)
-  find_package(ZeroMQPP REQUIRED)
+if(Node_FOUND AND MINIGLOG_FOUND AND ZeroMQPP_FOUND)
 
   set( BUILD_NodeCam true CACHE BOOL "Build NodeCam driver" )
 
