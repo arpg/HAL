@@ -10,7 +10,7 @@
 #include <HAL/Camera/CameraDevice.h>
 #include <Node/Node.h>
 #include <PbMsgs/ImageArray.h>
-#include <miniglog/logging.h>
+//#include <miniglog/logging.h>
 
 DEFINE_string(node, "camtonode", "Node name");
 DEFINE_string(topic, "images", "Topic name");
