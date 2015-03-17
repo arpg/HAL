@@ -8,13 +8,14 @@
 
 namespace hal {
 
-RealSenseDriver::RealSenseDriver()
+RealSenseDriver::RealSenseDriver(bool m_useIR)
     : ctx_(NULL),
       dev_(NULL),
       devh_rgb(NULL),
       devh_d(NULL),
       frame_rgb(NULL),
-      frame_d(NULL)
+      frame_d(NULL),
+      useIR(m_useIR)
 {
 
   Start(0x8086, 0x0a66, NULL); //hardcoded for the RealSense camera's vid/pid
@@ -123,13 +124,30 @@ void RealSenseDriver::Start(int vid, int pid, char* sn)
     }
 
     //Use the same frame parameters for both RGB and depth (for now)
-    mode_err = uvc_get_stream_ctrl_format_size(
-                devh_d, &ctrl_d,
-                UVC_COLOR_FORMAT_YUYV,
-                width_, height_,
-                fps_);
+    if (useIR)
+      {
+	//Depth as mono8
+	mode_err = uvc_get_stream_ctrl_format_size(
+						   devh_d, &ctrl_d,
+						   UVC_FRAME_FORMAT_INVI,
+						   width_, height_,
+						   fps_);
+	
+	pbtype_d = pb::PB_UNSIGNED_BYTE;
+      }
+    else
+      {
+	//Grayscale depth as yuyv, mono16
+	mode_err = uvc_get_stream_ctrl_format_size(
+						   devh_d, &ctrl_d,
+						   //UVC_FRAME_FORMAT_INVI,
+						   UVC_FRAME_FORMAT_YUYV,
+						   width_, height_,
+						   fps_);
     
-    pbtype_d = pb::PB_UNSIGNED_SHORT;
+	pbtype_d = pb::PB_UNSIGNED_SHORT;
+      }
+    
     pbformat_d = pb::PB_LUMINANCE;
         
     if (mode_err != UVC_SUCCESS) {
@@ -242,70 +260,182 @@ void RealSenseDriver::Stop()
  
 }
 
+  
+  uvc_error_t RealSenseDriver::getFrame(uvc_stream_handle_t *streamh, uvc_frame_t **frame)
+  {
+    uvc_error_t err;
+    err = uvc_stream_get_frame(streamh, frame, 0); //wait for the next frame
+    if(err!= UVC_SUCCESS)
+      {
+	uvc_perror(err, "uvc_get_frame");
+
+      }
+    return err;
+  }
+
+int64_t RealSenseDriver::diffSCR(int64_t depth, int64_t rgb)
+{
+  //return the difference as depth - rgb, accounting for rollovers of each one as necessary
+  int64_t newDepth, newRGB;
+  newDepth = depth;
+  newRGB = rgb;
+  
+  if (depth + frameSyncLimit > wrapLimit)
+    {
+      //Rollover the depth into negative territory
+      newDepth = depth - wrapLimit;
+    }
+
+  if (rgb + frameSyncLimit > wrapLimit)
+    {
+      //Rollover the RGB into negative territory
+      newRGB = rgb - wrapLimit;
+    }
+
+  return (newDepth - newRGB);
+  
+}
+
 bool RealSenseDriver::Capture( pb::CameraMsg& vImages )
 {
-  /*use a two-vector, where the first image is RGB, second is gray16 for depth */
+  /*use a two-vector, where the first image is RGB, second is gray16 for depth or gray8 for IR */
     vImages.Clear();
 
-    uvc_frame_t* frame = NULL;
+    uvc_frame_t* frameRGB = NULL;
+    uvc_frame_t* frameDepth = NULL;
     uvc_frame_t *rgb; //to hold the YUV->RGB conversion
-
-    uvc_error_t err = uvc_stream_get_frame(streamh_rgb, &frame, 0); //wait for the next RGB frame
+    uvc_error_t err;
     pb::ImageMsg* pimg;
-    if(err!= UVC_SUCCESS) {
-        uvc_perror(err, "uvc_get_frame");
-    }else{
-        if(frame) {
-            pimg = vImages.add_image();
-            pimg->set_type( (pb::Type) pbtype_rgb );
-            pimg->set_format( (pb::Format) pbformat_rgb );            
-            pimg->set_width(frame->width);
-            pimg->set_height(frame->height);
-	    rgb = uvc_allocate_frame(frame->width * frame->height * 3);
-	    uvc_any2rgb(frame, rgb);
-	    //Convert the YUYV to RGB
-            pimg->set_data(rgb->data, width_ * height_ * 3); //RGB uint8_t
+    uint64_t scrDepth, scrRGB;
 
-	    uvc_free_frame(rgb);
+    scrDepth = 0;
+    scrRGB = 0;
+    
+    /* Try to sync up the streams
+       Based on the SCR value that is shared between the two cameras, it looks like 
+       RGB leads (comes before) IR by about 21475451171 units (roughly) between frames
+    
+       Strategy: Make sure the difference between SCR values for each frame is less than
+       frameSyncLimit units.
 
-        }else{
-            std::cout << "No RGB data..." << std::endl;
-        }
-        
-    }
+       Also, depth takes some time to actually start publishing - keep reading RGB until we get
+       a good pair
 
-
-    /*
-    if (rgb)
-      uvc_free_frame(rgb);
     */
+
+    //Two functions: advanceDepth, advanceRGB
+    //Pick up an RGB, wait for a depth, see if diff > synclimit
+    //yes? Repeat with new RGB
+    //no? Stash both into protobuf and continue
+
     
     /*Pick up the depth image */
-    err = uvc_stream_get_frame(streamh_d, &frame, 0); //wait for the next RGB frame
-    if(err!= UVC_SUCCESS) {
-        uvc_perror(err, "uvc_get_frame");
-    }else{
-        if(frame) {
-            pimg = vImages.add_image();
-            pimg->set_type( (pb::Type) pbtype_d );
-            pimg->set_format( (pb::Format) pbformat_d );            
-            pimg->set_width(frame->width);
-            pimg->set_height(frame->height);
-            pimg->set_data(frame->data, width_ * height_ * 2); //gray uint16_t
-
-        }else{
-            std::cout << "No depth data..." << std::endl;
-        }
-        
-    }
+    int gotPair = 0;
+    int gotRGB = 0;
+    int gotDepth = 0;
+    int needNewDepth = 0;
+    int64_t frameSync = frameSyncLimit;
     
-    /*
-    if (frame)
-      uvc_free_frame(frame);
-    */
+    while (!gotPair)
+      {
+	gotRGB = 0;
+	gotDepth = 0;
+	needNewDepth = 0;
+	//Pick up a Depth
+	while (!gotDepth)
+	  {
+	    err = getFrame(streamh_d, &frameDepth);
+	    if (err == UVC_SUCCESS)
+	      {
+		memcpy(&scrDepth, &frameDepth->capture_time, sizeof(scrDepth));
+		gotDepth = 1;
+	      }
+	  }
+	
+	//Pick up an RGB that's synced up to this depth
+	while (!gotRGB)
+	  {
+	    err = getFrame(streamh_rgb, &frameRGB);
+	    if (err == UVC_SUCCESS)
+	      {
+		memcpy(&scrRGB, &frameRGB->capture_time, sizeof(scrRGB));
+		std::cout << "RGBCap?: D:" << scrDepth << " R:" << scrRGB << std::endl;
+		if ( scrRGB < (scrDepth - frameSyncLimit)  )
+		  {
+		    //Check for wrap-around at roughly 8800000000000
+		    if ( wrapLimit - scrDepth + scrRGB < frameSyncLimit)
+		      break;
+		    if ( wrapLimit -  scrRGB + scrDepth < frameSyncLimit)
+		      break;
+
+		    if (scrDepth + frameSyncLimit < scrRGB)
+		      {
+			//Too far out of whack, need a new depth image
+			std::cout << "Getting new depth image" << std::endl;
+			needNewDepth = 1;
+			break;
+		      }
+		    
+		    std::cout << "Advancing RGB stream" << std::endl;
+		    continue; //RGB needs to come first
+		  }
+		gotRGB = 1;
+	      }
+
+	    if (needNewDepth == 1)
+	      break;
+	  }
+
+	if (needNewDepth == 1)
+	  continue;
+
+
+	//compute sync diff
+	frameSync = scrDepth - scrRGB;
+	std::cout << "FrameSync?: D:" << scrDepth << " R:" << scrRGB << " diff: " << frameSync << " Sync?:" << (frameSync < frameSyncLimit) << std::endl;
+	
+	if (frameSync < frameSyncLimit)
+	  {
+	    gotPair = 1;
+	  }
+      }
+     
+    if(frameRGB)
+      {
+	pimg = vImages.add_image();
+	pimg->set_type( (pb::Type) pbtype_rgb );
+	pimg->set_format( (pb::Format) pbformat_rgb );            
+	pimg->set_width(frameRGB->width);
+	pimg->set_height(frameRGB->height);
+	rgb = uvc_allocate_frame(frameRGB->width * frameRGB->height * 3);
+	uvc_any2rgb(frameRGB, rgb);
+	//Convert the YUYV to RGB
+	pimg->set_data(rgb->data, width_ * height_ * 3); //RGB uint8_t
+	    
+	uvc_free_frame(rgb);
+      }
+    
+    if(frameDepth)
+      {
+	pimg = vImages.add_image();
+	pimg->set_type( (pb::Type) pbtype_d );
+	pimg->set_format( (pb::Format) pbformat_d );            
+	pimg->set_width(frameDepth->width);
+	pimg->set_height(frameDepth->height);
+	    
+
+	if (useIR)
+	  {
+	    pimg->set_data(frameDepth->data, width_ * height_); //gray uint8_t
+	  }
+	else
+	  {
+	    pimg->set_data(frameDepth->data, width_ * height_ * 2); //gray uint16_t
+	  }
+      }
 
     
     return true;
 }
 
-}
+} //namespace

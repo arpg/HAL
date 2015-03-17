@@ -10,13 +10,20 @@ public:
     RealSenseFactory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
-        Params() = {
-        };
-    }
+      Params() = {
+	{"ir","0","Select ir or depth image for the second channel, 0=depth"}
+      };
+    };
+    
         
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& /*uri*/)
+    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
-        RealSenseDriver* rs = new RealSenseDriver();
+      bool useIR = false;
+      std::string sUseIR = uri.properties.Get<std::string>("ir", "0");
+      if (sUseIR == "1")
+	useIR = true;
+	  
+        RealSenseDriver* rs = new RealSenseDriver(useIR);
         return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

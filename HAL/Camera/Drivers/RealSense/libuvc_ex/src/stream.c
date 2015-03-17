@@ -109,7 +109,8 @@ struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
       {'Y',  '8',  '0',  '0', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
     FMT(UVC_FRAME_FORMAT_BY8,
       {'B',  'Y',  '8',  ' ', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
-
+    FMT(UVC_FRAME_FORMAT_INVI,
+	{'I', 'N', 'V', 'I', 0xdb, 0x57, 0x49, 0x5e, 0x8e, 0x3f, 0xf4, 0x79, 0x53, 0x2b, 0x94, 0x6f})
     ABS_FMT(UVC_FRAME_FORMAT_COMPRESSED, 1,
       {UVC_FRAME_FORMAT_MJPEG})
     FMT(UVC_FRAME_FORMAT_MJPEG,
@@ -518,6 +519,8 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
     else
       data_len = payload_len - header_len;
   }
+  
+  uint64_t scr;
 
   if (header_len < 2) {
     header_info = 0;
@@ -546,6 +549,8 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
       variable_offset += 4;
     }
 
+    //this isn't quite right - the SCR is really a uint64_t
+    
     if (header_info & (1 << 3)) {
       /** @todo read the SOF token counter */
       strmh->last_scr = DW_TO_INT(payload + variable_offset);
@@ -558,7 +563,16 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
     strmh->got_bytes += data_len;
 
     if (header_info & (1 << 1)) {
+      
       /* The EOF bit is set, so publish the complete frame */
+
+      //Stash the SCR data into the frame's capture_time struct
+      //struct timeval is at least 8 bytes long (could be longer)
+      
+      scr = 0;
+      memcpy(&scr, &payload[6], 6);
+      memcpy(&strmh->frame.capture_time, &scr, sizeof(scr));
+
       _uvc_swap_buffers(strmh);
     }
   }
