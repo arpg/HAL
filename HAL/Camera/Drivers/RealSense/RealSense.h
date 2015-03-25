@@ -25,9 +25,10 @@ public:
     size_t Width( size_t /*idx*/ = 0 ) const;
     size_t Height( size_t /*idx*/ = 0 ) const;
     uvc_error_t getFrame(uvc_stream_handle_t *streamh, uvc_frame_t **frame);
-    const int64_t frameSyncLimit = 50000000000;
+    const int64_t frameSyncLimitPos = 40000000000;
+    const int64_t frameSyncLimitNeg = -20000000000;
     const int64_t wrapLimit = 8800000000000;
-    int64_t diffSCR(int64_t depth, int64_t rgb);
+    int64_t diffSCR(uint64_t depth, uint64_t rgb);
     static void ImageCallbackAdapter(uvc_frame_t *frame, void *ptr);
     void ImageCallback(uvc_frame_t *frame);
     

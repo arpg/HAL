@@ -110,7 +110,7 @@ void RealSenseDriver::Start(int vid, int pid, char* sn)
                 devh_rgb, &ctrl_rgb,
                 UVC_COLOR_FORMAT_YUYV,
                 width_, height_,
-                fps_);
+                60);
     
     pbtype_rgb = pb::PB_UNSIGNED_BYTE;
     pbformat_rgb = pb::PB_RGB;
@@ -264,7 +264,7 @@ void RealSenseDriver::Stop()
   uvc_error_t RealSenseDriver::getFrame(uvc_stream_handle_t *streamh, uvc_frame_t **frame)
   {
     uvc_error_t err;
-    err = uvc_stream_get_frame(streamh, frame, 0); //wait for the next frame
+    err = uvc_stream_get_frame(streamh, frame, 0 ); //use the latest acquired frame
     if(err!= UVC_SUCCESS)
       {
 	uvc_perror(err, "uvc_get_frame");
@@ -273,20 +273,23 @@ void RealSenseDriver::Stop()
     return err;
   }
 
-int64_t RealSenseDriver::diffSCR(int64_t depth, int64_t rgb)
+int64_t RealSenseDriver::diffSCR(uint64_t depth, uint64_t rgb)
 {
   //return the difference as depth - rgb, accounting for rollovers of each one as necessary
   int64_t newDepth, newRGB;
   newDepth = depth;
   newRGB = rgb;
+
+  if (wrapLimit - depth + rgb < frameSyncLimitPos)
+    return (wrapLimit - depth + rgb);
   
-  if (depth + frameSyncLimit > wrapLimit)
+  if (depth + frameSyncLimitPos > wrapLimit)
     {
       //Rollover the depth into negative territory
       newDepth = depth - wrapLimit;
     }
 
-  if (rgb + frameSyncLimit > wrapLimit)
+  if (rgb + frameSyncLimitPos > wrapLimit)
     {
       //Rollover the RGB into negative territory
       newRGB = rgb - wrapLimit;
@@ -331,71 +334,71 @@ bool RealSenseDriver::Capture( pb::CameraMsg& vImages )
     
     /*Pick up the depth image */
     int gotPair = 0;
-    int gotRGB = 0;
-    int gotDepth = 0;
-    int needNewDepth = 0;
-    int64_t frameSync = frameSyncLimit;
+    int needRGB = 1;
+    int needDepth = 1;
+    int advRGB = 0;
+    
+    int64_t frameSync;
     
     while (!gotPair)
       {
-	gotRGB = 0;
-	gotDepth = 0;
-	needNewDepth = 0;
-	//Pick up a Depth
-	while (!gotDepth)
-	  {
-	    err = getFrame(streamh_d, &frameDepth);
-	    if (err == UVC_SUCCESS)
-	      {
-		memcpy(&scrDepth, &frameDepth->capture_time, sizeof(scrDepth));
-		gotDepth = 1;
-	      }
-	  }
-	
-	//Pick up an RGB that's synced up to this depth
-	while (!gotRGB)
+	while (needRGB)
 	  {
 	    err = getFrame(streamh_rgb, &frameRGB);
 	    if (err == UVC_SUCCESS)
 	      {
+		//Calc the sync
 		memcpy(&scrRGB, &frameRGB->capture_time, sizeof(scrRGB));
-		std::cout << "RGBCap?: D:" << scrDepth << " R:" << scrRGB << std::endl;
-		if ( scrRGB < (scrDepth - frameSyncLimit)  )
-		  {
-		    //Check for wrap-around at roughly 8800000000000
-		    if ( wrapLimit - scrDepth + scrRGB < frameSyncLimit)
-		      break;
-		    if ( wrapLimit -  scrRGB + scrDepth < frameSyncLimit)
-		      break;
-
-		    if (scrDepth + frameSyncLimit < scrRGB)
-		      {
-			//Too far out of whack, need a new depth image
-			std::cout << "Getting new depth image" << std::endl;
-			needNewDepth = 1;
-			break;
-		      }
-		    
-		    std::cout << "Advancing RGB stream" << std::endl;
-		    continue; //RGB needs to come first
-		  }
-		gotRGB = 1;
+		needRGB = 0;
 	      }
-
-	    if (needNewDepth == 1)
-	      break;
 	  }
 
-	if (needNewDepth == 1)
-	  continue;
-
-
-	//compute sync diff
-	frameSync = scrDepth - scrRGB;
-	std::cout << "FrameSync?: D:" << scrDepth << " R:" << scrRGB << " diff: " << frameSync << " Sync?:" << (frameSync < frameSyncLimit) << std::endl;
-	
-	if (frameSync < frameSyncLimit)
+	//Pick up a Depth
+	while (needDepth)
 	  {
+	    err = getFrame(streamh_d, &frameDepth);
+	    if (err == UVC_SUCCESS)
+	      {
+		//Calc the sync
+		memcpy(&scrDepth, &frameDepth->capture_time, sizeof(scrDepth));
+		needDepth = 0;
+	      }
+	  }
+	
+	frameSync = diffSCR(scrDepth, scrRGB);
+
+	std::cout << "Sync?: R:" << scrRGB << " D: " << scrDepth << " diffSCR: " << frameSync;
+	
+	if (frameSync > frameSyncLimitPos)
+	  {
+	    //Depth is ahead of RGB, advance the RGB stream
+	    advRGB++;
+	    if (advRGB > 3)
+	      {
+		//restart, the rgb is out of whack
+		needDepth = 1;
+		std::cout << " Restarting acq sequence" << std::endl;
+	      }
+	    else
+	      {
+		std::cout << " Advancing RGB stream" << std::endl;
+	      }
+	    needRGB = 1;
+	    continue;
+	  }
+	else if (frameSync < frameSyncLimitNeg)
+	  {
+	    // depth after RGB by too much, start over
+	    needRGB = 1;
+	    needDepth = 1;
+	    std::cout << " Bad sync, starting over" << std::endl;
+	    advRGB = 0;
+	    continue;
+	  }
+	else
+	  {
+	    //Within limits, exit the loop
+	    std::cout << " Good sync" << std::endl;
 	    gotPair = 1;
 	  }
       }
