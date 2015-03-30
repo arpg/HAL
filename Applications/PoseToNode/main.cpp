@@ -24,12 +24,13 @@ using std::cout;
 using std::endl;
 
 void Posys_Handler(pb::PoseMsg& PoseData) {
+  /*
     cout << "Posys Id: " << PoseData.id() << ". Data: ";
     for (int ii = 0; ii < PoseData.pose().data_size(); ++ii) {
       cout << PoseData.pose().data(ii) << " ";
     }
     cout << endl;
-
+  */
     n.publish(FLAGS_topic, PoseData);
     
 }
@@ -62,9 +63,10 @@ int main(int argc, char *argv[])
   n.set_verbosity(FLAGS_verbosity);
   n.init(FLAGS_nodeName);
   n.advertise(FLAGS_topic);
+  cout << "Node initialized" << endl;
 
-  LOG(INFO) << "Publishing poses from node \"" << FLAGS_nodeName
-            << "\" through topic \"" << FLAGS_topic << "\"";
+  cout << "Publishing poses from node \"" << FLAGS_nodeName
+       << "\" through topic \"" << FLAGS_topic << "\"" << endl;
 
   //The posys driver is implemented as a series of callbacks
   
