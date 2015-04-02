@@ -8,14 +8,15 @@
 
 namespace hal {
 
-RealSenseDriver::RealSenseDriver(bool m_useIR)
+  RealSenseDriver::RealSenseDriver(bool m_useIR, bool m_useSync)
     : ctx_(NULL),
       dev_(NULL),
       devh_rgb(NULL),
       devh_d(NULL),
       frame_rgb(NULL),
       frame_d(NULL),
-      useIR(m_useIR)
+      useIR(m_useIR),
+      useSync(m_useSync)
 {
 
   Start(0x8086, 0x0a66, NULL); //hardcoded for the RealSense camera's vid/pid
@@ -213,6 +214,11 @@ void RealSenseDriver::Start(int vid, int pid, char* sn)
     if(!frame_d) {
         throw DeviceException("Unable to allocate depth frame.");
     }
+
+    if (useSync)
+      {
+	std::cout << "RealSense: Using SCR to sync" << std::endl;
+      }
 }
 
 void RealSenseDriver::Stop()
@@ -264,11 +270,10 @@ void RealSenseDriver::Stop()
   uvc_error_t RealSenseDriver::getFrame(uvc_stream_handle_t *streamh, uvc_frame_t **frame)
   {
     uvc_error_t err;
-    err = uvc_stream_get_frame(streamh, frame, 0 ); //use the latest acquired frame
-    if(err!= UVC_SUCCESS)
+    err = uvc_stream_get_frame(streamh, frame, -1); //use the latest acquired frame
+    if(err != UVC_SUCCESS)
       {
 	uvc_perror(err, "uvc_get_frame");
-
       }
     return err;
   }
@@ -345,30 +350,42 @@ bool RealSenseDriver::Capture( pb::CameraMsg& vImages )
 	while (needRGB)
 	  {
 	    err = getFrame(streamh_rgb, &frameRGB);
-	    if (err == UVC_SUCCESS)
+	   
+	    if ((err == UVC_SUCCESS) && (frameRGB != 0))
 	      {
 		//Calc the sync
 		memcpy(&scrRGB, &frameRGB->capture_time, sizeof(scrRGB));
 		needRGB = 0;
 	      }
+	    usleep(1);
 	  }
 
 	//Pick up a Depth
 	while (needDepth)
 	  {
 	    err = getFrame(streamh_d, &frameDepth);
-	    if (err == UVC_SUCCESS)
+	    if ((err == UVC_SUCCESS) && (frameDepth != 0))
 	      {
 		//Calc the sync
 		memcpy(&scrDepth, &frameDepth->capture_time, sizeof(scrDepth));
 		needDepth = 0;
 	      }
+	    usleep(1);
 	  }
 	
 	frameSync = diffSCR(scrDepth, scrRGB);
 
-	std::cout << "Sync?: R:" << scrRGB << " D: " << scrDepth << " diffSCR: " << frameSync;
+
+	if (!useSync)
+	  {
+	    //Don't care about the sync, just return the images
+	    
+	    gotPair = 1;
+	    break;
+	  }
 	
+	std::cout << "Sync?: R:" << scrRGB << " D: " << scrDepth << " diffSCR: " << frameSync;
+		
 	if (frameSync > frameSyncLimitPos)
 	  {
 	    //Depth is ahead of RGB, advance the RGB stream

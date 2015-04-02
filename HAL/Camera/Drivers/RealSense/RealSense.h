@@ -11,7 +11,7 @@ namespace hal
 class RealSenseDriver : public CameraDriverInterface
 {
 public:
-    RealSenseDriver(bool useIR);
+    RealSenseDriver(bool useIR, bool useSync);
     ~RealSenseDriver();
     
     bool Capture( pb::CameraMsg& vImages );
@@ -56,6 +56,7 @@ public:
     int fps_;
 
     bool useIR;
+    bool useSync;
 
 };
 
