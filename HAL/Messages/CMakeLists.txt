@@ -4,12 +4,11 @@ set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 
-include(def_library)
-include(export_package)
+include(install_package)
 
 string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall  -Werror")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror")
 
 
 #######################################################
@@ -111,27 +110,17 @@ configure_file(
   IMMEDIATE
 )
 
-add_library(hal ${HAL_SRCS} )
-target_link_library( hal ${LINK_LIBS} )
+add_library( messages ${SRCS} ${HDRS} )
+target_link_libraries( messages ${LINK_LIBS} )
 
 install_package(
-    PKG_NAME ${PROJECT_NAME}
-    LIB_NAME ${LIBRARY_NAME}
+    PKG_NAME Messages
+    LIB_NAME messages
     VERSION ${VERSION}
     DESCRIPTION "Protobuf Messages handler"
     INSTALL_HEADERS ${HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
-    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/Messages/
     INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
     LINK_LIBS ${LINK_LIBS}
     )
 
-
-#######################################################
-## Install headers / targets
-
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
-)
-install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
-)

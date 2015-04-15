@@ -7,10 +7,6 @@ set(HDRS
     SharedLoad.h
 )
 
-add_to_hal_sources(
-    ${HDRS} DeviceTime.cpp DeviceRegistry.cpp
-)
+add_to_hal_sources( DeviceTime.cpp DeviceRegistry.cpp )
 
-install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Devices
-)
+add_to_hal_headers( ${HDRS} )

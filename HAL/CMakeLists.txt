@@ -48,47 +48,10 @@ include_directories( ${LIB_INC_DIR} ${USER_INC} )
 
 list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${MINIGLOG_LIBRARIES})
 
-if(ANDROID)
-    # Override to use hosts protoc compiler
-    unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
-    find_host_package(Protobuf REQUIRED)
-endif()
-
-#######################################################
-## Protobuf messages
-set( _PROTO_SRCS
-    # aux
-    Messages/Matrix.proto
-
-    # header files
-    Messages/Header.proto
-    Messages/CameraModel.proto
-
-    # message files
-    Messages/Messages.proto
-    Messages/Camera.proto
-    Messages/Image.proto
-    Messages/Imu.proto
-    Messages/Pose.proto
-    Messages/Encoder.proto
-    Messages/Lidar.proto
-    Messages/NodeCamMessage.proto
-    Messages/NodeCar.proto
-    Messages/CarPlanner.proto
-    Messages/SceneGraphShapes.proto
-    Messages/SimMessages.proto
-)
-
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
-
-set( MSG_SRCS ${PROTO_SRCS} Messages/Logger.cpp Messages/Reader.cpp Messages/Image.cpp)
-set( MSG_HDRS ${PROTO_HDRS} Messages/Logger.h Messages/Reader.h Messages/Image.h Messages/Matrix.h Messages/Pose.h)
-
-if(BUILD_Velodyne)
-  list( APPEND MSG_SRCS Velodyne.cpp )
-  set( APPEND MSG_HDRS Velodyne.h )
-endif()
-
+############################################################################
+# Build messages library
+add_subdirectory( Messages )
+############################################################################
 
 
 # Collect all driver includes and libraries in P_INCLUDE_DIRS and P_LIBRARIES
@@ -145,6 +108,18 @@ macro( add_to_hal_sources )
     endforeach()
 endmacro()
 
+macro( add_to_hal_headers )
+    file(RELATIVE_PATH _relPath "${HAL_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach(_src ${ARGN})
+        if(_relPath)
+            set_property( GLOBAL APPEND PROPERTY P_HEADERS "${_relPath}/${_hdr}" )
+        else()
+            set_property( GLOBAL APPEND PROPERTY P_HEADERS "${_hdr}" )
+        endif()
+    endforeach()
+endmacro()
+
+
 macro( hal_set_compile_flags file flags )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_SOURCES "${file}" )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_FLAGS "${flags}" )
@@ -182,6 +157,7 @@ set(LIB_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/.. )
 get_property( INTERNAL_INC  GLOBAL PROPERTY P_INCLUDE_DIRS )
 get_property( INTERNAL_LIBS GLOBAL PROPERTY P_LIBRARIES )
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES )
+get_property( HAL_HEADERS GLOBAL PROPERTY P_HEADERS )
 
 # this is a horrible hack in order to set compiler flag properties to individual files
 get_property( C_O_S GLOBAL PROPERTY COMPILER_OPTS_SOURCES )
@@ -209,29 +185,28 @@ set(HAL_LIBS
   ${Boost_SYSTEM_LIBRARY}
   ${PROTOBUF_LIBRARIES}
   ${LINK_LIBS}
+  messages
   )
 
-add_library( hal ${HAL_SOURCES} )
+message( STATUS "Messages_LIBRARIES ${Messages_LIBRARIES}" )
+message( STATUS "HAL_LIBS ${HAL_LIBS}" )
+add_library( hal ${HAL_SOURCES} ${HAL_HEADERS} )
 target_link_libraries( hal ${HAL_LIBS} )
 
+install_package(
+    PKG_NAME HAL
+    LIB_NAME hal
+    VERSION ${HAL_VERSION}
+    INSTALL_HEADER_DIRS ${HAL_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    INCLUDE_DIRS ${Messages_BINARY_DIR} ${LIB_INC_DIR} ${USER_INC}
+    LINK_LIBS ${HAL_LIBS}
+    )
 
-#def_library(hal
-#  SOURCES ${HAL_SOURCES}
-#  LINK_LIBS ${HAL_LIBS}
-#  PACKAGE HAL)
-
-#if(TinyXML2_FOUND)
-#  target_link_libraries(hal PRIVATE ${TinyXML2_LIBRARIES})
-#endif()
-
-#export_package(HAL
-#  TARGETS hal
-#  VERSION ${HAL_VERSION}
-#  LIBRARY hal
-#  LIBRARIES hal
-#  INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
-#  LINK_DIRS ${PbMsgs_BINARY_DIR}
-#  )
+# make an uninstall target
+include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
+add_custom_target(uninstall
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 ########################################################
 ## Create configure file for inclusion in library
@@ -239,12 +214,4 @@ target_link_libraries( hal ${HAL_LIBS} )
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   )
-
-########################################################
-########################################################
-### Install headers / targets
-#install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-#  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${LIBRARY_NAME}
-#)
-
 
