@@ -110,7 +110,7 @@ endmacro()
 
 macro( add_to_hal_headers )
     file(RELATIVE_PATH _relPath "${HAL_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-    foreach(_src ${ARGN})
+    foreach(_hdr ${ARGN})
         if(_relPath)
             set_property( GLOBAL APPEND PROPERTY P_HEADERS "${_relPath}/${_hdr}" )
         else()
@@ -186,10 +186,15 @@ set(HAL_LIBS
   ${PROTOBUF_LIBRARIES}
   ${LINK_LIBS}
   messages
+  CACHE STRING "HAL required libraries"
   )
 
-message( STATUS "Messages_LIBRARIES ${Messages_LIBRARIES}" )
-message( STATUS "HAL_LIBS ${HAL_LIBS}" )
+set(HAL_INCLUDES
+    ${Messages_BINARY_DIR}
+    ${LIB_INC_DIR}
+    ${USER_INC}
+    CACHE STRING "HAL required includes" )
+
 add_library( hal ${HAL_SOURCES} ${HAL_HEADERS} )
 target_link_libraries( hal ${HAL_LIBS} )
 
@@ -197,16 +202,11 @@ install_package(
     PKG_NAME HAL
     LIB_NAME hal
     VERSION ${HAL_VERSION}
-    INSTALL_HEADER_DIRS ${HAL_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}
-    INCLUDE_DIRS ${Messages_BINARY_DIR} ${LIB_INC_DIR} ${USER_INC}
+    INSTALL_HEADERS ${HAL_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL
+    INCLUDE_DIRS ${HAL_INCLUDES}
     LINK_LIBS ${HAL_LIBS}
     )
-
-# make an uninstall target
-include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
-add_custom_target(uninstall
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 ########################################################
 ## Create configure file for inclusion in library
@@ -215,3 +215,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   )
 
+# make an uninstall target
+include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
+add_custom_target(uninstall
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/HAL/cmake_uninstall.cmake")

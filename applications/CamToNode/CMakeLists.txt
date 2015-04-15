@@ -6,7 +6,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
 find_package(HAL 0.1 QUIET)
 find_package(Node QUIET)
-find_package(PbMsgs 2.0 QUIET)
 find_package(GFlags QUIET)
 find_package(MINIGLOG QUIET)
 
@@ -21,17 +20,17 @@ if(HAL_FOUND AND PbMsgs_FOUND AND MINIGLOG_FOUND AND Node_FOUND)
   add_executable( ${PROJECT_NAME} main.cpp )
 
   include_directories(${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
-    ${PbMsgs_INCLUDE_DIRS} ${MINIGLOG_INCLUDE_DIRS} ${NODE_INCLUDE_DIRS})
+    ${MINIGLOG_INCLUDE_DIRS} ${NODE_INCLUDE_DIRS})
   target_link_libraries( ${PROJECT_NAME}
-    ${GFLAGS_LIBRARIES} 
+    ${GFLAGS_LIBRARIES}
     ${LINK_WHOLE_ARCHIVE_FLAG}
     ${HAL_LIBRARIES}
     ${NO_LINK_WHOLE_ARCHIVE_FLAG}
     ${Node_LIBRARIES}
-    ${PbMsgs_LIBRARIES}
     ${MINIGLOG_LIBRARIES}
     ${NODE_LIBRARIES}
     dl
+    messages
   )
 
 else(HAL_FOUND AND PbMsgs_FOUND AND GFlags_FOUND)

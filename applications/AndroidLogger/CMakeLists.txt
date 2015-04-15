@@ -5,7 +5,6 @@ include(def_apk)
 
 find_library(GLES_LIBRARY NAMES GLESv2)
 
-find_package(PbMsgs)
 find_package(MINIGLOG)
 find_package(OpenCV2)
 
@@ -16,5 +15,5 @@ def_apk(AndroidLogger
   JNI_SOURCES NativeSensorInterface.cpp NativeOpenGLRenderer.cpp
   JNI_LIB ARPGNativeInterface
   LINK_LIBS ${GLES_LIBRARY} ${OpenCV2_JAVA_LIBRARY}
-  DEPENDS pbmsgs miniglog
+  DEPENDS messages miniglog
   )

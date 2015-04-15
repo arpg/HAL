@@ -15,9 +15,13 @@ option( BUILD_SHARED_LIBS "Build shared libraries." ON )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_subdirectory( HAL )
-set(HAL_DIR ${HAL_BINARY_DIR})
 
-option( BUILD_APPLICATIONS "Build applications." OFF )
+set( HAL_DIR ${CMAKE_CURRENT_BINARY_DIR} )
+set( HAL_LIBRARIES ${HAL_LIBS} hal messages )
+set( HAL_INCLUDE_DIRS ${HAL_INCLUDES} )
+link_libraries( ${HAL_LIBS} hal )
+
+option( BUILD_APPLICATIONS "Build applications." ON )
 if( BUILD_APPLICATIONS )
     add_subdirectory( applications )
 endif()

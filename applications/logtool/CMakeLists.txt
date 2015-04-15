@@ -1,26 +1,43 @@
 project(logtool)
 cmake_minimum_required(VERSION 2.8)
 
-include(def_executable)
+#include(install_package)
 
-find_package(PbMsgs)
 find_package(GFlags)
 find_package(MINIGLOG)
 find_package(OpenCV2)
+find_package(PROTOBUF)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
+
+#install_package(
+#    PKG_NAME logtool
+#    VERSION 0.1
+#    DESTINATION ${CMAKE_INSTALL_PREFIX}
+#    INCLUDE_DIRS ${HAL_INCLUDES}
+#    LINK_LIBS ${HAL_LIBS} messages
+#    )
+
+add_executable( logtool logtool.cpp )
 include_directories(
-  ${PbMsgs_INCLUDE_DIRS}
   ${GFLAGS_INCLUDE_DIR}
   ${MINIGLOG_INCLUDE_DIRS}
   ${OpenCV2_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_BINARY_DIR}/HAL
+  ${HAL_INCLUDES}
   )
+target_link_libraries( logtool
+    ${HAL_LIBRARIES}
+    ${PROTOBUF_LIBRARY}
+    hal
+    messages
+)
 
-def_executable(logtool
-  SOURCES logtool.cpp
-  DEPENDS pbmsgs
-  LINK_LIBS ${GFLAGS_LIBRARIES} ${MINIGLOG_LIBRARIES} ${OpenCV2_LIBRARIES}
-  CONDITIONS GFLAGS_FOUND MINIGLOG_FOUND OpenCV2_FOUND
-  PACKAGE PbMsgs
-  )
+#def_executable(logtool
+#  SOURCES logtool.cpp
+#  DEPENDS messages
+#  LINK_LIBS ${GFLAGS_LIBRARIES} ${MINIGLOG_LIBRARIES} ${OpenCV2_LIBRARIES} ${HAL_LIBRARIES}
+#  CONDITIONS GFLAGS_FOUND MINIGLOG_FOUND OpenCV2_FOUND
+#  PACKAGE messages
+#  )

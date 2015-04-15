@@ -120,7 +120,7 @@ function(install_package)
   if( PACKAGE_INSTALL_HEADER_DIRS )
       foreach(dir IN LISTS PACKAGE_INSTALL_HEADER_DIRS )
           install( DIRECTORY ${dir}
-              DESTINATION ${PACKAGE_DESTINATION}/include 
+              DESTINATION ${PACKAGE_DESTINATION}/include
               FILES_MATCHING PATTERN "*.h"
               )
       endforeach()
