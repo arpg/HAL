@@ -1,6 +1,6 @@
 #include "RectifyDriver.h"
 
-#include <PbMsgs/Image.h>
+#include <Messages/Image.h>
 
 namespace hal
 {

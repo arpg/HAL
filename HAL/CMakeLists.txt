@@ -12,7 +12,7 @@ include( install_package )
 
 string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
 #############################################################################
 # Find required libraries
@@ -91,7 +91,7 @@ endif()
 
 
 
-# Collect all driver includes and libraries in P_INCLUDE_DIRS and P_LIBRARIES 
+# Collect all driver includes and libraries in P_INCLUDE_DIRS and P_LIBRARIES
 set_property( GLOBAL PROPERTY P_INCLUDE_DIRS ${OpenCV2_INCLUDE_DIRS} )
 set_property( GLOBAL PROPERTY P_LIBRARIES ${OpenCV2_LIBRARIES} )
 
@@ -208,10 +208,11 @@ set(HAL_LIBS
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${PROTOBUF_LIBRARIES}
+  ${LINK_LIBS}
   )
 
-add_library( hal ${HAL_SOURCES} ) 
-target_link_libraries( ${HAL_LIBS} )
+add_library( hal ${HAL_SOURCES} )
+target_link_libraries( hal ${HAL_LIBS} )
 
 
 #def_library(hal

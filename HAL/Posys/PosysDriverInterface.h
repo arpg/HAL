@@ -4,7 +4,7 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <PbMsgs/Pose.pb.h>
+#include <Messages/Pose.pb.h>
 
 
 namespace hal {

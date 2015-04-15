@@ -2,7 +2,7 @@
 
 #include <HAL/LIDAR/LIDARDriverInterface.h>
 
-#include <PbMsgs/Reader.h>
+#include <Messages/Reader.h>
 
 namespace hal {
 

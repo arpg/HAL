@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(PbMsgs)
+project(Messages)
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
@@ -102,19 +102,17 @@ if(BUILD_Velodyne)
     set(HDRS ${HDRS} Velodyne.h)
 endif()
 
-def_library(${LIBRARY_NAME}
-  SOURCES ${SRCS} ${HDRS}
-  LINK_LIBS ${LINK_LIBS}
-  PACKAGE PbMsgs
-  )
 
-export_package(${PROJECT_NAME}
-  TARGETS ${LIBRARY_NAME}
-  VERSION ${VERSION}
-  LIBRARY ${LIBRARY_NAME}
-  LIBRARIES ${LIBRARY_NAME}
-  INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
-  )
+install_package(
+    PKG_NAME ${PROJECT_NAME}
+    LIB_NAME ${LIBRARY_NAME}
+    VERSION ${VERSION}
+    DESCRIPTION "Protobuf Messages handler"
+    INSTALL_HEADERS ${HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
+    LINK_LIBS ${LINK_LIBS}
+    )
 
 #######################################################
 ## Create configure file for inclusion in library

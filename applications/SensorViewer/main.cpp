@@ -11,9 +11,9 @@
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
 
-#include <PbMsgs/ImageArray.h>
-#include <PbMsgs/Logger.h>
-#include <PbMsgs/Matrix.h>
+#include <Messages/ImageArray.h>
+#include <Messages/Logger.h>
+#include <Messages/Matrix.h>
 
 pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGyro;

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <PbMsgs/config.h>
+#include <Messages/config.h>
 
 #include "Reader.h"
 

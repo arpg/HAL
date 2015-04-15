@@ -1,9 +1,9 @@
-#include <PbMsgs/Image.h>
+#include <Messages/Image.h>
 
 #include <fstream>
 #include <memory>
 
-#include <PbMsgs/Messages.pb.h>
+#include <Messages/Messages.pb.h>
 #include <miniglog/logging.h>
 
 namespace pb {

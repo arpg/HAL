@@ -7,8 +7,8 @@
 #include <sstream>
 #include <thread>
 #include <condition_variable>
-#include <PbMsgs/Header.pb.h>
-#include <PbMsgs/Messages.pb.h>
+#include <Messages/Header.pb.h>
+#include <Messages/Messages.pb.h>
 
 namespace pb {
 

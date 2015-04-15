@@ -2,7 +2,7 @@
 
 #include <HAL/Encoder/EncoderDriverInterface.h>
 
-#include <PbMsgs/Reader.h>
+#include <Messages/Reader.h>
 
 namespace hal {
 

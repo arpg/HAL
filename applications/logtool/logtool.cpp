@@ -13,9 +13,9 @@
 #pragma clang diagnostic pop
 #endif
 
-#include <PbMsgs/Image.h>
-#include <PbMsgs/Logger.h>
-#include <PbMsgs/Reader.h>
+#include <Messages/Image.h>
+#include <Messages/Logger.h>
+#include <Messages/Reader.h>
 
 /**
  * logtool functionality
