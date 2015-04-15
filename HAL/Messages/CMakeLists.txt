@@ -102,6 +102,17 @@ if(BUILD_Velodyne)
     set(HDRS ${HDRS} Velodyne.h)
 endif()
 
+#######################################################
+## Create configure file for inclusion in library
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  IMMEDIATE
+)
+
+add_library(hal ${HAL_SRCS} )
+target_link_library( hal ${LINK_LIBS} )
 
 install_package(
     PKG_NAME ${PROJECT_NAME}
@@ -114,13 +125,6 @@ install_package(
     LINK_LIBS ${LINK_LIBS}
     )
 
-#######################################################
-## Create configure file for inclusion in library
-
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-)
 
 #######################################################
 ## Install headers / targets

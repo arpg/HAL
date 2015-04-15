@@ -234,12 +234,12 @@ target_link_libraries( hal ${HAL_LIBS} )
 #  )
 
 ########################################################
-### Create configure file for inclusion in library
-#
-#configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-#  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-#  )
-#
+## Create configure file for inclusion in library
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  )
+
 ########################################################
 ########################################################
 ### Install headers / targets
