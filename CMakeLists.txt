@@ -26,3 +26,7 @@ if( BUILD_APPLICATIONS )
     add_subdirectory( applications )
 endif()
 
+# make an uninstall target
+include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
+add_custom_target(uninstall
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")

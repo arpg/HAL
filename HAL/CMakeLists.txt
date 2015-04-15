@@ -214,8 +214,3 @@ install_package(
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   )
-
-# make an uninstall target
-include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
-add_custom_target(uninstall
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/HAL/cmake_uninstall.cmake")
