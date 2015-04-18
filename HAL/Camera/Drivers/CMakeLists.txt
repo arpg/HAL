@@ -1,7 +1,9 @@
 subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 foreach(subdir ${SUBDIRS})
-  add_subdirectory(${subdir})
+  if(NOT("${subdir}" STREQUAL "CMakeFiles"))
+    add_subdirectory(${subdir})
+  endif()
 endforeach()
 
 if(HAL_HAVE_THIRDPARTY)
