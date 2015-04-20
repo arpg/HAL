@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include <gflags/gflags.h>
-#include <miniglog/logging.h>
+#include <glog/logging.h>
 
 #ifdef __clang__
 #pragma clang diagnostic push

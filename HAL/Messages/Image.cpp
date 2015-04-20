@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <Messages/Messages.pb.h>
-#include <miniglog/logging.h>
+#include <glog/logging.h>
 
 namespace pb {
 

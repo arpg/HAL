@@ -11,7 +11,7 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <miniglog/logging.h>
+#include <glog/logging.h>
 
 namespace pb {
 
