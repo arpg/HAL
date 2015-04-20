@@ -25,9 +25,6 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
     m_vLuts[i] = calibu::LookupTable(new_rig->cameras_[i]->Width(), new_rig->cameras_[i]->Height());
   }
 
-  std::cout << new_rig->cameras_[0]->Width() << " is the width, and " <<
-               new_rig->cameras_[0]->Height() << " is the height." << std::endl; //debug
-
   if(new_rig->NumCams() == 2) {
     m_cam = calibu::CreateScanlineRectifiedLookupAndCameras(
         new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
