@@ -19,7 +19,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 find_package( Eigen3 REQUIRED )
 find_package( Protobuf REQUIRED )
 find_package( Sophus REQUIRED )
-find_package( MINIGLOG REQUIRED )
+find_package( GLog REQUIRED )
 find_package( TinyXML2 QUIET )
 find_package( OpenCV2 QUIET )
 if( OpenCV2_FOUND )
@@ -40,13 +40,13 @@ list( APPEND USER_INC   ${CMAKE_CURRENT_SOURCE_DIR} )
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIRS} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
-list( APPEND USER_INC   ${MINIGLOG_INCLUDE_DIRS} )
+list( APPEND USER_INC   ${GLog_INCLUDE_DIRS} )
 
 list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_DIR}/.." )
 
 include_directories( ${LIB_INC_DIR} ${USER_INC} )
 
-list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${MINIGLOG_LIBRARIES})
+list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${GLog_LIBRARIES})
 
 ############################################################################
 # Build messages library

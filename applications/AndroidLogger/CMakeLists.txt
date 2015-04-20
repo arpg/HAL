@@ -5,10 +5,10 @@ include(def_apk)
 
 find_library(GLES_LIBRARY NAMES GLESv2)
 
-find_package(MINIGLOG)
+find_package(GLog)
 find_package(OpenCV2)
 
-include_directories(${PbMsgs_INCLUDE_DIRS} ${MINIGLOG_INCLUDE_DIRS})
+include_directories(${PbMsgs_INCLUDE_DIRS} ${GLog_INCLUDE_DIRS})
 
 def_apk(AndroidLogger
   JNI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/jni"
