@@ -6,7 +6,7 @@ namespace hal
 {
 
 UndistortDriver::UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
-    const std::shared_ptr<calibu::Rig<double> >& rig
+    const std::shared_ptr<calibu::Rig<double> > rig
     )
   : m_Input(input)
 {

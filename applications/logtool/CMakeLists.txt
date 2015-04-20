@@ -8,7 +8,7 @@ find_package(MINIGLOG)
 find_package(OpenCV2)
 find_package(PROTOBUF)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
 #install_package(

@@ -3,6 +3,7 @@
 /* Headers related to ReadCalibData */
 #include <math.h>
 #include <tinyxml2.h>
+#include <cmath>
 //#include <mvl/image/colormap.h>
 
 using namespace tinyxml2;
@@ -385,7 +386,7 @@ void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
       double focal_slope = vcl.focalSlope;
 
       float focal_offset = 256 * (1 - vcl.focalDistance/13100) * (1 - vcl.focalDistance/13100);
-      intesity += focal_slope * abs(focal_offset - 256 * (1 - dist_raw/65535) * (1 - dist_raw/65535));
+      intesity += focal_slope * std::abs(focal_offset - 256 * (1 - dist_raw/65535) * (1 - dist_raw/65535));
       intesity = (intesity<min_intensity)?min_intensity:intesity;
       intesity = (intesity>max_intensity)?max_intensity:intesity;
 

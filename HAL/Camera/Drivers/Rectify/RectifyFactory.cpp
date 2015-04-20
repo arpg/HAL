@@ -39,7 +39,7 @@ public:
         }
 
         std::shared_ptr<calibu::Rig<double>> rig = calibu::ReadXmlRig( filename );
-        if(rig->cameras_.size() != 2) {
+        if(rig->NumCams() != 2) {
             throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
         }
 

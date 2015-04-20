@@ -17,7 +17,7 @@ class RectifyDriver : public CameraDriverInterface
 {
 public:
     RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
-            const std::shared_ptr<calibu::Rig<double>>& rig);
+            const std::shared_ptr<calibu::Rig<double>> rig);
 
     bool Capture( pb::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }
