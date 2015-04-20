@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <PbMsgs/Reader.h>
+#include <Messages/Reader.h>
 
 namespace hal {
 

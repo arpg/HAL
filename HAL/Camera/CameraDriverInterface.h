@@ -4,7 +4,7 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <PbMsgs/Camera.pb.h>
+#include <Messages/Camera.pb.h>
 
 namespace hal {
 
