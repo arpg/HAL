@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <Messages/Camera.pb.h>
+#include <HAL/Messages/Camera.pb.h>
 #include <HAL/Utils/Uri.h>
 #include "HAL/Camera/CameraDriverInterface.h"
 

@@ -3,8 +3,8 @@
 #include <jni.h>
 #include <android/log.h>
 #include <miniglog/logging.h>
-#include <Messages/Logger.h>
-#include <Messages/Matrix.h>
+#include <HAL/Messages/Logger.h>
+#include <HAL/Messages/Matrix.h>
 
 static pb::Logger& logger = pb::Logger::GetInstance();
 static std::string log_file;

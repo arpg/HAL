@@ -2,7 +2,7 @@
 
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <Messages/Camera.pb.h>
+#include <HAL/Messages/Camera.pb.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <gui/SurfaceTexture.h>

@@ -2,7 +2,7 @@
 // accompanying LICENSE file for more information.
 
 #include "KitKatDriver.h"
-#include <Messages/Camera.pb.h>
+#include <HAL/Messages/Camera.pb.h>
 #include "./Camera.h"
 #include "./Image.h"
 

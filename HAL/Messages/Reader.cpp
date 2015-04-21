@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <Messages/config.h>
+#include <HAL/Messages/config.h>
 
 #include "Reader.h"
 

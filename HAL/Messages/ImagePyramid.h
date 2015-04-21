@@ -1,7 +1,7 @@
 #pragma once
 
 #include <miniglog/logging.h>
-#include <Messages/Image.h>
+#include <HAL/Messages/Image.h>
 
 namespace pb {
 class ImagePyramid {

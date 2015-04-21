@@ -4,7 +4,7 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <Messages/Lidar.pb.h>
+#include <HAL/Messages/Lidar.pb.h>
 
 
 namespace hal {

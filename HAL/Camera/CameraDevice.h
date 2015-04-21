@@ -2,8 +2,8 @@
 
 #include <HAL/Devices/SharedLoad.h>
 
-#include <Messages/ImageArray.h>
-#include <Messages/Image.h>
+#include <HAL/Messages/ImageArray.h>
+#include <HAL/Messages/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>

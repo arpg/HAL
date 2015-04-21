@@ -1,6 +1,6 @@
 #include "UndistortDriver.h"
 
-#include <Messages/Image.h>
+#include <HAL/Messages/Image.h>
 
 namespace hal
 {

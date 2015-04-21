@@ -1,9 +1,9 @@
-#include <Messages/Image.h>
+#include <HAL/Messages/Image.h>
 
 #include <fstream>
 #include <memory>
 
-#include <Messages/Messages.pb.h>
+#include <HAL/Messages/Messages.pb.h>
 #include <glog/logging.h>
 
 namespace pb {

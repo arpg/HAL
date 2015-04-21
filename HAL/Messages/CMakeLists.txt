@@ -119,7 +119,7 @@ install_package(
     VERSION ${VERSION}
     DESCRIPTION "Protobuf Messages handler"
     INSTALL_HEADERS ${HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/Messages/
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Messages/
     INCLUDE_DIRS ${LIB_INC_DIR} ${USER_INC}
     LINK_LIBS ${LINK_LIBS}
     )
