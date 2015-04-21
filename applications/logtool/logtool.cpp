@@ -116,8 +116,17 @@ inline pb::MessageType MsgTypeForString(const std::string& str) {
     {"posys", pb::Msg_Type_Posys},
   };
   auto it = kTypeStrings.find(str);
+  if(it != kTypeStrings.end()) {
+    LOG(INFO) << "Type string '" << str
+              << "' does not match a known data type";
+  }
+
+  /*
+  // Note: no overloaded operator available.
+
   CHECK_NE(it, kTypeStrings.end()) << "Type string '" << str
                                    << "' does not match a known data type";
+  */
   return it->second;
 }
 

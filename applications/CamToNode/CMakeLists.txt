@@ -18,15 +18,14 @@ endif()
 if(GLog_FOUND AND Node_FOUND)
   add_executable( ${PROJECT_NAME} main.cpp )
 
-  include_directories(${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
-    ${GLog_INCLUDE_DIRS} ${NODE_INCLUDE_DIRS})
+  include_directories( ${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
+    ${GLog_INCLUDE_DIRS} )
   target_link_libraries( ${PROJECT_NAME}
     ${GFLAGS_LIBRARIES}
     ${LINK_WHOLE_ARCHIVE_FLAG}
     ${NO_LINK_WHOLE_ARCHIVE_FLAG}
     ${Node_LIBRARIES}
     ${GLog_LIBRARIES}
-    ${NODE_LIBRARIES}
     hal
     dl
     messages
