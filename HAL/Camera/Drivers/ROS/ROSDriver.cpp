@@ -159,7 +159,8 @@ namespace hal {
       return pb::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::MONO16)
       return pb::PB_UNSIGNED_SHORT;
-  
+    if (format == sensor_msgs::image_encodings::TYPE_16UC1)
+      return pb::PB_UNSIGNED_SHORT;
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
     return (pb::Type) 0;
   }
@@ -171,6 +172,9 @@ namespace hal {
       return pb::PB_LUMINANCE;
   
     if (format == sensor_msgs::image_encodings::MONO16)
+      return pb::PB_LUMINANCE;
+    
+    if (format == sensor_msgs::image_encodings::TYPE_16UC1)
       return pb::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::BGR8)
