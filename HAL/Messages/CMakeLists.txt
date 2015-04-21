@@ -8,7 +8,7 @@ include(install_package)
 
 string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror -Wabsolute-value")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror")
 
 
 #######################################################
@@ -17,7 +17,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall  -Werror -Wabsolute-val
 find_package( Eigen3 REQUIRED )
 find_package( Protobuf REQUIRED )
 find_package( Sophus REQUIRED )
-find_package( MINIGLOG REQUIRED )
+find_package( GLog REQUIRED )
 find_package( TinyXML2 )
 find_package( OpenCV2 )
 if( OpenCV2_FOUND )
@@ -34,9 +34,9 @@ list( APPEND USER_INC   ${CMAKE_CURRENT_SOURCE_DIR} )
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIRS} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
-list( APPEND USER_INC   ${MINIGLOG_INCLUDE_DIRS} )
+list( APPEND USER_INC   ${GLog_INCLUDE_DIRS} )
 list( APPEND LINK_LIBS  ${PROTOBUF_LIBRARIES} )
-list( APPEND LINK_LIBS  ${MINIGLOG_LIBRARIES})
+list( APPEND LINK_LIBS  ${GLog_LIBRARIES})
 
 if(TinyXML2_FOUND)
   list(APPEND LINK_LIBS  ${TinyXML2_LIBRARIES})
