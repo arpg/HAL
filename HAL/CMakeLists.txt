@@ -190,7 +190,6 @@ foreach(item ${PROTO_SRCS_PATH})
     list(APPEND PROTO_SRCS ${item_name} )
 endforeach()
 
-add_to_hal_headers( ${PROTO_HDRS} )
 add_to_hal_sources( ${PROTO_SRCS} )
 
 #############################################################################
@@ -261,14 +260,17 @@ set(HAL_INCLUDES
     ${USER_INC}
     CACHE STRING "HAL required includes" )
 
-add_library( hal ${HAL_SOURCES} ${HAL_HEADERS} )
+add_library( hal ${HAL_SOURCES} ${HAL_HEADERS} ${PROTO_HEADERS} )
 target_link_libraries( hal ${HAL_LIBS} )
 
+foreach( item ${PROTO_HDRS} )
+    list(APPEND PROTO_INSTALL_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
+endforeach()
 install_package(
     PKG_NAME HAL
     LIB_NAME hal
     VERSION ${HAL_VERSION}
-    INSTALL_HEADERS ${HAL_HEADERS}
+    INSTALL_HEADERS ${HAL_HEADERS} ${PROTO_INSTALL_HDRS}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL
     INCLUDE_DIRS ${HAL_INCLUDES}
     LINK_LIBS ${HAL_LIBS}
