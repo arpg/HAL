@@ -28,7 +28,7 @@ class SensorViewer {
                    has_encoder_(false), has_lidar_(false),
                    is_running_(true), is_stepping_(false), frame_number_(0),
                    panel_width_(0),
-                   logger_(pb::Logger::GetInstance())
+                   logger_(hal::Logger::GetInstance())
   {
   }
 
@@ -124,11 +124,11 @@ class SensorViewer {
     pangolin::Timer timer;
     bool got_first_image = false;
     bool capture_success = false;
-    std::shared_ptr<pb::ImageArray> last_images;
+    std::shared_ptr<hal::ImageArray> last_images;
     for (; !pangolin::ShouldQuit(); ++frame_number_) {
       const bool go = is_running_ || pangolin::Pushed(is_stepping_);
 
-      std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
+      std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glColor4f(1.0f,1.0f,1.0f,1.0f);
 
@@ -160,7 +160,7 @@ class SensorViewer {
       }
       if (got_first_image && !images->Empty()) {
         for (size_t ii = 0; ii < num_channels_; ++ii) {
-          std::shared_ptr<pb::Image> img = images->at(ii);
+          std::shared_ptr<hal::Image> img = images->at(ii);
           if (!glTex[ii].tid && num_channels_) {
             GLint internal_format = (img->Format() == GL_LUMINANCE ?
                                      GL_LUMINANCE : GL_RGBA);
@@ -179,7 +179,7 @@ class SensorViewer {
       }
 
       if (*logging_enabled_ && is_running_) {
-        if (pb::Logger::GetInstance().IsLogging() == false) {
+        if (hal::Logger::GetInstance().IsLogging() == false) {
 #ifdef ANDROID
           logger_.LogToFile("/sdcard/", "sensors");
 #else
@@ -286,16 +286,16 @@ class SensorViewer {
     }
   }
 
-  void LogCamera(pb::ImageArray* images) {
+  void LogCamera(hal::ImageArray* images) {
     if (!has_camera_) return;
 
-    pb::Msg pbMsg;
+    hal::Msg pbMsg;
     pbMsg.set_timestamp(hal::Tic());
     pbMsg.mutable_camera()->Swap(&images->Ref());
     logger_.LogMessage(pbMsg);
   }
 
-  void IMU_Handler(pb::ImuMsg& IMUdata) {
+  void IMU_Handler(hal::ImuMsg& IMUdata) {
     if (IMUdata.has_accel()) {
       g_PlotLogAccel.Log(IMUdata.accel().data(0),
                          IMUdata.accel().data(1),
@@ -313,14 +313,14 @@ class SensorViewer {
     }
 
     if (*logging_enabled_) {
-      pb::Msg pbMsg;
+      hal::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_imu()->Swap(&IMUdata);
       logger_.LogMessage(pbMsg);
     }
   }
 
-  void Posys_Handler(pb::PoseMsg& PoseData) {
+  void Posys_Handler(hal::PoseMsg& PoseData) {
     std::cout << "Posys Id: " << PoseData.id() << ". Data: ";
     for (int ii = 0; ii < PoseData.pose().data_size(); ++ii) {
       std::cout << PoseData.pose().data(ii) << " ";
@@ -328,14 +328,14 @@ class SensorViewer {
     std::cout << std::endl;
 
     if (*logging_enabled_) {
-      pb::Msg pbMsg;
+      hal::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_pose()->Swap(&PoseData);
       logger_.LogMessage(pbMsg);
     }
   }
 
-  void Encoder_Handler(pb::EncoderMsg& EncoderData) {
+  void Encoder_Handler(hal::EncoderMsg& EncoderData) {
     std::cout << "Encoder: ";
     for (int ii = 0; ii < EncoderData.label_size(); ++ii) {
       std::cout << EncoderData.label(ii) << ": " << EncoderData.data(ii) <<
@@ -344,18 +344,18 @@ class SensorViewer {
     std::cout << std::endl;
 
     if (*logging_enabled_){
-      pb::Msg pbMsg;
+      hal::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_encoder()->Swap(&EncoderData);
       logger_.LogMessage(pbMsg);
     }
   }
 
-  void LIDAR_Handler(pb::LidarMsg& LidarData)
+  void LIDAR_Handler(hal::LidarMsg& LidarData)
   {
     //std::cout << "Got LIDAR data..." << std::endl;
     if (*logging_enabled_){
-      pb::Msg pbMsg;
+      hal::Msg pbMsg;
       pbMsg.set_timestamp(hal::Tic());
       pbMsg.mutable_lidar()->Swap(&LidarData);
       logger_.LogMessage(pbMsg);
@@ -377,7 +377,7 @@ class SensorViewer {
   std::unique_ptr<pangolin::Var<bool> > limit_fps_;
   std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
   std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;
-  pb::Logger& logger_;
+  hal::Logger& logger_;
 };
 
 int main(int argc, char* argv[]) {

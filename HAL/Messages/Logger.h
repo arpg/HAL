@@ -10,7 +10,7 @@
 #include <HAL/Header.pb.h>
 #include <HAL/Messages.pb.h>
 
-namespace pb {
+namespace hal {
 
 class Logger {
  public:
@@ -33,13 +33,13 @@ class Logger {
   size_t buffer_size() const;
   size_t messages_written() const;
 
-  bool LogMessage(const pb::Msg& message);
+  bool LogMessage(const hal::Msg& message);
 
  private:
   void ThreadFunc();
 
  private:
-  std::list<pb::Msg>          m_qMessages;
+  std::list<hal::Msg>          m_qMessages;
   std::mutex                  m_QueueMutex;
   std::condition_variable     m_QueueCondition;
   std::string                 m_sFilename;

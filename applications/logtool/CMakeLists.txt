@@ -29,6 +29,7 @@ include_directories(
   )
 target_link_libraries( logtool
     ${HAL_LIBRARIES}
+    ${GFLAGS_LIBRARIES}
     ${PROTOBUF_LIBRARY}
     hal
 )

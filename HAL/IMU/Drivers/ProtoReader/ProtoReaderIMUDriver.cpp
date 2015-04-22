@@ -5,7 +5,7 @@ using namespace hal;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ProtoReaderIMUDriver::ProtoReaderIMUDriver(std::string filename)
-    : m_reader(pb::Reader::Instance(filename,pb::Msg_Type_IMU)), m_running(false), m_callback(nullptr)
+    : m_reader(hal::Reader::Instance(filename,hal::Msg_Type_IMU)), m_running(false), m_callback(nullptr)
 {
 }
 
@@ -14,7 +14,7 @@ ProtoReaderIMUDriver::ProtoReaderIMUDriver(std::string filename)
 void ProtoReaderIMUDriver::_ThreadFunc()
 {
   while( m_running ) {
-    if (std::unique_ptr<pb::ImuMsg> readmsg = m_reader.ReadImuMsg()) {
+    if (std::unique_ptr<hal::ImuMsg> readmsg = m_reader.ReadImuMsg()) {
       m_callback( *readmsg );
     } else {
       break;

@@ -28,7 +28,7 @@ HALCameraListener::~HALCameraListener()
     }
 }
 
-bool HALCameraListener::GetImages( pb::ImageMsg* pbImg )
+bool HALCameraListener::GetImages( hal::ImageMsg* pbImg )
 {
     if(!m_pBuffer) {
         return false;

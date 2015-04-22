@@ -1,4 +1,4 @@
-package pb;
+package hal;
 
 import "Pose.proto";
 import "Matrix.proto";

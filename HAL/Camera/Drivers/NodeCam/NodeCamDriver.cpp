@@ -28,7 +28,7 @@ bool NodeCamDriver::InitNode()
     if(m_Node.subscribe(m_sAddress))
     {
       // this initiates the number of channels and image dimensions
-      pb::CameraMsg vImages;
+      hal::CameraMsg vImages;
       Capture(vImages);
     }
     else
@@ -45,7 +45,7 @@ bool NodeCamDriver::InitNode()
   return true;
 }
 
-bool NodeCamDriver::Capture(pb::CameraMsg& vImages)
+bool NodeCamDriver::Capture(hal::CameraMsg& vImages)
 {
   auto start = Now();
   bool ok = m_Node.receive(m_sAddress, vImages);

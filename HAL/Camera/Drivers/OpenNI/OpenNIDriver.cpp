@@ -201,7 +201,7 @@ OpenNIDriver::~OpenNIDriver()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
+bool OpenNIDriver::Capture( hal::CameraMsg& vImages )
 {
     XnStatus rc = XN_STATUS_OK;
 
@@ -221,40 +221,40 @@ bool OpenNIDriver::Capture( pb::CameraMsg& vImages )
     for(unsigned int i=0; i<m_ImageGenerators.size(); ++i) {
         xn::ImageMetaData metaData;
         m_ImageGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.add_image();
+        hal::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
-        pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-        pbImg->set_format(pb::PB_RGB);
+        pbImg->set_type(hal::PB_UNSIGNED_BYTE);
+        pbImg->set_format(hal::PB_RGB);
         pbImg->set_data( metaData.RGB24Data(), metaData.DataSize() );
         pbImg->set_serial_number( m_SerialNos[i] );
     }
     for(unsigned int i=0; i<m_DepthGenerators.size(); ++i) {
         xn::DepthMetaData metaData;
         m_DepthGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.add_image();
+        hal::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->set_data( metaData.Data(), metaData.DataSize() );
-        pbImg->set_type(pb::PB_UNSIGNED_SHORT);
-        pbImg->set_format(pb::PB_LUMINANCE);
+        pbImg->set_type(hal::PB_UNSIGNED_SHORT);
+        pbImg->set_format(hal::PB_LUMINANCE);
         pbImg->set_serial_number( m_SerialNos[i] );
-        pb::ImageInfoMsg* pbImgInfo = pbImg->mutable_info();
+        hal::ImageInfoMsg* pbImgInfo = pbImg->mutable_info();
         pbImgInfo->set_baseline( m_DepthBaselines[i] );
         pbImgInfo->set_focal_length( m_DepthFocalLengths[i] );
     }
     for(unsigned int i=0; i<m_IRGenerators.size(); ++i) {
         xn::IRMetaData metaData;
         m_IRGenerators[i].GetMetaData(metaData);
-        pb::ImageMsg* pbImg = vImages.add_image();
+        hal::ImageMsg* pbImg = vImages.add_image();
         pbImg->set_width( m_nImgWidth );
         pbImg->set_height( m_nImgHeight );
         pbImg->set_timestamp( metaData.Timestamp() );
         pbImg->set_data( metaData.Data(), metaData.DataSize() );
-        pbImg->set_type(pb::PB_UNSIGNED_SHORT);
-        pbImg->set_format(pb::PB_LUMINANCE);
+        pbImg->set_type(hal::PB_UNSIGNED_SHORT);
+        pbImg->set_format(hal::PB_LUMINANCE);
         pbImg->set_serial_number( m_SerialNos[i] );
     }
 

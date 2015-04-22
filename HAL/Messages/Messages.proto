@@ -1,4 +1,4 @@
-package pb;
+package hal;
 
 import "Camera.proto";
 import "Imu.proto";

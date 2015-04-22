@@ -6,53 +6,53 @@
 #include <HAL/Messages.pb.h>
 #include <glog/logging.h>
 
-namespace pb {
+namespace hal {
 
-void ReadCvMat(const cv::Mat& cvImage, pb::ImageMsg* pbImage) {
+void ReadCvMat(const cv::Mat& cvImage, hal::ImageMsg* pbImage) {
   pbImage->set_data((const char*)cvImage.data,
                     cvImage.total() * cvImage.elemSize());
   pbImage->set_height(cvImage.rows);
   pbImage->set_width(cvImage.cols);
 
   if (cvImage.elemSize1() == 1) {
-    pbImage->set_type(pb::PB_UNSIGNED_BYTE);
+    pbImage->set_type(hal::PB_UNSIGNED_BYTE);
   } else if (cvImage.elemSize1() == 2) {
-    pbImage->set_type(pb::PB_UNSIGNED_SHORT);
+    pbImage->set_type(hal::PB_UNSIGNED_SHORT);
   } else if (cvImage.elemSize1() == 4) {
-    pbImage->set_type(pb::PB_FLOAT);
+    pbImage->set_type(hal::PB_FLOAT);
   } else {
     LOG(FATAL) << "Unknown image type";
   }
 
   if (cvImage.channels() == 1) {
-    pbImage->set_format(pb::PB_LUMINANCE);
+    pbImage->set_format(hal::PB_LUMINANCE);
   } else if (cvImage.channels() == 3) {
-    pbImage->set_format(pb::PB_RGB);
+    pbImage->set_format(hal::PB_RGB);
   } else {
     LOG(FATAL) << "Unknown number of image channels";
   }
 }
 
-cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
+cv::Mat WriteCvMat(const hal::ImageMsg& pbImage) {
   int nCvType = 0;
-  if (pbImage.type() == pb::PB_BYTE ||
-      pbImage.type() == pb::PB_UNSIGNED_BYTE) {
-    if (pbImage.format() == pb::PB_LUMINANCE) {
+  if (pbImage.type() == hal::PB_BYTE ||
+      pbImage.type() == hal::PB_UNSIGNED_BYTE) {
+    if (pbImage.format() == hal::PB_LUMINANCE) {
       nCvType = CV_8UC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == hal::PB_RGB) {
       nCvType = CV_8UC3;
     }
-  } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
-             pbImage.type() == pb::PB_SHORT) {
-    if (pbImage.format() == pb::PB_LUMINANCE) {
+  } else if (pbImage.type() == hal::PB_UNSIGNED_SHORT ||
+             pbImage.type() == hal::PB_SHORT) {
+    if (pbImage.format() == hal::PB_LUMINANCE) {
       nCvType = CV_16UC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == hal::PB_RGB) {
       nCvType = CV_16UC3;
     }
-  } else if (pbImage.type() == pb::PB_FLOAT) {
-    if (pbImage.format() == pb::PB_LUMINANCE) {
+  } else if (pbImage.type() == hal::PB_FLOAT) {
+    if (pbImage.format() == hal::PB_LUMINANCE) {
       nCvType = CV_32FC1;
-    } else if (pbImage.format() == pb::PB_RGB) {
+    } else if (pbImage.format() == hal::PB_RGB) {
       nCvType = CV_32FC3;
     }
   }
@@ -61,7 +61,7 @@ cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
                  (void*)pbImage.data().data());
 }
 
-void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage) {
+void ReadFile(const std::string& sFileName, hal::ImageMsg* pbImage) {
   cv::Mat Image;
 
   std::string sExtension = sFileName.substr(sFileName.rfind(".") + 1);
@@ -128,14 +128,14 @@ Image& Image::operator=(const Image& other) {
     }
 
     owns_image_ = true;
-    msg_ = new pb::ImageMsg(*other.msg_);
+    msg_ = new hal::ImageMsg(*other.msg_);
     source_array_.reset();
     mat_ = WriteCvMat(*msg_);
   }
   return *this;
 }
 
-Image::Image(const Image& other) : msg_(new pb::ImageMsg(*other.msg_)),
+Image::Image(const Image& other) : msg_(new hal::ImageMsg(*other.msg_)),
                                    mat_(WriteCvMat(*msg_)),
                                    owns_image_(true) {
 }
@@ -170,7 +170,7 @@ double Image::Timestamp() const {
   return msg_->timestamp();
 }
 
-const pb::ImageInfoMsg& Image::GetInfo() const {
+const hal::ImageInfoMsg& Image::GetInfo() const {
   return msg_->info();
 }
 
@@ -186,4 +186,4 @@ const unsigned char* Image::RowPtr(unsigned int row) const {
   return data() + (row * Width());
 }
 
-}  // end namespace pb
+}  // end namespace hal

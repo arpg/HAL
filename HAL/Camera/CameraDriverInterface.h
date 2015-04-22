@@ -15,7 +15,7 @@ class CameraDriverInterface : public DriverInterface
 public:
     // Pure virtual functions driver writers must implement:
     virtual ~CameraDriverInterface() {}
-    virtual bool Capture( pb::CameraMsg& vImages ) = 0;
+    virtual bool Capture( hal::CameraMsg& vImages ) = 0;
     virtual std::shared_ptr<CameraDriverInterface> GetInputDevice() = 0;
 
     virtual size_t NumChannels() const = 0;

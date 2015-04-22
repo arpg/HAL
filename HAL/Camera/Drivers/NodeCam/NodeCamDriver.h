@@ -17,7 +17,7 @@ public:
                   const std::string& sTopicName, double timeout);
     ~NodeCamDriver();
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() {
         return std::shared_ptr<CameraDriverInterface>();
     }

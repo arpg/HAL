@@ -6,11 +6,11 @@
 #include "Messages.pb.h"
 #include "Matrix.h"
 
-namespace pb {
+namespace hal {
 
 template <typename Scalar>
 void WritePoseSE3(const Sophus::SE3Group<Scalar>& pose, PoseMsg* msg) {
-  msg->set_type(pb::PoseMsg_Type_SE3);
+  msg->set_type(hal::PoseMsg_Type_SE3);
 
   Eigen::Matrix<Scalar, 7, 1> vec(
       Sophus::Map<const Eigen::Matrix<Scalar, 7, 1> >(pose.data()));

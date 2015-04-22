@@ -20,7 +20,7 @@ Scalar radians(const Scalar& deg) {
   return deg * M_PI / 180.;
 }
 
-double pose_std(const pb::PoseMsg& msg) {
+double pose_std(const hal::PoseMsg& msg) {
   if (msg.has_covariance()) {
     // mean of stds
     double sum = 0.;
@@ -33,14 +33,14 @@ double pose_std(const pb::PoseMsg& msg) {
     return 0;
 }
 
-void gps_to_file(std::ofstream* fout, pb::PoseMsg& msg) {
+void gps_to_file(std::ofstream* fout, hal::PoseMsg& msg) {
   CHECK_NOTNULL(fout);
-  if (msg.type() != pb::PoseMsg::LatLongAlt) {
+  if (msg.type() != hal::PoseMsg::LatLongAlt) {
     LOG(INFO) << "Skipping non-WGS84 PoseMsg";
     return;
   }
 
-  const pb::VectorMsg& pose = msg.pose();
+  const hal::VectorMsg& pose = msg.pose();
   if (!converter) {
     converter.reset(geocon::geodetic2local::Create(radians(pose.data(0)),
                                                    radians(pose.data(1)),

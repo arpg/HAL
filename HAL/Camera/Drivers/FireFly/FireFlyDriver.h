@@ -19,7 +19,7 @@ class FireFlyDriver : public CameraDriver
     public:
         FireFlyDriver();
         virtual ~FireFlyDriver();
-        bool Capture( pb::CameraMsg& vImages );
+        bool Capture( hal::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
     private:

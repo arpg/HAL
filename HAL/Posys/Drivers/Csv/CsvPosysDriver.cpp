@@ -76,14 +76,14 @@ void CsvPosysDriver::_ThreadCaptureFunc()
 
         // get data and pack
         // we already have the timestamp so no need to read it!
-        pb::PoseMsg dataPose;
+        hal::PoseMsg dataPose;
         std::string sValue;
         getline ( m_pFile, sValue );
         std::vector<std::string> items = hal::Split(sValue, ',');
         // note: timestamps were already read
 
         dataPose.set_id( atol( items[0].c_str() ) );
-        dataPose.set_type(static_cast<pb::PoseMsg_Type>
+        dataPose.set_type(static_cast<hal::PoseMsg_Type>
                           ( atol( items[1].c_str() ) ));
 
         int N = atol( items[2].c_str() ); // pose data size

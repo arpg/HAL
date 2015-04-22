@@ -26,7 +26,7 @@ int main(/*int argc, char **argv*/)
 
   std::vector<pangolin::GlTexture> tex(cam.NumChannels());
   bool run = true;
-  std::shared_ptr<pb::ImageArray> imgs = pb::ImageArray::Create();
+  std::shared_ptr<hal::ImageArray> imgs = hal::ImageArray::Create();
   for (int frame = 0; !pangolin::ShouldQuit(); ++frame)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -42,7 +42,7 @@ int main(/*int argc, char **argv*/)
     }
     if(imgs->Size()>0){
       for(size_t i=0; i<imgs->Size(); ++i ) {
-        pb::Image img = *(imgs->at(i));
+        hal::Image img = *(imgs->at(i));
         if(!tex[i].tid) {
           tex[i].Reinitialise(img.Width(), img.Height(),
                               img.Format(), true, 0,

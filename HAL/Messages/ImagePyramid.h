@@ -3,7 +3,7 @@
 #include <miniglog/logging.h>
 #include <HAL/Messages/Image.h>
 
-namespace pb {
+namespace hal {
 class ImagePyramid {
  public:
   /** Construct an image pyramid */
@@ -103,4 +103,4 @@ class ImagePyramid {
   size_t num_levels_;
   double scale_factor_;
 };
-}  // end namespace pb
+}  // end namespace hal

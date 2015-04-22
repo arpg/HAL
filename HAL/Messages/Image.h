@@ -6,7 +6,7 @@
 #pragma GCC system_header
 #include <opencv2/opencv.hpp>
 
-namespace pb {
+namespace hal {
 
 class ImageArray;
 
@@ -14,14 +14,14 @@ class ImageArray;
  * given message.
  *
  * */
-cv::Mat WriteCvMat(const pb::ImageMsg& pbImage);
-void ReadCvMat(const cv::Mat& cvImage, pb::ImageMsg* pbImage);
-void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage);
+cv::Mat WriteCvMat(const hal::ImageMsg& pbImage);
+void ReadCvMat(const cv::Mat& cvImage, hal::ImageMsg* pbImage);
+void ReadFile(const std::string& sFileName, hal::ImageMsg* pbImage);
 
 /**
  * Basic image class used as a wrapper around an ImageMsg.
  *
- * IMPORTANT: Copy-semantics of pb::Image:
+ * IMPORTANT: Copy-semantics of hal::Image:
  * =======================================
  *
  * None of the basic constructors copy the image they are given!
@@ -30,9 +30,9 @@ void ReadFile(const std::string& sFileName, pb::ImageMsg* pbImage);
  * maintain a shared_ptr to that ImageArray to keep the Image alive
  * for (at least) as long as the Image exists.
  *
- * When pb::Image is copied, it will perform a DEEP copy of the image,
+ * When hal::Image is copied, it will perform a DEEP copy of the image,
  * and assume ownership of the copied Image. This follows normal C++
- * copy-semantics. Pass the pb::Image by reference if you don't want a
+ * copy-semantics. Pass the hal::Image by reference if you don't want a
  * deep copy.
  *
  */
@@ -66,7 +66,7 @@ class Image {
   int Type() const;
   int Format() const;
   double Timestamp() const;
-  const pb::ImageInfoMsg& GetInfo() const;
+  const hal::ImageInfoMsg& GetInfo() const;
   bool HasInfo() const;
   const unsigned char* data() const;
   const unsigned char* RowPtr(unsigned int row = 0) const;
@@ -107,4 +107,4 @@ class Image {
   bool owns_image_;
 };
 
-}  // end namespace pb
+}  // end namespace hal

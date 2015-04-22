@@ -19,7 +19,7 @@ class AutoExposureDriver : public CameraDriverInterface
 public:
     AutoExposureDriver(const int nTarget,std::shared_ptr<CameraDriverInterface> Input);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     std::string GetDeviceProperty(const std::string& sProperty);

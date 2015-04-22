@@ -7,7 +7,7 @@
 /* Headers related to the driver side*/
 #include <HAL/LIDAR/LIDARDevice.h>
 
-namespace pb
+namespace hal
 {
 
 //This structure will contain all the correction factors for a laser. HDL-64E contains 64 lasers, so when using it

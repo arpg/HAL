@@ -3,7 +3,7 @@
 #include <memory>
 #include <HAL/Camera.pb.h>
 #include <HAL/Utils/Uri.h>
-#include "HAL/Camera/CameraDriverInterface.h"
+#include <HAL/Camera/CameraDriverInterface.h>
 
 #include <asm/types.h>
 #include <linux/videodev2.h>
@@ -29,13 +29,13 @@ public:
     V4LDriver(std::string dev_name, io_method io);
     ~V4LDriver();
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
 
 //    std::string GetDeviceProperty(const std::string& sProperty);
-    
+
     inline std::shared_ptr<CameraDriverInterface> GetInputDevice() {
         return std::shared_ptr<CameraDriverInterface>();
-    }    
+    }
 
     size_t Width( size_t idx = 0 ) const;
 

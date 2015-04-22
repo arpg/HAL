@@ -6,9 +6,9 @@
 #include <HAL/Messages/Logger.h>
 #include <HAL/Messages/Matrix.h>
 
-static pb::Logger& logger = pb::Logger::GetInstance();
+static hal::Logger& logger = hal::Logger::GetInstance();
 static std::string log_file;
-static pb::Msg msg;
+static hal::Msg msg;
 static int image_width = 0, image_height = 0;
 
 extern "C" {
@@ -86,15 +86,15 @@ extern "C" {
     double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
     msg.set_timestamp(sec_ts);
 
-    pb::CameraMsg* cam = msg.mutable_camera();
+    hal::CameraMsg* cam = msg.mutable_camera();
     cam->set_id(0);
     cam->set_device_time(sec_ts);
 
-    pb::ImageMsg* img = cam->add_image();
+    hal::ImageMsg* img = cam->add_image();
     img->set_timestamp(sec_ts);
     img->set_width(image_width);
     img->set_height(image_height);
-    img->set_format(pb::PB_LUMINANCE);
+    img->set_format(hal::PB_LUMINANCE);
 
     // Size of luminance portion of image for format NV16
     int lum_size = image_width * image_height;
@@ -119,11 +119,11 @@ extern "C" {
     double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
     msg.set_timestamp(sec_ts);
 
-    pb::ImuMsg* imu = msg.mutable_imu();
+    hal::ImuMsg* imu = msg.mutable_imu();
     imu->set_id(0);
     imu->set_device_time(sec_ts);
 
-    pb::VectorMsg* accel = imu->mutable_accel();
+    hal::VectorMsg* accel = imu->mutable_accel();
     accel->add_data(x);
     accel->add_data(y);
     accel->add_data(z);
@@ -141,11 +141,11 @@ extern "C" {
     double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
     msg.set_timestamp(sec_ts);
 
-    pb::ImuMsg* imu = msg.mutable_imu();
+    hal::ImuMsg* imu = msg.mutable_imu();
     imu->set_id(0);
     imu->set_device_time(sec_ts);
 
-    pb::VectorMsg* mag = imu->mutable_mag();
+    hal::VectorMsg* mag = imu->mutable_mag();
     mag->add_data(x);
     mag->add_data(y);
     mag->add_data(z);
@@ -163,11 +163,11 @@ extern "C" {
     double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
     msg.set_timestamp(sec_ts);
 
-    pb::ImuMsg* imu = msg.mutable_imu();
+    hal::ImuMsg* imu = msg.mutable_imu();
     imu->set_id(0);
     imu->set_device_time(sec_ts);
 
-    pb::VectorMsg* gyro = imu->mutable_gyro();
+    hal::VectorMsg* gyro = imu->mutable_gyro();
     gyro->add_data(x);
     gyro->add_data(y);
     gyro->add_data(z);
@@ -186,19 +186,19 @@ extern "C" {
     double sec_ts = static_cast<int64_t>(timestamp) * 1e-9;
     msg.set_timestamp(sec_ts);
 
-    pb::PoseMsg* pose = msg.mutable_pose();
-    pose->set_type(pb::PoseMsg::LatLongAlt);
+    hal::PoseMsg* pose = msg.mutable_pose();
+    pose->set_type(hal::PoseMsg::LatLongAlt);
     pose->set_id(0);
     pose->set_device_time(sec_ts);
 
-    pb::VectorMsg* pose_vec = pose->mutable_pose();
+    hal::VectorMsg* pose_vec = pose->mutable_pose();
     pose_vec->add_data(lat);
     pose_vec->add_data(lon);
     pose_vec->add_data(alt);
 
     Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(3, 3);
     covariance.diagonal().setConstant(std * std);
-    pb::WriteMatrix(covariance, pose->mutable_covariance());
+    hal::WriteMatrix(covariance, pose->mutable_covariance());
 
     logger.LogMessage(msg);
   }

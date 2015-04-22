@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   // publish images
   const long long int period_ms = static_cast<long long int>
       (1000. / static_cast<double>(FLAGS_fps));
-  for(std::shared_ptr<pb::ImageArray> vImages = pb::ImageArray::Create();;)
+  for(std::shared_ptr<hal::ImageArray> vImages = hal::ImageArray::Create();;)
   {
     // current time
     auto start_ms = std::chrono::duration_cast<std::chrono::milliseconds>

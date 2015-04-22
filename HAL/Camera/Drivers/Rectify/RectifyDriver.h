@@ -19,7 +19,7 @@ public:
     RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
             const std::shared_ptr<calibu::Rig<double>> rig);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }
 
     size_t NumChannels() const;

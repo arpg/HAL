@@ -6,7 +6,7 @@
 
 namespace hal {
 
-typedef std::function<void (pb::ImuMsg&)> IMUDriverDataCallback;
+typedef std::function<void (hal::ImuMsg&)> IMUDriverDataCallback;
 
 /// Generic IMU driver interface
 ///

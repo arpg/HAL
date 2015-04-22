@@ -229,14 +229,14 @@ AndroidDriver::~AndroidDriver()
   m_Cam->disconnect();
 }
 
-bool AndroidDriver::Capture( pb::CameraMsg& vImages )
+bool AndroidDriver::Capture( hal::CameraMsg& vImages )
 {
-  pb::ImageMsg* pbImg = vImages.add_image();
+  hal::ImageMsg* pbImg = vImages.add_image();
 
   pbImg->set_width(Width());
   pbImg->set_height(Height());
-  pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-  pbImg->set_format( pb::PB_LUMINANCE );
+  pbImg->set_type( hal::PB_UNSIGNED_BYTE );
+  pbImg->set_format( hal::PB_LUMINANCE );
   pbImg->set_timestamp( m_CamListener->GetTimestamp() );
 
   return m_CamListener->GetImages( pbImg );

@@ -275,10 +275,10 @@ private:
   /////////////////////////////////////////////////////////////////////////////////////////
   void _ThreadFunc()
   {
-    pb::ImuMsg      pbIMU;
-    pb::EncoderMsg  pbEncoderRear;
-    pb::EncoderMsg  pbEncoderFront;
-    pb::EncoderMsg  pbSteering;
+    hal::ImuMsg      pbIMU;
+    hal::EncoderMsg  pbEncoderRear;
+    hal::EncoderMsg  pbEncoderFront;
+    hal::EncoderMsg  pbSteering;
     CANMessage      RawPkg;
     CANParsedPkg    Pkg;
 #ifdef HAL_HAVE_LEXUSISF12
@@ -305,7 +305,7 @@ private:
         pbIMU.set_id(2); // changed the Id from 1 to 2
         pbIMU.set_device_time( hal::Tic() );
 
-        pb::VectorMsg* pbVec = pbIMU.mutable_accel();
+        hal::VectorMsg* pbVec = pbIMU.mutable_accel();
         pbVec->add_data(Pkg.Acc_x);
         pbVec->add_data(Pkg.Acc_y);
 

@@ -5,7 +5,7 @@ using namespace hal;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ProtoReaderPosysDriver::ProtoReaderPosysDriver(std::string filename)
-    : m_reader(pb::Reader::Instance(filename,pb::Msg_Type_Posys)), m_running(false), m_callback(nullptr)
+    : m_reader(hal::Reader::Instance(filename,hal::Msg_Type_Posys)), m_running(false), m_callback(nullptr)
 {
 }
 
@@ -14,7 +14,7 @@ ProtoReaderPosysDriver::ProtoReaderPosysDriver(std::string filename)
 void ProtoReaderPosysDriver::_ThreadFunc()
 {
     while( m_running ) {
-        std::unique_ptr<pb::PoseMsg> readmsg = m_reader.ReadPoseMsg();
+        std::unique_ptr<hal::PoseMsg> readmsg = m_reader.ReadPoseMsg();
         if(readmsg) {
             m_callback( *readmsg );
         } else {

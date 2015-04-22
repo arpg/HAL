@@ -8,7 +8,7 @@
 
 using namespace tinyxml2;
 
-namespace pb
+namespace hal
 {
 
 // Here starts the defining of the methods, no other definitions shall compare to this. These SHALL PASS compiling and
@@ -341,7 +341,7 @@ void Velodyne::ReadCalibData(const char *calibFileName)
   }
 }
 
-void Velodyne::ConvertRangeToPoints(const pb::LidarMsg& LidarData, //input
+void Velodyne::ConvertRangeToPoints(const hal::LidarMsg& LidarData, //input
                                     std::shared_ptr<LidarMsg> CorrectedData) //output
 {
   if((int)LidarData.distance().rows() != mn_NumLasers)
@@ -358,11 +358,11 @@ void Velodyne::ConvertRangeToPoints(const pb::LidarMsg& LidarData, //input
   md_TimeStamp = LidarData.system_time();
 }
 
-void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
+void Velodyne::ComputeIntensity(const hal::LidarMsg& LidarData,
                                 std::shared_ptr<LidarMsg> Intensities)
 {
 
-  pb::MatrixMsg* pbMatIntensity = nullptr;
+  hal::MatrixMsg* pbMatIntensity = nullptr;
   if(Intensities != nullptr) {
     pbMatIntensity = Intensities->mutable_intensity();
     pbMatIntensity->set_rows(1);
@@ -400,11 +400,11 @@ void Velodyne::ComputeIntensity(const pb::LidarMsg& LidarData,
   }
 }
 
-void Velodyne::ComputePoints(const pb::LidarMsg &LidarData,
+void Velodyne::ComputePoints(const hal::LidarMsg &LidarData,
                              std::shared_ptr<LidarMsg> Points)
 {
 
-  pb::MatrixMsg* pbMatPoint = nullptr;
+  hal::MatrixMsg* pbMatPoint = nullptr;
   if(Points != nullptr) {
     pbMatPoint = Points->mutable_distance();
     pbMatPoint->set_rows(4);

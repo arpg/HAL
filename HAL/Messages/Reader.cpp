@@ -13,7 +13,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <glog/logging.h>
 
-namespace pb {
+namespace hal {
 
 Reader& Reader::Instance( const std::string& filename, MessageType eType ) {
   static Reader m_Instance(filename);
@@ -131,7 +131,7 @@ void Reader::_ThreadFunc() {
 
     google::protobuf::io::CodedInputStream::Limit lim =
         coded_input.PushLimit(msg_size_bytes);
-    std::unique_ptr<pb::Msg> pMsg(new pb::Msg);
+    std::unique_ptr<hal::Msg> pMsg(new hal::Msg);
 //      This error message is inaccurate, so squelching it for now.
     if( !pMsg->ParseFromCodedStream(&coded_input) ) {
 //      std::cerr << "HAL: Error while parsing from coded stream. "
@@ -192,7 +192,7 @@ void Reader::_ThreadFunc() {
   m_bRunning = false;
 }
 
-std::unique_ptr<pb::Msg> Reader::ReadMessage() {
+std::unique_ptr<hal::Msg> Reader::ReadMessage() {
   // Wait if buffer is empty
   std::unique_lock<std::mutex> lock(m_QueueMutex);
   while( m_bRunning && m_qMessages.empty() ){
@@ -200,7 +200,7 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage() {
   }
 
   if(!m_qMessages.empty()) {
-    std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+    std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
     m_qMessages.pop_front();
     m_qMessageTypes.pop_front();
     m_ConditionDequeued.notify_one();
@@ -210,7 +210,7 @@ std::unique_ptr<pb::Msg> Reader::ReadMessage() {
   }
 }
 
-std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
+std::unique_ptr<hal::CameraMsg> Reader::ReadCameraMsg(int id) {
   if( !m_bReadCamera ) {
     std::cerr << "warning: ReadCameraMsg was called but"
               << " ReadCamera variable is set to false! " << std::endl;
@@ -227,7 +227,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
     return nullptr;
   }
 
-  std::unique_ptr<pb::CameraMsg> pCameraMsg(new pb::CameraMsg);
+  std::unique_ptr<hal::CameraMsg> pCameraMsg(new hal::CameraMsg);
   pCameraMsg->Swap(m_qMessages.front()->mutable_camera());
   pCameraMsg->set_system_time(m_qMessages.front()->timestamp());
 
@@ -244,7 +244,7 @@ std::unique_ptr<pb::CameraMsg> Reader::ReadCameraMsg(int id) {
   return pCameraMsg;
 }
 
-std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg() {
+std::unique_ptr<hal::EncoderMsg> Reader::ReadEncoderMsg() {
   if( !m_bReadEncoder ) {
     std::cerr << "warning: ReadEncoderMsg was called but"
               << "ReadEncoder variable is set to false! " << std::endl;
@@ -261,17 +261,17 @@ std::unique_ptr<pb::EncoderMsg> Reader::ReadEncoderMsg() {
     return nullptr;
   }
 
-  std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
 
-  std::unique_ptr<pb::EncoderMsg> pEncoderMsg( new pb::EncoderMsg );
+  std::unique_ptr<hal::EncoderMsg> pEncoderMsg( new hal::EncoderMsg );
   pEncoderMsg->Swap( pMessage->mutable_encoder() );
   return pEncoderMsg;
 }
 
-std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg() {
+std::unique_ptr<hal::ImuMsg> Reader::ReadImuMsg() {
   if( !m_bReadIMU ) {
     std::cerr << "warning: ReadImuMsg was called but ReadIMU variable is set to false! " << std::endl;
     return nullptr;
@@ -287,18 +287,18 @@ std::unique_ptr<pb::ImuMsg> Reader::ReadImuMsg() {
     return nullptr;
   }
 
-  std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
 
-  std::unique_ptr<pb::ImuMsg> pImuMsg( new pb::ImuMsg );
+  std::unique_ptr<hal::ImuMsg> pImuMsg( new hal::ImuMsg );
   pImuMsg->Swap( pMessage->mutable_imu() );
   pImuMsg->set_system_time(pMessage->timestamp());
   return pImuMsg;
 }
 
-std::unique_ptr<pb::LidarMsg> Reader::ReadLidarMsg() {
+std::unique_ptr<hal::LidarMsg> Reader::ReadLidarMsg() {
   if( !m_bReadLIDAR ) {
     std::cerr << "warning: ReadLidarMsg was called but ReadLIDAR variable is set to false! " << std::endl;
     return nullptr;
@@ -314,17 +314,17 @@ std::unique_ptr<pb::LidarMsg> Reader::ReadLidarMsg() {
     return nullptr;
   }
 
-  std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
 
-  std::unique_ptr<pb::LidarMsg> pLidarMsg( new pb::LidarMsg );
+  std::unique_ptr<hal::LidarMsg> pLidarMsg( new hal::LidarMsg );
   pLidarMsg->Swap( pMessage->mutable_lidar() );
   return pLidarMsg;
 }
 
-std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg() {
+std::unique_ptr<hal::PoseMsg> Reader::ReadPoseMsg() {
   if( !m_bReadPosys ) {
     std::cerr << "warning: ReadPoseMsg was called but ReadPose variable is set to false! " << std::endl;
     return nullptr;
@@ -340,12 +340,12 @@ std::unique_ptr<pb::PoseMsg> Reader::ReadPoseMsg() {
     return nullptr;
   }
 
-  std::unique_ptr<pb::Msg> pMessage = std::move(m_qMessages.front());
+  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
   m_ConditionDequeued.notify_one();
 
-  std::unique_ptr<pb::PoseMsg> pPoseMsg( new pb::PoseMsg );
+  std::unique_ptr<hal::PoseMsg> pPoseMsg( new hal::PoseMsg );
   pPoseMsg->Swap( pMessage->mutable_pose() );
   return pPoseMsg;
 }

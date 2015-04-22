@@ -17,7 +17,7 @@ public:
     HALCameraListener();
     ~HALCameraListener();
 
-    bool GetImages( pb::ImageMsg* pbImg );
+    bool GetImages( hal::ImageMsg* pbImg );
     double GetTimestamp() { return m_dTimestamp; }
 
     void notify(int32_t msgType, int32_t ext1, int32_t ext2);

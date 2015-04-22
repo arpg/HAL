@@ -3,7 +3,7 @@
 #include <Eigen/Eigen>
 #include <HAL/Messages.pb.h>
 
-namespace pb {
+namespace hal {
 
 inline void ReadMatrix(const MatrixMsg &msg, Eigen::MatrixXd* mat) {
   mat->resize(msg.rows(),msg.data_size()/msg.rows());
@@ -34,4 +34,4 @@ inline void WriteVector(const Eigen::VectorXd &mat, VectorMsg *msg) {
   }
 }
 
-}  // namespace pb
+}  // namespace hal

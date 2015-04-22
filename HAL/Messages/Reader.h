@@ -12,7 +12,7 @@
 #include <HAL/Header.pb.h>
 #include <HAL/Messages.pb.h>
 
-namespace pb {
+namespace hal {
 
 enum MessageType {
   Msg_Type_Camera,
@@ -33,7 +33,7 @@ class Reader {
   /// the message list directly.
   ///
   /// This will block if no messages are in the queue.
-  std::unique_ptr<pb::Msg> ReadMessage();
+  std::unique_ptr<hal::Msg> ReadMessage();
 
   /// Reads the next camera message from the message queue. If the
   /// next message is NOT a camera message, or the message queue is
@@ -45,7 +45,7 @@ class Reader {
   ///
   /// @param id ID of camera to return. Negative number indicates that
   ///           any camera messsage should be returned.
-  std::unique_ptr<pb::CameraMsg> ReadCameraMsg(int id = -1);
+  std::unique_ptr<hal::CameraMsg> ReadCameraMsg(int id = -1);
 
   /// Reads the next ENCODER message from the message queue. If the
   /// next message is NOT a ENCODER message, or the message queue is
@@ -54,7 +54,7 @@ class Reader {
   ///
   /// The "ReadEncoder" static variable must be set to true if the
   /// reader is to queue ENCODER messages.
-  std::unique_ptr<pb::EncoderMsg> ReadEncoderMsg();
+  std::unique_ptr<hal::EncoderMsg> ReadEncoderMsg();
 
   /// Reads the next IMU message from the message queue. If the next
   /// message is NOT an IMU message, or the message queue is empty,
@@ -63,7 +63,7 @@ class Reader {
   ///
   /// The "ReadIMU" static variable must be set to true if the reader
   /// is to queue IMU messages.
-  std::unique_ptr<pb::ImuMsg> ReadImuMsg();
+  std::unique_ptr<hal::ImuMsg> ReadImuMsg();
 
   /// Reads the next LIDAR message from the message queue. If the next
   /// message is NOT a LIDAR message, or the message queue is empty,
@@ -72,7 +72,7 @@ class Reader {
   ///
   /// The "ReadLidar" static variable must be set to true if the
   /// reader is to queue LIDAR messages.
-  std::unique_ptr<pb::LidarMsg> ReadLidarMsg();
+  std::unique_ptr<hal::LidarMsg> ReadLidarMsg();
 
   /// Reads the next POSE message from the message queue. If the next
   /// message is NOT a POSE message, or the message queue is empty,
@@ -81,7 +81,7 @@ class Reader {
   ///
   /// The "ReadPose" static variable must be set to true if the reader
   /// is to queue POSE messages.
-  std::unique_ptr<pb::PoseMsg> ReadPoseMsg();
+  std::unique_ptr<hal::PoseMsg> ReadPoseMsg();
 
   /// Stops the buffering thread. Should be called by driver
   /// implementations, usually in their destructors.
@@ -100,7 +100,7 @@ class Reader {
   std::string GetFilename() const { return m_sFilename; }
 
   /// Return Header protobuf.
-  const pb::Header& GetHeader() const { return m_Header; }
+  const hal::Header& GetHeader() const { return m_Header; }
 
   bool IsRunning() const { return m_bRunning; }
 
@@ -119,7 +119,7 @@ class Reader {
 
  private:
   std::string                             m_sFilename;
-  pb::Header                              m_Header;
+  hal::Header                              m_Header;
   bool                                    m_bRunning;
   bool                                    m_bShouldRun;
   bool                                    m_bReadCamera;
@@ -127,7 +127,7 @@ class Reader {
   bool                                    m_bReadIMU;
   bool                                    m_bReadLIDAR;
   bool                                    m_bReadPosys;
-  std::list<std::unique_ptr<pb::Msg> >    m_qMessages;
+  std::list<std::unique_ptr<hal::Msg> >    m_qMessages;
   std::list<MessageType >                 m_qMessageTypes;
   std::mutex                              m_QueueMutex;
   std::condition_variable                 m_ConditionQueued;
@@ -137,4 +137,4 @@ class Reader {
   size_t                                  m_nMaxBufferSize;
 };
 
-}  // end namespace pb
+}  // end namespace hal

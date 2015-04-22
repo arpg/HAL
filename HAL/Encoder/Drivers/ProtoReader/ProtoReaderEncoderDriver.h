@@ -17,7 +17,7 @@ private:
     void _ThreadFunc();
 
 private:
-    pb::Reader&                 m_reader;
+    hal::Reader&                 m_reader;
     bool                        m_running;
     std::thread                 m_callbackThread;
     EncoderDriverDataCallback   m_callback;

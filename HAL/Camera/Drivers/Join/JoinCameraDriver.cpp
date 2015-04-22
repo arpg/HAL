@@ -40,7 +40,7 @@ void JoinCameraDriver::WorkTeam::addWorker(
   const size_t workerId = m_ImageData.size();
   {
     std::unique_lock<std::mutex>(m_Mutex);
-    m_ImageData.push_back(pb::CameraMsg());
+    m_ImageData.push_back(hal::CameraMsg());
     m_bWorkerDone.push_back(true);
   }
   m_Workers.emplace_back(std::thread(&JoinCameraDriver::WorkTeam::Worker, this,
@@ -71,16 +71,16 @@ void JoinCameraDriver::WorkTeam::workerDone(size_t workerId)
   m_MasterCond.notify_one();
 }
 
-bool JoinCameraDriver::Capture( pb::CameraMsg& vImages )
+bool JoinCameraDriver::Capture( hal::CameraMsg& vImages )
 {
   vImages.Clear();
   const double time = Tic();
   vImages.set_system_time(time);
   vImages.set_device_time(time);
 
-  std::vector<pb::CameraMsg>& results = m_WorkTeam.process();
+  std::vector<hal::CameraMsg>& results = m_WorkTeam.process();
 
-  for( pb::CameraMsg& result : results ) {
+  for( hal::CameraMsg& result : results ) {
     for( int i = 0; i < result.image_size(); ++i ) {
       vImages.add_image()->Swap(result.mutable_image(i));
     }
@@ -89,7 +89,7 @@ bool JoinCameraDriver::Capture( pb::CameraMsg& vImages )
   return true;
 }
 
-std::vector<pb::CameraMsg>& JoinCameraDriver::WorkTeam::process()
+std::vector<hal::CameraMsg>& JoinCameraDriver::WorkTeam::process()
 {
   std::unique_lock<std::mutex> lock(m_Mutex);
   std::fill(m_bWorkerDone.begin(), m_bWorkerDone.end(), false);

@@ -114,7 +114,7 @@ uint64_t Freenect2Driver::ParseSerialNumber(const std::string& serial)
   }
 }
 
-bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
+bool Freenect2Driver::Capture( hal::CameraMsg& vImages )
 {
   vImages.Clear();
   vImages.set_device_time(Tic());
@@ -128,15 +128,15 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
     bool save_rgb = false;
 
     if((fit = frames.find(libfreenect2::Frame::Color)) != frames.end()) {
-      pb::ImageMsg* pbImg = vImages.add_image();
+      hal::ImageMsg* pbImg = vImages.add_image();
       pbImg->set_timestamp(time);
       pbImg->set_width(m_nImgWidth);
       pbImg->set_height(m_nImgHeight);
       pbImg->set_serial_number(m_lSerialNumbers[i]);
 
-      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-      if(m_bColor) pbImg->set_format(pb::PB_BGR);
-      else pbImg->set_format(pb::PB_LUMINANCE);
+      pbImg->set_type(hal::PB_UNSIGNED_BYTE);
+      if(m_bColor) pbImg->set_format(hal::PB_BGR);
+      else pbImg->set_format(hal::PB_LUMINANCE);
 
       const libfreenect2::Frame* frame = fit->second;
       cv::Mat trg(frame->height, frame->width, CV_8UC3, frame->data);
@@ -152,14 +152,14 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
 
     if((fit = frames.find(libfreenect2::Frame::Ir)) != frames.end()) {
       const libfreenect2::Frame* frame = fit->second;
-      pb::ImageMsg* pbImg = vImages.add_image();
+      hal::ImageMsg* pbImg = vImages.add_image();
       pbImg->set_timestamp(time);
       pbImg->set_width(frame->width);
       pbImg->set_height(frame->height);
       pbImg->set_serial_number(m_lSerialNumbers[i]);
 
-      pbImg->set_type(pb::PB_FLOAT);
-      pbImg->set_format(pb::PB_LUMINANCE);
+      pbImg->set_type(hal::PB_FLOAT);
+      pbImg->set_format(hal::PB_LUMINANCE);
 
       cv::Mat trg(frame->height, frame->width, CV_32F, frame->data);
       cv::flip(trg, trg, 1);
@@ -177,14 +177,14 @@ bool Freenect2Driver::Capture( pb::CameraMsg& vImages )
       }
 
       // change rgb and depth image
-      pb::ImageMsg* pbImg = vImages.add_image();
+      hal::ImageMsg* pbImg = vImages.add_image();
       pbImg->set_timestamp(time);
       pbImg->set_width(trg.cols);
       pbImg->set_height(trg.rows);
       pbImg->set_serial_number(m_lSerialNumbers[i]);
 
-      pbImg->set_type(pb::PB_FLOAT);
-      pbImg->set_format(pb::PB_LUMINANCE);
+      pbImg->set_type(hal::PB_FLOAT);
+      pbImg->set_format(hal::PB_LUMINANCE);
 
       cv::flip(trg, trg, 1);
       pbImg->set_data(trg.ptr<float>(), trg.rows * trg.cols * sizeof(float));

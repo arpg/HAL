@@ -21,7 +21,7 @@ NodeIMUDriver::NodeIMUDriver(const std::string& sHost)
 /////////////////////////////////////////////////////////////////////////////////////////
 void NodeIMUDriver::_ThreadFunc()
 {
-    pb::ImuMsg pbMsg;
+    hal::ImuMsg pbMsg;
     while( m_running ) {
         pbMsg.Clear();
         if( m_node.ReadBlocking("IMU", pbMsg) == false ) {

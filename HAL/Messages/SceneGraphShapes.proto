@@ -1,4 +1,4 @@
-package pb;
+package hal;
 
 // This lists all of the Shapes that we can add to the
 // SimBA RenderEngine via Node.

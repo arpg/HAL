@@ -17,7 +17,7 @@ public:
     UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
             const std::shared_ptr<calibu::Rig<double> > rig);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     size_t NumChannels() const;
@@ -35,7 +35,7 @@ public:
     }
 
 protected:
-    pb::CameraMsg                                       m_InMsg;
+    hal::CameraMsg                                       m_InMsg;
     std::shared_ptr<CameraDriverInterface>              m_Input;
     std::vector<std::shared_ptr<calibu::CameraInterface<double>>>  m_CamModel;
     std::vector<calibu::LookupTable>                    m_vLuts;

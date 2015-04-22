@@ -5,7 +5,7 @@
 #include <HAL/Messages.pb.h>
 #include <HAL/Messages/Image.h>
 
-namespace pb {
+namespace hal {
 
 class ImageArray : public std::enable_shared_from_this<ImageArray> {
  public:

@@ -5,7 +5,7 @@ using namespace hal;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ProtoReaderEncoderDriver::ProtoReaderEncoderDriver(std::string filename)
-    : m_reader(pb::Reader::Instance(filename,pb::Msg_Type_Encoder)), m_running(false), m_callback(nullptr)
+    : m_reader(hal::Reader::Instance(filename,hal::Msg_Type_Encoder)), m_running(false), m_callback(nullptr)
 {
 }
 
@@ -14,7 +14,7 @@ ProtoReaderEncoderDriver::ProtoReaderEncoderDriver(std::string filename)
 void ProtoReaderEncoderDriver::_ThreadFunc()
 {
     while( m_running ) {
-        std::unique_ptr<pb::EncoderMsg> readmsg = m_reader.ReadEncoderMsg();
+        std::unique_ptr<hal::EncoderMsg> readmsg = m_reader.ReadEncoderMsg();
         if(readmsg) {
             m_callback( *readmsg );
         } else {

@@ -28,8 +28,8 @@
 #  endif
 #endif
 
-using fPtr_IMU = void(*)(pb::ImuMsg& IMUdata);
-using fPtr_Encoder = void(*)(pb::EncoderMsg& Encoderdata);
+using fPtr_IMU = void(*)(hal::ImuMsg& IMUdata);
+using fPtr_Encoder = void(*)(hal::EncoderMsg& Encoderdata);
 
 typedef int ComPortHandle;
 
@@ -307,8 +307,8 @@ private:
   /////////////////////////////////////////////////////////////////////////////////////////
   void _ThreadFunc()
   {
-    pb::ImuMsg      pbIMU;
-    pb::EncoderMsg  pbEncoder;
+    hal::ImuMsg      pbIMU;
+    hal::EncoderMsg  pbEncoder;
     SensorPacket    Pkt;
 
     while( m_Running ) {
@@ -324,7 +324,7 @@ private:
         pbIMU.set_id(1);
         pbIMU.set_device_time( hal::Tic() );
 
-        pb::VectorMsg* pbVec = pbIMU.mutable_accel();
+        hal::VectorMsg* pbVec = pbIMU.mutable_accel();
         pbVec->add_data(Pkt.Acc_x);
         pbVec->add_data(Pkt.Acc_y);
         pbVec->add_data(Pkt.Acc_z);

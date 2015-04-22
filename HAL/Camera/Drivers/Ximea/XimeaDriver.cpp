@@ -228,7 +228,7 @@ XimeaDriver::~XimeaDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////
-bool XimeaDriver::Capture(pb::CameraMsg& images)
+bool XimeaDriver::Capture(hal::CameraMsg& images)
 {
   XI_RETURN error = XI_OK;
 
@@ -256,7 +256,7 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
     _CheckError(error, "xiGetImage");
 
     // Allocate memory.
-    pb::ImageMsg* pb_img = images.add_image();
+    hal::ImageMsg* pb_img = images.add_image();
 
     // Set timestamp from camera.
     images.set_device_time(image_.tsSec + 1e-6*image_.tsUSec);
@@ -266,20 +266,20 @@ bool XimeaDriver::Capture(pb::CameraMsg& images)
 
     if (image_format_ == XI_RAW8) {
       pb_img->set_data(image_.bp, image_width_ * image_height_);
-      pb_img->set_type(pb::PB_UNSIGNED_BYTE);
-      pb_img->set_format(pb::PB_LUMINANCE);
+      pb_img->set_type(hal::PB_UNSIGNED_BYTE);
+      pb_img->set_format(hal::PB_LUMINANCE);
     } else if (image_format_ == XI_RAW16) {
       pb_img->set_data(image_.bp, 2 * image_width_ * image_height_);
-      pb_img->set_type(pb::PB_UNSIGNED_SHORT);
-      pb_img->set_format(pb::PB_LUMINANCE);
+      pb_img->set_type(hal::PB_UNSIGNED_SHORT);
+      pb_img->set_format(hal::PB_LUMINANCE);
     } else if (image_format_ == XI_MONO8) {
       pb_img->set_data(image_.bp, image_width_ * image_height_);
-      pb_img->set_type(pb::PB_UNSIGNED_BYTE);
-      pb_img->set_format(pb::PB_LUMINANCE);
+      pb_img->set_type(hal::PB_UNSIGNED_BYTE);
+      pb_img->set_format(hal::PB_LUMINANCE);
     } else if (image_format_ == XI_MONO16) {
       pb_img->set_data(image_.bp, 2 * image_width_ * image_height_);
-      pb_img->set_type(pb::PB_UNSIGNED_SHORT);
-      pb_img->set_format(pb::PB_LUMINANCE);
+      pb_img->set_type(hal::PB_UNSIGNED_SHORT);
+      pb_img->set_format(hal::PB_LUMINANCE);
     } else {
       std::cerr << "Image format not supported." << std::endl;
     }

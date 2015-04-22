@@ -35,31 +35,31 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
   }
 }
 
-bool RectifyDriver::Capture( pb::CameraMsg& vImages )
+bool RectifyDriver::Capture( hal::CameraMsg& vImages )
 {
-  pb::CameraMsg vIn;
+  hal::CameraMsg vIn;
 
   const bool success = m_input->Capture( vIn );
 
   if(success) {
     vImages.Clear();
 
-    pb::Image inimg[2] = { pb::Image(vIn.image(0)),
-                           pb::Image(vIn.image(1)) };
+    hal::Image inimg[2] = { hal::Image(vIn.image(0)),
+                           hal::Image(vIn.image(1)) };
 
     vImages.set_system_time(vIn.system_time());
     vImages.set_device_time(vIn.device_time());
 
     for(int k=0; k < 2; ++k) {
-      pb::ImageMsg* pimg = vImages.add_image();
+      hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg[k].Width());
       pimg->set_height(inimg[k].Height());
       pimg->set_timestamp(inimg[k].Timestamp());
-      pimg->set_type( (pb::Type)inimg[k].Type());
-      pimg->set_format( (pb::Format)inimg[k].Format());
+      pimg->set_type( (hal::Type)inimg[k].Type());
+      pimg->set_format( (hal::Format)inimg[k].Format());
       pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
-      pb::Image img = pb::Image(*pimg);
+      hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
             m_vLuts[k], inimg[k].data(),
             reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),

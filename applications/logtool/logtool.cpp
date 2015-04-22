@@ -107,13 +107,13 @@ inline void Split<std::string>(const std::string& s, char delim,
   }
 }
 
-inline pb::MessageType MsgTypeForString(const std::string& str) {
-  static std::map<std::string, pb::MessageType> kTypeStrings = {
-    {"cam", pb::Msg_Type_Camera},
-    {"imu", pb::Msg_Type_IMU},
-    {"encoder", pb::Msg_Type_Encoder},
-    {"lidar", pb::Msg_Type_LIDAR},
-    {"posys", pb::Msg_Type_Posys},
+inline hal::MessageType MsgTypeForString(const std::string& str) {
+  static std::map<std::string, hal::MessageType> kTypeStrings = {
+    {"cam", hal::Msg_Type_Camera},
+    {"imu", hal::Msg_Type_IMU},
+    {"encoder", hal::Msg_Type_Encoder},
+    {"lidar", hal::Msg_Type_LIDAR},
+    {"posys", hal::Msg_Type_Posys},
   };
   auto it = kTypeStrings.find(str);
   if(it != kTypeStrings.end()) {
@@ -135,7 +135,7 @@ inline void SaveImage(const std::string& out_dir,
                       int channel_index,
                       unsigned int frame_number,
                       double timestamp,
-                      const pb::ImageMsg& image) {
+                      const hal::ImageMsg& image) {
 
   // Convert index to string.
   std::string index;
@@ -158,9 +158,9 @@ inline void SaveImage(const std::string& out_dir,
   std::string filename;
 
   // Use OpenCV to handle saving the file for us.
-  cv::Mat cv_image = pb::WriteCvMat(image);
+  cv::Mat cv_image = hal::WriteCvMat(image);
 
-  if (image.type() == pb::Type::PB_FLOAT) {
+  if (image.type() == hal::Type::PB_FLOAT) {
     // Save floats to our own "portable depth map" format.
     filename = file_prefix + "_" + index + ".pdm";
 
@@ -171,10 +171,10 @@ inline void SaveImage(const std::string& out_dir,
     file << 4294967295 << std::endl;
     file.write((const char*)cv_image.data, size);
     file.close();
-  } else if (image.type() == pb::Type::PB_BYTE
-             || image.type() == pb::Type::PB_UNSIGNED_BYTE
-             || image.type() == pb::Type::PB_SHORT
-             || image.type() == pb::Type::PB_UNSIGNED_SHORT) {
+  } else if (image.type() == hal::Type::PB_BYTE
+             || image.type() == hal::Type::PB_UNSIGNED_BYTE
+             || image.type() == hal::Type::PB_SHORT
+             || image.type() == hal::Type::PB_UNSIGNED_SHORT) {
     // OpenCV only supports byte/short data types with 1/3 channel images.
     filename = file_prefix + "_" + index + ".pgm";
     cv::imwrite(filename, cv_image);
@@ -204,11 +204,11 @@ void ExtractImu() {
         << "Minimum frame index must be <= than max frame index.";
   }
 
-  pb::Reader reader(FLAGS_in);
-  reader.Enable(pb::Msg_Type_IMU);
+  hal::Reader reader(FLAGS_in);
+  reader.Enable(hal::Msg_Type_IMU);
 
   int idx = 0;
-  std::unique_ptr<pb::Msg> msg;
+  std::unique_ptr<hal::Msg> msg;
   while (frame_min != kNoRange && idx < frame_min) {
     if ((msg = reader.ReadMessage()) && msg->has_camera()) {
       ++idx;
@@ -219,7 +219,7 @@ void ExtractImu() {
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_imu()) {
-      const pb::ImuMsg& imu_msg = msg->imu();
+      const hal::ImuMsg& imu_msg = msg->imu();
       if (imu_msg.has_accel()) {
         // Write the accel to the accel csv
         accel_file  << imu_msg.accel().data(0) << ", " <<
@@ -270,11 +270,11 @@ void ExtractPosys() {
         << "Minimum frame index must be <= than max frame index.";
   }
 
-  pb::Reader reader(FLAGS_in);
-  reader.Enable(pb::Msg_Type_Posys);
+  hal::Reader reader(FLAGS_in);
+  reader.Enable(hal::Msg_Type_Posys);
 
   int idx = 0;
-  std::unique_ptr<pb::Msg> msg;
+  std::unique_ptr<hal::Msg> msg;
   while (frame_min != kNoRange && idx < frame_min) {
     if ((msg = reader.ReadMessage()) && msg->has_camera()) {
       ++idx;
@@ -300,7 +300,7 @@ void ExtractPosys() {
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_pose()) {
-      const pb::PoseMsg& pose_msg = msg->pose();
+      const hal::PoseMsg& pose_msg = msg->pose();
       std::shared_ptr<std::ofstream>& file = files[pose_msg.id()];
 
       if (!file) {
@@ -342,11 +342,11 @@ void ExtractImages() {
         << "Minimum frame index must be <= than max frame index.";
   }
 
-  pb::Reader reader(FLAGS_in);
-  reader.Enable(pb::Msg_Type_Camera);
+  hal::Reader reader(FLAGS_in);
+  reader.Enable(hal::Msg_Type_Camera);
 
   int idx = 0;
-  std::unique_ptr<pb::Msg> msg;
+  std::unique_ptr<hal::Msg> msg;
   while (frame_min != kNoRange && idx < frame_min) {
     if ((msg = reader.ReadMessage()) && msg->has_camera()) {
       ++idx;
@@ -357,9 +357,9 @@ void ExtractImages() {
           idx <= frame_max) &&
          (msg = reader.ReadMessage())) {
     if (msg->has_camera()) {
-      const pb::CameraMsg& cam_msg = msg->camera();
+      const hal::CameraMsg& cam_msg = msg->camera();
       for (int ii = 0; ii < cam_msg.image_size(); ++ii) {
-        const pb::ImageMsg& img_msg = cam_msg.image(ii);
+        const hal::ImageMsg& img_msg = cam_msg.image(ii);
         SaveImage(FLAGS_out, ii, idx, cam_msg.system_time(), img_msg);
       }
       ++idx;
@@ -384,7 +384,7 @@ void ExtractLog() {
         << "Minimum frame index must be <= than max frame index.";
   }
 
-  pb::Reader reader(FLAGS_in);
+  hal::Reader reader(FLAGS_in);
   if (FLAGS_extract_types.empty()) {
     reader.EnableAll();
   } else {
@@ -396,14 +396,14 @@ void ExtractLog() {
   }
 
   int idx = 0;
-  std::unique_ptr<pb::Msg> msg;
+  std::unique_ptr<hal::Msg> msg;
   while (frame_min != kNoRange && idx < frame_min) {
     if ((msg = reader.ReadMessage()) && msg->has_camera()) {
       ++idx;
     }
   }
 
-  pb::Logger logger;
+  hal::Logger logger;
   logger.LogToFile(FLAGS_out);
   const uint32_t max_buffer_size = 5000; // This is the default in logger.
   logger.SetMaxBufferSize(max_buffer_size);
@@ -433,13 +433,13 @@ void CatLogs() {
   std::vector<std::string> in;
   Split(TrimQuotes(FLAGS_cat_logs), ',', &in);
 
-  pb::Logger logger;
+  hal::Logger logger;
   logger.LogToFile(FLAGS_out);
   for (const std::string& log : in) {
-    pb::Reader reader(log);
+    hal::Reader reader(log);
     reader.EnableAll();
 
-    std::unique_ptr<pb::Msg> msg;
+    std::unique_ptr<hal::Msg> msg;
     while ((msg = reader.ReadMessage())) {
       while (!logger.LogMessage(*msg)) {}
     }

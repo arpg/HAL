@@ -9,7 +9,7 @@ SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vect
 
 }
 
-bool SplitDriver::Capture( pb::CameraMsg& vImages )
+bool SplitDriver::Capture( hal::CameraMsg& vImages )
 {
     m_InMsg.Clear();
     if( m_Input->Capture( m_InMsg ) == false ) {
@@ -21,25 +21,25 @@ bool SplitDriver::Capture( pb::CameraMsg& vImages )
         return false;
     }
 
-    const pb::ImageMsg& InImg = m_InMsg.image(0);
+    const hal::ImageMsg& InImg = m_InMsg.image(0);
 
     for( unsigned int ii = 0; ii < m_vROIs.size(); ++ii ) {
 
-        pb::ImageMsg* pImg = vImages.add_image();
+        hal::ImageMsg* pImg = vImages.add_image();
 
         pImg->set_format( InImg.format() );
         pImg->set_type( InImg.type() );
         pImg->set_timestamp( InImg.timestamp() );
 
-        const unsigned int nChannels = InImg.format() == pb::PB_LUMINANCE ? 1 : 3;
+        const unsigned int nChannels = InImg.format() == hal::PB_LUMINANCE ? 1 : 3;
         unsigned int nDepth = 1;
-        if( InImg.type() == pb::PB_SHORT || InImg.type() == pb::PB_UNSIGNED_SHORT ) {
+        if( InImg.type() == hal::PB_SHORT || InImg.type() == hal::PB_UNSIGNED_SHORT ) {
             nDepth = 2;
-        } else if( InImg.type() == pb::PB_INT || InImg.type() == pb::PB_UNSIGNED_INT ) {
+        } else if( InImg.type() == hal::PB_INT || InImg.type() == hal::PB_UNSIGNED_INT ) {
             nDepth = 4;
-        } else if( InImg.type() == pb::PB_FLOAT ) {
+        } else if( InImg.type() == hal::PB_FLOAT ) {
             nDepth = 4;
-        } else if( InImg.type() == pb::PB_DOUBLE ) {
+        } else if( InImg.type() == hal::PB_DOUBLE ) {
             nDepth = 8;
         }
 

@@ -9,7 +9,7 @@
 
 namespace hal {
 
-typedef std::function<void (pb::PoseMsg&)> PosysDriverDataCallback;
+typedef std::function<void (hal::PoseMsg&)> PosysDriverDataCallback;
 
 ///
 /// Generic Posys Driver Interface

@@ -15,7 +15,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
 
-namespace pb {
+namespace hal {
 
 /** Copied from HAL/TicToc.h */
 inline double RealTime() {
@@ -63,7 +63,7 @@ void Logger::ThreadFunc() {
   coded_output.WriteRaw(magic_number,4);
 
   ///-------------------- Write Header Msg
-  pb::Header hdr;
+  hal::Header hdr;
   hdr.set_version(Messages_VERSION);
   hdr.set_date(RealTime());
   hdr.set_description("HAL Log File.");
@@ -86,7 +86,7 @@ void Logger::ThreadFunc() {
 
     if (m_qMessages.empty()) continue;
 
-    pb::Msg& msg = m_qMessages.front();
+    hal::Msg& msg = m_qMessages.front();
     if (msg.IsInitialized()) {
       coded_output.WriteVarint32(msg.ByteSize());
       if(!msg.SerializeToCodedStream(&coded_output)) {
@@ -106,7 +106,7 @@ void Logger::ThreadFunc() {
             << " frames to " << m_sFilename << ".";
 }
 
-bool Logger::LogMessage(const pb::Msg &message) {
+bool Logger::LogMessage(const hal::Msg &message) {
   if(!message.has_timestamp()){
     LOG(WARNING) << "Logging a message without a timestamp.";
   }
@@ -180,4 +180,4 @@ size_t Logger::buffer_size() const {
 size_t Logger::messages_written() const {
   return m_nMessagesWritten;
 }
-}  // namespace pb
+}  // namespace hal

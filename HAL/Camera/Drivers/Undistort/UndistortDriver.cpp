@@ -34,7 +34,7 @@ UndistortDriver::UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
   }
 }
 
-bool UndistortDriver::Capture( pb::CameraMsg& vImages )
+bool UndistortDriver::Capture( hal::CameraMsg& vImages )
 {
   m_InMsg.Clear();
   const bool success = m_Input->Capture( m_InMsg );
@@ -48,15 +48,15 @@ bool UndistortDriver::Capture( pb::CameraMsg& vImages )
 
   if(success) {
     for (int ii = 0; ii < m_InMsg.image_size(); ++ii) {
-      pb::Image inimg = pb::Image(m_InMsg.image(ii));
-      pb::ImageMsg* pimg = vImages.add_image();
+      hal::Image inimg = hal::Image(m_InMsg.image(ii));
+      hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg.Width());
       pimg->set_height(inimg.Height());
-      pimg->set_type( (pb::Type)inimg.Type());
-      pimg->set_format( (pb::Format)inimg.Format());
+      pimg->set_type( (hal::Type)inimg.Type());
+      pimg->set_format( (hal::Format)inimg.Format());
       pimg->mutable_data()->resize(inimg.Width()*inimg.Height());
 
-      pb::Image img = pb::Image(*pimg);
+      hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
             m_vLuts[ii], inimg.data(),
             reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),

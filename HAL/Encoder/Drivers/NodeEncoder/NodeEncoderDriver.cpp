@@ -23,7 +23,7 @@ NodeEncoderDriver::NodeEncoderDriver(const std::string& sLocalNode,
     if(m_node.subscribe(m_sAddress))
     {
       // this initiates the number of channels and image dimensions
-      // pb::CameraMsg vImages;
+      // hal::CameraMsg vImages;
       // Capture(vImages);
     }
     else
@@ -44,7 +44,7 @@ NodeEncoderDriver::NodeEncoderDriver(const std::string& sLocalNode,
 /////////////////////////////////////////////////////////////////////////////////////////
 void NodeEncoderDriver::_ThreadFunc()
 {
-    pb::EncoderMsg pbMsg;
+    hal::EncoderMsg pbMsg;
     while( m_running ) {
         pbMsg.Clear();
 

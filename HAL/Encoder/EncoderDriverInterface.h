@@ -9,7 +9,7 @@
 
 namespace hal {
 
-typedef std::function<void (pb::EncoderMsg&)> EncoderDriverDataCallback;
+typedef std::function<void (hal::EncoderMsg&)> EncoderDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Generic Encoder driver interface

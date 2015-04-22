@@ -14,7 +14,7 @@ JoinDriver::JoinDriver(const std::shared_ptr<IMUDriverInterface>& input)
       std::bind(&JoinDriver::HandleIMU, this, _1));
 }
 
-inline void PopPushVectorMsg(const pb::VectorMsg& msg,
+inline void PopPushVectorMsg(const hal::VectorMsg& msg,
                              double time,
                              std::deque<Eigen::VectorXd>* data,
                              std::deque<double>* times) {
@@ -70,7 +70,7 @@ bool JoinDriver::InterpolateAccel(int* gyro_index, Eigen::VectorXd* vec) const {
 
 /** @todo Unit test me! */
 /** @todo Add magnetometer handling! Right now we drop those messages! */
-void JoinDriver::HandleIMU(pb::ImuMsg& imu) {
+void JoinDriver::HandleIMU(hal::ImuMsg& imu) {
   if (!callback_) return;
 
   if (imu.has_gyro() ^ imu.has_accel()) {  // If we've only got one of them
@@ -85,7 +85,7 @@ void JoinDriver::HandleIMU(pb::ImuMsg& imu) {
     Eigen::VectorXd new_accel(3);
     int gyro_index;
     if (InterpolateAccel(&gyro_index, &new_accel)) {
-      pb::ImuMsg interpolated_msg;
+      hal::ImuMsg interpolated_msg;
       interpolated_msg.set_device_time(gyro_ts_[gyro_index]);
       WriteVector(new_accel, interpolated_msg.mutable_accel());
       WriteVector(gyros_[gyro_index], interpolated_msg.mutable_gyro());

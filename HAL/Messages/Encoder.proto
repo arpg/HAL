@@ -1,4 +1,4 @@
-package pb;
+package hal;
 
 message EncoderMsg {
     optional double device_time = 1;

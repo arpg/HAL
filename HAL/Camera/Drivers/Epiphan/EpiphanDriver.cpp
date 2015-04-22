@@ -80,7 +80,7 @@ EpiphanDriver::~EpiphanDriver()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool EpiphanDriver::Capture( pb::CameraMsg& vImages )
+bool EpiphanDriver::Capture( hal::CameraMsg& vImages )
 {
 
     V2U_GrabFrame2* frame = FrmGrab_Frame( m_pFrameGrabber, V2U_GRABFRAME_FORMAT_BGR24, NULL );
@@ -94,12 +94,12 @@ bool EpiphanDriver::Capture( pb::CameraMsg& vImages )
     // set timestamp
     vImages.set_device_time( hal::Tic() );
 
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
     pbImg->set_width( m_nImageWidth );
     pbImg->set_height( m_nImageHeight );
     pbImg->set_data( frame->pixbuf, frame->imagelen );
-    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-    pbImg->set_format( pb::PB_RGB );
+    pbImg->set_type( hal::PB_UNSIGNED_BYTE );
+    pbImg->set_format( hal::PB_RGB );
 
 
     /* Release the frame */

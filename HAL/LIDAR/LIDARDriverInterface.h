@@ -9,7 +9,7 @@
 
 namespace hal {
 
-typedef std::function<void (pb::LidarMsg&)> LIDARDriverDataCallback;
+typedef std::function<void (hal::LidarMsg&)> LIDARDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Generic LIDAR driver interface
