@@ -7,7 +7,7 @@
 #include <camera/Camera.h>
 #pragma GCC diagnostic pop
 
-#include <HAL/Messages/Image.pb.h>
+#include <HAL/Image.pb.h>
 
 
 namespace hal {

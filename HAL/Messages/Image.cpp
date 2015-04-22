@@ -3,7 +3,7 @@
 #include <fstream>
 #include <memory>
 
-#include <HAL/Messages/Messages.pb.h>
+#include <HAL/Messages.pb.h>
 #include <glog/logging.h>
 
 namespace pb {

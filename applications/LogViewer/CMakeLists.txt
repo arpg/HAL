@@ -29,6 +29,5 @@ if( Pangolin_FOUND AND SceneGraph_FOUND )
     target_link_libraries( LogViewer ${SceneGraph_LIBRARIES} )
 
     add_dependencies( LogViewer hal )
-    add_dependencies( LogViewer messages )
 
 endif()

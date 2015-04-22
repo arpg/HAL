@@ -2,7 +2,7 @@
 
 #include <functional>
 #include <HAL/Devices/DriverInterface.h>
-#include <HAL/Messages/Imu.pb.h>
+#include <HAL/Imu.pb.h>
 
 namespace hal {
 

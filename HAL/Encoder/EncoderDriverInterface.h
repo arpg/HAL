@@ -4,7 +4,7 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <HAL/Messages/Encoder.pb.h>
+#include <HAL/Encoder.pb.h>
 
 
 namespace hal {

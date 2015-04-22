@@ -3,6 +3,7 @@ project( HAL )
 set(HAL_VERSION_MAJOR 0)
 set(HAL_VERSION_MINOR 2)
 set(HAL_VERSION ${HAL_VERSION_MAJOR}.${HAL_VERSION_MINOR})
+set( Messages_VERSION 2 )
 
 # Policy CMP0023 allows to mix old and new interfaces of target_link_libraries
 cmake_policy(SET CMP0023 OLD)
@@ -18,6 +19,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 # Find required libraries
 find_package( Eigen3 REQUIRED )
 find_package( Protobuf REQUIRED )
+if(ANDROID)
+    # Override to use hosts protoc compiler
+    unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
+    find_host_package(Protobuf REQUIRED)
+endif()
 find_package( Sophus REQUIRED )
 find_package( GLog REQUIRED )
 find_package( TinyXML2 QUIET )
@@ -49,10 +55,6 @@ include_directories( ${LIB_INC_DIR} ${USER_INC} )
 list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${GLog_LIBRARIES})
 
 ############################################################################
-# Build messages library
-add_subdirectory( Messages )
-############################################################################
-
 
 # Collect all driver includes and libraries in P_INCLUDE_DIRS and P_LIBRARIES
 set_property( GLOBAL PROPERTY P_INCLUDE_DIRS ${OpenCV2_INCLUDE_DIRS} )
@@ -152,6 +154,45 @@ add_subdirectory( LIDAR )
 add_subdirectory( Car )
 add_subdirectory( Utils )
 
+set( PROTO_DIR Messages )
+
+set( _PROTO_SRCS
+    # aux
+    ${PROTO_DIR}/Matrix.proto
+
+    # header files
+    ${PROTO_DIR}/Header.proto
+    ${PROTO_DIR}/CameraModel.proto
+
+    # message files
+    ${PROTO_DIR}/Messages.proto
+    ${PROTO_DIR}/Camera.proto
+    ${PROTO_DIR}/Image.proto
+    ${PROTO_DIR}/Imu.proto
+    ${PROTO_DIR}/Pose.proto
+    ${PROTO_DIR}/Encoder.proto
+    ${PROTO_DIR}/Lidar.proto
+    ${PROTO_DIR}/NodeCamMessage.proto
+    ${PROTO_DIR}/NodeCar.proto
+    ${PROTO_DIR}/CarPlanner.proto
+    ${PROTO_DIR}/SceneGraphShapes.proto
+    ${PROTO_DIR}/SimMessages.proto
+)
+
+PROTOBUF_GENERATE_CPP(PROTO_SRCS_PATH PROTO_HDRS_PATH ${_PROTO_SRCS})
+foreach(item ${PROTO_HDRS_PATH})
+    GET_FILENAME_COMPONENT( item_name ${item} NAME )
+    list(APPEND PROTO_HDRS ${item_name} )
+endforeach()
+
+foreach(item ${PROTO_SRCS_PATH})
+    GET_FILENAME_COMPONENT( item_name ${item} NAME )
+    list(APPEND PROTO_SRCS ${item_name} )
+endforeach()
+
+add_to_hal_headers( ${PROTO_HDRS} )
+add_to_hal_sources( ${PROTO_SRCS} )
+
 #############################################################################
 # Setup libraries
 
@@ -178,8 +219,33 @@ if(TinyXML2_FOUND)
   include_directories( ${TinyXML2_INCLUDE_DIR} )
 endif()
 
+#############################################################################
+## Protobuf
+
+list(APPEND HAL_SOURCES
+    ${PROTO_DIR}/Logger.cpp
+    ${PROTO_DIR}/Reader.cpp
+    ${PROTO_DIR}/Image.cpp
+   )
+
+list(APPEND HAL_HEADERS
+    ${PROTO_DIR}/Logger.h
+    ${PROTO_DIR}/Reader.h
+    ${PROTO_DIR}/Image.h
+    ${PROTO_DIR}/Matrix.h
+    ${PROTO_DIR}/Pose.h
+   )
+
+if(BUILD_Velodyne)
+    list(APPEND HAL_SOURCES ${PROTO_DIR}/Velodyne.cpp)
+    list(APPEND HAL_HEADERS ${PROTO_DIR}/Velodyne.h)
+endif()
+
+##########################################################################
+
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
 
 set(HAL_LIBS
   ${INTERNAL_LIBS}
@@ -187,12 +253,10 @@ set(HAL_LIBS
   ${Boost_SYSTEM_LIBRARY}
   ${PROTOBUF_LIBRARIES}
   ${LINK_LIBS}
-  messages
   CACHE STRING "HAL required libraries"
   )
 
 set(HAL_INCLUDES
-    ${Messages_BINARY_DIR}
     ${LIB_INC_DIR}
     ${USER_INC}
     CACHE STRING "HAL required includes" )
@@ -210,9 +274,10 @@ install_package(
     LINK_LIBS ${HAL_LIBS}
     )
 
+include_directories( ${CMAKE_BINARY_DIR} )
+
 ########################################################
 ## Create configure file for inclusion in library
-
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   )

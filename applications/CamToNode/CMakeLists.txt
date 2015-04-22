@@ -28,7 +28,6 @@ if(GLog_FOUND AND Node_FOUND)
     ${GLog_LIBRARIES}
     hal
     dl
-    messages
   )
 
 endif()

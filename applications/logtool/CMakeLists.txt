@@ -31,7 +31,6 @@ target_link_libraries( logtool
     ${HAL_LIBRARIES}
     ${PROTOBUF_LIBRARY}
     hal
-    messages
 )
 
 #def_executable(logtool

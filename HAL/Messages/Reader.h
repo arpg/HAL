@@ -9,8 +9,8 @@
 #include <list>
 #include <memory>
 
-#include <HAL/Messages/Header.pb.h>
-#include <HAL/Messages/Messages.pb.h>
+#include <HAL/Header.pb.h>
+#include <HAL/Messages.pb.h>
 
 namespace pb {
 

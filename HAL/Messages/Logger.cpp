@@ -1,4 +1,4 @@
-#include <HAL/Messages/config.h>
+#include <HAL/config.h>
 #include <HAL/Messages/Logger.h>
 
 #include <fcntl.h>
@@ -64,7 +64,7 @@ void Logger::ThreadFunc() {
 
   ///-------------------- Write Header Msg
   pb::Header hdr;
-  hdr.set_version(PBMSGS_VERSION);
+  hdr.set_version(Messages_VERSION);
   hdr.set_date(RealTime());
   hdr.set_description("HAL Log File.");
 

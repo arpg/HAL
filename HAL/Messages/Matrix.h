@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Eigen/Eigen>
-#include <HAL/Messages/Messages.pb.h>
+#include <HAL/Messages.pb.h>
 
 namespace pb {
 

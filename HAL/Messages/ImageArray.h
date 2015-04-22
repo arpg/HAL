@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <memory>
-#include <HAL/Messages/Messages.pb.h>
+#include <HAL/Messages.pb.h>
 #include <HAL/Messages/Image.h>
 
 namespace pb {

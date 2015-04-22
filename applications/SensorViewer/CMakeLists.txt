@@ -30,5 +30,5 @@ if(Pangolin_FOUND)
     ${PROTOBUF_LIBRARY}
     hal
      dl
-     messages)
+     )
 endif()

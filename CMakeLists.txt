@@ -17,7 +17,7 @@ include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_subdirectory( HAL )
 
 set( HAL_DIR ${CMAKE_CURRENT_BINARY_DIR} )
-set( HAL_LIBRARIES ${HAL_LIBS} hal messages )
+set( HAL_LIBRARIES ${HAL_LIBS} hal )
 set( HAL_INCLUDE_DIRS ${HAL_INCLUDES} )
 link_libraries( ${HAL_LIBS} hal )
 

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <HAL/Messages/config.h>
+#include <HAL/config.h>
 
 #include "Reader.h"
 
@@ -108,9 +108,9 @@ void Reader::_ThreadFunc() {
   }
 
   // check if version numbers match
-  if( m_Header.version() != PBMSGS_VERSION ) {
+  if( m_Header.version() != Messages_VERSION ) {
     std::cerr << "HAL: Log was recorded using a different "
-              << "version and it is unreadable!" << std::endl;
+              << "Messages version and it is unreadable!" << std::endl;
     return;
   }
 

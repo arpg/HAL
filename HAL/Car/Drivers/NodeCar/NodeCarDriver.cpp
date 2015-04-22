@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <HAL/Devices/DeviceException.h>
-#include <HAL/Messages/NodeCar.pb.h>
+#include <HAL/NodeCar.pb.h>
 
 namespace hal {
 

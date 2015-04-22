@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <HAL/Messages/Messages.pb.h>
+#include <HAL/Messages.pb.h>
 
 #pragma GCC system_header
 #include <opencv2/opencv.hpp>
