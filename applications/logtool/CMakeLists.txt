@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 find_package(GFlags)
 find_package(GLog)
 find_package(OpenCV2)
-find_package(PROTOBUF)
+find_package(Protobuf)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
