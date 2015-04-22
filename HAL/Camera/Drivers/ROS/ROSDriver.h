@@ -37,7 +37,8 @@ namespace hal
   public:
     ROSDriver(string m_topics, int width, int height );
     ~ROSDriver();
-    
+
+    const int radixMultiplier = 1000; 
     bool Capture( pb::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
  
@@ -52,6 +53,8 @@ namespace hal
     pb::Type findPbType(string format);
     pb::Format findPbFormat(string format);
 
+    void makeFixedPoint(sensor_msgs::ImagePtr &destImage, const sensor_msgs::ImageConstPtr srcImage);
+			
     void imageCallback(const sensor_msgs::Image::ConstPtr& msg, int topicIndex);
     template<typename T> vector<T> split(const T & str, const T & delimiters);
       

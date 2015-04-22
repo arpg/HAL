@@ -117,11 +117,25 @@ namespace hal {
     for (int i =0; i< topicCount; i++)
       {
 	pimg = vImages.add_image();
+
+
 	pimg->set_type(findPbType(freshImages[i]->encoding));
 	pimg->set_format(findPbFormat(freshImages[i]->encoding) );            
 	pimg->set_width(freshImages[i]->width);
 	pimg->set_height(freshImages[i]->height);
-	pimg->set_data(&freshImages[i]->data[0], freshImages[i]->step * freshImages[i]->height);
+
+	//If necessary, convert the floating point images types to fixed point
+	if (freshImages[i]->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
+	  {
+	    sensor_msgs::ImagePtr convImage;
+	    makeFixedPoint(convImage, freshImages[i]);
+	    pimg->set_data(&convImage->data[0], convImage->step * convImage->height);
+	  }
+	else
+	  {
+	    //the image published from ROS is already a uint* type of image
+	    pimg->set_data(&freshImages[i]->data[0], freshImages[i]->step * freshImages[i]->height);
+	  }
       }
     
     pthread_mutex_unlock(&topicBell);
@@ -161,6 +175,8 @@ namespace hal {
       return pb::PB_UNSIGNED_SHORT;
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
       return pb::PB_UNSIGNED_SHORT;
+    if (format == sensor_msgs::image_encodings::TYPE_32FC1)
+      return pb::PB_UNSIGNED_SHORT;
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
     return (pb::Type) 0;
   }
@@ -175,6 +191,9 @@ namespace hal {
       return pb::PB_LUMINANCE;
     
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
+      return pb::PB_LUMINANCE;
+    
+    if (format == sensor_msgs::image_encodings::TYPE_32FC1)
       return pb::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::BGR8)
@@ -216,6 +235,30 @@ namespace hal {
     pthread_mutex_unlock(&topicLocks[topicIndex]);
     //Ring the bell
     pthread_cond_signal(&newTopic);
+  }
+
+  void ROSDriver::makeFixedPoint(sensor_msgs::ImagePtr &destImage_sp, const sensor_msgs::ImageConstPtr srcImage)
+  {
+    //Given a src floating point grayscale image, convert to a fixed radix point grayscale image
+    //Radix point as class const for now
+     sensor_msgs::Image* destImage = new sensor_msgs::Image;
+    destImage->encoding = sensor_msgs::image_encodings::MONO16;
+    destImage->height = srcImage->height;
+    destImage->width = srcImage->width;
+    destImage->step = srcImage->width*sizeof(uint16_t);
+    destImage->data.resize(destImage->step * destImage->height);
+
+    unsigned int i;
+
+    float *baseSrc = (float*)(&srcImage->data[0]);
+    uint16_t *baseDest = (uint16_t*) (&destImage->data[0]); //since the data ptr is a uint8_t for both storage media
+    
+    for (i = 0; i< srcImage->height*srcImage->width; i++)
+      {
+	baseDest[i] = baseSrc[i] * radixMultiplier; //cut off at the uint16_t boundary
+      }
+
+    destImage_sp = boost::shared_ptr<sensor_msgs::Image>(destImage);
   }
 
   
