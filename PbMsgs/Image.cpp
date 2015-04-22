@@ -41,7 +41,10 @@ cv::Mat WriteCvMat(const pb::ImageMsg& pbImage) {
       nCvType = CV_8UC1;
     } else if (pbImage.format() == pb::PB_RGB) {
       nCvType = CV_8UC3;
+    } else if (pbImage.format() == pb::PB_BGR) {
+      nCvType = CV_8UC3;
     }
+    
   } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
              pbImage.type() == pb::PB_SHORT) {
     if (pbImage.format() == pb::PB_LUMINANCE) {
