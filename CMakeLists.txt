@@ -21,6 +21,8 @@ set( HAL_LIBRARIES ${HAL_LIBS} hal )
 set( HAL_INCLUDE_DIRS ${HAL_INCLUDES} )
 link_libraries( ${HAL_LIBS} hal )
 
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
+
 option( BUILD_APPLICATIONS "Build applications." ON )
 if( BUILD_APPLICATIONS )
     add_subdirectory( applications )
