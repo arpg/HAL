@@ -251,12 +251,17 @@ set(HAL_INCLUDES
 add_library( hal ${HAL_SOURCES} )
 target_link_libraries( hal ${HAL_LIBS} )
 
+########################################################
+## Create configure file for inclusion in library
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h" )
+
 install_package(
     PKG_NAME HAL
     LIB_NAME hal
     VERSION ${HAL_VERSION}
     INSTALL_HEADERS ${HAL_HEADERS}
-    INSTALL_GENERATED_HEADERS ${PROTO_HDRS} # just for protobuf...
+    INSTALL_GENERATED_HEADERS ${PROTO_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include
     INCLUDE_DIRS ${HAL_INCLUDES}
     LINK_LIBS ${HAL_LIBS} hal
@@ -264,8 +269,4 @@ install_package(
 
 include_directories( ${CMAKE_BINARY_DIR} )
 
-########################################################
-## Create configure file for inclusion in library
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-  )
+
