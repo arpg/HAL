@@ -220,6 +220,9 @@ list(APPEND HAL_HEADERS
     ${PROTO_DIR}/Logger.h
     ${PROTO_DIR}/Reader.h
     ${PROTO_DIR}/Image.h
+    ${PROTO_DIR}/ImageArray.h
+    ${PROTO_DIR}/ImagePyramid.h 
+    ${PROTO_DIR}/Velodyne.h
     ${PROTO_DIR}/Matrix.h
     ${PROTO_DIR}/Pose.h
    )
@@ -261,7 +264,7 @@ install_package(
     INSTALL_GENERATED_HEADERS ${PROTO_HDRS} # just for protobuf...
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include
     INCLUDE_DIRS ${HAL_INCLUDES}
-    LINK_LIBS ${HAL_LIBS}
+    LINK_LIBS ${HAL_LIBS} hal
     )
 
 include_directories( ${CMAKE_BINARY_DIR} )
