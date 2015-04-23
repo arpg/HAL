@@ -41,14 +41,10 @@ if(TinyXML2_FOUND)
   list(APPEND USER_INC   ${TinyXML2_INCLUDE_DIRS})
 endif()
 
-list( APPEND USER_INC   ${CMAKE_CURRENT_BINARY_DIR} )
-list( APPEND USER_INC   ${CMAKE_CURRENT_SOURCE_DIR} )
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIRS} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
 list( APPEND USER_INC   ${GLog_INCLUDE_DIRS} )
-
-list( APPEND LIB_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/..;${CMAKE_CURRENT_SOURCE_DIR}/.." )
 
 include_directories( ${LIB_INC_DIR} ${USER_INC} )
 
@@ -122,7 +118,6 @@ macro( add_to_hal_headers )
     endforeach()
 endmacro()
 
-
 macro( hal_set_compile_flags file flags )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_SOURCES "${file}" )
     set_property( GLOBAL APPEND PROPERTY COMPILER_OPTS_FLAGS "${flags}" )
@@ -184,7 +179,6 @@ add_to_hal_sources( ${PROTO_SRCS} )
 #############################################################################
 # Setup libraries
 
-set(LIB_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/.. )
 get_property( INTERNAL_INC  GLOBAL PROPERTY P_INCLUDE_DIRS )
 get_property( INTERNAL_LIBS GLOBAL PROPERTY P_LIBRARIES )
 get_property( HAL_SOURCES GLOBAL PROPERTY P_SOURCES )
@@ -231,6 +225,7 @@ endif()
 
 ##########################################################################
 
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
