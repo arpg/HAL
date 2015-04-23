@@ -233,9 +233,6 @@ include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
 
-list( REMOVE_DUPLICATES INTERNAL_LIBS )
-list( REMOVE_DUPLICATES LINK_LIBS )
-list( REMOVE_DUPLICATES PROTOBUF_LIBRARIES )
 set(HAL_LIBS
   ${INTERNAL_LIBS}
   ${PROTOBUF_LIBRARIES}
@@ -243,10 +240,14 @@ set(HAL_LIBS
   CACHE STRING "HAL required libraries"
   )
 
+list( REMOVE_ITEM HAL_LIBS "debug" )
+list( REMOVE_ITEM HAL_LIBS "optimized" )
+
 set(HAL_INCLUDES
     ${LIB_INC_DIR}
     ${USER_INC}
     CACHE STRING "HAL required includes" )
+
 
 add_library( hal ${HAL_SOURCES} )
 target_link_libraries( hal ${HAL_LIBS} )
@@ -267,7 +268,7 @@ install_package(
     INSTALL_GENERATED_HEADERS ${GENERATED_HEADERS}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include
     INCLUDE_DIRS ${HAL_INCLUDES}
-    LINK_LIBS ${HAL_LIBS} hal
+    LINK_LIBS ${HAL_LIBS}
     )
 
 include_directories( ${CMAKE_BINARY_DIR} )
