@@ -35,6 +35,7 @@ function(install_package)
       VERSION
       DESCRIPTION
       INSTALL_HEADERS 
+      INSTALL_GENERATED_HEADERS 
       INSTALL_HEADER_DIRS
       INSTALL_INCLUDE_DIR
       DESTINATION
@@ -113,10 +114,29 @@ function(install_package)
             endforeach()
         endif()
 
-        # install header files
+        # Some care is needed for header installation...
+        # install header files with any relative path provided
         if( PACKAGE_INSTALL_HEADERS )
-            install( FILES ${PACKAGE_INSTALL_HEADERS} DESTINATION ${PACKAGE_DESTINATION} )
+          foreach(hdr IN LISTS PACKAGE_INSTALL_HEADERS )
+             get_filename_component( _fp ${hdr} ABSOLUTE )
+             file( RELATIVE_PATH _rpath ${CMAKE_SOURCE_DIR} ${_fp} )
+             get_filename_component( _dir ${_rpath} DIRECTORY )
+             install( FILES ${_fp}
+                 DESTINATION ${PACKAGE_DESTINATION}/${_dir} )
+          endforeach()
         endif()
+
+        # install GENERATED header files (e.g. protobuf)
+        if( PACKAGE_INSTALL_GENERATED_HEADERS )
+          foreach(hdr IN LISTS PACKAGE_INSTALL_GENERATED_HEADERS )
+             get_filename_component( _fp ${hdr} ABSOLUTE )
+             file( RELATIVE_PATH _rpath ${CMAKE_BINARY_DIR} ${_fp} )
+             get_filename_component( _dir ${_rpath} DIRECTORY )
+             install( FILES ${_fp}
+                 DESTINATION ${PACKAGE_DESTINATION}/${_dir} )
+         endforeach()
+        endif()
+
 
         if( PACKAGE_INSTALL_INCLUDE_DIR )
             install(DIRECTORY ${CMAKE_SOURCE_DIR}/include DESTINATION ${PACKAGE_DESTINATION} )

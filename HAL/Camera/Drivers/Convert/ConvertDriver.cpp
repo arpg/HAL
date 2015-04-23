@@ -31,7 +31,7 @@ ConvertDriver::ConvertDriver(
     m_nOrigImgHeight.push_back(Input->Height(i));
 
     if (m_iChannel != -1) {
-      if (m_iChannel != i) {
+      if (m_iChannel != (int)i) {
         continue;
       }
     }
@@ -108,7 +108,7 @@ bool ConvertDriver::Capture( hal::CameraMsg& vImages )
     // If the user has specified to convert a single channel only,
     // gate it here
     if (m_iChannel != -1) {
-      if (m_iChannel != ii) {
+      if (m_iChannel != (int)ii) {
         *pbImg = m_Message.image(ii);
         continue;
       }

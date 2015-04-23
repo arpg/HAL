@@ -96,6 +96,7 @@ macro( add_to_hal_libraries )
   set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
       endif()
     endforeach()
+
 endmacro()
 
 
@@ -174,21 +175,9 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Lidar.proto
     ${PROTO_DIR}/NodeCamMessage.proto
     ${PROTO_DIR}/NodeCar.proto
-    ${PROTO_DIR}/CarPlanner.proto
-    ${PROTO_DIR}/SceneGraphShapes.proto
-    ${PROTO_DIR}/SimMessages.proto
 )
 
-PROTOBUF_GENERATE_CPP(PROTO_SRCS_PATH PROTO_HDRS_PATH ${_PROTO_SRCS})
-foreach(item ${PROTO_HDRS_PATH})
-    GET_FILENAME_COMPONENT( item_name ${item} NAME )
-    list(APPEND PROTO_HDRS ${item_name} )
-endforeach()
-
-foreach(item ${PROTO_SRCS_PATH})
-    GET_FILENAME_COMPONENT( item_name ${item} NAME )
-    list(APPEND PROTO_SRCS ${item_name} )
-endforeach()
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
 
 add_to_hal_sources( ${PROTO_SRCS} )
 
@@ -246,10 +235,11 @@ include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
 
+list( REMOVE_DUPLICATES INTERNAL_LIBS )
+list( REMOVE_DUPLICATES LINK_LIBS )
+list( REMOVE_DUPLICATES PROTOBUF_LIBRARIES )
 set(HAL_LIBS
   ${INTERNAL_LIBS}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
   ${PROTOBUF_LIBRARIES}
   ${LINK_LIBS}
   CACHE STRING "HAL required libraries"
@@ -260,18 +250,16 @@ set(HAL_INCLUDES
     ${USER_INC}
     CACHE STRING "HAL required includes" )
 
-add_library( hal ${HAL_SOURCES} ${HAL_HEADERS} ${PROTO_HEADERS} )
+add_library( hal ${HAL_SOURCES} )
 target_link_libraries( hal ${HAL_LIBS} )
 
-foreach( item ${PROTO_HDRS} )
-    list(APPEND PROTO_INSTALL_HDRS "${CMAKE_CURRENT_BINARY_DIR}/${item}" )
-endforeach()
 install_package(
     PKG_NAME HAL
     LIB_NAME hal
     VERSION ${HAL_VERSION}
-    INSTALL_HEADERS ${HAL_HEADERS} ${PROTO_INSTALL_HDRS}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL
+    INSTALL_HEADERS ${HAL_HEADERS}
+    INSTALL_GENERATED_HEADERS ${PROTO_HDRS} # just for protobuf...
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include
     INCLUDE_DIRS ${HAL_INCLUDES}
     LINK_LIBS ${HAL_LIBS}
     )

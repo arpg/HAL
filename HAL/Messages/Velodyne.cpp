@@ -4,7 +4,6 @@
 #include <math.h>
 #include <tinyxml2.h>
 #include <cmath>
-//#include <mvl/image/colormap.h>
 
 using namespace tinyxml2;
 

@@ -2,7 +2,7 @@
 
 #include <thread>
 
-#include <HAL/Utils/Node.h>
+#include <node/Node.h>
 
 #include <HAL/IMU/IMUDriverInterface.h>
 
@@ -23,7 +23,7 @@ private:
     void _ThreadFunc();
 
 private:
-    rpg::Node               m_node;
+    node::node              m_node;
     std::string             m_host;
     bool                    m_running;
     std::thread             m_callbackThread;

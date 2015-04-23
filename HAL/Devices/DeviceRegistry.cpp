@@ -7,10 +7,6 @@
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Car/CarDevice.h>
 
-#ifdef HAVE_TINYXML2
-  #include <HAL/Utils/SimLauncher.h>
-#endif
-
 namespace hal
 {
 
@@ -54,8 +50,12 @@ void DeviceRegistry<BaseDevice>::RegisterAlias(
 template<typename BaseDevice>
 std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     const Uri& uri,
-    const char *sDeviceType)
+    const char * /*sDeviceType*/ )
 {
+  /*
+
+  sigh. keep code for launching simulation... we're moving towards using gazebo, so this code is dying.
+
 #ifdef HAVE_TINYXML2
   char *sEnv = getenv("SIM");
   if(sEnv!= NULL)
@@ -93,6 +93,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     }
   }
 #endif  // HAVE_TINYXML2
+*/
 
   // Check for aliases
   std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
