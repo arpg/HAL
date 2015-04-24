@@ -223,7 +223,7 @@ function(install_package)
         #endif()
 
         list( APPEND PACKAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}
-            ${CMAKE_CURRENT_BINARY_DIR} )
+            ${CMAKE_BINARY_DIR} )
 
         # install library itself
         #if( PACKAGE_LIB_NAME )
