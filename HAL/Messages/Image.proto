@@ -1,0 +1,42 @@
+package hal;
+
+
+message ImageInfoMsg {
+    optional double exposure = 1;
+    optional double shutter = 2;
+    optional double gain = 3;
+    optional double gamma = 4;
+    optional double baseline = 50;
+    optional double focal_length = 51;
+}
+
+enum Type {
+    PB_BYTE             = 0x1400;
+    PB_UNSIGNED_BYTE    = 0x1401;
+    PB_SHORT            = 0x1402;
+    PB_UNSIGNED_SHORT   = 0x1403;
+    PB_INT              = 0x1404;
+    PB_UNSIGNED_INT     = 0x1405;
+    PB_FLOAT            = 0x1406;
+    PB_DOUBLE           = 0x140A;
+  }
+
+enum Format {
+    PB_LUMINANCE        = 0x1909;
+    PB_RGB              = 0x1907;
+    PB_RGBA             = 0x1908;
+    PB_RAW              = 0x0001;
+    PB_BGR              = 0x80E0;
+    PB_BGRA             = 0x80E1;
+}
+
+message ImageMsg {
+    optional uint32 width = 1;
+    optional uint32 height = 2;
+    optional bytes data = 3;
+    optional Type type = 4 [default = PB_UNSIGNED_BYTE];
+    optional Format format = 5 [default = PB_RGB];
+    optional double timestamp = 6;
+    optional ImageInfoMsg info = 7;
+    optional uint64 serial_number = 8;
+}

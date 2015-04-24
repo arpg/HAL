@@ -14,7 +14,7 @@ class KitKatDriver : public CameraDriverInterface {
   KitKatDriver();
   virtual ~KitKatDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
 
   size_t NumChannels() const;
   size_t Width( size_t /*idx*/ = 0 ) const;

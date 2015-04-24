@@ -47,7 +47,7 @@ void AndroidIMUDriver::SensorLoop() {
   ASensorEventQueue_setEventRate(event_queue_, gyroscope_, (1000L/60)*1000);
   ASensorEventQueue_setEventRate(event_queue_, magnetometer_, (1000L/60)*1000);
 
-  pb::ImuMsg imu_msg;
+  hal::ImuMsg imu_msg;
   while (should_run_) {
     // Read all pending events.
     int ident;
@@ -61,17 +61,17 @@ void AndroidIMUDriver::SensorLoop() {
         imu_msg.Clear();
 
         if (accelerometer_ && event.type == ASENSOR_TYPE_ACCELEROMETER) {
-          pb::VectorMsg* accel = imu_msg.mutable_accel();
+          hal::VectorMsg* accel = imu_msg.mutable_accel();
           accel->add_data(event.acceleration.x);
           accel->add_data(event.acceleration.y);
           accel->add_data(event.acceleration.z);
         } else if (gyroscope_ && event.type == ASENSOR_TYPE_GYROSCOPE) {
-          pb::VectorMsg* gyro = imu_msg.mutable_gyro();
+          hal::VectorMsg* gyro = imu_msg.mutable_gyro();
           gyro->add_data(event.uncalibrated_gyro.x_uncalib);
           gyro->add_data(event.uncalibrated_gyro.y_uncalib);
           gyro->add_data(event.uncalibrated_gyro.z_uncalib);
         } else if (magnetometer_ && event.type == ASENSOR_TYPE_MAGNETIC_FIELD) {
-          pb::VectorMsg* mag = imu_msg.mutable_mag();
+          hal::VectorMsg* mag = imu_msg.mutable_mag();
           mag->add_data(event.magnetic.x);
           mag->add_data(event.magnetic.y);
           mag->add_data(event.magnetic.z);

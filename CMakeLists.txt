@@ -3,31 +3,32 @@ cmake_minimum_required(VERSION 2.8.10)
 project( HAL )
 
 # Add to module path, so we can find our cmake modules
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 
 if(ANDROID)
-    set(ANDROID_PACKAGE_NAME "edu.arpg.hal")
+    set(ANDROID_PACKAGE_NAME "edu.colorado.arpg")
 endif()
 
 ################################################################################
 
-option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+option( BUILD_SHARED_LIBS "Build shared libraries." ON )
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_subdirectory( PbMsgs )
-set(PbMsgs_DIR ${PbMsgs_BINARY_DIR})
-
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_subdirectory( HAL )
-set(HAL_DIR ${HAL_BINARY_DIR})
 
-set( BUILD_URDFParser false CACHE BOOL force )
-if( BUILD_URDFParser )
-    add_subdirectory( URDFParser )
-    set(URDF_DIR ${URDF_BINARY_DIR})
-endif()
+set( HAL_DIR ${CMAKE_CURRENT_BINARY_DIR} )
+set( HAL_LIBRARIES ${HAL_LIBS} hal )
+set( HAL_INCLUDE_DIRS ${HAL_INCLUDES} )
+link_libraries( ${HAL_LIBS} hal )
 
-set( BUILD_APPLICATIONS true CACHE BOOL force )
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
+
+option( BUILD_APPLICATIONS "Build applications." ON )
 if( BUILD_APPLICATIONS )
-    add_subdirectory( Applications )
+    add_subdirectory( applications )
 endif()
+
+# make an uninstall target
+include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
+add_custom_target(uninstall
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")

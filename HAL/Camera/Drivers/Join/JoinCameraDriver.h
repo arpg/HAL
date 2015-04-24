@@ -19,7 +19,7 @@ public:
       const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras);
   virtual ~JoinCameraDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();
   }
@@ -41,7 +41,7 @@ private:
   public:
     WorkTeam(){}
     void addWorker(std::shared_ptr<CameraDriverInterface>& cam);
-    std::vector<pb::CameraMsg>& process();
+    std::vector<hal::CameraMsg>& process();
 
   private:
     void waitForWork(size_t workerId);
@@ -52,7 +52,7 @@ private:
   private:
     std::vector<std::thread> m_Workers;
     std::vector<bool> m_bWorkerDone;
-    std::vector<pb::CameraMsg> m_ImageData;
+    std::vector<hal::CameraMsg> m_ImageData;
     std::mutex m_Mutex;
     std::condition_variable m_WorkerCond, m_MasterCond;
   };

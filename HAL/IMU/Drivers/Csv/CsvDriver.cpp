@@ -136,10 +136,10 @@ void CsvDriver::_ThreadCaptureFunc()
         // we already have the timestamp so no need to read it!
         std::string     sValue;
 
-        pb::ImuMsg dataIMU;
+        hal::ImuMsg dataIMU;
 
         if( m_bHaveAccel ) {
-            pb::VectorMsg* pbVec = dataIMU.mutable_accel();
+            hal::VectorMsg* pbVec = dataIMU.mutable_accel();
 
             getline ( m_pFileAccel, sValue, ',' );
             pbVec->add_data( atof( sValue.c_str() ) );
@@ -152,7 +152,7 @@ void CsvDriver::_ThreadCaptureFunc()
         }
 
         if( m_bHaveGyro ) {
-            pb::VectorMsg* pbVec = dataIMU.mutable_gyro();
+            hal::VectorMsg* pbVec = dataIMU.mutable_gyro();
 
             getline ( m_pFileGyro, sValue, ',' );
             pbVec->add_data(  atof( sValue.c_str() ) );
@@ -165,7 +165,7 @@ void CsvDriver::_ThreadCaptureFunc()
         }
 
         if( m_bHaveMag ) {
-            pb::VectorMsg* pbVec = dataIMU.mutable_mag();
+            hal::VectorMsg* pbVec = dataIMU.mutable_mag();
 
             getline ( m_pFileMag, sValue, ',' );
             pbVec->add_data( atof( sValue.c_str() ) );

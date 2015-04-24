@@ -4,12 +4,12 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <PbMsgs/Lidar.pb.h>
+#include <HAL/Lidar.pb.h>
 
 
 namespace hal {
 
-typedef std::function<void (pb::LidarMsg&)> LIDARDriverDataCallback;
+typedef std::function<void (hal::LidarMsg&)> LIDARDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Generic LIDAR driver interface

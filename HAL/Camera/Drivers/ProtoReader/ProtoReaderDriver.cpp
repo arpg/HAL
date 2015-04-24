@@ -9,14 +9,14 @@ namespace hal {
 ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID)
     : m_first(true),
       m_camId(camID),
-      m_reader( pb::Reader::Instance(filename,pb::Msg_Type_Camera) ) {
+      m_reader( hal::Reader::Instance(filename,hal::Msg_Type_Camera) ) {
   m_reader.SetInitialImage(imageID);
   while( !ReadNextCameraMessage(m_nextMsg) ) {
     std::cout << "HAL: Initializing proto-reader..." << std::endl;
     usleep(100);
   }
 
-  const pb::Header pbHdr = m_reader.GetHeader();
+  const hal::Header pbHdr = m_reader.GetHeader();
   time_t log_date((long)pbHdr.date());
   std::cout << "- Log dated " << ctime(&log_date);
 
@@ -31,9 +31,9 @@ ProtoReaderDriver::~ProtoReaderDriver() {
   //    m_reader.StopBuffering();
 }
 
-bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg) {
+bool ProtoReaderDriver::ReadNextCameraMessage(hal::CameraMsg& msg) {
   msg.Clear();
-  std::unique_ptr<pb::CameraMsg> readmsg = m_reader.ReadCameraMsg(m_camId);
+  std::unique_ptr<hal::CameraMsg> readmsg = m_reader.ReadCameraMsg(m_camId);
   if(readmsg) {
     msg.Swap(readmsg.get());
     return true;
@@ -42,7 +42,7 @@ bool ProtoReaderDriver::ReadNextCameraMessage(pb::CameraMsg& msg) {
   }
 }
 
-bool ProtoReaderDriver::Capture( pb::CameraMsg& vImages ) {
+bool ProtoReaderDriver::Capture( hal::CameraMsg& vImages ) {
   bool success = true;
   if (m_first) {
     m_nextMsg.Swap(&vImages);

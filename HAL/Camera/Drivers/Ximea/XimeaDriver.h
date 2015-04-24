@@ -24,7 +24,7 @@ public:
 
   ~XimeaDriver();
 
-  bool Capture(pb::CameraMsg& images);
+  bool Capture(hal::CameraMsg& images);
 
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();

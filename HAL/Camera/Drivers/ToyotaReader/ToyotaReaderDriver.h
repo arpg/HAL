@@ -32,7 +32,7 @@ class ToyotaReaderDriver : public CameraDriver
     public:
         ToyotaReaderDriver();
         virtual ~ToyotaReaderDriver();
-        bool Capture( pb::CameraMsg& vImages );
+        bool Capture( hal::CameraMsg& vImages );
         void PrintInfo();
         bool Init();
 
@@ -50,7 +50,7 @@ class ToyotaReaderDriver : public CameraDriver
         boost::condition_variable                       m_cBufferEmpty;
         boost::condition_variable                       m_cBufferFull;
 
-        std::queue< pb::CameraMsg >                     m_qImageBuffer;
+        std::queue< hal::CameraMsg >                     m_qImageBuffer;
 
         bool                                            m_bLoop;
         bool                                            m_bOutputRectified;

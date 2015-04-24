@@ -18,7 +18,7 @@ OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
 
 OpenCVDriver::~OpenCVDriver() {}
 
-bool OpenCVDriver::Capture(pb::CameraMsg& images_msg) {
+bool OpenCVDriver::Capture(hal::CameraMsg& images_msg) {
   if(!cam_.isOpened()) {
     std::cerr << "HAL: Error reading from camera." << std::endl;
     return false;
@@ -27,11 +27,11 @@ bool OpenCVDriver::Capture(pb::CameraMsg& images_msg) {
 
   cv::Mat temp;
   bool success = cam_.read(temp);
-  pb::ImageMsg* pbImg = images_msg.add_image();
-  pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+  hal::ImageMsg* pbImg = images_msg.add_image();
+  pbImg->set_type(hal::PB_UNSIGNED_BYTE);
   pbImg->set_height(img_height_);
   pbImg->set_width(img_width_);
-  pbImg->set_format(force_greyscale_ ? pb::PB_LUMINANCE : pb::PB_BGR);
+  pbImg->set_format(force_greyscale_ ? hal::PB_LUMINANCE : hal::PB_BGR);
 
   if (!success) return false;
 

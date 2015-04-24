@@ -1,0 +1,13 @@
+package hal;
+
+import "Matrix.proto";
+
+message LidarMsg{
+    optional int32 id = 1;
+    optional double device_time = 2;
+    optional double system_time = 3;
+    optional MatrixMsg distance = 4;
+    optional MatrixMsg intensity = 5;
+    optional VectorMsg rotational_position = 6;
+}
+

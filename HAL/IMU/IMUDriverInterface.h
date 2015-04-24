@@ -2,11 +2,11 @@
 
 #include <functional>
 #include <HAL/Devices/DriverInterface.h>
-#include <PbMsgs/Imu.pb.h>
+#include <HAL/Imu.pb.h>
 
 namespace hal {
 
-typedef std::function<void (pb::ImuMsg&)> IMUDriverDataCallback;
+typedef std::function<void (hal::ImuMsg&)> IMUDriverDataCallback;
 
 /// Generic IMU driver interface
 ///

@@ -16,7 +16,7 @@ public:
     DeinterlaceDriver( std::shared_ptr<CameraDriverInterface> Input
                  );
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     std::string GetDeviceProperty(const std::string& sProperty);
@@ -27,7 +27,7 @@ public:
 
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
-    pb::CameraMsg                           m_Message;
+    hal::CameraMsg                           m_Message;
     unsigned char*                          m_Buffer;
     unsigned int                            m_nImgWidth;
     unsigned int                            m_nImgHeight;

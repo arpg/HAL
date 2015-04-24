@@ -4,9 +4,9 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 
 #pragma GCC system_header
-#include <calibu/cam/CameraRig.h>
-#include <calibu/cam/Rectify.h>
-#include <calibu/cam/StereoRectify.h>
+#include <calibu/cam/camera_crtp.h>
+#include <calibu/cam/rectify_crtp.h>
+#include <calibu/cam/stereo_rectify.h>
 
 namespace hal
 {
@@ -15,9 +15,9 @@ class UndistortDriver : public CameraDriverInterface
 {
 public:
     UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
-            const calibu::CameraRig& rig);
+            const std::shared_ptr<calibu::Rig<double> > rig);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     size_t NumChannels() const;
@@ -27,7 +27,7 @@ public:
     std::string GetDeviceProperty(const std::string& sProperty);
 
     /// Return rectified camera model.
-    const calibu::CameraModelT<calibu::Pinhole>& CameraModel(size_t idx = 0) const {
+    const std::shared_ptr<calibu::CameraInterface<double>> CameraModel(size_t idx = 0) const {
       if(idx < m_CamModel.size()) {
         return m_CamModel[idx];
       }
@@ -35,9 +35,9 @@ public:
     }
 
 protected:
-    pb::CameraMsg                                       m_InMsg;
+    hal::CameraMsg                                       m_InMsg;
     std::shared_ptr<CameraDriverInterface>              m_Input;
-    std::vector<calibu::CameraModelT<calibu::Pinhole>>  m_CamModel;
+    std::vector<std::shared_ptr<calibu::CameraInterface<double>>>  m_CamModel;
     std::vector<calibu::LookupTable>                    m_vLuts;
 
 };

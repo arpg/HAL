@@ -15,12 +15,12 @@ DeinterlaceDriver::DeinterlaceDriver(
   m_Buffer = (unsigned char*)malloc(m_nImgHeight*m_nImgWidth*2);
 }
 
-bool DeinterlaceDriver::Capture( pb::CameraMsg& vImages )
+bool DeinterlaceDriver::Capture( hal::CameraMsg& vImages )
 {
     m_Message.Clear();
     m_Input->Capture( m_Message );
 
-    if( m_Message.mutable_image(0)->type() != pb::PB_UNSIGNED_SHORT ) {
+    if( m_Message.mutable_image(0)->type() != hal::PB_UNSIGNED_SHORT ) {
       std::cerr << "HAL: Error! Expecting image with depth of 16 bits." << std::endl;
       return false;
     }
@@ -32,18 +32,18 @@ bool DeinterlaceDriver::Capture( pb::CameraMsg& vImages )
 
     const unsigned int nImgSize = m_nImgWidth * m_nImgHeight;
 
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
     pbImg->set_width( m_nImgWidth );
     pbImg->set_height( m_nImgHeight );
     pbImg->set_data( m_Buffer, nImgSize );
-    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+    pbImg->set_type( hal::PB_UNSIGNED_BYTE );
     pbImg->set_format( m_Message.mutable_image(0)->format() );
 
     pbImg = vImages.add_image();
     pbImg->set_width( m_nImgWidth );
     pbImg->set_height( m_nImgHeight );
     pbImg->set_data( m_Buffer+nImgSize, nImgSize);
-    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+    pbImg->set_type( hal::PB_UNSIGNED_BYTE );
     pbImg->set_format( m_Message.mutable_image(0)->format() );
 
     return true;

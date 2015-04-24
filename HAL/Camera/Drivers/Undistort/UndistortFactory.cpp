@@ -1,7 +1,7 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "UndistortDriver.h"
 
-#include <calibu/cam/CameraXml.h>
+#include <calibu/cam/camera_xml.h>
 
 namespace hal
 {
@@ -38,7 +38,7 @@ public:
             filename = (dir.empty() ? "" : dir + "/") + filename;
         }
 
-        calibu::CameraRig rig = calibu::ReadXmlRig( filename );
+        std::shared_ptr<calibu::Rig<double>> rig = calibu::ReadXmlRig( filename );
 
         UndistortDriver* pDriver = new UndistortDriver( input, rig );
         return std::shared_ptr<CameraDriverInterface>( pDriver );

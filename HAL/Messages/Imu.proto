@@ -1,0 +1,13 @@
+package hal;
+
+import "Matrix.proto";
+
+message ImuMsg{
+    optional int32 id = 1;
+    optional double device_time = 2;
+    optional double system_time = 3;
+    optional VectorMsg accel = 4;
+    optional VectorMsg gyro = 5;
+    optional VectorMsg mag = 6;
+}
+

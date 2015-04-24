@@ -20,7 +20,7 @@ public:
                float fFPS, dc1394speed_t ISO,
                unsigned int nDMA, float fEXP, bool ptgrey_timestamp);
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
   std::string GetDeviceProperty(const std::string& sProperty);
@@ -30,7 +30,7 @@ public:
   size_t Height( size_t /*idx*/ = 0 ) const;
 
 private:
-  void _SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam );
+  void _SetImageMetaDataFromCamera( hal::ImageMsg* img, dc1394camera_t* pCam );
   inline int _NearestValue(int value, int step, int min, int max);
 
 
@@ -41,8 +41,8 @@ private:
   double                            m_PreviousTimestamp;
 
   dc1394_t*                         m_pBus;
-  pb::Type                          m_VideoType;
-  pb::Format                        m_VideoFormat;
+  hal::Type                          m_VideoType;
+  hal::Format                        m_VideoFormat;
   unsigned int                      m_nImageWidth;
   unsigned int                      m_nImageHeight;
   unsigned int                      m_nNumChannels;

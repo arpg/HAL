@@ -1,0 +1,25 @@
+package hal;
+
+import "Matrix.proto";
+
+message PoseMsg {
+    enum Type {
+        SO2         = 1;    // stored as a 1d vector [t]
+        SE2         = 2;    // stored as a 3d vector [xy|t]
+        SO3         = 3;    // stored as a 4d vector [ijkw]
+        SE3         = 4;    // stored as a 7d vector [ijkw|xyz]
+        LatLongAlt  = 5;    // WGS84. stored as 3d vector [lat lon alt]
+        Euler       = 6;    // stored as a 6d vector [pqr|xyz]
+        RAW         = 9;    // independent user specific format
+    }
+
+    optional int32 id = 1;
+    optional double device_time = 2;
+    required Type type = 3;
+    optional VectorMsg pose = 4;    // format dependent on type
+
+     // position covariance. Ordered as the pose data is.
+    optional MatrixMsg covariance = 5;
+
+    optional double system_time = 6;
+}

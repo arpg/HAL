@@ -1,5 +1,6 @@
 #pragma once
 
 #define HAL_VERSION @HAL_VERSION@
+#define Messages_VERSION @Messages_VERSION@
 
 #include <HAL/ThirdParty/ThirdPartyConfig.h>

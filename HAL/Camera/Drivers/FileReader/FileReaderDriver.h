@@ -22,7 +22,7 @@ class FileReaderDriver : public CameraDriverInterface {
                    const std::string& idString = std::string());
   ~FileReaderDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();
   }
@@ -49,11 +49,11 @@ class FileReaderDriver : public CameraDriverInterface {
   std::condition_variable                         m_cBufferFull;
 
   // TODO refactor using circular buffer
-  std::vector< pb::CameraMsg >                    m_vBuffer;
+  std::vector< hal::CameraMsg >                    m_vBuffer;
   unsigned int                                    m_nHead;
   unsigned int                                    m_nTail;
 
-  std::queue< pb::CameraMsg >                     m_qImageBuffer;
+  std::queue< hal::CameraMsg >                     m_qImageBuffer;
   std::vector< std::vector< std::string > >       m_vFileList;
   std::string                                     m_sBaseDir;
   unsigned int                                    m_nNumChannels;

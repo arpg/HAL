@@ -1,0 +1,10 @@
+package hal;
+
+import "CameraModel.proto";
+
+message Header {
+    required uint32 version = 1;
+    optional double date = 2;
+    optional string description = 3;
+    optional CameraModelMsg camera_model = 5;
+}
