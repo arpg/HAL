@@ -8,9 +8,9 @@
 #include <gflags/gflags.h>
 
 #include <HAL/Posys/PosysDevice.h>
-#include <Node/Node.h>
-#include <PbMsgs/Pose.pb.h>
-#include <miniglog/logging.h>
+#include <node/Node.h>
+#include <HAL/Pose.pb.h>
+#include <glog/logging.h>
 
 DEFINE_string(nodeName, "posetonode", "Node name");
 DEFINE_string(topic, "pose", "Topic name");
@@ -23,7 +23,7 @@ node::node n;
 using std::cout;
 using std::endl;
 
-void Posys_Handler(pb::PoseMsg& PoseData) {
+void Posys_Handler(hal::PoseMsg& PoseData) {
   /*
     cout << "Posys Id: " << PoseData.id() << ". Data: ";
     for (int ii = 0; ii < PoseData.pose().data_size(); ++ii) {
