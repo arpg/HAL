@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <Node/Node.h>
+#include <node/Node.h>
 
 namespace hal {
 
