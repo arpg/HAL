@@ -26,7 +26,7 @@ RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
   }
 
   if(new_rig->NumCams() == 2) {
-    m_cam = calibu::CreateScanlineRectifiedLookupAndCameras(
+    m_rig = calibu::CreateScanlineRectifiedLookupAndCameras(
         new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
         new_rig->cameras_[0], new_rig->cameras_[1],
         m_T_nr_nl,

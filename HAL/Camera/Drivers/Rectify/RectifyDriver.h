@@ -33,14 +33,14 @@ public:
         return m_T_nr_nl;
     }
 
-    /// Return rectified camera model for both left and right images.
-    const std::shared_ptr<calibu::CameraInterface<double>> CameraModel() const {
-        return m_cam;
+    /// Return rectified rig.
+    const std::shared_ptr<calibu::Rig<double>> Rig() const {
+        return m_rig;
     }
 
 protected:
     Sophus::SE3d                                       m_T_nr_nl;
-    std::shared_ptr<calibu::CameraInterface<double>>   m_cam;
+    std::shared_ptr<calibu::Rig<double>>               m_rig;
     std::shared_ptr<CameraDriverInterface>             m_input;
     std::vector<calibu::LookupTable>                   m_vLuts;
 
