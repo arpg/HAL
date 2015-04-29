@@ -211,8 +211,8 @@ function(install_package)
         #    endforeach()
         #endif()
 
-        list( APPEND PACKAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include
-            ${CMAKE_CURRENT_BINARY_DIR}/include )
+        list( APPEND PACKAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}
+            ${CMAKE_BINARY_DIR} )
 
         # install library itself
         #if( PACKAGE_LIB_NAME )
