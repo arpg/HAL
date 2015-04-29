@@ -71,34 +71,27 @@ function(install_package)
   endif()
 
   # construct Cflags arguments for pkg-config file
-#  string( CONCAT PACKAGE_CFLAGS ${PACKAGE_CFLAGS} ${CMAKE_C_FLAGS} )
   set( PACKAGE_CFLAGS "${PACKAGE_CFLAGS} ${CMAKE_C_FLAGS}" )
   foreach(var IN LISTS PACKAGE_INCLUDE_DIRS )
-#    string( CONCAT PACKAGE_CFLAGS ${PACKAGE_CFLAGS} " -I${var}" )
     set( PACKAGE_CFLAGS "${PACKAGE_CFLAGS} -I${var}" )
   endforeach()
 
   # now construct Libs.private arguments 
   foreach(var IN LISTS PACKAGE_LINK_DIRS )
-#    string( CONCAT PACKAGE_LIBS ${PACKAGE_LIBS} " -L${var}" )
     set( PACKAGE_LIBS "${PACKAGE_LIBS} -L${var}" )
   endforeach()
   foreach(var IN LISTS PACKAGE_LINK_LIBS )
     if( EXISTS ${var} OR  ${var} MATCHES "-framework*" )
-#      string( CONCAT PACKAGE_LIBS ${PACKAGE_LIBS} " ${var}" )
       set( PACKAGE_LIBS "${PACKAGE_LIBS} ${var}" )
     else() # assume it's just a -l call??
-#      string( CONCAT PACKAGE_LIBS ${PACKAGE_LIBS} " -l${var}" )
       set( PACKAGE_LIBS "${PACKAGE_LIBS} -l${var}" )
     endif()
   endforeach()
 
   # add any CXX flags user has passed in
   if( PACKAGE_CXXFLAGS )
-#    string( CONCAT PACKAGE_CFLAGS ${PACKAGE_CXXFLAGS} )
     set( PACKAGE_CFLAGS ${PACKAGE_CXXFLAGS} )
   endif()
-
 
   # In case we want to install. 
   if( NOT EXPORT_${PROJECT_NAME} )
@@ -109,9 +102,8 @@ function(install_package)
             endif()
             get_target_property( _target_library ${PACKAGE_LIB_NAME} LOCATION )
             get_filename_component( _lib ${_target_library} NAME )
-            list( APPEND PACKAGE_LINK_LIBS ${CMAKE_INSTALL_PREFIX}/lib/${_lib} )
+            list( APPEND PACKAGE_LINK_LIBS ${PACKAGE_LIB_NAME} )
         endif()
-
 
         if( PACKAGE_INSTALL_HEADER_DIRS )
             foreach(dir IN LISTS PACKAGE_INSTALL_HEADER_DIRS )
@@ -122,19 +114,17 @@ function(install_package)
             endforeach()
         endif()
 
-        # Some care is needed for header installation...
-        # install header files with any relative path provided
+        # install header files
         if( PACKAGE_INSTALL_HEADERS )
+#            install( FILES ${PACKAGE_INSTALL_HEADERS} DESTINATION ${PACKAGE_DESTINATION} )
           foreach(hdr IN LISTS PACKAGE_INSTALL_HEADERS )
              get_filename_component( _fp ${hdr} ABSOLUTE )
-             file( RELATIVE_PATH _rpath ${CMAKE_SOURCE_DIR} ${_fp} )
+             file( RELATIVE_PATH _rpath ${CMAKE_BINARY_DIR} ${_fp} )
              get_filename_component( _dir ${_rpath} DIRECTORY )
              install( FILES ${_fp}
                  DESTINATION ${PACKAGE_DESTINATION}/${_dir} )
-          endforeach()
+         endforeach()
         endif()
-
-        # install GENERATED header files (e.g. protobuf)
         if( PACKAGE_INSTALL_GENERATED_HEADERS )
           foreach(hdr IN LISTS PACKAGE_INSTALL_GENERATED_HEADERS )
              get_filename_component( _fp ${hdr} ABSOLUTE )
@@ -144,7 +134,6 @@ function(install_package)
                  DESTINATION ${PACKAGE_DESTINATION}/${_dir} )
          endforeach()
         endif()
-
 
         if( PACKAGE_INSTALL_INCLUDE_DIR )
             install(DIRECTORY ${CMAKE_SOURCE_DIR}/include DESTINATION ${PACKAGE_DESTINATION} )
@@ -222,8 +211,8 @@ function(install_package)
         #    endforeach()
         #endif()
 
-        list( APPEND PACKAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}
-            ${CMAKE_BINARY_DIR} )
+        list( APPEND PACKAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_BINARY_DIR}/include )
 
         # install library itself
         #if( PACKAGE_LIB_NAME )
