@@ -4,8 +4,8 @@
 
 namespace hal {
 
-  ROSDriver::ROSDriver(string m_topics, int width, int height )
-    : topics(m_topics)
+  ROSDriver::ROSDriver(string m_topics, string m_sizes, int m_grayScale )
+    : topics(m_topics), sizes(m_sizes), grayScale(m_grayScale)
   {
     int argc = 0;
     ros::init(argc, NULL, "ros_hal");
@@ -14,8 +14,9 @@ namespace hal {
     nh = new ros::NodeHandle("~");
     it = new image_transport::ImageTransport(*nh);
     topicBell = PTHREAD_MUTEX_INITIALIZER;
-    width_ = width;
-    height_ = height;
+
+    //Parse the sizes string so that we have that available when called by higher
+    parseSizes();
     Start(); //hardcoded for the ROS camera's vid/pid
   }
   
@@ -29,20 +30,32 @@ namespace hal {
     delete it;
     delete nh;
   }
-
+  
+  void ROSDriver::parseSizes()
+  {
+    vector<string> sizeList = split<string>(sizes, "+");
+    int numSizes = sizeList.size();
+    for (int i=0; i< numSizes; i++)
+      {
+	vector<string> oneSize = split<string>(sizeList[i], "x");
+	widthList.push_back(strtoul(oneSize[0].c_str(), NULL, 10));
+	heightList.push_back(strtoul(oneSize[1].c_str(), NULL, 10));
+      }
+  }
+  
   size_t ROSDriver::NumChannels() const
   {
     return topicCount; //one channel for RGB, one for depth
   }
 
-  size_t ROSDriver::Width( size_t /*idx*/) const
+  size_t ROSDriver::Width( size_t idx) const
   {
-    return width_;
+    return widthList[idx];
   }
 
-  size_t ROSDriver::Height( size_t /*idx*/) const
+  size_t ROSDriver::Height( size_t idx) const
   {
-    return height_;
+    return heightList[idx];
   }
 
   void ROSDriver::Start()
@@ -82,8 +95,20 @@ namespace hal {
   bool ROSDriver::Capture( pb::CameraMsg& vImages )
   {
     //Only publish when there's at least one new image to share
+    //Return false if we timed out in the cond_wait
+    struct timespec timeout;
+    clock_gettime(CLOCK_REALTIME, &timeout);
+    timeout.tv_sec +=1;
 
-    pthread_cond_wait(&newTopic, &topicBell);
+    int ret;
+    
+    ret = pthread_cond_timedwait(&newTopic, &topicBell, &timeout);
+    if (ret == ETIMEDOUT)
+      {
+	std::cout << "No images received from ROS!" << std::endl;
+	return false;
+      }
+
     vImages.Clear();
 
     //cout << "Woke up!" << endl;
@@ -130,6 +155,21 @@ namespace hal {
 	    sensor_msgs::ImagePtr convImage;
 	    makeFixedPoint(convImage, freshImages[i]);
 	    pimg->set_data(&convImage->data[0], convImage->step * convImage->height);
+	  }
+	else if ((freshImages[i]->encoding == sensor_msgs::image_encodings::MONO16 ||
+		  freshImages[i]->encoding == sensor_msgs::image_encodings::TYPE_16UC1) &&
+		 grayScale)
+	  {
+	    
+	    //Dynamically adjust the scale of the uint16_t to occupy the full range
+	    //Certain cameras only publish 10 or 12-bit data, leading to very dark images
+	    //First, go through the image and find the real max value
+	    //Then, rescale the image into the full 16-bit range
+	    sensor_msgs::ImagePtr scaledImage;
+	    makeScaledImage(scaledImage, freshImages[i]);
+	    pimg->set_type(pb::PB_UNSIGNED_BYTE);
+	    pimg->set_data(&scaledImage->data[0], scaledImage->step * scaledImage->height);
+ 
 	  }
 	else
 	  {
@@ -261,5 +301,45 @@ namespace hal {
     destImage_sp = boost::shared_ptr<sensor_msgs::Image>(destImage);
   }
 
+  void ROSDriver::makeScaledImage(sensor_msgs::ImagePtr &destImage_sp, const sensor_msgs::ImageConstPtr srcImage)
+  {
+    //Dynamically scale a gray image to span the full uint16_t space
+    //since some cameras only publish 10 or 12-bit data
+    
+     sensor_msgs::Image* destImage = new sensor_msgs::Image;
+    destImage->encoding = sensor_msgs::image_encodings::MONO8;
+    destImage->height = srcImage->height;
+    destImage->width = srcImage->width;
+    destImage->step = srcImage->width*sizeof(uint8_t);
+    destImage->data.resize(destImage->step * destImage->height);
+
+    unsigned int i;
+
+    uint16_t *baseSrc = (uint16_t*)(&srcImage->data[0]);
+    uint8_t *baseDest = (uint8_t*) (&destImage->data[0]); //since the data ptr is a uint8_t for both storage media
+    //use two passes: one to find this images' max
+    //second to actually scale every value
+
+    uint16_t maxValue = 0;
+    uint8_t newValue = 0;
+    
+    for (i = 0; i< srcImage->height*srcImage->width; i++)
+      {
+	if (baseSrc[i] > maxValue)
+	  maxValue = baseSrc[i];
+      }
+
+    //ROS_INFO("Found max value: %u\n", maxValue);
+    //Scale the image
+    for (i = 0; i< srcImage->height*srcImage->width; i++)
+      {
+	newValue = (float) baseSrc[i] / maxValue * (1 << 8);
+	baseDest[i] =  newValue;
+      }
+
+    
+    destImage_sp = boost::shared_ptr<sensor_msgs::Image>(destImage);
+  }
+	   
   
 } //namespace

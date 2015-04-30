@@ -1,8 +1,8 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include "ROSDriver.h"
 
-#define DEFAULT_WIDTH 640
-#define DEFAULT_HEIGHT 480
+#define DEFAULT_SIZE "640x480"
+
 namespace hal
 {
 
@@ -14,8 +14,8 @@ public:
     {
       Params() = {
 	{"topics","/image_left","Topics to subscribe to, separated by +"},
-	{"width", "DEFAULT_WIDTH","Width of each image"},
-	{"height","DEFAULT_HEIGHT","Height of each image"},
+	{"sizes", "DEFAULT_SIZE","Size of each image (wxh), separated by +"},
+	{"gray_scale","0","Should the gray images be scaled dynamically to the output range?"},
       };
     };
     
@@ -24,11 +24,11 @@ public:
     {
 
       std::string topics = uri.properties.Get<std::string>("topics", "/image_left");
-      int width = DEFAULT_WIDTH; //uri.properties.Get<std::int>("width", "DEFAULT_WIDTH");
-      int height = DEFAULT_HEIGHT; //uri.properties.Get<std::int>("height", "DEFAULT_HEIGHT");
+      std::string sizes = uri.properties.Get<std::string>("sizes", "DEFAULT_SIZE");
+      int grayScale = uri.properties.Get<int>("gray_scale", 1);
 
       
-      ROSDriver* rs = new ROSDriver(topics, width, height);
+      ROSDriver* rs = new ROSDriver(topics, sizes, grayScale);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

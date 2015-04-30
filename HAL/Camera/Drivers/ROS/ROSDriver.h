@@ -35,7 +35,7 @@ namespace hal
   class ROSDriver : public CameraDriverInterface
   {
   public:
-    ROSDriver(string m_topics, int width, int height );
+    ROSDriver(string m_topics, string m_sizes, int grayScale );
     ~ROSDriver();
 
     const int radixMultiplier = 1000; 
@@ -54,13 +54,23 @@ namespace hal
     pb::Format findPbFormat(string format);
 
     void makeFixedPoint(sensor_msgs::ImagePtr &destImage, const sensor_msgs::ImageConstPtr srcImage);
-			
+    void makeScaledImage(sensor_msgs::ImagePtr &destImage_sp, const sensor_msgs::ImageConstPtr srcImage);	
     void imageCallback(const sensor_msgs::Image::ConstPtr& msg, int topicIndex);
+
     template<typename T> vector<T> split(const T & str, const T & delimiters);
-      
+
+    void parseSizes();
+
+    
     string topics;
+    string sizes;
     vector<string> topicList;
+    vector<size_t> widthList;
+    vector<size_t> heightList;
+    
     int topicCount;
+
+    int grayScale;
 
 
     //ROS variables
@@ -77,8 +87,6 @@ namespace hal
     int pbformat_rgb;
     int pbformat_d;
 
-    int width_;
-    int height_;
     int fps_;
 
     //Have an array of mutexes, one for each topic that we're subscribed to
