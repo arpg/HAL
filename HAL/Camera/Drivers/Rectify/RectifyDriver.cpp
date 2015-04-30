@@ -51,19 +51,29 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
     vImages.set_device_time(vIn.device_time());
 
     for(int k=0; k < 2; ++k) {
+      uint num_channels = 1;
+      if (inimg[k].Format() == hal::Format::PB_BGR ||
+          inimg[k].Format() == hal::Format::PB_RGB) {
+        num_channels = 3;
+      } else if (inimg[k].Format() == hal::Format::PB_BGRA ||
+                 inimg[k].Format() == hal::Format::PB_RGBA) {
+        num_channels = 4;
+      }
+
       hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg[k].Width());
       pimg->set_height(inimg[k].Height());
       pimg->set_timestamp(inimg[k].Timestamp());
       pimg->set_type( (hal::Type)inimg[k].Type());
       pimg->set_format( (hal::Format)inimg[k].Format());
-      pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
+      pimg->mutable_data()->resize(inimg[k].Width() * inimg[k].Height() *
+                                   num_channels);
 
       hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
             m_vLuts[k], inimg[k].data(),
             reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
-            img.Width(), img.Height());
+            img.Width(), img.Height(), num_channels);
     }
   }
 

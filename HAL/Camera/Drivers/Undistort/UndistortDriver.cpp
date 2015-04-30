@@ -52,15 +52,37 @@ bool UndistortDriver::Capture( hal::CameraMsg& vImages )
       hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg.Width());
       pimg->set_height(inimg.Height());
+
       pimg->set_type( (hal::Type)inimg.Type());
       pimg->set_format( (hal::Format)inimg.Format());
-      pimg->mutable_data()->resize(inimg.Width()*inimg.Height());
+
+      uint num_channels = 1;
+      if (pimg->format() == hal::PB_LUMINANCE) {
+        num_channels = 1;
+      } else if (pimg->format() == hal::PB_BGRA ||
+                 pimg->format() == hal::PB_RGBA) {
+        num_channels = 4;
+      } else {
+        num_channels = 3;
+      }
 
       hal::Image img = hal::Image(*pimg);
-      calibu::Rectify(
-            m_vLuts[ii], inimg.data(),
-            reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
-            img.Width(), img.Height());
+
+      if (pimg->type() == hal::PB_UNSIGNED_BYTE) {
+        pimg->mutable_data()->resize(inimg.Width() * inimg.Height() *
+                                     sizeof(unsigned char) * num_channels);
+        calibu::Rectify<unsigned char>(
+              m_vLuts[ii], inimg.data(),
+              reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
+              img.Width(), img.Height(), num_channels);
+      } else if (pimg->type() == hal::PB_FLOAT) {
+        pimg->mutable_data()->resize(inimg.Width() * inimg.Height() *
+                                     sizeof(float) * num_channels);
+        calibu::Rectify<float>(
+              m_vLuts[ii], (float*)inimg.data(),
+              reinterpret_cast<float*>(&pimg->mutable_data()->front()),
+              img.Width(), img.Height(), num_channels);
+      }
     }
   }
 
