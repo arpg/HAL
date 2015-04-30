@@ -233,6 +233,9 @@ include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
 
+message( "Internal libs ${INTERNAL_LIBS}" )
+message( "Link libs ${PROTOBUF_LIBRARIES}" )
+message( "proto  libs ${LINK_LIBS}" )
 set(HAL_LIBS
   ${INTERNAL_LIBS}
   ${PROTOBUF_LIBRARIES}

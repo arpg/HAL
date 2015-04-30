@@ -15,7 +15,7 @@ elseif(ANDROID)
   set(NO_LINK_WHOLE_ARCHIVE_FLAG -Wl,--no-whole-archive)
 endif()
 
-if(GLog_FOUND AND Node_FOUND)
+if(GLOG_FOUND AND Node_FOUND AND GFLAGS_FOUND)
   add_executable( ${PROJECT_NAME} main.cpp )
 
   include_directories( ${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
