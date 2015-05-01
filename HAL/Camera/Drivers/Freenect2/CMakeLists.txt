@@ -2,6 +2,10 @@ find_package( freenect2 QUIET )
 
 set( BUILD_Freenect2 "${freenect2_FOUND}" CACHE BOOL
   "Build Freenect2 driver for Kinect2" )
+ 
+set(freenect2_DEFINITIONS "-DLIBFREENECT2_THREADING_TINYTHREAD")
+#temp fix for OpenKinect/libfreenect2 issue #217
+set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)
 
 if( BUILD_Freenect2 )
     if( freenect2_FOUND )
