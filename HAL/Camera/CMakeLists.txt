@@ -3,10 +3,6 @@ set(HDRS
     CameraDriverInterface.h
 )
 
-add_to_hal_sources( ${HDRS} )
-
-install(FILES ${HDRS}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/HAL/Camera
-)
+add_to_hal_headers( ${HDRS} )
 
 add_subdirectory( Drivers )

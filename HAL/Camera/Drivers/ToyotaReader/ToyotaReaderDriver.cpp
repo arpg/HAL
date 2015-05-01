@@ -25,7 +25,7 @@ ToyotaReaderDriver::~ToyotaReaderDriver() {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Consumer
-bool ToyotaReaderDriver::Capture( pb::CameraMsg& vImages ) {
+bool ToyotaReaderDriver::Capture( hal::CameraMsg& vImages ) {
 
     if( m_qImageBuffer.size() == 0 && !m_bLoop) {
         return false;
@@ -237,7 +237,7 @@ bool ToyotaReaderDriver::_Read() {
     //*************************************************************************
 
     // now fetch the next set of images
-    pb::CameraMsg vImages;
+    hal::CameraMsg vImages;
 
     for( unsigned int ii = 0; ii < m_uNumChannels; ++ii ) {
         //check if we are not at the end of the file
@@ -256,7 +256,7 @@ bool ToyotaReaderDriver::_Read() {
         if( m_vChannels[ii]->is_open() ) {
 
             cv::Mat         cvImg;
-            pb::ImageMsg*   pbImg = vImages.add_image();
+            hal::ImageMsg*   pbImg = vImages.add_image();
 
             if( ImgFormat == GRAY ) {
                 cvImg.create( m_vCamerasInfo[ii]->h, m_vCamerasInfo[ii]->w, CV_8UC1 );
@@ -293,8 +293,8 @@ bool ToyotaReaderDriver::_Read() {
             pbImg->set_data( (const char*)cvImg.data );
             pbImg->set_height( cvImg.rows );
             pbImg->set_width( cvImg.cols );
-            pbImg->set_format( pb::ImageMsg_Format_PB_LUMINANCE );
-            pbImg->set_type( pb::ImageMsg_Type_PB_BYTE );
+            pbImg->set_format( hal::ImageMsg_Format_PB_LUMINANCE );
+            pbImg->set_type( hal::ImageMsg_Type_PB_BYTE );
 
             if( m_bReadTimestamps ) {
                 double dTimestamp;

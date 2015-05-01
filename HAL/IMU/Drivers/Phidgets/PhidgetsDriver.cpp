@@ -101,9 +101,9 @@ void PhidgetsDriver::_SpatialDataHandler(CPhidgetSpatialHandle /*spatial*/, CPhi
     /**/
 
   for(i = 0; i < count; i++){
-    pb::ImuMsg imuData;
+    hal::ImuMsg imuData;
 
-    pb::VectorMsg* pbVec = imuData.mutable_accel();
+    hal::VectorMsg* pbVec = imuData.mutable_accel();
     pbVec->add_data(data[i]->acceleration[0]);
     pbVec->add_data(data[i]->acceleration[1]);
     pbVec->add_data(data[i]->acceleration[2]);

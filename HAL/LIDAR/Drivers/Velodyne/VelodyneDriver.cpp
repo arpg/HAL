@@ -39,7 +39,7 @@ VelodyneDriver::VelodyneDriver(int port)
 /////////////////////////////////////////////////////////////////////////////////////////
 void VelodyneDriver::_ThreadFunc()
 {
-    pb::LidarMsg pbMsg;
+    hal::LidarMsg pbMsg;
 	struct sockaddr_in si_other;
 	char buf[BUFLEN];
 	int slen=sizeof(si_other);
@@ -55,9 +55,9 @@ void VelodyneDriver::_ThreadFunc()
 	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206.
 	pbMsg.set_system_time(Tic());//before doing anything else.
 
-	pb::VectorMsg *pbVec = pbMsg.mutable_rotational_position();
-	pb::MatrixMsg *pbMatDist = pbMsg.mutable_distance();
-	pb::MatrixMsg *pbMatIntensity = pbMsg.mutable_intensity();
+	hal::VectorMsg *pbVec = pbMsg.mutable_rotational_position();
+	hal::MatrixMsg *pbMatDist = pbMsg.mutable_distance();
+	hal::MatrixMsg *pbMatIntensity = pbMsg.mutable_intensity();
 	int offset=0; //This Variable will tell where data for block starts, each block will be of 100 bytes.
 
 

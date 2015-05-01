@@ -92,8 +92,8 @@ void UvcDriver::Start(int vid, int pid, char* sn)
                 width_, height_,
                 fps_);
     
-    pbtype = pb::PB_UNSIGNED_BYTE;
-    pbformat = pb::PB_LUMINANCE;
+    pbtype = hal::PB_UNSIGNED_BYTE;
+    pbformat = hal::PB_LUMINANCE;
         
     if (mode_err != UVC_SUCCESS) {
         uvc_perror(mode_err, "uvc_get_stream_ctrl_format_size");
@@ -150,7 +150,7 @@ void UvcDriver::Stop()
 //void UvcDriver::ImageCallback(uvc_frame_t* /*frame*/) {
 //}
 
-bool UvcDriver::Capture( pb::CameraMsg& vImages )
+bool UvcDriver::Capture( hal::CameraMsg& vImages )
 {
     vImages.Clear();
 
@@ -160,9 +160,9 @@ bool UvcDriver::Capture( pb::CameraMsg& vImages )
         uvc_perror(err, "uvc_get_frame");
     }else{
         if(frame) {
-            pb::ImageMsg* pimg = vImages.add_image();
-            pimg->set_type( (pb::Type) pbtype );
-            pimg->set_format( (pb::Format) pbformat );            
+            hal::ImageMsg* pimg = vImages.add_image();
+            pimg->set_type( (hal::Type) pbtype );
+            pimg->set_format( (hal::Format) pbformat );            
             pimg->set_width(frame->width);
             pimg->set_height(frame->height);
             pimg->set_data(frame->data, width_ * height_);

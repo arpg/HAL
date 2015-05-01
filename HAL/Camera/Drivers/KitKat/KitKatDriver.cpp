@@ -2,7 +2,7 @@
 // accompanying LICENSE file for more information.
 
 #include "KitKatDriver.h"
-#include <PbMsgs/Camera.pb.h>
+#include <HAL/Camera.pb.h>
 #include "./Camera.h"
 #include "./Image.h"
 
@@ -22,8 +22,8 @@ KitKatDriver::~KitKatDriver() {
   camera_free(camera_);
 }
 
-bool KitKatDriver::Capture( pb::CameraMsg& vImages ) {
-  pb::ImageMsg* pb_img = vImages.add_image();
+bool KitKatDriver::Capture( hal::CameraMsg& vImages ) {
+  hal::ImageMsg* pb_img = vImages.add_image();
 
   image_t image;
   camera_lock_buffer(camera_, &image);
@@ -32,8 +32,8 @@ bool KitKatDriver::Capture( pb::CameraMsg& vImages ) {
 
   pb_img->set_width(image.width);
   pb_img->set_height(image.height);
-  pb_img->set_type(pb::PB_UNSIGNED_BYTE);
-  pb_img->set_format(pb::PB_LUMINANCE);
+  pb_img->set_type(hal::PB_UNSIGNED_BYTE);
+  pb_img->set_format(hal::PB_LUMINANCE);
   pb_img->set_timestamp(image.timestamp);
   pb_img->set_data(image.buffer, image.width * image.height);
 

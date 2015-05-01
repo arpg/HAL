@@ -1,0 +1,7 @@
+package hal;
+
+message EncoderMsg {
+    optional double device_time = 1;
+    repeated string label = 2;
+    repeated double data = 3;
+}

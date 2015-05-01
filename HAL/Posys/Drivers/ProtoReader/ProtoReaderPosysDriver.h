@@ -2,7 +2,7 @@
 
 #include <HAL/Posys/PosysDriverInterface.h>
 
-#include <PbMsgs/Reader.h>
+#include <HAL/Messages/Reader.h>
 
 namespace hal {
 
@@ -20,7 +20,7 @@ private:
     void _ThreadFunc();
 
 private:
-    pb::Reader&                 m_reader;
+    hal::Reader&                 m_reader;
     bool                        m_running;
     std::thread                 m_callbackThread;
     PosysDriverDataCallback     m_callback;

@@ -2,7 +2,7 @@
 
 #include <HAL/Posys/PosysDriverInterface.h>
 
-#include <PbMsgs/Reader.h>
+#include <HAL/Messages/Reader.h>
 
 namespace hal {
 

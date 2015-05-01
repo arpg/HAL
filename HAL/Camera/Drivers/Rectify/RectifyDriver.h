@@ -4,9 +4,11 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 
 #pragma GCC system_header
-#include <calibu/cam/CameraRig.h>
-#include <calibu/cam/Rectify.h>
-#include <calibu/cam/StereoRectify.h>
+#include <calibu/cam/camera_crtp.h>
+#include <calibu/cam/camera_models_crtp.h>
+#include <calibu/cam/camera_rig.h>
+#include <calibu/cam/rectify_crtp.h>
+#include <calibu/cam/stereo_rectify.h>
 
 namespace hal
 {
@@ -15,9 +17,9 @@ class RectifyDriver : public CameraDriverInterface
 {
 public:
     RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
-            const calibu::CameraRig& rig);
+            const std::shared_ptr<calibu::Rig<double>> rig);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }
 
     size_t NumChannels() const;
@@ -31,16 +33,16 @@ public:
         return m_T_nr_nl;
     }
 
-    /// Return rectified camera model for both left and right images.
-    const calibu::CameraModelT<calibu::Pinhole>& CameraModel() const {
-        return m_cam;
+    /// Return rectified rig.
+    const std::shared_ptr<calibu::Rig<double>> Rig() const {
+        return m_rig;
     }
 
 protected:
-    Sophus::SE3d                            m_T_nr_nl;
-    calibu::CameraModelT<calibu::Pinhole>   m_cam;
-    std::shared_ptr<CameraDriverInterface>  m_input;
-    std::vector<calibu::LookupTable>        m_vLuts;
+    Sophus::SE3d                                       m_T_nr_nl;
+    std::shared_ptr<calibu::Rig<double>>               m_rig;
+    std::shared_ptr<CameraDriverInterface>             m_input;
+    std::vector<calibu::LookupTable>                   m_vLuts;
 
 };
 

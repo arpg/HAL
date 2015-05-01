@@ -1,6 +1,0 @@
-<SimInfo>
-    <sim name="Proxy1" path="/Users/Trystan/Code/simba/build/Applications/LocalSim/"/>
-    <statekeeper name="NULL"/>
-    <world path="/Users/Trystan/Code/simba/urdf/World.xml"/>
-    <robot path="/Users/Trystan/Code/simba/urdf/Robot.xml"/>
-</SimInfo>

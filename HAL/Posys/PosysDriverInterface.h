@@ -4,12 +4,12 @@
 
 #include <HAL/Devices/DriverInterface.h>
 
-#include <PbMsgs/Pose.pb.h>
+#include <HAL/Pose.pb.h>
 
 
 namespace hal {
 
-typedef std::function<void (pb::PoseMsg&)> PosysDriverDataCallback;
+typedef std::function<void (hal::PoseMsg&)> PosysDriverDataCallback;
 
 ///
 /// Generic Posys Driver Interface

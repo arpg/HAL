@@ -1,6 +1,6 @@
 #include "RectifyDriver.h"
 
-#include <PbMsgs/Image.h>
+#include <HAL/Messages/Image.h>
 
 namespace hal
 {
@@ -10,58 +10,56 @@ inline float lerp(unsigned char a, unsigned char b, float t)
   return (float)a + t*((float)b-(float)a);
 }
 
-RectifyDriver::RectifyDriver(
-    std::shared_ptr<CameraDriverInterface> input,
-    const calibu::CameraRig& rig
+RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
+    const std::shared_ptr<calibu::Rig<double> > rig
     )
   : m_input(input)
 {
   // Convert rig to vision frame.
-  calibu::CameraRig new_rig;
-  new_rig = calibu::ToCoordinateConvention(rig, calibu::RdfVision);
+  std::shared_ptr<calibu::Rig<double>> new_rig =
+      calibu::ToCoordinateConvention(rig, calibu::RdfVision);
 
   // Generate lookup tables for stereo rectify.
-  m_vLuts.resize(new_rig.cameras.size());
-  for(size_t i=0; i< new_rig.cameras.size(); ++i) {
-    const calibu::CameraModel& cam = new_rig.cameras[i].camera;
-    m_vLuts[i] = calibu::LookupTable(cam.Width(), cam.Height());
+  m_vLuts.resize(new_rig->NumCams());
+  for(size_t i=0; i< new_rig->NumCams(); ++i) {
+    m_vLuts[i] = calibu::LookupTable(new_rig->cameras_[i]->Width(), new_rig->cameras_[i]->Height());
   }
 
-  if(rig.cameras.size() == 2) {
-    m_cam = calibu::CreateScanlineRectifiedLookupAndCameras(
-        new_rig.cameras[1].T_wc.inverse()* new_rig.cameras[0].T_wc,
-        new_rig.cameras[0].camera, new_rig.cameras[1].camera,
+  if(new_rig->NumCams() == 2) {
+    m_rig = calibu::CreateScanlineRectifiedLookupAndCameras(
+        new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
+        new_rig->cameras_[0], new_rig->cameras_[1],
         m_T_nr_nl,
         m_vLuts[0], m_vLuts[1]
         );
   }
 }
 
-bool RectifyDriver::Capture( pb::CameraMsg& vImages )
+bool RectifyDriver::Capture( hal::CameraMsg& vImages )
 {
-  pb::CameraMsg vIn;
+  hal::CameraMsg vIn;
 
   const bool success = m_input->Capture( vIn );
 
   if(success) {
     vImages.Clear();
 
-    pb::Image inimg[2] = { pb::Image(vIn.image(0)),
-                           pb::Image(vIn.image(1)) };
+    hal::Image inimg[2] = { hal::Image(vIn.image(0)),
+                           hal::Image(vIn.image(1)) };
 
     vImages.set_system_time(vIn.system_time());
     vImages.set_device_time(vIn.device_time());
 
     for(int k=0; k < 2; ++k) {
-      pb::ImageMsg* pimg = vImages.add_image();
+      hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg[k].Width());
       pimg->set_height(inimg[k].Height());
       pimg->set_timestamp(inimg[k].Timestamp());
-      pimg->set_type( (pb::Type)inimg[k].Type());
-      pimg->set_format( (pb::Format)inimg[k].Format());
+      pimg->set_type( (hal::Type)inimg[k].Type());
+      pimg->set_format( (hal::Format)inimg[k].Format());
       pimg->mutable_data()->resize(inimg[k].Width()*inimg[k].Height());
 
-      pb::Image img = pb::Image(*pimg);
+      hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
             m_vLuts[k], inimg[k].data(),
             reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),

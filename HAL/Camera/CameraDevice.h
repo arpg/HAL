@@ -2,8 +2,8 @@
 
 #include <HAL/Devices/SharedLoad.h>
 
-#include <PbMsgs/ImageArray.h>
-#include <PbMsgs/Image.h>
+#include <HAL/Messages/ImageArray.h>
+#include <HAL/Messages/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -68,14 +68,14 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
-    bool Capture( pb::CameraMsg& Images )
+    bool Capture( hal::CameraMsg& Images )
     {
         Images.Clear();
         return m_cam->Capture(Images);
     }
 
     ///////////////////////////////////////////////////////////////
-    bool Capture( pb::ImageArray& Images )
+    bool Capture( hal::ImageArray& Images )
     {
         return Capture( Images.Ref() );
     }
@@ -85,24 +85,24 @@ public:
             std::vector<cv::Mat>& vImages
             )
     {
-        std::vector<pb::ImageInfoMsg> vImageInfo;
+        std::vector<hal::ImageInfoMsg> vImageInfo;
         return Capture( vImages, vImageInfo );
     }
 
     ///////////////////////////////////////////////////////////////
     bool Capture(
             std::vector<cv::Mat>& vImages,
-            std::vector<pb::ImageInfoMsg>& vImageInfo
+            std::vector<hal::ImageInfoMsg>& vImageInfo
             )
     {
-      static std::shared_ptr<pb::ImageArray> pbImages =
-          pb::ImageArray::Create();
+      static std::shared_ptr<hal::ImageArray> pbImages =
+          hal::ImageArray::Create();
         bool bRes = Capture( pbImages->Ref() );
         vImages.resize( pbImages->Size() );
         vImageInfo.resize( pbImages->Size() );
         if( bRes ){
           for (int ii = 0; ii < pbImages->Size(); ++ii) {
-            std::shared_ptr<pb::Image> img = pbImages->at(ii);
+            std::shared_ptr<hal::Image> img = pbImages->at(ii);
             vImages[ii] = *img;
             if( img->HasInfo() ){
               vImageInfo[ii] = img->GetInfo();

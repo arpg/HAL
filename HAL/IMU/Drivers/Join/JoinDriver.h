@@ -21,7 +21,7 @@ class JoinDriver : public IMUDriverInterface {
   }
 
  private:
-  void HandleIMU(pb::ImuMsg& imu);
+  void HandleIMU(hal::ImuMsg& imu);
   inline bool InterpolateAccel(int* gyro_index, Eigen::VectorXd* vec) const;
 
   std::shared_ptr<IMUDriverInterface> input_imu_;

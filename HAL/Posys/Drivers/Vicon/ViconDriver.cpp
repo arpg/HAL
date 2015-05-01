@@ -70,7 +70,7 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
     TrackerObject* pObj = (TrackerObject*)uData;
     ViconDriver* pVicon = pObj->m_pViconDriver;
 
-    pb::PoseMsg pbMsg;
+    hal::PoseMsg pbMsg;
 
     const double vicon_timestamp = tData.msg_time.tv_sec + (1e-6 * tData.msg_time.tv_usec);
     pbMsg.set_device_time( vicon_timestamp );
@@ -78,9 +78,9 @@ void VRPN_CALLBACK ViconDriver::_ViconHandler( void* uData, const vrpn_TRACKERCB
 
     pbMsg.set_id( pObj->m_nId );
 
-    pbMsg.set_type( pb::PoseMsg_Type_SE3 );
+    pbMsg.set_type( hal::PoseMsg_Type_SE3 );
 
-    pb::VectorMsg* pbVec = pbMsg.mutable_pose();
+    hal::VectorMsg* pbVec = pbMsg.mutable_pose();
 
     pbVec->add_data(tData.pos[0]);
     pbVec->add_data(tData.pos[1]);

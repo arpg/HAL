@@ -2,7 +2,7 @@
 
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <PbMsgs/Camera.pb.h>
+#include <HAL/Camera.pb.h>
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <gui/SurfaceTexture.h>
@@ -20,7 +20,7 @@ public:
     AndroidDriver();
     ~AndroidDriver();
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
 
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;

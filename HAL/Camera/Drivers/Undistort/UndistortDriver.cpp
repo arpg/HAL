@@ -1,38 +1,40 @@
 #include "UndistortDriver.h"
 
-#include <PbMsgs/Image.h>
+#include <HAL/Messages/Image.h>
 
 namespace hal
 {
 
-UndistortDriver::UndistortDriver(
-    std::shared_ptr<CameraDriverInterface> input,
-    const calibu::CameraRig& rig
+UndistortDriver::UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
+    const std::shared_ptr<calibu::Rig<double> > rig
     )
   : m_Input(input)
 {
-  const size_t num_cams = rig.cameras.size();
+  const size_t num_cams = rig->NumCams();
 
   m_vLuts.resize(num_cams);
 
   for(size_t ii=0; ii< num_cams; ++ii) {
-    const calibu::CameraModel& cmod = rig.cameras[ii].camera;
+    const std::shared_ptr<calibu::CameraInterface<double>> cmod = rig->cameras_[ii];
 
     // Allocate memory for LUTs.
-    m_vLuts[ii] = calibu::LookupTable(cmod.Width(), cmod.Height());
+    m_vLuts[ii] = calibu::LookupTable(cmod->Width(), cmod->Height());
 
     // Setup new camera model
     // For now, assume no change in scale so return same params with
     // no distortion.
-    calibu::CameraModelT<calibu::Pinhole> new_cam(cmod.Width(), cmod.Height());
-    new_cam.Params() << cmod.K()(0,0), cmod.K()(1,1), cmod.K()(0,2), cmod.K()(1,2);
+    Eigen::Vector2i size_;
+    Eigen::VectorXd params_(calibu::LinearCamera<double>::NumParams);
+    size_ << cmod->Width(), cmod->Height();
+    params_ << cmod->K()(0,0), cmod->K()(1,1), cmod->K()(0,2), cmod->K()(1,2);
+    std::shared_ptr<calibu::CameraInterface<double>> new_cam(new calibu::LinearCamera<double>(params_, size_));
     m_CamModel.push_back(new_cam);
 
-    calibu::CreateLookupTable(rig.cameras[ii].camera, new_cam.Kinv(), m_vLuts[ii]);
+    calibu::CreateLookupTable(rig->cameras_[ii], new_cam->K().inverse(), m_vLuts[ii]);
   }
 }
 
-bool UndistortDriver::Capture( pb::CameraMsg& vImages )
+bool UndistortDriver::Capture( hal::CameraMsg& vImages )
 {
   m_InMsg.Clear();
   const bool success = m_Input->Capture( m_InMsg );
@@ -46,15 +48,15 @@ bool UndistortDriver::Capture( pb::CameraMsg& vImages )
 
   if(success) {
     for (int ii = 0; ii < m_InMsg.image_size(); ++ii) {
-      pb::Image inimg = pb::Image(m_InMsg.image(ii));
-      pb::ImageMsg* pimg = vImages.add_image();
+      hal::Image inimg = hal::Image(m_InMsg.image(ii));
+      hal::ImageMsg* pimg = vImages.add_image();
       pimg->set_width(inimg.Width());
       pimg->set_height(inimg.Height());
-      pimg->set_type( (pb::Type)inimg.Type());
-      pimg->set_format( (pb::Format)inimg.Format());
+      pimg->set_type( (hal::Type)inimg.Type());
+      pimg->set_format( (hal::Format)inimg.Format());
       pimg->mutable_data()->resize(inimg.Width()*inimg.Height());
 
-      pb::Image img = pb::Image(*pimg);
+      hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
             m_vLuts[ii], inimg.data(),
             reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
@@ -78,17 +80,17 @@ size_t UndistortDriver::NumChannels() const
 size_t UndistortDriver::Width( size_t idx ) const
 {
   if(idx < m_CamModel.size()) {
-    return m_CamModel[idx].Width();
+    return m_CamModel[idx]->Width();
   }
-  return m_CamModel[0].Width();
+  return m_CamModel[0]->Width();
 }
 
 size_t UndistortDriver::Height( size_t idx ) const
 {
   if(idx < m_CamModel.size()) {
-    return m_CamModel[idx].Height();
+    return m_CamModel[idx]->Height();
   }
-  return m_CamModel[0].Height();
+  return m_CamModel[0]->Height();
 }
 
 }

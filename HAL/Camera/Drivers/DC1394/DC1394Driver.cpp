@@ -19,9 +19,9 @@ using namespace hal;
 
 
 /////////////////////////////////////////////////////////////////////////////
-void DC1394Driver::_SetImageMetaDataFromCamera( pb::ImageMsg* img, dc1394camera_t* pCam )
+void DC1394Driver::_SetImageMetaDataFromCamera( hal::ImageMsg* img, dc1394camera_t* pCam )
 {
-  pb::ImageInfoMsg* info = img->mutable_info();
+  hal::ImageInfoMsg* info = img->mutable_info();
 
   // obtain meta data from image
   dc1394error_t e;
@@ -330,19 +330,19 @@ DC1394Driver::DC1394Driver(std::vector<unsigned int>& vCamId,
   m_nImageHeight = pFrame->size[1];
 
   if( pFrame->color_coding == DC1394_COLOR_CODING_MONO8  ) {
-    m_VideoFormat = pb::PB_LUMINANCE;
+    m_VideoFormat = hal::PB_LUMINANCE;
   } else if( pFrame->color_coding == DC1394_COLOR_CODING_MONO16  ) {
-    m_VideoFormat = pb::PB_LUMINANCE;
+    m_VideoFormat = hal::PB_LUMINANCE;
   } else if( pFrame->color_coding == DC1394_COLOR_CODING_RGB8  ) {
-    m_VideoFormat = pb::PB_RGB;
+    m_VideoFormat = hal::PB_RGB;
   } else {
-    m_VideoFormat = pb::PB_RAW;
+    m_VideoFormat = hal::PB_RAW;
   }
 
   if( pFrame->data_depth == 16 ) {
-    m_VideoType = pb::PB_UNSIGNED_SHORT;
+    m_VideoType = hal::PB_UNSIGNED_SHORT;
   } else {
-    m_VideoType = pb::PB_UNSIGNED_BYTE;
+    m_VideoType = hal::PB_UNSIGNED_BYTE;
   }
 
   // Release the frame.
@@ -352,13 +352,13 @@ DC1394Driver::DC1394Driver(std::vector<unsigned int>& vCamId,
 
 
 /////////////////////////////////////////////////////////////////////////////
-bool DC1394Driver::Capture( pb::CameraMsg& vImages )
+bool DC1394Driver::Capture( hal::CameraMsg& vImages )
 {
   dc1394video_frame_t* pFrame;
   dc1394error_t e;
 
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
 
     e = dc1394_capture_dequeue( m_vCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
     if( e != DC1394_SUCCESS )
