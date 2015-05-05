@@ -1,7 +1,7 @@
 #include "AlignDriver.h"
 #include "HAL/Devices/DeviceException.h"
 #include "depth_registration.h"
-#include "PbMsgs/Image.h"
+#include "HAL/Messages/Image.h"
 
 #include <iostream>
 
@@ -11,7 +11,7 @@ namespace hal
 {
 
 AlignDriver::AlignDriver(
-    const calibu::CameraRig& rig, int idx,
+    const std::shared_ptr<calibu::Rig<double>> rig, int idx,
     std::shared_ptr<CameraDriverInterface> Input)
   : m_Rig(rig),
     m_RefIdx(idx),
@@ -32,13 +32,13 @@ AlignDriver::AlignDriver(
             cv::Size(m_nImgWidth[i], m_nImgHeight[i]),
             0.5f, 20.0f, 0.015f, DepthRegistration::DEFAULT));
 
-        const calibu::CameraModelAndTransform& ref_cam = rig.cameras[m_RefIdx];
-        const calibu::CameraModelAndTransform& sub_cam =
-            (i < rig.cameras.size() ? rig.cameras[i] : rig.cameras.back());
+        const std::shared_ptr<calibu::CameraInterface<double>> ref_cam = rig->cameras_[m_RefIdx];
+        const std::shared_ptr<calibu::CameraInterface<double>> sub_cam =
+            (i < rig->cameras_.size() ? rig->cameras_[i] : rig->cameras_.back());
 
         m_DepthReg[i]->init
-            (ref_cam.camera, sub_cam.camera,
-             ref_cam.T_wc.inverse() * sub_cam.T_wc,
+            (ref_cam, sub_cam,
+             ref_cam->Pose().inverse() * sub_cam->Pose(),
              cv::Mat::eye(3, 3, CV_64F), cv::Mat::zeros(1, 3, CV_64F),
              cv::Mat::zeros(m_nImgHeight[i], m_nImgWidth[i], CV_32F),
              cv::Mat::zeros(m_nImgHeight[i], m_nImgWidth[i], CV_32F));
@@ -51,9 +51,9 @@ AlignDriver::AlignDriver(
   }
 }
 
-bool AlignDriver::Capture( pb::CameraMsg& vImages )
+bool AlignDriver::Capture( hal::CameraMsg& vImages )
 {
-  pb::CameraMsg message;
+  hal::CameraMsg message;
   m_Input->Capture( message );
 
   vImages.set_device_time(message.device_time());
@@ -68,12 +68,12 @@ bool AlignDriver::Capture( pb::CameraMsg& vImages )
 
   // align others now
   for (int ii = 0; ii < message.image_size(); ++ii) {
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
     if (ii == m_RefIdx) {
       pbImg->Swap(message.mutable_image(m_RefIdx));
     } else {
-      pb::ImageMsg& src = *message.mutable_image(ii);
-      cv::Mat trg = pb::WriteCvMat(src);
+      hal::ImageMsg& src = *message.mutable_image(ii);
+      cv::Mat trg = hal::WriteCvMat(src);
       m_DepthReg[ii]->depthToRGBResolution(trg, trg);
 
       pbImg->set_width( trg.cols );
@@ -109,32 +109,32 @@ size_t AlignDriver::Height( size_t idx ) const
   return m_nImgHeight[idx];
 }
 
-unsigned int AlignDriver::sizeofType(pb::Type type) const
+unsigned int AlignDriver::sizeofType(hal::Type type) const
 {
   switch(type) {
-    case pb::PB_BYTE: return sizeof(char);
-    case pb::PB_UNSIGNED_BYTE: return sizeof(unsigned char);
-    case pb::PB_SHORT: return sizeof(short);
-    case pb::PB_UNSIGNED_SHORT: return sizeof(unsigned short);
-    case pb::PB_INT: return sizeof(int);
-    case pb::PB_UNSIGNED_INT: return sizeof(unsigned int);
-    case pb::PB_FLOAT: return sizeof(float);
-    case pb::PB_DOUBLE: return sizeof(double);
+    case hal::PB_BYTE: return sizeof(char);
+    case hal::PB_UNSIGNED_BYTE: return sizeof(unsigned char);
+    case hal::PB_SHORT: return sizeof(short);
+    case hal::PB_UNSIGNED_SHORT: return sizeof(unsigned short);
+    case hal::PB_INT: return sizeof(int);
+    case hal::PB_UNSIGNED_INT: return sizeof(unsigned int);
+    case hal::PB_FLOAT: return sizeof(float);
+    case hal::PB_DOUBLE: return sizeof(double);
   }
   return 0;
 }
 
-unsigned int AlignDriver::sizeofFormat(pb::Format format) const
+unsigned int AlignDriver::sizeofFormat(hal::Format format) const
 {
   switch(format) {
-    case pb::PB_LUMINANCE:
-    case pb::PB_RAW:
+    case hal::PB_LUMINANCE:
+    case hal::PB_RAW:
       return 1;
-    case pb::PB_RGB:
-    case pb::PB_BGR:
+    case hal::PB_RGB:
+    case hal::PB_BGR:
       return 3;
-    case pb::PB_RGBA:
-    case pb::PB_BGRA:
+    case hal::PB_RGBA:
+    case hal::PB_BGRA:
       return 4;
   }
   return 0;

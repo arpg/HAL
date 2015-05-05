@@ -27,8 +27,8 @@ public:
     const Uri input_uri = Uri(uri.url);
 
     // Read calibration file
-    calibu::CameraRig rig = calibu::ReadXmlRig(sCam);
-    if (rig.cameras.empty())
+    std::shared_ptr<calibu::Rig<double>> rig = calibu::ReadXmlRig(sCam);
+    if (rig->cameras_.empty())
       throw DeviceException("No cameras loaded from the calibration file");
 
     // Create input cameras

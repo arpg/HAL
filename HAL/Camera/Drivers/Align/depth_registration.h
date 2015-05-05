@@ -39,8 +39,8 @@ protected:
     mapX, mapY;
 
   DepthRegistration();
-  void SetCameraInfo( const calibu::CameraModel& camColor,
-                      const calibu::CameraModel& camDepth,
+  void SetCameraInfo( const std::shared_ptr<calibu::CameraInterface<double>> camColor,
+                      const std::shared_ptr<calibu::CameraInterface<double>> camDepth,
                       const Sophus::SE3Group<double> T_cd);
 
   virtual bool init() = 0;
@@ -48,8 +48,8 @@ protected:
 public:
   virtual ~DepthRegistration();
 
-  bool init(const calibu::CameraModel& camColor,
-            const calibu::CameraModel& camDepth,
+  bool init(const std::shared_ptr<calibu::CameraInterface<double>> camColor,
+            const std::shared_ptr<calibu::CameraInterface<double>> camDepth,
             const Sophus::SE3Group<double> T_cd,
             const cv::Mat &rotation, const cv::Mat &translation,
             const cv::Mat &mapX, const cv::Mat &mapY);

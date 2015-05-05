@@ -30,8 +30,8 @@ DepthRegistration::~DepthRegistration()
 {
 }
 
-bool DepthRegistration::init(const calibu::CameraModel& camColor,
-                             const calibu::CameraModel& camDepth,
+bool DepthRegistration::init(const std::shared_ptr<calibu::CameraInterface<double>> camColor,
+                             const std::shared_ptr<calibu::CameraInterface<double>> camDepth,
                              const Sophus::SE3Group<double> T_cd,
                              const cv::Mat &rotation,
                              const cv::Mat &translation,
@@ -47,19 +47,19 @@ bool DepthRegistration::init(const calibu::CameraModel& camColor,
 }
 
 
-void DepthRegistration::SetCameraInfo(const calibu::CameraModel& camColor,
-                                      const calibu::CameraModel& camDepth,
+void DepthRegistration::SetCameraInfo(const std::shared_ptr<calibu::CameraInterface<double>> camColor,
+                                      const std::shared_ptr<calibu::CameraInterface<double>> camDepth,
                                       const Sophus::SE3Group<double> T_cd)
 {
-  calibu::CameraModel::Matrix3t K;
+    Eigen::Matrix<double,3,3> K;
 
-  K = camColor.K();
+  K = camColor->K();
   cameraMatrixColor = (cv::Mat_<double>(3,3) <<
                        K(0,0), K(0,1), K(0,2),
                        K(1,0), K(1,1), K(1,2),
                        K(2,0), K(2,1), K(2,2));
 
-  K = camDepth.K();
+  K = camDepth->K();
   cameraMatrixDepth = (cv::Mat_<double>(3,3) <<
                        K(0,0), K(0,1), K(0,2),
                        K(1,0), K(1,1), K(1,2),

@@ -13,10 +13,10 @@ namespace hal
 class AlignDriver : public CameraDriverInterface
 {
 public:
-    AlignDriver(const calibu::CameraRig& rig, int idx,
+    AlignDriver(const std::shared_ptr<calibu::Rig<double>> rig, int idx,
                 std::shared_ptr<CameraDriverInterface> Input);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     std::string GetDeviceProperty(const std::string& sProperty);
@@ -26,11 +26,11 @@ public:
     size_t Height( size_t idx = 0 ) const;
 
 private:
-    unsigned int sizeofType(pb::Type type) const;
-    unsigned int sizeofFormat(pb::Format format) const;
+    unsigned int sizeofType(hal::Type type) const;
+    unsigned int sizeofFormat(hal::Format format) const;
 
 protected:
-    const calibu::CameraRig&                         m_Rig;
+    const std::shared_ptr<calibu::Rig<double>>       m_Rig;
     int                                              m_RefIdx;
     std::shared_ptr<CameraDriverInterface>           m_Input;
     std::vector<std::shared_ptr<DepthRegistration>>  m_DepthReg;
