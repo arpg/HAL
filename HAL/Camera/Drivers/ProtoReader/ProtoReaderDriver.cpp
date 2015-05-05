@@ -64,7 +64,7 @@ bool ProtoReaderDriver::Capture( hal::CameraMsg& vImages ) {
     success = ReadNextCameraMessage(vImages);
   }
   if (success && !m_channelIds.empty()) {
-    pb::CameraMsg vSubImages;
+    hal::CameraMsg vSubImages;
     for (int id : m_channelIds) {
       if (id >= 0 && id < vImages.image_size())
         vSubImages.add_image()->Swap(vImages.mutable_image(id));
