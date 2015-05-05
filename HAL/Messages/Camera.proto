@@ -1,0 +1,10 @@
+package hal;
+
+import "Image.proto";
+
+message CameraMsg {
+    optional int32 id = 1;
+    optional double device_time = 2;
+    repeated ImageMsg image = 3;
+    optional double system_time = 4;
+}

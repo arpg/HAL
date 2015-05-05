@@ -19,7 +19,7 @@ public:
                    unsigned int                           nDepth
                  );
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     std::string GetDeviceProperty(const std::string& sProperty);
@@ -30,7 +30,7 @@ public:
 
 protected:
     std::shared_ptr<CameraDriverInterface>  m_Input;
-    pb::CameraMsg                           m_Message;
+    hal::CameraMsg                           m_Message;
     unsigned int                            m_nImgWidth;
     unsigned int                            m_nImgHeight;
     unsigned int                            m_nNumChannels;

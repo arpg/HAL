@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <HAL/Devices/DeviceException.h>
-#include <PbMsgs/NodeCar.pb.h>
+#include <HAL/NodeCar.pb.h>
 
 namespace hal {
 
@@ -48,8 +48,8 @@ bool NodeCarDriver::InitNode() {
 }
 
 bool NodeCarDriver::RegisterInHost(const Uri &uri) {
-  pb::RegisterControllerReqMsg req;
-  pb::RegisterControllerRepMsg rep;
+  hal::RegisterControllerReqMsg req;
+  hal::RegisterControllerRepMsg rep;
   req.set_topic(node_topic_);
   req.set_uri(uri.ToString());
   int nTries = 0;
@@ -76,7 +76,7 @@ bool NodeCarDriver::RegisterInHost(const Uri &uri) {
 
 bool NodeCarDriver::ApplyCommand(double torque, double steering,
                                  double command_time) {
-  pb::VehicleMsg msg;
+  hal::VehicleMsg msg;
   msg.set_steering_angle(steering);
   msg.set_desired_force(torque);
   msg.set_command_time(command_time);

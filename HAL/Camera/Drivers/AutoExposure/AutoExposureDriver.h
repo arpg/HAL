@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <PbMsgs/Camera.pb.h>
+#include <HAL/Camera.pb.h>
 #include <HAL/Utils/Uri.h>
 #include "HAL/Camera/CameraDriverInterface.h"
 #include "HAL/Camera/Drivers/UVC/UvcDriver.h"
@@ -19,7 +19,7 @@ class AutoExposureDriver : public CameraDriverInterface
 public:
     AutoExposureDriver(const int nTarget,std::shared_ptr<CameraDriverInterface> Input);
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
     std::string GetDeviceProperty(const std::string& sProperty);

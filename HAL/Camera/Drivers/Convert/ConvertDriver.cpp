@@ -12,37 +12,54 @@ ConvertDriver::ConvertDriver(
     std::shared_ptr<CameraDriverInterface> Input,
     const std::string& sFormat,
     double dRange,
-    ImageDim dims
-    )
+    ImageDim dims,
+    int channel)
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nOutCvType(-1),
     m_nNumChannels(Input->NumChannels()),
     m_dRange(dRange),
-    m_Dims(dims)
+    m_Dims(dims),
+    m_iChannel(channel)
 {
+  // Set the correct image size on the output interface, considering the request
+  // to resize the images
   for(size_t i = 0; i < Input->NumChannels(); ++i) {
     m_nImgWidth.push_back(Input->Width(i));
     m_nImgHeight.push_back(Input->Height(i));
+    m_nOrigImgWidth.push_back(Input->Width(i));
+    m_nOrigImgHeight.push_back(Input->Height(i));
+
+    if (m_iChannel != -1) {
+      if (m_iChannel != (int)i) {
+        continue;
+      }
+    }
+
+    const bool resize_requested = (m_Dims.x != 0 || m_Dims.y != 0);
+    if (resize_requested) {
+      m_nImgWidth[i] = m_Dims.x;
+      m_nImgHeight[i] = m_Dims.y;
+    }
   }
 
   // Guess output color coding
   if( m_sFormat == "MONO8" ) {
     m_nOutCvType = CV_8UC1;
-    m_nOutPbType = pb::Format::PB_LUMINANCE;
+    m_nOutPbType = hal::Format::PB_LUMINANCE;
   } else if( m_sFormat == "RGB8" ) {
     m_nOutCvType = CV_8UC3;
-    m_nOutPbType = pb::Format::PB_RGB;
+    m_nOutPbType = hal::Format::PB_RGB;
   } else if( m_sFormat == "BGR8" ) {
     m_nOutCvType = CV_8UC3;
-    m_nOutPbType = pb::Format::PB_BGR;
+    m_nOutPbType = hal::Format::PB_BGR;
   }
 
   if( m_nOutCvType == -1 )
     throw DeviceException("HAL: Error! Unknown target format: " + m_sFormat);
 }
 
-bool ConvertDriver::Capture( pb::CameraMsg& vImages )
+bool ConvertDriver::Capture( hal::CameraMsg& vImages )
 {
   m_Message.Clear();
   m_Input->Capture( m_Message );
@@ -51,23 +68,23 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
   if( m_nCvType.empty() ) {
     for(int i = 0; i < m_Message.image_size(); ++i) {
       int cvtype = -1;
-      pb::Format pbtype = m_Message.image(i).format();
+      hal::Format pbtype = m_Message.image(i).format();
       int channels = 0;
 
-      if( m_Message.image(i).format() == pb::PB_LUMINANCE )
+      if( m_Message.image(i).format() == hal::PB_LUMINANCE )
         channels = 1;
-      else if( m_Message.image(i).format() == pb::PB_RGB ||
-               m_Message.image(i).format() == pb::PB_BGR )
+      else if( m_Message.image(i).format() == hal::PB_RGB ||
+               m_Message.image(i).format() == hal::PB_BGR )
         channels = 3;
 
       if( channels != 0 ) {
-        if( m_Message.image(i).type() == pb::PB_BYTE ||
-            m_Message.image(i).type() == pb::PB_UNSIGNED_BYTE )
+        if( m_Message.image(i).type() == hal::PB_BYTE ||
+            m_Message.image(i).type() == hal::PB_UNSIGNED_BYTE )
           cvtype = (channels == 1 ? CV_8UC1 : CV_8UC3);
-        else if( m_Message.image(i).type() == pb::PB_UNSIGNED_SHORT ||
-                 m_Message.image(i).type() == pb::PB_SHORT )
+        else if( m_Message.image(i).type() == hal::PB_UNSIGNED_SHORT ||
+                 m_Message.image(i).type() == hal::PB_SHORT )
           cvtype = (channels == 1 ? CV_16UC1 : CV_16UC3);
-        else if( m_Message.image(i).type() == pb::PB_FLOAT )
+        else if( m_Message.image(i).type() == hal::PB_FLOAT )
           cvtype = (channels == 1 ? CV_32FC1 : CV_32FC3);
       }
 
@@ -86,7 +103,16 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
   vImages.set_system_time(m_Message.system_time());
 
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
+
+    // If the user has specified to convert a single channel only,
+    // gate it here
+    if (m_iChannel != -1) {
+      if (m_iChannel != (int)ii) {
+        *pbImg = m_Message.image(ii);
+        continue;
+      }
+    }
 
     if( m_nCvType[ii] == -1 ) { // this image cannot be converted
       *pbImg = m_Message.image(ii);
@@ -99,12 +125,12 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
       final_width = m_Dims.x;
       final_height = m_Dims.y;
     } else {
-      final_width = m_nImgWidth[ii];
-      final_height = m_nImgHeight[ii];
+      final_width = m_nOrigImgWidth[ii];
+      final_height = m_nOrigImgHeight[ii];
     }
     pbImg->set_width( final_width );
     pbImg->set_height( final_height );
-    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+    pbImg->set_type( hal::PB_UNSIGNED_BYTE );
     pbImg->set_format( m_nOutPbType );
     pbImg->mutable_data()->resize(final_width * final_height *
                                  (m_nOutCvType == CV_8UC1 ? 1 : 3) );
@@ -112,12 +138,14 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
     pbImg->set_timestamp( m_Message.image(ii).timestamp() );
     pbImg->set_serial_number( m_Message.image(ii).serial_number() );
 
-    cv::Mat s_origImg(m_nImgHeight[ii], m_nImgWidth[ii], m_nCvType[ii],
+    cv::Mat s_origImg(m_nOrigImgHeight[ii], m_nOrigImgWidth[ii], m_nCvType[ii],
                    (void*)m_Message.mutable_image(ii)->data().data());
 
     cv::Mat sImg;
     if (resize_requested) {
       cv::resize(s_origImg, sImg, cv::Size(final_width, final_height));
+      m_nImgWidth[ii] = final_width;
+      m_nImgHeight[ii] = final_height;
     } else {
       sImg = s_origImg;
     }
@@ -135,20 +163,20 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
                     dImg.begin<unsigned char>());
         else
           cv::cvtColor(sImg, dImg,
-            (m_nOutPbType == pb::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
+            (m_nOutPbType == hal::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
         break;
 
       case CV_8UC3:
         if( m_nOutCvType == CV_8UC1 )
           cv::cvtColor(sImg, dImg,
-            (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
+            (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
         else {
           if( m_nPbType[ii] == m_nOutPbType )
             std::copy(sImg.begin<unsigned char>(), sImg.end<unsigned char>(),
                       dImg.begin<unsigned char>());
           else
             cv::cvtColor(sImg, dImg,
-              (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
+              (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
         }
         break;
 
@@ -159,7 +187,7 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         else {
           aux.convertTo(aux, CV_8UC1, 255. / m_dRange);
           cv::cvtColor(aux, dImg,
-            (m_nOutPbType == pb::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
+            (m_nOutPbType == hal::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
         }
         break;
 
@@ -168,14 +196,14 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         if( m_nOutCvType == CV_8UC1 ) {
           aux.convertTo(aux, CV_8UC3, 255. / m_dRange);
           cv::cvtColor(aux, dImg,
-            (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
+            (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
         } else {
           if( m_nPbType[ii] == m_nOutPbType )
             aux.convertTo(dImg, CV_8UC3, 255. / m_dRange);
           else {
             aux.convertTo(aux, CV_8UC3, 255. / m_dRange);
             cv::cvtColor(aux, dImg,
-              (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
+              (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
           }
         }
         break;
@@ -186,7 +214,7 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         } else {
           sImg.convertTo(aux, CV_8UC1, 255. / m_dRange);
           cv::cvtColor(aux, dImg,
-            (m_nOutPbType == pb::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
+            (m_nOutPbType == hal::Format::PB_RGB ? CV_GRAY2RGB : CV_GRAY2BGR));
         }
         break;
 
@@ -194,14 +222,14 @@ bool ConvertDriver::Capture( pb::CameraMsg& vImages )
         if( m_nOutCvType == CV_8UC1 ) {
           sImg.convertTo(aux, CV_8UC3, 255. / m_dRange);
           cv::cvtColor(aux, dImg,
-            (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
+            (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2GRAY : CV_BGR2GRAY));
         } else {
           if( m_nPbType[ii] == m_nOutPbType )
             sImg.convertTo(dImg, CV_8UC3, 255. / m_dRange);
           else {
             sImg.convertTo(aux, CV_8UC3, 255. / m_dRange);
             cv::cvtColor(aux, dImg,
-              (m_nPbType[ii] == pb::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
+              (m_nPbType[ii] == hal::Format::PB_RGB ? CV_RGB2BGR : CV_BGR2RGB));
           }
         }
         break;

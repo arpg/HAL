@@ -13,7 +13,7 @@ AutoExposureDriver::AutoExposureDriver(const int nTarget, std::shared_ptr<Camera
     }
 }
 
-bool AutoExposureDriver::Capture( pb::CameraMsg& vImages )
+bool AutoExposureDriver::Capture( hal::CameraMsg& vImages )
 {
     m_pUvcDriver->SetExposure(m_nExposure);
     m_Input->Capture( vImages );
@@ -23,9 +23,9 @@ bool AutoExposureDriver::Capture( pb::CameraMsg& vImages )
         return false;
     }
 
-    const pb::ImageMsg& InImg = vImages.image(0);
+    const hal::ImageMsg& InImg = vImages.image(0);
 
-    if( InImg.type() != pb::PB_UNSIGNED_BYTE || InImg.format() != pb::PB_LUMINANCE){
+    if( InImg.type() != hal::PB_UNSIGNED_BYTE || InImg.format() != hal::PB_LUMINANCE){
         std::cerr << "error: Autoexposure currently only works with unsigned byte and luminance images." << std::endl;
     }
 

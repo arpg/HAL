@@ -53,7 +53,11 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
   m_nNumImages = m_vFileList[0].size();
   for(unsigned int ii = 1; ii < m_nNumChannels; ii++){
     if(m_vFileList[ii].size() != m_nNumImages){
-      throw DeviceException("Uneven number of files");
+      std::stringstream sstm;
+      sstm << "Uneven number of files. Count for camera " << ii << ": " <<
+              m_vFileList[ii].size() << " vs count for camera 0: " <<
+              m_nNumImages;
+      throw DeviceException(sstm.str());
     }
   }
 
@@ -82,7 +86,7 @@ FileReaderDriver::~FileReaderDriver() {
 }
 
 // Consumer
-bool FileReaderDriver::Capture(pb::CameraMsg& vImages) {
+bool FileReaderDriver::Capture(hal::CameraMsg& vImages) {
   if(m_nCurrentImageIndex >= m_nNumImages &&
       m_qImageBuffer.empty() && !m_bLoop) {
     return false;
@@ -132,23 +136,23 @@ std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty) {
 }
 
 size_t FileReaderDriver::NumChannels() const {
-  const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+  const hal::CameraMsg& NextFrame = m_qImageBuffer.front();
   return NextFrame.image_size();
 }
 
 size_t FileReaderDriver::Width(size_t idx) const {
-  const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+  const hal::CameraMsg& NextFrame = m_qImageBuffer.front();
   if((int)idx < NextFrame.image_size()) {
-    const pb::ImageMsg& NextImg = NextFrame.image(idx);
+    const hal::ImageMsg& NextImg = NextFrame.image(idx);
     return NextImg.width();
   }
   return 0;
 }
 
 size_t FileReaderDriver::Height(size_t idx) const {
-  const pb::CameraMsg& NextFrame = m_qImageBuffer.front();
+  const hal::CameraMsg& NextFrame = m_qImageBuffer.front();
   if((int)idx < NextFrame.image_size()) {
-    const pb::ImageMsg& NextImg = NextFrame.image(idx);
+    const hal::ImageMsg& NextImg = NextFrame.image(idx);
     return NextImg.height();
   }
   return 0;
@@ -187,10 +191,10 @@ bool FileReaderDriver::_Read() {
   // now fetch the next set of images
   std::string sFileName;
 
-  pb::CameraMsg vImages;
+  hal::CameraMsg vImages;
   double device_timestamp = -1;
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
-    pb::ImageMsg* pbImg = vImages.add_image();
+    hal::ImageMsg* pbImg = vImages.add_image();
     sFileName = m_vFileList[ii][m_nCurrentImageIndex];
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
@@ -199,26 +203,26 @@ bool FileReaderDriver::_Read() {
     if (device_timestamp < 0) device_timestamp = timestamp;
     pbImg->set_timestamp(timestamp);
 
-    //        pb::ReadCvMat(cvImg, pbImg);
+    //        hal::ReadCvMat(cvImg, pbImg);
     pbImg->set_height(cvImg.rows);
     pbImg->set_width(cvImg.cols);
 
     // TODO this is BAD since 4 bytes can be int, or float, etc, etc
     if(cvImg.elemSize1() == 1) {
-      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
+      pbImg->set_type(hal::PB_UNSIGNED_BYTE);
     }
     if(cvImg.elemSize1() == 2) {
-      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
+      pbImg->set_type(hal::PB_UNSIGNED_SHORT);
     }
     if(cvImg.elemSize1() == 4) {
-      pbImg->set_type(pb::PB_FLOAT);
+      pbImg->set_type(hal::PB_FLOAT);
     }
 
     if(cvImg.channels() == 1) {
-      pbImg->set_format(pb::PB_LUMINANCE);
+      pbImg->set_format(hal::PB_LUMINANCE);
     }
     if(cvImg.channels() == 3) {
-      pbImg->set_format(pb::PB_RGB);
+      pbImg->set_format(hal::PB_RGB);
     }
     pbImg->set_data(
         (const char*)cvImg.data,

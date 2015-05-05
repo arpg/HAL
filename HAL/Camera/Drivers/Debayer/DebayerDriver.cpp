@@ -20,7 +20,7 @@ DebayerDriver::DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
 {
 }
 
-bool DebayerDriver::Capture( pb::CameraMsg& vImages )
+bool DebayerDriver::Capture( hal::CameraMsg& vImages )
 {
   m_Message.Clear();
   m_Input->Capture( m_Message );
@@ -28,9 +28,9 @@ bool DebayerDriver::Capture( pb::CameraMsg& vImages )
   vImages.set_device_time( m_Message.device_time() );
 
   for(size_t ii = 0; ii < m_nNumChannels; ++ii) {
-    pb::ImageMsg* pbImg = vImages.add_image();
-    pbImg->set_format( pb::PB_RGB );
-    pbImg->set_type( pb::PB_UNSIGNED_BYTE );
+    hal::ImageMsg* pbImg = vImages.add_image();
+    pbImg->set_format( hal::PB_RGB );
+    pbImg->set_type( hal::PB_UNSIGNED_BYTE );
     if(m_Method == DC1394_BAYER_METHOD_DOWNSAMPLE) {
       pbImg->set_width( m_nImgWidth / 2 );
       pbImg->set_height( m_nImgHeight / 2 );

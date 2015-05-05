@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <vector>
 
 #include <HAL/Camera/CameraDriverInterface.h>
@@ -18,11 +19,12 @@ public:
               int exp,
               float gain,
               XI_IMG_FORMAT mode,
-              ImageRoi roi);
+              ImageRoi roi,
+              int sync);
 
   ~XimeaDriver();
 
-  bool Capture(pb::CameraMsg& images);
+  bool Capture(hal::CameraMsg& images);
 
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();
@@ -40,13 +42,14 @@ private:
   void _CheckError(XI_RETURN err, std::string place);
 
 private:
-  size_t                              num_channels;
-  std::vector<HANDLE>                 cam_handle;
-  XI_IMG                              image;
-  XI_IMG_FORMAT                       image_format;
-  unsigned int                        image_width;
-  unsigned int                        image_height;
-
+  size_t                              num_channels_;
+  std::vector<HANDLE>                 cam_handles_;
+  XI_IMG                              image_;
+  XI_IMG_FORMAT                       image_format_;
+  unsigned int                        image_width_;
+  unsigned int                        image_height_;
+  int                                 sync_;
+  std::deque<std::vector<double> >    sync_times_;
 };
 
 } /* namespace */

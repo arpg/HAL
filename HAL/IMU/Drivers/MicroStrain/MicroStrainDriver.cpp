@@ -97,8 +97,8 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
     {
         case MIP_INTERFACE_CALLBACK_VALID_PACKET:
         {
-            pb::ImuMsg pbImuMsg;
-            pb::PoseMsg pbPoseMsg;
+            hal::ImuMsg pbImuMsg;
+            hal::PoseMsg pbPoseMsg;
 
             // Read each field in packet.
             // For little-endian targets, byteswap the data field
@@ -117,6 +117,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
 
                         // TODO It is probably better to use a differnent time specific for the GPS??
                         pbPoseMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
+                        pbPoseMsg.set_system_time(hal::Tic());
                     }break;
 
                     // Scaled Accelerometer
@@ -126,7 +127,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         memcpy(&curr_ahrs_accel, field_data, sizeof(mip_ahrs_scaled_accel));
                         mip_ahrs_scaled_accel_byteswap(&curr_ahrs_accel);
 
-                        pb::VectorMsg* pbVec = pbImuMsg.mutable_accel();
+                        hal::VectorMsg* pbVec = pbImuMsg.mutable_accel();
                         pbVec->add_data(curr_ahrs_accel.scaled_accel[0] *
                             9.80665);
                         pbVec->add_data(curr_ahrs_accel.scaled_accel[1] *
@@ -142,7 +143,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         memcpy(&curr_ahrs_gyro, field_data, sizeof(mip_ahrs_scaled_gyro));
                         mip_ahrs_scaled_gyro_byteswap(&curr_ahrs_gyro);
 
-                        pb::VectorMsg* pbVec = pbImuMsg.mutable_gyro();
+                        hal::VectorMsg* pbVec = pbImuMsg.mutable_gyro();
                         pbVec->add_data(curr_ahrs_gyro.scaled_gyro[0]);
                         pbVec->add_data(curr_ahrs_gyro.scaled_gyro[1]);
                         pbVec->add_data(curr_ahrs_gyro.scaled_gyro[2]);
@@ -155,7 +156,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         memcpy(&curr_ahrs_mag, field_data, sizeof(mip_ahrs_scaled_mag));
                         mip_ahrs_scaled_mag_byteswap(&curr_ahrs_mag);
 
-                        pb::VectorMsg* pbVec = pbImuMsg.mutable_mag();
+                        hal::VectorMsg* pbVec = pbImuMsg.mutable_mag();
                         pbVec->add_data(curr_ahrs_mag.scaled_mag[0]);
                         pbVec->add_data(curr_ahrs_mag.scaled_mag[1]);
                         pbVec->add_data(curr_ahrs_mag.scaled_mag[2]);
@@ -189,9 +190,9 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         memcpy(&curr_gps_llh_pos, field_data, sizeof(mip_gps_llh_pos));
                         mip_gps_llh_pos_byteswap(&curr_gps_llh_pos);
 
-                        pbPoseMsg.set_type( pb::PoseMsg_Type_LatLongAlt );
+                        pbPoseMsg.set_type( hal::PoseMsg_Type_LatLongAlt );
 
-                        pb::VectorMsg* pbVec = pbPoseMsg.mutable_pose();
+                        hal::VectorMsg* pbVec = pbPoseMsg.mutable_pose();
 
                         pbVec->add_data(curr_gps_llh_pos.latitude);
                         pbVec->add_data(curr_gps_llh_pos.longitude);

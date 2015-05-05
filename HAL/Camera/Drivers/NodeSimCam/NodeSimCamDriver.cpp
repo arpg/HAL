@@ -37,7 +37,7 @@ NodeSimCamDriver::~NodeSimCamDriver()
 }
 
 // capture images from host
-bool NodeSimCamDriver::Capture( pb::CameraMsg& vImages )
+bool NodeSimCamDriver::Capture( hal::CameraMsg& vImages )
 {
   // here we use max try to avoid infinite wait
   int iMaxTry=5;
@@ -71,32 +71,32 @@ bool NodeSimCamDriver::Capture( pb::CameraMsg& vImages )
 
   //    if(Img.image_type()==1)//------------------------Gray
   //    {
-  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      hal::ImageMsg* pbImg = vImages.add_image();
   //      pbImg->set_timestamp( m_nTimeStep);
   //      pbImg->set_width( m_nImgWidth );
   //      pbImg->set_height( m_nImgHeight );
-  //      pbImg->set_type(pb::PB_UNSIGNED_SHORT);
-  //      pbImg->set_format(pb::PB_LUMINANCE);
+  //      pbImg->set_type(hal::PB_UNSIGNED_SHORT);
+  //      pbImg->set_format(hal::PB_LUMINANCE);
   //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight );
   //    }
   //    else if(Img.image_type()==2)//-------------------RGB
   //    {
-  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      hal::ImageMsg* pbImg = vImages.add_image();
   //      pbImg->set_timestamp( m_nTimeStep);
   //      pbImg->set_width( m_nImgWidth );
   //      pbImg->set_height( m_nImgHeight );
-  //      pbImg->set_type(pb::PB_UNSIGNED_BYTE);
-  //      pbImg->set_format(pb::PB_RGB);
+  //      pbImg->set_type(hal::PB_UNSIGNED_BYTE);
+  //      pbImg->set_format(hal::PB_RGB);
   //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *3);
   //    }
   //    else if(Img.image_type()==5)//------------------Depth
   //    {
-  //      pb::ImageMsg* pbImg = vImages.add_image();
+  //      hal::ImageMsg* pbImg = vImages.add_image();
   //      pbImg->set_timestamp( m_nTimeStep);
   //      pbImg->set_width( m_nImgWidth );
   //      pbImg->set_height( m_nImgHeight );
-  //      pbImg->set_type(pb::PB_FLOAT);
-  //      pbImg->set_format(pb::PB_LUMINANCE);
+  //      pbImg->set_type(hal::PB_FLOAT);
+  //      pbImg->set_format(hal::PB_LUMINANCE);
   //      pbImg->set_data( Img.image().c_str(), m_nImgWidth * m_nImgHeight *4);
   //    }
   //  }

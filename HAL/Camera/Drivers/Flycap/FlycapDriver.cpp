@@ -220,7 +220,7 @@ FlycapDriver::~FlycapDriver()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool FlycapDriver::Capture(pb::CameraMsg& vImages)
+bool FlycapDriver::Capture(hal::CameraMsg& vImages)
 {
   FlyCapture2::Error error;
 
@@ -240,12 +240,12 @@ bool FlycapDriver::Capture(pb::CameraMsg& vImages)
         vImages.set_device_time( Image.GetMetadata().embeddedTimeStamp );
       }
 
-      pb::ImageMsg* pbImg = vImages.add_image();
+      hal::ImageMsg* pbImg = vImages.add_image();
       pbImg->set_width( Image.GetCols() );
       pbImg->set_height( Image.GetRows() );
       pbImg->set_data( Image.GetData(), Image.GetDataSize() );
-      pbImg->set_type( pb::PB_UNSIGNED_BYTE );
-      pbImg->set_format( pb::PB_LUMINANCE );
+      pbImg->set_type( hal::PB_UNSIGNED_BYTE );
+      pbImg->set_format( hal::PB_LUMINANCE );
     }
   }
   return true;

@@ -11,7 +11,7 @@ class OpenCVDriver : public CameraDriverInterface
   OpenCVDriver(unsigned int nCamId, bool bForceGrey);
   ~OpenCVDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
   size_t NumChannels() const;

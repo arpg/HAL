@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 set(BUILD_NodeCar false CACHE BOOL force)
 
 if(BUILD_NodeCar)
-  find_package(Node REQUIRED)
-  find_package(PbMsgs REQUIRED)
+  find_package(Node QUIET)
+  find_package(PbMsgs QUIET)
 
   if(Node_FOUND AND PbMsgs_FOUND)
     set(DRIVER_SOURCES NodeCarDriver.cpp)

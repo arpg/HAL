@@ -1,6 +1,0 @@
-add_subdirectory(SensorViewer)
-#add_subdirectory(TestSim)
-add_subdirectory(AndroidLogger)
-add_subdirectory(gps2cartesian)
-add_subdirectory(logtool)
-add_subdirectory(CamToNode)

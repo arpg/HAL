@@ -1,0 +1,12 @@
+package hal;
+
+import "Pose.proto";
+
+message PoseSensorMsg{
+    optional int32 id = 1;
+    optional double deviceTime = 2;
+    optional PoseMsg pose = 3;
+}
+
+
+

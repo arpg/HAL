@@ -15,9 +15,9 @@
 using namespace hal;
 
 ///////////////////////////////////////////////////////////////////////////////
-void SetImageMetaDataFromCamera2( pb::ImageMsg* img, dc1394camera_t* pCam )
+void SetImageMetaDataFromCamera2( hal::ImageMsg* img, dc1394camera_t* pCam )
 {
-    pb::ImageInfoMsg* info = img->mutable_info();
+    hal::ImageInfoMsg* info = img->mutable_info();
 
     // obtain meta data from image
     dc1394error_t e;
@@ -305,7 +305,7 @@ bool FireFlyDriver::Init()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-bool FireFlyDriver::Capture( pb::CameraMsg& vImages )
+bool FireFlyDriver::Capture( hal::CameraMsg& vImages )
 {
     //  capture
     dc1394video_frame_t* pFrame;
@@ -314,7 +314,7 @@ bool FireFlyDriver::Capture( pb::CameraMsg& vImages )
 
     for( unsigned int ii = 0; ii < m_nNumCams; ii++ ) {
 
-        pb::ImageMsg* pbImg = vImages.add_image();
+        hal::ImageMsg* pbImg = vImages.add_image();
 
         e = dc1394_capture_dequeue( m_pCam[ii], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
         DC1394_ERR_CLN_RTN( e, _cleanup_and_exit(m_pCam[ii]), "Could not capture a frame" );

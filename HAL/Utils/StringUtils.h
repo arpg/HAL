@@ -82,6 +82,15 @@ inline bool FileExists(const std::string& filename)
     return stat(filename.c_str(), &buf) != -1;
 }
 
+inline bool IsDir(const std::string& filename)
+{
+    struct stat buf;
+    if(0 == stat(filename.c_str(), &buf)) {
+        return S_ISDIR(buf.st_mode);
+    }
+    return false;
+}
+
 inline std::string ExpandTildePath(const std::string& sPath)
 {
     if(sPath.length() >0 && sPath[0] == '~') {

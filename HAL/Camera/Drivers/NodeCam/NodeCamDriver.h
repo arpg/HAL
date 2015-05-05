@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <Node/Node.h>
+#include <node/Node.h>
 
 namespace hal {
 
@@ -17,7 +17,7 @@ public:
                   const std::string& sTopicName, double timeout);
     ~NodeCamDriver();
 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() {
         return std::shared_ptr<CameraDriverInterface>();
     }

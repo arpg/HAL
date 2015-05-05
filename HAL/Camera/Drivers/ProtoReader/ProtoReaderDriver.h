@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <PbMsgs/Reader.h>
+#include <HAL/Messages/Reader.h>
 
 namespace hal {
 
@@ -11,7 +11,7 @@ class ProtoReaderDriver : public CameraDriverInterface {
                     const std::vector<int>& channels);
   ~ProtoReaderDriver();
 
-  bool Capture( pb::CameraMsg& vImages );
+  bool Capture( hal::CameraMsg& vImages );
 
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();
@@ -24,13 +24,13 @@ class ProtoReaderDriver : public CameraDriverInterface {
   size_t Height( size_t /*idx*/ = 0 ) const;
 
  protected:
-  bool ReadNextCameraMessage(pb::CameraMsg& msg);
+  bool ReadNextCameraMessage(hal::CameraMsg& msg);
 
   bool                    m_first;
   int                     m_camId;
   std::vector<int>        m_channelIds;
-  pb::Reader&             m_reader;
-  pb::CameraMsg           m_nextMsg;
+  hal::Reader&             m_reader;
+  hal::CameraMsg           m_nextMsg;
 
   std::vector<size_t>     m_width;
   std::vector<size_t>     m_height;

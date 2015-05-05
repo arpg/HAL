@@ -543,15 +543,15 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
     }
 
     if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_GREY) {
-        pb_type = pb::PB_BYTE;
-        pb_format = pb::PB_LUMINANCE;
+        pb_type = hal::PB_BYTE;
+        pb_format = hal::PB_LUMINANCE;
     }else if(fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) {
         // TODO: Fix this
-//        pb_type = pb::PB_BYTE;
-//        pb_format = pb::PB_YUYV;
+//        pb_type = hal::PB_BYTE;
+//        pb_format = hal::PB_YUYV;
     }else{
-        pb_type = pb::PB_BYTE;
-        pb_format = pb::PB_LUMINANCE;
+        pb_type = hal::PB_BYTE;
+        pb_format = hal::PB_LUMINANCE;
         std::cerr << "V4L Format " << V4lToString(fmt.fmt.pix.pixelformat)
                   << " not recognised. Defaulting to greyscale" << std::endl;
     }
@@ -584,11 +584,11 @@ void V4LDriver::open_device(const char* dev_name)
     }
 }
 
-bool V4LDriver::Capture( pb::CameraMsg& vImages )
+bool V4LDriver::Capture( hal::CameraMsg& vImages )
 {
     vImages.Clear();
 
-    pb::ImageMsg* img = vImages.add_image();
+    hal::ImageMsg* img = vImages.add_image();
     img->set_width(width);
     img->set_height(height);
     img->mutable_data()->resize(SizeBytes());
