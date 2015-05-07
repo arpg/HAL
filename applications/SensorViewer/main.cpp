@@ -107,6 +107,9 @@ class SensorViewer {
     pangolin::RegisterKeyPressCallback(' ', [&]() {
         is_running_ = !is_running_;
       });
+    pangolin::RegisterKeyPressCallback('s', [&]() {
+        take_snapShot = 1;
+      });
     pangolin::RegisterKeyPressCallback(
         'l', [this]() {
           *logging_enabled_ = !*logging_enabled_;
@@ -192,6 +195,23 @@ class SensorViewer {
         DrawLoggingIndicator();
       }
 
+      //Handle snapshots
+      if (take_snapShot && capture_success)
+	{
+	  std::cout << "Snap!" << std::endl;
+	  if (hal::Logger::GetInstance().IsLogging() == false) {
+#ifdef ANDROID
+	    logger_.LogToFile("/sdcard/", "sensors");
+#else
+	    logger_.LogToFile("", "sensors");
+#endif
+	  }
+	  LogCamera(images.get());
+	  take_snapShot = 0;
+	}
+
+	  
+	  
       pangolin::FinishFrame();
       last_images = images;
 
@@ -365,7 +385,7 @@ class SensorViewer {
  private:
   size_t num_channels_, base_width_, base_height_;
   bool has_camera_, has_imu_, has_posys_, has_encoder_, has_lidar_;
-  bool is_running_, is_stepping_;
+  bool is_running_, is_stepping_, take_snapShot;
   int frame_number_;
   int panel_width_;
   hal::Camera camera_;
