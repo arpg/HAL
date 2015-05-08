@@ -144,6 +144,10 @@ namespace hal {
 	pimg = vImages.add_image();
 
 
+	//Pass through the timestamp
+	double halStamp = freshImages[i]->header.stamp.sec + ((double)freshImages[i]->header.stamp.nsec)/1e9;
+	
+	pimg->set_timestamp(halStamp);
 	pimg->set_type(findPbType(freshImages[i]->encoding));
 	pimg->set_format(findPbFormat(freshImages[i]->encoding) );            
 	pimg->set_width(freshImages[i]->width);
