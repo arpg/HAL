@@ -1,7 +1,7 @@
 
-find_package( roscpp )
-find_package( image_transport )
-find_package( std_msgs )
+find_package( roscpp QUIET )
+find_package( image_transport QUIET )
+find_package( std_msgs QUIET )
 if(roscpp_FOUND)
 
     set( BUILD_ROS_Camera true CACHE BOOL force )
