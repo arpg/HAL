@@ -17,6 +17,7 @@ public:
             {"depth", "true", "Capture depth image."},
             {"ir", "false", "Capture infrared image."},
             {"align", "false", "Align depth with RGB."},
+            {"cmod", "false", "Software Align depth with RGB."},
         };
     }
 
@@ -28,9 +29,10 @@ public:
         bool bDepth         = uri.properties.Get("depth", true);
         bool bIR            = uri.properties.Get("ir", false);
         bool bAlign         = uri.properties.Get("align", false);
+        std::string scmod   = uri.properties.Get<std::string>("cmod", "");
 
         OpenNIDriver* pDriver = new OpenNIDriver(
-                    Dims.x, Dims.y, nFPS, bRGB, bDepth, bIR, bAlign
+                    Dims.x, Dims.y, nFPS, bRGB, bDepth, bIR, bAlign, scmod
                     );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
