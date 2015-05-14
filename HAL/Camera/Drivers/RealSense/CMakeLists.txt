@@ -1,12 +1,11 @@
 find_package(USB1 QUIET)
 
-if(USB1_FOUND)
+if(USB1_FOUND AND BUILD_UVC)
 
     set( BUILD_RealSense true CACHE BOOL force )
 
     if( BUILD_RealSense)
         add_to_hal_include_dirs(
-            ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
             ${USB1_INCLUDE_DIRS}
         )
 
@@ -16,9 +15,6 @@ if(USB1_FOUND)
 
         add_to_hal_sources(
             RealSense.h RealSense.cpp RealSenseFactory.cpp
-            libuvc_ex/src/ctrl.c libuvc_ex/src/ctrl-gen.c libuvc_ex/src/device.c libuvc_ex/src/diag.c
-            libuvc_ex/src/frame.c libuvc_ex/src/init.c libuvc_ex/src/stream.c
-            libuvc_ex/src/misc.c
         )
 
     endif()

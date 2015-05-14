@@ -1,4 +1,5 @@
 subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
+list(REVERSE SUBDIRS)
 
 foreach(subdir ${SUBDIRS})
   add_subdirectory(${subdir})
