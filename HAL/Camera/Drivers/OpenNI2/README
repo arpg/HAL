@@ -1,0 +1,7 @@
+To use this driver first install the openni2 API:
+
+$ brew tap homebrew/science
+$ brew install openni2
+
+In my experience, in OSX, this driver works better than the openni driver.
+
