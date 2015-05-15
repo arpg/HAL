@@ -370,8 +370,8 @@ void OpenNIDriver::SoftwareAlign(hal::CameraMsg& vImages) {
          }
        }
 
-        cv::imshow("rgb", OutRGB8UC3);
-        cv::waitKey(1);
+       //cv::imshow("rgb", OutRGB8UC3);
+       // cv::waitKey(1);
 
 
        // now, change the data in the Pb messages.
