@@ -1,10 +1,9 @@
 find_package(USB1 QUIET)
 
-if(USB1_FOUND)
+option( BUILD_RealSense "Build RealSense Driver." OFF )
 
-    set( BUILD_RealSense true CACHE BOOL force )
+if(USB1_FOUND AND BUILD_RealSense) # to be added: AND BUILD_UVC
 
-    if( BUILD_RealSense)
         add_to_hal_include_dirs(
             ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
             ${USB1_INCLUDE_DIRS}
@@ -21,5 +20,4 @@ if(USB1_FOUND)
             libuvc_ex/src/misc.c
         )
 
-    endif()
 endif()
