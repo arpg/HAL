@@ -21,7 +21,7 @@ class OpenNI2Driver : public CameraDriverInterface
                 bool                    bCaptureDepth,
                 bool                    bCaptureIR,
                 bool                    bAlignDepth,
-                const std::string&      uri,
+                const std::string&      sn,
                 const std::string&      scmod);
 
         virtual ~OpenNI2Driver();
@@ -42,6 +42,7 @@ class OpenNI2Driver : public CameraDriverInterface
         // just use many of these drivers with differnt device URIs.
 
         void SoftwareAlign( hal::CameraMsg& vImages );
+	std::string getSerial(const std::string& Uri) const;
         unsigned int                         m_height;
         unsigned int                         m_width;
         openni::VideoFrameRef                m_depthFrame;
@@ -63,7 +64,7 @@ class OpenNI2Driver : public CameraDriverInterface
         double                               m_DepthBaseline;
         double                               m_DepthFocalLength;
         std::vector<openni::VideoStream*>    m_streams;
-        std::string                          m_dev_uri;
+        std::string                          m_dev_sn;
         std::string                          m_sCameraModel;
 };
 

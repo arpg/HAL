@@ -19,11 +19,11 @@ OpenNI2Driver::OpenNI2Driver(
         bool                    bCaptureDepth,
         bool                    bCaptureIR,
         bool                    bAlignDepth,
-        const std::string&      dev_uri,
+        const std::string&      dev_sn,
         const std::string&      scmod
     ) 
 {
-  m_dev_uri = dev_uri;
+  m_dev_sn = dev_sn;
   m_bSoftwareAlign = bAlignDepth;
   m_sCameraModel = scmod;
 
@@ -34,20 +34,44 @@ OpenNI2Driver::OpenNI2Driver(
       << openni::OpenNI::getExtendedError();
   }
 
+
+  int chosenDevice = -1;
+  if (dev_sn.size() > 0)
+    {
+      printf("OpenNI2Driver: Looking for user-supplied device S/N: %s\n", dev_sn.c_str() );	
+    }
+  
   openni::Array<openni::DeviceInfo> deviceList;
   openni::OpenNI::enumerateDevices(&deviceList);
-  printf("Found %d devices:\n", deviceList.getSize() );
+  printf("OpenNI2Driver: Found %d devices:\n", deviceList.getSize() );
   for( int ii = 0; ii < deviceList.getSize(); ii++ ){
-    printf("  Device[%d] URI: %s\n", ii, deviceList[ii].getUri() );
+    std::string oneUri = deviceList[ii].getUri();
+    std::string serNum = getSerial(oneUri);
+    printf("  Device[%d] URI: %s Serial: %s\n", ii, oneUri.c_str(), serNum.c_str());
+    if (serNum == dev_sn)
+      {
+	chosenDevice = ii;
+      }
   }
-  printf("Using user supplied device URI: %s\n", dev_uri.c_str() );
 
-  rc = m_device.open( dev_uri == "" ? openni::ANY_DEVICE : dev_uri.c_str() );
+  //If a user s/n was provided and found, open it. Otherwise, open the first device found
+  if ((dev_sn.size() > 0) && (chosenDevice >= 0))
+    {
+      rc = m_device.open(deviceList[chosenDevice].getUri() );
+    }
+  else
+    {
+      rc = m_device.open(openni::ANY_DEVICE); //pick anything we can
+    }
+
+
   if (rc != openni::STATUS_OK) {
     printf("OpenNI2Driver: Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
     openni::OpenNI::shutdown();
   }
-
+  
+  //printf("OpenNI2Driver: Opened device [%s]\n",  m_device.getUri());
+  
   // setup depth channel
   if( bCaptureDepth ){
     rc = m_depthStream.create(m_device, openni::SENSOR_DEPTH);
@@ -118,6 +142,40 @@ OpenNI2Driver::~OpenNI2Driver()
   openni::OpenNI::shutdown();
 }
 
+//From the ROS openni2_camera package, src/openni2_device_manager.cpp
+
+std::string OpenNI2Driver::getSerial(const std::string& Uri) const
+{
+  //OpenNI2 doesn't report serial numbers until the device is actually opened
+  {
+  openni::Device openni_device;
+  std::string ret;
+
+  // we need to open the device to query the serial number
+  if (Uri.length() > 0 && openni_device.open(Uri.c_str()) == openni::STATUS_OK)
+  {
+    int serial_len = 100;
+    char serial[serial_len];
+
+    openni::Status rc = openni_device.getProperty(openni::DEVICE_PROPERTY_SERIAL_NUMBER, serial, &serial_len);
+    if (rc == openni::STATUS_OK)
+      ret = serial;
+    else
+    {
+      printf("OpenNI2: Serial number query failed: %s", openni::OpenNI::getExtendedError());
+    }
+    // close the device again
+    openni_device.close();
+  }
+  else
+  {
+    printf("OpenNI2: Device open failed: %s", openni::OpenNI::getExtendedError());
+  }
+  return ret;
+  }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
 {
@@ -168,7 +226,7 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
     }
   }
 
-  LOG(INFO) << m_dev_uri << " capturing at\t" <<  1000.0/hal::TocMS(d0) << "hz\n";
+  //LOG(INFO) << m_dev_sn << " capturing at\t" <<  1000.0/hal::TocMS(d0) << "hz\n";
   d0 = hal::Tic();
 
   if( m_colorStream.isValid() ){ 
