@@ -1,5 +1,6 @@
 #include "OpenNIDriver.h"
 
+#include "imageintrincs.h"
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
 
@@ -28,7 +29,8 @@ OpenNIDriver::OpenNIDriver(
         bool                    bCaptureRGB,
         bool                    bCaptureDepth,
         bool                    bCaptureIR,
-        bool                    bAlignDepth
+        bool                    bAlignDepth,
+        std::string             scmod
     )
 {
     XnMapOutputMode MapMode;
@@ -188,6 +190,21 @@ OpenNIDriver::OpenNIDriver(
         }
     }
 
+    if(scmod.size()>0)
+    {
+        m_bSoftwareAlign = true;
+       m_pRig = calibu::ReadXmlRig( scmod);
+       Eigen::VectorXd RGBParams = m_pRig->cameras_[0]->GetParams();
+       m_rRGBImgIn.init(RGBParams(0), RGBParams(1), RGBParams(2), RGBParams(3));
+
+       Eigen::VectorXd DepthParams = m_pRig->cameras_[1]->GetParams();
+       m_rDepthImgIn.init(DepthParams(0), DepthParams(1), DepthParams(2), DepthParams(3));
+       std::cout<<"prepare for RGBD reg"<<std::endl;
+    }else
+    {
+        m_bSoftwareAlign = false;
+    }
+
     rc = m_Context.StartGeneratingAll();
     CHECK_XN_RETURN(rc);
 }
@@ -258,6 +275,8 @@ bool OpenNIDriver::Capture( hal::CameraMsg& vImages )
         pbImg->set_serial_number( m_SerialNos[i] );
     }
 
+    SoftwareAlign(vImages);
+
     return true;
 }
 
@@ -289,3 +308,79 @@ size_t OpenNIDriver::Height( size_t /*idx*/ ) const
 {
     return m_nImgHeight;
 }
+
+
+cv::Vec3b getColorSubpix(const cv::Mat &img, cv::Point2f pt) {
+  cv::Mat patch;
+  cv::getRectSubPix(img, cv::Size(1, 1), pt, patch);
+  return patch.at<cv::Vec3b>(0, 0);
+}
+
+// color the depth map
+void OpenNIDriver::SoftwareAlign(hal::CameraMsg& vImages) {
+
+    if(m_bSoftwareAlign)
+    {
+        hal::Image rawRGBImg = hal::Image(vImages.image(0));
+        cv::Mat &rRGB8UC3 = rawRGBImg.Mat();
+
+        hal::Image rawDepthImg = hal::Image(vImages.image(1));
+        cv::Mat &rDepth16U = rawDepthImg.Mat();
+
+        // get the camera intrinsics
+        Sophus::SE3d T_RGB_Depth = m_pRig->cameras_[1]->Pose();
+
+        std::cout<<"T_RGB_Depth:"<<_T2Cart(T_RGB_Depth.matrix()).transpose()<<std::endl;
+
+       // -------------
+       cv::Mat OutDepth16U =
+           cv::Mat::zeros(rDepth16U.rows, rDepth16U.cols, CV_16U);
+       cv::Mat OutRGB8UC3 =
+           cv::Mat::zeros(rDepth16U.rows, rDepth16U.cols, CV_8UC3);
+
+       // register depth image to rgb image
+       for (float i = 0; i != rDepth16U.rows; i++) {
+         for (float j = 0; j != rDepth16U.cols; j++) {
+           // for a depth val
+           float fDepth = static_cast<float>(rDepth16U.at<ushort>(i, j)) / 1000.f;
+
+           if (fDepth > 0  ) {
+             // get x, y, z of the voxel as P_w
+             Eigen::Vector3d P_w_Depth = m_rDepthImgIn.Unproject(i, j, fDepth);
+             Sophus::SE3d sP_w_Depth(_Cart2T(P_w_Depth(0), P_w_Depth(1), P_w_Depth(2),0,0,0));
+
+             // get the new pose of p_w in 3D w.r.t the rgb camera.
+             Sophus::SE3d sP_w_RGB = T_RGB_Depth * sP_w_Depth;
+
+             const Eigen::Vector3d P_w_RGB = sP_w_RGB.translation();
+
+             // project the 3D point it back to the rgb camera frame
+             Eigen::Vector2d p_i = m_rRGBImgIn.Project(P_w_RGB);
+
+             // see if the pixel is in range of the rgb camera
+             if (cvRound(p_i(0)) >= 0 && cvRound(p_i(0)) < rRGB8UC3.rows && // 480
+                 cvRound(p_i(1)) >= 0 && cvRound(p_i(1)) < rRGB8UC3.cols)   // 640
+             {
+               // do interpations here to color the depth image..
+               OutRGB8UC3.at<cv::Vec3b>(i, j) =
+                   getColorSubpix(rRGB8UC3, cv::Point2f(p_i(1), p_i(0)));
+               OutDepth16U.at<ushort>(i, j) = rDepth16U.at<ushort>(i, j);
+             }
+           }
+         }
+       }
+
+       //cv::imshow("rgb", OutRGB8UC3);
+       // cv::waitKey(1);
+
+
+       // now, change the data in the Pb messages.
+       hal::ImageMsg* pbImgRGB  = vImages.mutable_image(0);
+       pbImgRGB->set_data(OutRGB8UC3.data, sizeof(OutRGB8UC3.data));
+
+       hal::ImageMsg* pbImgDepth  = vImages.mutable_image(1);
+       pbImgDepth->set_data(OutDepth16U.data, sizeof(OutDepth16U.data));
+    }
+}
+
+

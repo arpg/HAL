@@ -1,13 +1,13 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include "OpenNIDriver.h"
+#include "OpenNI2Driver.h"
 
 namespace hal
 {
 
-class OpenNIFactory : public DeviceFactory<CameraDriverInterface>
+class OpenNI2Factory : public DeviceFactory<CameraDriverInterface>
 {
 public:
-    OpenNIFactory(const std::string& name)
+    OpenNI2Factory(const std::string& name)
         : DeviceFactory<CameraDriverInterface>(name)
     {
         Params() = {
@@ -18,6 +18,7 @@ public:
             {"ir", "false", "Capture infrared image."},
             {"align", "false", "Align depth with RGB."},
             {"cmod", "false", "Software Align depth with RGB."},
+	    {"sn", "", "Open a particular S/N (first available otherwise)"},
         };
     }
 
@@ -30,15 +31,16 @@ public:
         bool bIR            = uri.properties.Get("ir", false);
         bool bAlign         = uri.properties.Get("align", false);
         std::string scmod   = uri.properties.Get<std::string>("cmod", "");
+        std::string dev_sn = uri.properties.Get<std::string>("sn","");
 
-        OpenNIDriver* pDriver = new OpenNIDriver(
-                    Dims.x, Dims.y, nFPS, bRGB, bDepth, bIR, bAlign, scmod
+        OpenNI2Driver* pDriver = new OpenNI2Driver(
+                    Dims.x, Dims.y, nFPS, bRGB, bDepth, bIR, bAlign, dev_sn, scmod
                     );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static OpenNIFactory g_OpenNIFactory("openni");
+static OpenNI2Factory g_OpenNI2Factory("openni2");
 
 }
