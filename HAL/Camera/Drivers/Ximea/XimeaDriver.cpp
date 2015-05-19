@@ -197,6 +197,25 @@ XimeaDriver::XimeaDriver(
         xiSetParamInt(handle, XI_PRM_TRG_SOURCE, XI_TRG_SOFTWARE);
         xiSetParamInt(handle, XI_PRM_GPO_SELECTOR, 1);
         xiSetParamInt(handle, XI_PRM_GPO_MODE,  XI_GPO_FRAME_ACTIVE);
+
+        if (fps != 0) {
+          error = xiSetParamInt(handle, XI_PRM_ACQ_TIMING_MODE,
+                                XI_ACQ_TIMING_MODE_FRAME_RATE);
+          _CheckError(error, "xiSetParam (ACQ Timing)");
+
+          float min_fps, max_fps;
+          xiGetParamFloat(handle, XI_PRM_FRAMERATE XI_PRM_INFO_MIN, &min_fps);
+          xiGetParamFloat(handle, XI_PRM_FRAMERATE XI_PRM_INFO_MAX, &max_fps);
+          if (fps < min_fps || fps > max_fps) {
+            std::cerr << "Framerate Values = Min: " << min_fps << " - Max: "
+                      << max_fps << std::endl;
+            throw DeviceException("Requested FPS not supported!");
+          }
+
+          error = xiSetParamFloat(handle, XI_PRM_FRAMERATE, fps);
+          _CheckError(error, "xiSetParam (FPS)");
+        }
+
         first_cam = false;
       } else {
         // Other cameras are slave.
@@ -280,6 +299,14 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
       pb_img->set_data(image_.bp, 2 * image_width_ * image_height_);
       pb_img->set_type(hal::PB_UNSIGNED_SHORT);
       pb_img->set_format(hal::PB_LUMINANCE);
+    } else if (image_format_ == XI_RGB24) {
+      pb_img->set_data(image_.bp, 3 * image_width_ * image_height_);
+      pb_img->set_type(hal::PB_UNSIGNED_BYTE);
+      pb_img->set_format(hal::PB_BGR);
+    } else if (image_format_ == XI_RGB32) {
+      pb_img->set_data(image_.bp, 4 * image_width_ * image_height_);
+      pb_img->set_type(hal::PB_UNSIGNED_BYTE);
+      pb_img->set_format(hal::PB_RGBA);
     } else {
       std::cerr << "Image format not supported." << std::endl;
     }

@@ -9,6 +9,10 @@ set( Messages_VERSION 2 )
 cmake_policy(SET CMP0023 OLD)
 cmake_policy(SET CMP0022 OLD)
 
+if(POLICY CMP0042)
+    cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
+endif()
+
 include( install_package )
 
 string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)

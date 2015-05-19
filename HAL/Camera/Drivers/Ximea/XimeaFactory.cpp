@@ -17,7 +17,7 @@ public:
     {"fps", "DEFAULT", "Capture framerate: [1, 150]"},
     {"exp", "0", "Exposure time (microseconds): [1,1000000] (0: AUTO)"},
     {"gain", "0.5", "Gain (dB): [-2.4, 12.0]"},
-    {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16"},
+    {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16, RGB24, RGB32"},
     {"size", "640x480", "Capture resolution."},
     {"roi", "0+0+640x480", "ROI resolution."},
     {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
@@ -60,7 +60,11 @@ public:
       xi_mode = XI_RAW16;
     } else if (mode == "MONO16") {
       xi_mode = XI_MONO16;
-    } else {
+    } else if (mode == "RGB24") {
+      xi_mode = XI_RGB24;
+    } else if (mode == "RGB32") {
+      xi_mode = XI_RGB32;
+    }else {
       xi_mode = XI_MONO8;
     }
 

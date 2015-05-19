@@ -11,8 +11,8 @@
 #include <pthread.h>
 
 //Protobuf includes
-#include <PbMsgs/Image.pb.h>
-#include <PbMsgs/ImageArray.h>
+#include <HAL/Image.pb.h>
+#include <HAL/Messages/ImageArray.h>
 
 //ROS includes
 #include <ros/ros.h>
@@ -39,7 +39,7 @@ namespace hal
     ~ROSDriver();
 
     const int radixMultiplier = 1000; 
-    bool Capture( pb::CameraMsg& vImages );
+    bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
  
     void Start();
@@ -50,8 +50,8 @@ namespace hal
     size_t Height( size_t /*idx*/ = 0 ) const;
     
     string findROSFormat(uint32_t format);
-    pb::Type findPbType(string format);
-    pb::Format findPbFormat(string format);
+    hal::Type findPbType(string format);
+    hal::Format findPbFormat(string format);
 
     void makeFixedPoint(sensor_msgs::ImagePtr &destImage, const sensor_msgs::ImageConstPtr srcImage);
     void makeScaledImage(sensor_msgs::ImagePtr &destImage_sp, const sensor_msgs::ImageConstPtr srcImage);	

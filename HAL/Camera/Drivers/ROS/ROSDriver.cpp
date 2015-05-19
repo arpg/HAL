@@ -8,7 +8,7 @@ namespace hal {
     : topics(m_topics), sizes(m_sizes), grayScale(m_grayScale)
   {
     int argc = 0;
-    ros::init(argc, NULL, "ros_hal");
+    ros::init(argc, NULL, "ros_hal", ros::init_options::AnonymousName );
     spinner = new ros::AsyncSpinner(2);
     spinner->start();
     nh = new ros::NodeHandle("~");
@@ -92,7 +92,7 @@ namespace hal {
   }
 
 
-  bool ROSDriver::Capture( pb::CameraMsg& vImages )
+  bool ROSDriver::Capture( hal::CameraMsg& vImages )
   {
     //Only publish when there's at least one new image to share
     //Return false if we timed out in the cond_wait
@@ -112,7 +112,7 @@ namespace hal {
     vImages.Clear();
 
     //cout << "Woke up!" << endl;
-    pb::ImageMsg* pimg;
+    hal::ImageMsg* pimg;
 
     if (!initComplete)
       {
@@ -167,7 +167,7 @@ namespace hal {
 	    //Then, rescale the image into the full 16-bit range
 	    sensor_msgs::ImagePtr scaledImage;
 	    makeScaledImage(scaledImage, freshImages[i]);
-	    pimg->set_type(pb::PB_UNSIGNED_BYTE);
+	    pimg->set_type(hal::PB_UNSIGNED_BYTE);
 	    pimg->set_data(&scaledImage->data[0], scaledImage->step * scaledImage->height);
  
 	  }
@@ -185,17 +185,17 @@ namespace hal {
   {
     switch (format)
       {
-      case pb::PB_LUMINANCE:
+      case hal::PB_LUMINANCE:
 	return sensor_msgs::image_encodings::MONO8;
-      case pb::PB_RGB:
+      case hal::PB_RGB:
 	return sensor_msgs::image_encodings::RGB8;
-      case pb::PB_RGBA:
+      case hal::PB_RGBA:
 	return sensor_msgs::image_encodings::RGBA8;
-      case pb::PB_RAW:
+      case hal::PB_RAW:
 	return sensor_msgs::image_encodings::MONO8;
-      case pb::PB_BGR:
+      case hal::PB_BGR:
 	return sensor_msgs::image_encodings::BGR8;
-      case pb::PB_BGRA:
+      case hal::PB_BGRA:
 	return sensor_msgs::image_encodings::BGRA8;
       default:
 	ROS_FATAL("Unknown HAL image format: 0x%x\n", format);
@@ -203,47 +203,47 @@ namespace hal {
       }
   }
 
-  pb::Type ROSDriver::findPbType(string format)
+  hal::Type ROSDriver::findPbType(string format)
   {
     if (format == sensor_msgs::image_encodings::MONO8)
-      return pb::PB_UNSIGNED_BYTE;
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::BGR8)
-      return pb::PB_UNSIGNED_BYTE;
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::RGB8)
-      return pb::PB_UNSIGNED_BYTE;
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::MONO16)
-      return pb::PB_UNSIGNED_SHORT;
+      return hal::PB_UNSIGNED_SHORT;
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
-      return pb::PB_UNSIGNED_SHORT;
+      return hal::PB_UNSIGNED_SHORT;
     if (format == sensor_msgs::image_encodings::TYPE_32FC1)
-      return pb::PB_UNSIGNED_SHORT;
+      return hal::PB_UNSIGNED_SHORT;
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
-    return (pb::Type) 0;
+    return (hal::Type) 0;
   }
   
-  pb::Format ROSDriver::findPbFormat(string format)
+  hal::Format ROSDriver::findPbFormat(string format)
   {
     //Protobuf formats are typedefed ints, ROS formats are strings
     if (format == sensor_msgs::image_encodings::MONO8)
-      return pb::PB_LUMINANCE;
+      return hal::PB_LUMINANCE;
   
     if (format == sensor_msgs::image_encodings::MONO16)
-      return pb::PB_LUMINANCE;
+      return hal::PB_LUMINANCE;
     
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
-      return pb::PB_LUMINANCE;
+      return hal::PB_LUMINANCE;
     
     if (format == sensor_msgs::image_encodings::TYPE_32FC1)
-      return pb::PB_LUMINANCE;
+      return hal::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::BGR8)
-      return pb::PB_BGR;
+      return hal::PB_BGR;
   
     if (format == sensor_msgs::image_encodings::RGB8)
-      return pb::PB_RGB;
+      return hal::PB_RGB;
   
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
-    return (pb::Format) 0;
+    return (hal::Format) 0;
   }
 
   

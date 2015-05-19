@@ -41,13 +41,13 @@ cv::Mat WriteCvMat(const hal::ImageMsg& pbImage) {
       nCvType = CV_8UC1;
     } else if (pbImage.format() == hal::PB_RGB) {
       nCvType = CV_8UC3;
-    } else if (pbImage.format() == pb::PB_BGR) {
+    } else if (pbImage.format() == hal::PB_BGR) {
       nCvType = CV_8UC3;
     }
-  
-  } else if (pbImage.type() == pb::PB_UNSIGNED_SHORT ||
-             pbImage.type() == pb::PB_SHORT) {
-    if (pbImage.format() == pb::PB_LUMINANCE) {
+
+  } else if (pbImage.type() == hal::PB_UNSIGNED_SHORT ||
+             pbImage.type() == hal::PB_SHORT) {
+    if (pbImage.format() == hal::PB_LUMINANCE) {
       nCvType = CV_16UC1;
     } else if (pbImage.format() == hal::PB_RGB) {
       nCvType = CV_16UC3;

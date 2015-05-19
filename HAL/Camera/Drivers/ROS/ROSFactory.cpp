@@ -25,7 +25,7 @@ public:
 
       std::string topics = uri.properties.Get<std::string>("topics", "/image_left");
       std::string sizes = uri.properties.Get<std::string>("sizes", "DEFAULT_SIZE");
-      int grayScale = uri.properties.Get<int>("gray_scale", 1);
+      int grayScale = uri.properties.Get<int>("gray_scale", 0);
 
       
       ROSDriver* rs = new ROSDriver(topics, sizes, grayScale);
