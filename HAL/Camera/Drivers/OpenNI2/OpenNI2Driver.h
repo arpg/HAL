@@ -3,6 +3,12 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Messages/ImageArray.h>
 #include <calibu/cam/camera_xml.h>
+#include <calibu/cam/camera_crtp.h>
+#include <calibu/cam/camera_models_crtp.h>
+#include <calibu/cam/camera_rig.h>
+#include <calibu/cam/rectify_crtp.h>
+#include <calibu/cam/stereo_rectify.h>
+
 
 #include "OniSampleUtilities.h"
 #include "OpenNI.h"
@@ -40,9 +46,11 @@ class OpenNI2Driver : public CameraDriverInterface
 
         // NB: this is not a multi-kinect driver.  If you need multi kinects,
         // just use many of these drivers with differnt device URIs.
-
+	std::vector<calibu::LookupTable>      m_vLuts;
         void SoftwareAlign( hal::CameraMsg& vImages );
 	std::string getSerial(const std::string& Uri) const;
+	uint16_t* AutoScale(const void* src, uint32_t pixelCount);
+	void setHardwareRegistrationMode(bool enable);
         unsigned int                         m_height;
         unsigned int                         m_width;
         openni::VideoFrameRef                m_depthFrame;
@@ -60,7 +68,7 @@ class OpenNI2Driver : public CameraDriverInterface
         ImageIntrinsics                      m_rDepthImgIn;
         std::shared_ptr<calibu::Rig<double>> m_pRig;
         std::vector<uint64_t>                m_SerialNos;
-        bool                                 m_bSoftwareAlign;
+        bool                                 m_bHardwareAlign;
         double                               m_DepthBaseline;
         double                               m_DepthFocalLength;
         std::vector<openni::VideoStream*>    m_streams;

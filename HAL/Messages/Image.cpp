@@ -44,6 +44,7 @@ cv::Mat WriteCvMat(const hal::ImageMsg& pbImage) {
     } else if (pbImage.format() == hal::PB_BGR) {
       nCvType = CV_8UC3;
     }
+
   } else if (pbImage.type() == hal::PB_UNSIGNED_SHORT ||
              pbImage.type() == hal::PB_SHORT) {
     if (pbImage.format() == hal::PB_LUMINANCE) {

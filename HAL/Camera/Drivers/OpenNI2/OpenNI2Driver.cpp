@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
+#include <HAL/Utils/StringUtils.h>
 
 #include "OniEnums.h"
 
@@ -22,11 +23,17 @@ OpenNI2Driver::OpenNI2Driver(
         const std::string&      dev_sn,
         const std::string&      scmod
     ) 
+
 {
   m_dev_sn = dev_sn;
-  m_bSoftwareAlign = bAlignDepth;
+  m_bHardwareAlign = bAlignDepth;
   m_sCameraModel = scmod;
 
+  if (m_bHardwareAlign && (m_sCameraModel.size() > 0))
+    {
+      LOG(FATAL) << "OpenNI2Driver: Pick either hardware alignment (hw_align=1) or supply a camera model via cmod=\"filename.xml\"";
+    }
+  
   openni::Status rc = openni::STATUS_OK;
   rc = openni::OpenNI::initialize();
   if (rc != openni::STATUS_OK) {
@@ -65,13 +72,19 @@ OpenNI2Driver::OpenNI2Driver(
     }
 
 
+  printf("OpenNI2: RGB? %d, Depth? %d, IR? %d\n", bCaptureRGB, bCaptureDepth, bCaptureIR);
+  
   if (rc != openni::STATUS_OK) {
     printf("OpenNI2Driver: Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
     openni::OpenNI::shutdown();
   }
   
   //printf("OpenNI2Driver: Opened device [%s]\n",  m_device.getUri());
-  
+
+  //Turn off mirroring so that the imagery is consistent with other HAL drivers
+
+ 
+
   // setup depth channel
   if( bCaptureDepth ){
     rc = m_depthStream.create(m_device, openni::SENSOR_DEPTH);
@@ -90,8 +103,10 @@ OpenNI2Driver::OpenNI2Driver(
       printf("OpenNI2Driver: Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
       m_depthStream.destroy();
     }
+    m_depthStream.setMirroringEnabled(false);	
     m_streams.push_back( &m_depthStream );
   }
+  
   if( bCaptureRGB ){
     rc = m_colorStream.create(m_device, openni::SENSOR_COLOR);
     if (rc != openni::STATUS_OK) {
@@ -109,15 +124,88 @@ OpenNI2Driver::OpenNI2Driver(
       printf("OpenNI2Driver: Couldn't start color stream:\n%s\n", openni::OpenNI::getExtendedError());
       m_colorStream.destroy();
     }
+    
+    m_colorStream.setMirroringEnabled(false);
     m_streams.push_back( &m_colorStream );
   }
-  if( bCaptureIR ){
+  
+  if (bCaptureRGB && bCaptureIR)
+    {
+       printf("OpenNI2Driver: Can't capture from both RGB and IR at the same time\n");
+    }
+
+  if( bCaptureIR && (!bCaptureRGB)){
+    rc = m_irStream.create(m_device, openni::SENSOR_IR);
+    if (rc != openni::STATUS_OK) {
+      printf("OpenNI2Driver: Couldn't find ir stream:\n%s\n", openni::OpenNI::getExtendedError());
+    }
+
+    m_irVideoMode = m_irStream.getVideoMode();
+    m_irVideoMode.setResolution( nWidth, nHeight );
+    m_irVideoMode.setFps( nFPS );
+    m_irVideoMode.setPixelFormat( openni::PIXEL_FORMAT_GRAY16);
+    m_irStream.setVideoMode( m_irVideoMode );
+
+    rc = m_irStream.start();
+    if (rc != openni::STATUS_OK) {
+      printf("OpenNI2Driver: Couldn't start ir stream:\n%s\n", openni::OpenNI::getExtendedError());
+      m_irStream.destroy();
+    }
+    m_irStream.setMirroringEnabled(false);
     m_streams.push_back( &m_irStream );
-  } 
+  }
+  
+  //Set hardware registration appropriately
+  setHardwareRegistrationMode(m_bHardwareAlign);
 
-  m_width = m_depthVideoMode.getResolutionX();
-  m_height = m_depthVideoMode.getResolutionY();
+				 
+  //Setup software alignment and rectification if needed
+  if(m_sCameraModel.size() > 0)
+    {
+      std::string modelFileName = hal::ExpandTildePath(m_sCameraModel);
+      if (!hal::FileExists(modelFileName))
+	{
+	  LOG(FATAL) << "OpenNI2Driver: Could not find camera model file: " << modelFileName;
+	}
 
+      m_pRig = calibu::ReadXmlRig( modelFileName);
+      Eigen::VectorXd RGBParams = m_pRig->cameras_[0]->GetParams();
+      m_rRGBImgIn.init(RGBParams(0), RGBParams(1), RGBParams(2), RGBParams(3));
+
+      Eigen::VectorXd DepthParams = m_pRig->cameras_[1]->GetParams();
+      m_rDepthImgIn.init(DepthParams(0), DepthParams(1), DepthParams(2), DepthParams(3));
+      printf("OpenNI2Driver: Software alignment enabled using file: %s\n", m_sCameraModel.c_str() );
+
+      // Set up rectification
+      /*
+       // Convert rig to vision frame.
+      std::shared_ptr<calibu::Rig<double>> new_rig =
+	calibu::ToCoordinateConvention(m_pRig, calibu::RdfVision);
+
+      // Generate lookup tables for stereo rectify.
+      m_vLuts.resize(new_rig->NumCams());
+      for(size_t i=0; i< new_rig->NumCams(); ++i) {
+	m_vLuts[i] = calibu::LookupTable(new_rig->cameras_[i]->Width(), new_rig->cameras_[i]->Height());
+      }
+      
+
+      if(new_rig->NumCams() == 2) {
+	m_pRig = calibu::CreateScanlineRectifiedLookupAndCameras(
+								new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
+								new_rig->cameras_[0], new_rig->cameras_[1],
+								m_T_nr_nl,
+								m_vLuts[0], m_vLuts[1]
+								);
+   
+      
+      }
+   */
+    }
+
+    
+  m_width = nWidth;
+  m_height = nHeight;
+  
   LOG(INFO) << "OpenNI2Driver: opened device at " 
     << m_width << "x" << m_height << " resolution\n";
 }
@@ -175,6 +263,28 @@ std::string OpenNI2Driver::getSerial(const std::string& Uri) const
   }
 }
 
+//From the ROS openni2_camera node, src/openni2_device.cpp
+void OpenNI2Driver::setHardwareRegistrationMode(bool enable)
+{
+  if (m_device.isImageRegistrationModeSupported(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR))
+  {
+    if (enable == true)
+    {
+      openni::Status rc = m_device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
+      if (rc != openni::STATUS_OK)
+	{
+	  printf("OpenNI2Driver: Enabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
+
+	}
+    }
+    else
+    {
+      openni::Status rc = m_device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
+      if (rc != openni::STATUS_OK)
+	printf("OpenNI2Driver: Disabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
+    }
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
@@ -189,13 +299,14 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
     return false;
   }
 
+  
   if( m_streams[changedIndex] == &m_depthStream ){
     m_depthStream.readFrame(&m_depthFrame);
     if(  m_colorStream.isValid() ){ 
       m_colorStream.readFrame(&m_colorFrame);
     }
     if( m_irStream.isValid() ){ 
-      m_irStream.readFrame(&m_colorFrame);
+      m_irStream.readFrame(&m_irFrame);
     }
   }
 
@@ -205,10 +316,16 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
       m_depthStream.readFrame(&m_depthFrame);
     } 
     if( m_irStream.isValid() ){ 
-      m_irStream.readFrame(&m_colorFrame);
+      m_irStream.readFrame(&m_irFrame);
     }
   }
-
+  
+  if( m_streams[changedIndex] == &m_irStream ){
+    if( m_irStream.isValid() ){
+      m_irStream.readFrame(&m_irFrame);
+    }
+  }
+  
   // if the channel is on, make sure we get the image
   if( m_colorStream.isValid() ){
     if( !m_colorFrame.isValid() ){
@@ -227,7 +344,6 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
   }
 
   //LOG(INFO) << m_dev_sn << " capturing at\t" <<  1000.0/hal::TocMS(d0) << "hz\n";
-  d0 = hal::Tic();
 
   if( m_colorStream.isValid() ){ 
     hal::ImageMsg* im = vImages.add_image();
@@ -254,13 +370,44 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
     im->set_timestamp( m_irFrame.getTimestamp() );
     im->set_width( m_width );
     im->set_height( m_height );
-    im->set_type( hal::PB_UNSIGNED_BYTE );
+    im->set_type( hal::PB_UNSIGNED_SHORT);
     im->set_format( hal::PB_LUMINANCE );
-    im->set_data( m_irFrame.getData(), m_irFrame.getDataSize() );
+    uint16_t *scaled = AutoScale(m_irFrame.getData(), m_irFrame.getHeight()*m_irFrame.getWidth());
+    im->set_data( scaled, 2*m_irFrame.getHeight()*m_irFrame.getWidth() );
+    delete[] scaled;
   }
 
-  SoftwareAlign(vImages);
+  if (m_sCameraModel.size() > 0)
+    SoftwareAlign(vImages);
+  
   return true;
+}
+
+uint16_t* OpenNI2Driver::AutoScale(const void* src, uint32_t pixelCount)
+{
+  //Given a gray source image with a specified bpp, make a new image that has the dynamic range expanded to gray16
+  uint16_t* src_data = (uint16_t*) src;
+  
+  //Make a gray16 dest image
+  uint16_t *dest = new uint16_t[pixelCount];
+
+  //For this frame, find the max value:
+  uint16_t maxVal = 0;
+  for (unsigned int ii = 0; ii < pixelCount; ii++)
+    {
+      if (src_data[ii] > maxVal)
+	maxVal = src_data[ii];
+    }
+
+  //Scale by the max value
+  float scaleFactor = (1 << 16) / maxVal;
+  for (unsigned int ii = 0; ii < pixelCount; ii++)
+    {
+      dest[ii] = src_data[ii]*scaleFactor;
+    }
+
+  //Caller releases storage
+  return dest;
 }
 
 std::string OpenNI2Driver::GetDeviceProperty(const std::string& sProperty)
@@ -302,8 +449,20 @@ static cv::Vec3b getColorSubpix(const cv::Mat &img, cv::Point2f pt)
 // color the depth map
 void OpenNI2Driver::SoftwareAlign(hal::CameraMsg& vImages) 
 {
-  if(m_bSoftwareAlign)
-  {
+
+  /*
+  //First, rectify the image using Calibu
+  hal::Image raw_img[2] = { hal::Image(vImages.image(0)),
+			    hal::Image(vImages.image(1)) };
+
+  for (unsigned int k=0; k<2; k++)
+    {
+      calibu::Rectify(m_vLuts[k], raw_img[k].data(),
+		      reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
+		      img.Width(), img.Height(), num_channels);
+    }
+  */
+  
     hal::Image rawRGBImg = hal::Image(vImages.image(0));
     cv::Mat &rRGB8UC3 = rawRGBImg.Mat();
 
@@ -351,10 +510,9 @@ void OpenNI2Driver::SoftwareAlign(hal::CameraMsg& vImages)
           }
         }
       }
-    }
 
-    cv::imshow("rgb", OutRGB8UC3);
-    cv::waitKey(1);
+      //cv::imshow("rgb", OutRGB8UC3);
+    //cv::waitKey(1);
 
 
     // now, change the data in the Pb messages.
