@@ -16,8 +16,8 @@ public:
             {"rgb", "true", "Capture RGB image."},
             {"depth", "true", "Capture depth image."},
             {"ir", "false", "Capture infrared image."},
-            {"align", "false", "Align depth with RGB."},
-            {"cmod", "false", "Software Align depth with RGB."},
+            {"hw_align", "false", "Align depth with RGB in hardware"},
+            {"cmod", "false", "Camera model for software aligning depth with RGB."},
 	    {"sn", "", "Open a particular S/N (first available otherwise)"},
         };
     }
@@ -29,7 +29,7 @@ public:
         bool bRGB           = uri.properties.Get("rgb", true);
         bool bDepth         = uri.properties.Get("depth", true);
         bool bIR            = uri.properties.Get("ir", false);
-        bool bAlign         = uri.properties.Get("align", false);
+        bool bAlign         = uri.properties.Get("hw_align", false);
         std::string scmod   = uri.properties.Get<std::string>("cmod", "");
         std::string dev_sn = uri.properties.Get<std::string>("sn","");
 
