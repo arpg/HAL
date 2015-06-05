@@ -15,7 +15,7 @@
 #include <HAL/Messages/ImageArray.h>
 
 //Occam includes from the indigosdk package
-#include <indigo.h>
+#include <occam/indigo.h>
 
 using std::cout;
 using std::string;

@@ -1,7 +1,7 @@
+set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
-SET(OccamIndigo_FOUND true)
-SET(OccamIndigo_INCLUDE_DIRS /home/smcguire/research/indigosdk-2.0.13/include)
-SET(OccamIndigo_LIBRARIES /home/smcguire/research/indigosdk-2.0.13/bin/libindigo.so)
+
+find_package( OccamIndigo QUIET )
 
 
 if(OccamIndigo_FOUND)
@@ -13,7 +13,7 @@ if(OccamIndigo_FOUND)
 	    ${OccamIndigo_INCLUDE_DIRS}	
         )
         add_to_hal_libraries(
-	    /home/smcguire/research/indigosdk-2.0.13/bin/libindigo.so
+	    ${OccamIndigo_LIBRARIES}	
         )
         add_to_hal_sources(
 		OccamDriver.cpp
@@ -22,3 +22,7 @@ if(OccamIndigo_FOUND)
 
     endif()
 endif()
+
+message("Occam includes: ${OccamIndigo_INCLUDE_DIRS}")
+message("Occam libs: ${OccamIndigo_LIBRARIES}")
+
