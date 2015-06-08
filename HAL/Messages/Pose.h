@@ -3,8 +3,7 @@
 
 #include <Eigen/Eigen>
 #include <sophus/se3.hpp>
-#include <HAL/Messages.pb.h>
-#include "Matrix.h"
+#include <HAL/Messages/Matrix.h>
 
 namespace hal {
 
