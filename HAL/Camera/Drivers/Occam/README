@@ -1,0 +1,11 @@
+This driver is for Occam Vision Group's omni60 camera, both mono (tested) and color (untested)
+
+To download the SDK from Occam, one must first register to get access to the link.
+This driver expects to find indigo.h in /usr/include/occam, and tries to find libindigo.so in /usr/lib
+This driver is written against Occam SDK version 2.0.13
+
+
+Currently, this driver supports opening a camera by serial number as well as the default of opening the first enumerated camera.
+
+The camera exports a PbBuf of size 5, with the raw, unprocessed images
+
