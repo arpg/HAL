@@ -3,10 +3,11 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
 find_package( OccamIndigo QUIET )
 
+set( BUILD_Occam false)
 
 if(OccamIndigo_FOUND)
 
-    set( BUILD_Occam true CACHE BOOL force )
+    set( BUILD_Occam true CACHE BOOL force)
 
     if( BUILD_Occam)
         add_to_hal_include_dirs(
