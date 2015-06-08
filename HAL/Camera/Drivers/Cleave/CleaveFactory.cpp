@@ -13,7 +13,8 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
       Params() = {
-	{"max", "0", "Maximum channels to pass through"},
+	{"max", "0", "Maximum channel number to pass through"},
+	{"min", "0", "Minimum channel number to pass through"},
       };
     };
     
@@ -22,10 +23,17 @@ public:
     {
       hal::Uri subUri(uri.url);
       int maxChannel = uri.properties.Get<int>("max", 0);
+      int minChannel = uri.properties.Get<int>("min", 0);
+
+      if (maxChannel < minChannel)
+	{
+	  printf("Cleave: Max channel number [%u] is not >= min channel [%u]\n", maxChannel, minChannel);
+	  return NULL;
+	}
       // Create input camera
       std::shared_ptr<CameraDriverInterface> InCam =
 	DeviceRegistry<hal::CameraDriverInterface>::I().Create(subUri);      
-      CleaveDriver* rs = new CleaveDriver(InCam, maxChannel);
+      CleaveDriver* rs = new CleaveDriver(InCam, maxChannel, minChannel);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

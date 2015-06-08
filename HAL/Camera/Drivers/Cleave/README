@@ -1,0 +1,9 @@
+The Cleave driver takes a slave video source with 1 or more channels and returns a contiguous subset of the available channels. For instance, with the Occam camera that produces 5 channels, cleave can produce a 'stereo' pair out of say, channels 2 and 3.
+
+Arguments:
+
+-cam cleave:[min=1,max=3]//<slave video URI>
+
+will return channels 1,2, and 3 out of the available channels from the slave
+
+Min and max are zero-based - to pass through a single channel, use '0' for both parameters

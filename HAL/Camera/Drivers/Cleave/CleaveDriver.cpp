@@ -4,8 +4,8 @@
 
 namespace hal {
 
-  CleaveDriver::CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel )
-    : maxChannel(m_maxChannel), inputCamera(Input)
+  CleaveDriver::CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel, int m_minChannel )
+    : maxChannel(m_maxChannel), minChannel(m_minChannel), inputCamera(Input)
   {
     
     Start(); 
@@ -20,7 +20,7 @@ namespace hal {
   
   size_t CleaveDriver::NumChannels() const
   {
-    return maxChannel+1;
+    return maxChannel-minChannel+1;
   }
 
   size_t CleaveDriver::Width( size_t idx) const
@@ -35,7 +35,8 @@ namespace hal {
 
   void CleaveDriver::Start()
   {
-    cout << "Cleave: Only picking up first " << maxChannel+1 << " images" << endl;
+    //to get the sizes, capture one round of imagery and throw it away
+    cout << "Cleave: Passing through channels " << minChannel << " to " << maxChannel << endl;
     m_InMsg.Clear();
     widths.clear();
     heights.clear();
@@ -43,7 +44,7 @@ namespace hal {
         return;
     }
 
-    for( unsigned int ii = 0; ii <= maxChannel; ++ii ) {
+    for( unsigned int ii = minChannel; ii <= maxChannel; ++ii ) {
       const hal::ImageMsg& InImg = m_InMsg.image(ii);
       widths.push_back(InImg.width());
       heights.push_back(InImg.height());
@@ -67,7 +68,7 @@ namespace hal {
         return false;
     }
 
-    for( unsigned int ii = 0; ii <= maxChannel; ++ii ) {
+    for( unsigned int ii = minChannel; ii <= maxChannel; ++ii ) {
       const hal::ImageMsg& InImg = m_InMsg.image(ii);
 
         hal::ImageMsg* pImg = vImages.add_image();

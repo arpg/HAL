@@ -27,7 +27,7 @@ namespace hal
   class CleaveDriver : public CameraDriverInterface
   {
   public:
-    CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel);
+    CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel, int m_minChannel);
     ~CleaveDriver();
 
     bool Capture( hal::CameraMsg& vImages );
@@ -44,8 +44,9 @@ namespace hal
     //Width/Height of each component image
     vector<size_t> widths;
     vector<size_t> heights;
-    int maxChannel;
-
+    unsigned int maxChannel;
+    unsigned int minChannel;
+    
     std::shared_ptr<CameraDriverInterface>  inputCamera;
     hal::CameraMsg                           m_InMsg;
     
