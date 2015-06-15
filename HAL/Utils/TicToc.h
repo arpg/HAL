@@ -38,7 +38,7 @@ inline double Tic() {
   return secs;
 #elif _POSIX_TIMERS > 0
   struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  clock_gettime(CLOCK_REALTIME, &ts);
   return ts.tv_sec + ts.tv_nsec * 1e-9;
 #else
   struct timeval tv;
@@ -51,7 +51,7 @@ inline double Tic() {
 inline double RealTime() {
 #if _POSIX_TIMERS > 0
   struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
+  clock_gettime(CLOCK_REALTIME, &ts);
   return ts.tv_sec + ts.tv_nsec * 1e-9;
 #else
   struct timeval tv;
