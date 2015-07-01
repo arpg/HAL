@@ -16,19 +16,22 @@ elseif(ANDROID)
 endif()
 
 if(GLOG_FOUND AND Node_FOUND AND GFLAGS_FOUND)
-  add_executable( ${PROJECT_NAME} main.cpp )
+    option(BUILD_PoseToNode false)
+    if(BUILD_PoseToNode)
+        add_executable( ${PROJECT_NAME} main.cpp )
 
-  include_directories(${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
-    ${GLOG_INCLUDE_DIRS})
-  target_link_libraries( ${PROJECT_NAME}
-    ${GFLAGS_LIBRARIES} 
-    ${LINK_WHOLE_ARCHIVE_FLAG}
-    ${HAL_LIBRARIES}
-    ${NO_LINK_WHOLE_ARCHIVE_FLAG}
-    ${GLOG_LIBRARIES}
-    ${Node_LIBRARIES}
-    dl
-  )
+        include_directories(${GFLAGS_INCLUDE_DIRS} ${HAL_INCLUDE_DIRS} ${Node_INCLUDE_DIRS}
+            ${GLOG_INCLUDE_DIRS})
+        target_link_libraries( ${PROJECT_NAME}
+            ${GFLAGS_LIBRARIES}
+            ${LINK_WHOLE_ARCHIVE_FLAG}
+            ${HAL_LIBRARIES}
+            ${NO_LINK_WHOLE_ARCHIVE_FLAG}
+            ${GLOG_LIBRARIES}
+            ${Node_LIBRARIES}
+            dl
+            )
+    endif()
 
 else(GFlags_FOUND)
   message("Skipping ${PROJECT_NAME} because some dependency is not met:")
