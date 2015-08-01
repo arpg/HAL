@@ -211,6 +211,8 @@ namespace hal {
   {
     if (format == sensor_msgs::image_encodings::MONO8)
       return hal::PB_UNSIGNED_BYTE;
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::BGR8)
       return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::RGB8)
@@ -230,7 +232,10 @@ namespace hal {
     //Protobuf formats are typedefed ints, ROS formats are strings
     if (format == sensor_msgs::image_encodings::MONO8)
       return hal::PB_LUMINANCE;
-  
+    
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_LUMINANCE;
+
     if (format == sensor_msgs::image_encodings::MONO16)
       return hal::PB_LUMINANCE;
     
