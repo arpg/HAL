@@ -279,7 +279,8 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
 
     // Set timestamp from camera.
     images.set_device_time(image_.tsSec + 1e-6*image_.tsUSec);
-
+    images.set_system_time(hal::Tic());
+ 
     pb_img->set_width(image_.width);
     pb_img->set_height(image_.height);
 

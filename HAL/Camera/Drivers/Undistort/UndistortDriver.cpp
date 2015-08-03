@@ -46,6 +46,10 @@ bool UndistortDriver::Capture( hal::CameraMsg& vImages )
     return false;
   }
 
+  //Transfer the container's timestamps
+  vImages.set_device_time(m_InMsg.device_time());
+  vImages.set_system_time(m_InMsg.system_time());
+  
   if(success) {
     for (int ii = 0; ii < m_InMsg.image_size(); ++ii) {
   
@@ -56,6 +60,7 @@ bool UndistortDriver::Capture( hal::CameraMsg& vImages )
 
       pimg->set_type( (hal::Type)inimg.Type());
       pimg->set_format( (hal::Format)inimg.Format());
+      
       //Transfer the timestamps from the source to the destination
       pimg->set_timestamp(inimg.Timestamp());
       
