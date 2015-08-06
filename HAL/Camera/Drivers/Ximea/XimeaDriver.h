@@ -14,13 +14,14 @@ namespace hal {
 class XimeaDriver : public CameraDriverInterface
 {
 public:
-  XimeaDriver(std::vector<unsigned int>& vector_ids,
+  XimeaDriver(std::vector<std::string>& vector_ids,
               float fps,
               int exp,
               float gain,
               XI_IMG_FORMAT mode,
               ImageRoi roi,
-              int sync);
+              int sync,
+	      uint8_t binning);
 
   ~XimeaDriver();
 
@@ -49,6 +50,7 @@ private:
   unsigned int                        image_width_;
   unsigned int                        image_height_;
   int                                 sync_;
+  uint8_t                             binning_;
   std::deque<std::vector<double> >    sync_times_;
 };
 

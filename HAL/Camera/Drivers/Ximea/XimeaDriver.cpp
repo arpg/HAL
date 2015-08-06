@@ -21,13 +21,14 @@ inline void XimeaDriver::_CheckError(
 
 ///////////////////////////////////////////////////////////////////////////
 XimeaDriver::XimeaDriver(
-    std::vector<unsigned int>&  vector_ids,
+			 std::vector<std::string>&  vector_ids,
     float                       fps,
     int                         exp,
     float                       gain,
     XI_IMG_FORMAT               mode,
     ImageRoi                    roi,
-    int                         sync
+    int                         sync,
+    uint8_t                     binning
     )
 {
   XI_RETURN error = XI_OK;
@@ -39,7 +40,8 @@ XimeaDriver::XimeaDriver(
   image_format_ = mode;
   image_width_  = roi.w;
   image_height_ = roi.h;
-
+  binning_ = binning;
+  
   // Get number of camera devices.
   DWORD num_devices;
   error = xiGetNumberDevices(&num_devices);
@@ -57,6 +59,7 @@ XimeaDriver::XimeaDriver(
   }
 
   if (num_channels_ < vector_ids.size()) {
+    
     throw DeviceException("Less cameras detected than those requested!");
   }
 
@@ -65,7 +68,15 @@ XimeaDriver::XimeaDriver(
 
   for (size_t ii = 0; ii < num_channels_; ++ii) {
     // Retrieving a handle to the camera device.
-    error = xiOpenDevice(ii, &cam_handles_[ii]);
+    // Actually open the correct one if serial numbers are specified
+    if (vector_ids.size() > 0)
+      {
+	error = xiOpenDeviceBy(XI_OPEN_BY_SN, vector_ids[ii].c_str(), &cam_handles_[ii]);
+      }
+    else
+      {
+	error = xiOpenDevice(ii, &cam_handles_[ii]);
+      }
     _CheckError(error, "xiOpenDevice");
   }
 
@@ -116,6 +127,12 @@ XimeaDriver::XimeaDriver(
       throw DeviceException("Image out of bounds!");
     }
 
+    //Set binning if applicable
+    if (binning_ > 0) {
+      error = xiSetParamInt(handle, XI_PRM_DOWNSAMPLING, binning_);
+      _CheckError(error, "xiSetParam (binning)");
+    }
+    
     // Setting "exposure" parameter (10ms=10000us). Default 0 is AUTO exposure.
     if (exp == 0) {
       error = xiSetParamInt(handle, XI_PRM_AEAG, 1);

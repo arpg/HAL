@@ -13,7 +13,7 @@ public:
     : DeviceFactory<CameraDriverInterface>(name)
   {
     Params() = {
-    {"idN", "0", "Camera serial number."},
+    {"idN", "0", "Camera serial number. Increment N from 0 to (number of serial numbers -1)"},
     {"fps", "DEFAULT", "Capture framerate: [1, 150]"},
     {"exp", "0", "Exposure time (microseconds): [1,1000000] (0: AUTO)"},
     {"gain", "0.5", "Gain (dB): [-2.4, 12.0]"},
@@ -21,6 +21,7 @@ public:
     {"size", "640x480", "Capture resolution."},
     {"roi", "0+0+640x480", "ROI resolution."},
     {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
+    {"binning", "0", "Binning: Divide frame by this integer in hardware"}
   };
   }
 
@@ -33,8 +34,9 @@ public:
     ImageDim dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
     ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
     int sync                = uri.properties.Get<int>("sync", 0);
-
-    std::vector<unsigned int> vector_ids;
+    uint8_t binning         = uri.properties.Get<uint8_t>("binning", 0);
+    
+    std::vector<std::string> vector_ids;
 
     while(true) {
       std::stringstream ss;
@@ -45,7 +47,7 @@ public:
         break;
       }
 
-      vector_ids.push_back(uri.properties.Get<unsigned int>(key, 0));
+      vector_ids.push_back(uri.properties.Get<std::string>(key, ""));
     }
 
     if(ROI.w == 0 && ROI.h == 0) {
@@ -69,7 +71,7 @@ public:
     }
 
     XimeaDriver* pDriver = new XimeaDriver(vector_ids, fps, exp, gain, xi_mode,
-                                           ROI, sync);
+                                           ROI, sync, binning);
 
     return std::shared_ptr<CameraDriverInterface>(pDriver);
   }
