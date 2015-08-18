@@ -219,6 +219,8 @@ namespace hal {
       return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::MONO16)
       return hal::PB_UNSIGNED_SHORT;
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
       return hal::PB_UNSIGNED_SHORT;
     if (format == sensor_msgs::image_encodings::TYPE_32FC1)
@@ -239,6 +241,9 @@ namespace hal {
     if (format == sensor_msgs::image_encodings::MONO16)
       return hal::PB_LUMINANCE;
     
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_LUMINANCE;
+
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
       return hal::PB_LUMINANCE;
     

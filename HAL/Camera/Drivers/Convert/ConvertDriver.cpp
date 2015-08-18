@@ -62,8 +62,11 @@ ConvertDriver::ConvertDriver(
 bool ConvertDriver::Capture( hal::CameraMsg& vImages )
 {
   m_Message.Clear();
-  m_Input->Capture( m_Message );
+  bool srcGood = m_Input->Capture( m_Message );
 
+  if (!srcGood)
+    return false;
+  
   // Guess source color coding.
   if( m_nCvType.empty() ) {
     for(int i = 0; i < m_Message.image_size(); ++i) {
