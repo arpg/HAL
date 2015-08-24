@@ -8,8 +8,10 @@
 ##
 
 SET( XIMEA_SEARCH_PATHS
+     /usr/local/include/ximea
     /usr/include/ximea
     /usr/lib
+    /usr/local/lib
     /opt/XIMEA/lib
     /opt/XIMEA/include
     /Library/Frameworks/m3api.framework/Libraries
