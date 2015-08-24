@@ -9,7 +9,7 @@ if( XIMEA_FOUND )
 
     if( BUILD_Ximea )
         add_to_hal_include_dirs( ${XIMEA_INCLUDE_DIR} )
-        add_to_hal_libraries( ${XIMEA_LIBRARIES} )
+        add_to_hal_libraries( ${XIMEA_LIBRARIES} ${XIMEA_LIBRARY} )
         add_to_hal_sources(
             XimeaDriver.h XimeaDriver.cpp XimeaFactory.cpp
         )

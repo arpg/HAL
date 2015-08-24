@@ -4,6 +4,11 @@
 #include <HAL/Utils/TicToc.h>
 
 #include "XimeaDriver.h"
+//Limit the bandwidth available to each camera out of this bucket of data
+//Assumes that all cameras share the same host controller
+
+
+#define USB3_HUB_DATA_RATE 2400 
 
 using namespace hal;
 
@@ -28,7 +33,8 @@ XimeaDriver::XimeaDriver(
     XI_IMG_FORMAT               mode,
     ImageRoi                    roi,
     int                         sync,
-    uint8_t                     binning
+    uint8_t                     binning,
+    uint8_t                     bus_cams
     )
 {
   XI_RETURN error = XI_OK;
@@ -41,9 +47,12 @@ XimeaDriver::XimeaDriver(
   image_width_  = roi.w;
   image_height_ = roi.h;
   binning_ = binning;
+  bus_cams_ = bus_cams;
   
   // Get number of camera devices.
   DWORD num_devices;
+  int camera_data_rate;
+  
   error = xiGetNumberDevices(&num_devices);
   _CheckError(error, "xiGetNumberDevices");
 
@@ -65,7 +74,11 @@ XimeaDriver::XimeaDriver(
 
   // Resize camera handle vector to accomodate requested cameras.
   cam_handles_.resize(num_channels_);
-
+  
+  // disable auto bandwidth calculation (before camera open)
+  xiSetParamInt(0, XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF);
+  std::cerr << "Ximea auto-bandwidth calc disabled" << std::endl;
+  
   for (size_t ii = 0; ii < num_channels_; ++ii) {
     // Retrieving a handle to the camera device.
     // Actually open the correct one if serial numbers are specified
@@ -75,14 +88,28 @@ XimeaDriver::XimeaDriver(
       }
     else
       {
+	std::cerr << "Opening Ximea index: " << ii << std::endl;
 	error = xiOpenDevice(ii, &cam_handles_[ii]);
       }
     _CheckError(error, "xiOpenDevice");
   }
+  //Calculate the data rate available per camera
 
+  if (bus_cams_ == 0)
+    {
+      //if not set explicitly, assume that whatever is detected / requested is on the same bus
+      bus_cams_ = num_channels_;
+    }
+  
+  camera_data_rate =  USB3_HUB_DATA_RATE / bus_cams_;
+  
   // Set parameters.
   bool first_cam = true; // Flag to check if we are dealing with first camera.
   for (HANDLE handle: cam_handles_) {
+    //Set data rate limit
+     error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
+     _CheckError(error, "xiSetParam (limit_bandwidth)");
+     
     // Setting "format" parameter. Has to be set first before image size!
     error = xiSetParamInt(handle, XI_PRM_IMAGE_DATA_FORMAT, image_format_);
     _CheckError(error, "xiSetParam (format)");
@@ -241,12 +268,19 @@ XimeaDriver::XimeaDriver(
         xiSetParamInt(handle, XI_PRM_GPI_MODE,  XI_GPI_TRIGGER);
       }
     }
+    
+
+   
   }
 
   // Start acquisition.
   for (HANDLE handle: cam_handles_) {
     error = xiStartAcquisition(handle);
     _CheckError(error, "xiStartAcquisition");
+
+    //Set the LED to indicate BUSY status (frame active, XI_LED_FRAME_ACTIVE)
+    xiSetParamInt(handle, XI_PRM_LED_SELECTOR,  XI_MQ_LED_STATUS2);
+    xiSetParamInt(handle, XI_PRM_LED_MODE, XI_LED_FRAME_ACTIVE);
   }
 
   // Reset image buffer.
@@ -277,7 +311,7 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
 
   // Hardware sync -- only first camera.
   if (sync_ == 2) {
-    // Trigger acquisition on Master camera.
+    // Trigger acquisition on Master camera
     xiSetParamInt(cam_handles_[0], XI_PRM_TRG_SOFTWARE, 1);
   }
 
@@ -328,11 +362,13 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
     } else {
       std::cerr << "Image format not supported." << std::endl;
     }
+
   }
 
   images.set_system_time(hal::Tic());
 
   return error == XI_OK ? true : false;
+
 }
 
 

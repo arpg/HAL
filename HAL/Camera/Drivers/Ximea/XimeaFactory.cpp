@@ -21,7 +21,8 @@ public:
     {"size", "640x480", "Capture resolution."},
     {"roi", "0+0+640x480", "ROI resolution."},
     {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
-    {"binning", "0", "Binning: Divide frame by this integer in hardware"}
+    {"binning", "0", "Binning: Divide frame by this integer in hardware"},
+    {"bus_cams", "0", "Divide the total bus bandwidth by this number per camera"}
   };
   }
 
@@ -35,6 +36,7 @@ public:
     ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
     int sync                = uri.properties.Get<int>("sync", 0);
     uint8_t binning         = uri.properties.Get<uint8_t>("binning", 0);
+    uint8_t bus_cams         = uri.properties.Get<uint8_t>("bus_cams", 0);
     
     std::vector<std::string> vector_ids;
 
@@ -71,7 +73,7 @@ public:
     }
 
     XimeaDriver* pDriver = new XimeaDriver(vector_ids, fps, exp, gain, xi_mode,
-                                           ROI, sync, binning);
+                                           ROI, sync, binning, bus_cams);
 
     return std::shared_ptr<CameraDriverInterface>(pDriver);
   }

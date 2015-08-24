@@ -8,6 +8,8 @@
 ##
 
 SET( XIMEA_SEARCH_PATHS
+    /usr/include/ximea
+    /usr/lib
     /opt/XIMEA/lib
     /opt/XIMEA/include
     /Library/Frameworks/m3api.framework/Libraries
@@ -19,7 +21,7 @@ find_path(XIMEA_INCLUDE_DIR
 )
 
 find_library( XIMEA_LIBRARY
-    NAMES libXIMEA_GenTL.dylib
+    NAMES libXIMEA_GenTL.dylib libm3api.so
     PATHS ${XIMEA_SEARCH_PATHS}
 )
 
