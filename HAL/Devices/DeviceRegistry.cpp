@@ -22,7 +22,7 @@ DeviceRegistry<BaseDevice>::~DeviceRegistry()
 }
 
 template<typename BaseDevice>
-DeviceRegistry<BaseDevice>& DeviceRegistry<BaseDevice>::I()
+DeviceRegistry<BaseDevice>& DeviceRegistry<BaseDevice>::Instance()
 {
   static DeviceRegistry<BaseDevice> s_instance;
   return s_instance;
@@ -49,8 +49,7 @@ void DeviceRegistry<BaseDevice>::RegisterAlias(
 
 template<typename BaseDevice>
 std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
-    const Uri& uri,
-    const char * /*sDeviceType*/ )
+    const Uri& uri )
 {
   // Check for aliases
   std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
@@ -72,6 +71,18 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     }
   }
 }
+
+template<typename BaseDevice>
+void DeviceRegistry<BaseDevice>::PrintRegisteredDevices()
+{
+/*
+  std::cout << "Registered device factories:\n";
+  for( auto it = m_factories.begin; it != m_factories.end; it++ ){
+     std::cout << it->first << std::endl;
+  }
+*/
+}
+
 
 template<typename BaseDevice>
 void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)

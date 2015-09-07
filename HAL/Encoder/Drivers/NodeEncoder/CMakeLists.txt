@@ -13,6 +13,5 @@ if(GLog_FOUND AND Node_FOUND )
 elseif(NOT GLOG_FOUND)
     message("GLog not found. NodeEncoder driver cannot be built")
 elseif(NOT Node_FOUND)
-  message("Node not found. NodeEncoder driver cannot be built")
-
+  message( STATUS "HAL: NOT building the NodeEncoder driver.")
 endif()

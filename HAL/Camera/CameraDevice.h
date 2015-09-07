@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Devices/SharedLoad.h>
+//#include <HAL/Devices/SharedLoad.h>
 
 #include <HAL/Messages/ImageArray.h>
 #include <HAL/Messages/Image.h>
@@ -25,14 +25,14 @@ public:
     Camera(const std::string& uri)
         : m_uri(uri)
     {
-        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri, "Cam");
+//        m_cam = DeviceRegistry<CameraDriverInterface>::Instance().Create(m_uri, "Cam");
     }
 
     ///////////////////////////////////////////////////////////////
     Camera(const hal::Uri& uri)
         : m_uri(uri)
     {
-        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri);
+        m_cam = DeviceRegistry<CameraDriverInterface>::Instance().Create(m_uri);
     }
 
     ///////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ public:
     inline void Reset()
     {
         Clear();
-        m_cam = DeviceRegistry<CameraDriverInterface>::I().Create(m_uri);
+        m_cam = DeviceRegistry<CameraDriverInterface>::Instance().Create(m_uri);
     }
 
     ///////////////////////////////////////////////////////////////
