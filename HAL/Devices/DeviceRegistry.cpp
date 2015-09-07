@@ -52,49 +52,6 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
     const Uri& uri,
     const char * /*sDeviceType*/ )
 {
-  /*
-
-  sigh. keep code for launching simulation... we're moving towards using gazebo, so this code is dying.
-
-#ifdef HAVE_TINYXML2
-  char *sEnv = getenv("SIM");
-  if(sEnv!= NULL)
-  {
-    if(sDeviceType==NULL)
-      throw DeviceException("DeviceType was not set when create was not"
-                            " called, so i don't know what driver to"
-                            " use for Simulating the Device");
-
-    std::string sSimName;
-    if( !LaunchSimulationIfNeeded(sSimName) )
-        throw DeviceException("You set SIM Environment variable, but"
-                              " Sim was not succesfully launched."
-                              " Please Read messages above this one for"
-                              " more detail.");
-
-
-    //TODO: Create a Node<device> object and return
-    //If we are here that means Simulator is launched and we have a device
-    //type passed to us, but then you knew that, didn't you.
-    std::string sDriverName = "Node"; sDriverName.append( sDeviceType);
-    hal::Uri simUri = uri;
-    simUri.SetProperties("sim=" + sSimName);
-
-    auto pf = m_factories.find(sDriverName);
-    if(pf != m_factories.end()) {
-
-      std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(simUri);
-      return dev;
-    }
-    else{
-      throw DeviceException("Simulation Device for " + std::string(sDeviceType)
-                            + " was not found. Perhaps BUILD_" + sDriverName
-                            + "was off while building HAL.");
-    }
-  }
-#endif  // HAVE_TINYXML2
-*/
-
   // Check for aliases
   std::map<std::string,std::string>::const_iterator iAlias= m_aliases.find( uri.scheme );
 
@@ -107,7 +64,6 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
   else{
     auto pf = m_factories.find(uri.scheme);
     if(pf != m_factories.end()) {
-
       std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
       return dev;
     }
