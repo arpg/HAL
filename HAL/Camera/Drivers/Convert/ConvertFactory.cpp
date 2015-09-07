@@ -45,7 +45,7 @@ public:
 
     // Create input camera
     std::shared_ptr<CameraDriverInterface> Input =
-        DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
+        DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
 
     ConvertDriver* pDriver = new ConvertDriver( Input, sFormat, dRange, dims,
                                                 channel);

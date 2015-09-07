@@ -5,6 +5,8 @@ if(USB1_FOUND)
 
     if( BUILD_AutoExposure)
 
+        message( STATUS "HAL: building 'AutoExposure' abstract camera driver.")
+
 	    add_to_hal_sources(
        		 AutoExposureDriver.h AutoExposureDriver.cpp AutoExposureFactory.cpp
     		)

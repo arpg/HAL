@@ -115,7 +115,7 @@ DC1394Driver::DC1394Driver(std::vector<unsigned int>& vCamId,
 
     dc1394camera_t* pCam = m_vCam[ii];
 
-    printf("Configuring camera with GUID %llu ...\n", pCam->guid);
+    printf("Configuring camera with GUID %lu ...\n", (long unsigned int)pCam->guid);
     fflush(stdout);
 
     dc1394_camera_reset(pCam);

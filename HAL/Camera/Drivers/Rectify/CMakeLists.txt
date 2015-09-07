@@ -2,6 +2,9 @@
   set( BUILD_Rectify true CACHE BOOL force )
 
   if( BUILD_Rectify )
+
+      message( STATUS "HAL: building 'Rectify' abstract camera driver.")
+
       find_package( Calibu 0.1 QUIET )
       if(Calibu_FOUND)    
       			  add_to_hal_libraries( ${Calibu_LIBRARIES} )

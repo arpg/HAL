@@ -7,9 +7,8 @@ if(roscpp_FOUND)
     set( BUILD_ROS_Camera true CACHE BOOL force )
 
     if( BUILD_ROS_Camera)
+        message( STATUS "HAL: building 'ROS' camera driver.")
         add_to_hal_include_dirs(
-
-
 	    ${roscpp_INCLUDE_DIRS}
 	    ${image_transport_INCLUDE_DIRS}
 	    ${std_msgs_INCLUDE_DIRS}
@@ -25,7 +24,6 @@ if(roscpp_FOUND)
         add_to_hal_sources(
 		ROSDriver.cpp
 		ROSFactory.cpp
-           
         )
 
     endif()

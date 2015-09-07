@@ -25,7 +25,7 @@ public:
 
         // Create input camera
         std::shared_ptr<CameraDriverInterface> Input =
-                DeviceRegistry<hal::CameraDriverInterface>::I().Create(input_uri);
+                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
 
 
         std::string sMethod =   uri.properties.Get<std::string>("method", "downsample");

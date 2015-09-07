@@ -1,4 +1,7 @@
 if(0)
+
+    message( STATUS "HAL: building 'ToyotaReader' camera driver.")
+
 # 1) Build the library
 set( TOYOTAREADER_DRIVER_SOURCES ToyotaReaderDriver.cpp )
 set( TOYOTAREADER_DRIVER_HEADERS ToyotaReaderDriver.h )

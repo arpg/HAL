@@ -1,9 +1,10 @@
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
-
-
-find_package( XIMEA QUIET )
+    
+find_package( XIMEA )
 
 if( XIMEA_FOUND )
+
+    message( STATUS "HAL: building 'Ximea' camera driver.")
 
     set( BUILD_Ximea true CACHE BOOL force )
 
@@ -14,4 +15,6 @@ if( XIMEA_FOUND )
             XimeaDriver.h XimeaDriver.cpp XimeaFactory.cpp
         )
     endif()
+else()
+    message( STATUS "HAL: NOT building 'Ximea' camera driver.")
 endif()

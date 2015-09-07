@@ -5,7 +5,11 @@ if(ANDROID)
   find_package(GLUES QUIET)
 
   set(BUILD_Android OFF CACHE BOOL "Build the generic Android camera driver")
+
   if(BUILD_Android)
+
+    message( STATUS "HAL: building 'Android' camera driver.")
+
     add_to_hal_include_dirs( ${AndroidKernel_INCLUDE_DIRS} )
     add_to_hal_libraries( ${AndroidKernel_LIBRARIES} )
 
