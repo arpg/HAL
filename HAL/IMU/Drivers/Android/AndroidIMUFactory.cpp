@@ -9,7 +9,7 @@ class AndroidIMUFactory : public DeviceFactory<IMUDriverInterface> {
     Params() = {};
   }
 
-  std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& /*uri*/) {
+  std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& /*uri*/) {
     return std::shared_ptr<IMUDriverInterface>(new AndroidIMUDriver());
   }
 };

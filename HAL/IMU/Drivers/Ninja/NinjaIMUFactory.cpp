@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
     {
         NinjaIMUDriver* pDriver = new NinjaIMUDriver( uri.url );
         return std::shared_ptr<IMUDriverInterface>( pDriver );

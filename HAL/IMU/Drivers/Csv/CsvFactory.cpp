@@ -16,7 +16,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string sDataSourceDir = hal::ExpandTildePath(uri.url);
         const std::string sFileAccel = uri.properties.Get( "Accel", sDataSourceDir+"/accel.txt");

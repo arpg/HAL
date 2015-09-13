@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Devices/SharedLoad.h>
+//#include <HAL/Devices/SharedLoad.h>
 
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -41,8 +41,8 @@ class IMU : public IMUDriverInterface {
     return;
   }
 
-  std::string GetDeviceProperty(const std::string& sProperty) {
-    return m_IMU->GetDeviceProperty(sProperty);
+  std::string GetProperty(const std::string& sProperty) {
+    return m_IMU->GetProperty(sProperty);
   }
 
   bool IsRunning() const override {

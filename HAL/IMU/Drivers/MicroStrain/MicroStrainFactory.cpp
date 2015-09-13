@@ -21,7 +21,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
     {
         bool capture_accel = uri.properties.Get("accel", true);
         bool capture_gyro = uri.properties.Get("gyro", true);

@@ -20,7 +20,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
     {
         NodeIMUDriver* pDriver = new NodeIMUDriver( uri.url );
         return std::shared_ptr<IMUDriverInterface>( pDriver );
