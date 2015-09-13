@@ -1,7 +1,5 @@
 #pragma once
 
-//#include <HAL/Devices/SharedLoad.h>
-
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
 #include <HAL/Utils/Uri.h>

@@ -1,7 +1,5 @@
 #pragma once
 
-//#include <HAL/Devices/SharedLoad.h>
-
 #include <HAL/Messages/ImageArray.h>
 #include <HAL/Messages/Image.h>
 

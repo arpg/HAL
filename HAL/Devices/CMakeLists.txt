@@ -4,7 +4,6 @@ set(HDRS
     DeviceRegistry.h
     DeviceTime.h
     DriverInterface.h
-    #    SharedLoad.h
 )
 
 add_to_hal_sources( DeviceTime.cpp DeviceRegistry.cpp )
