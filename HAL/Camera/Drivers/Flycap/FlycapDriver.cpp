@@ -253,7 +253,7 @@ bool FlycapDriver::Capture(hal::CameraMsg& vImages)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::string FlycapDriver::GetDeviceProperty(const std::string& /*sProperty*/)
+std::string FlycapDriver::GetProperty(const std::string& /*sProperty*/)
 {
   return std::string();
 }

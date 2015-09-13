@@ -24,7 +24,7 @@ public:
     size_t Width( size_t idx = 0 ) const;
     size_t Height( size_t idx = 0 ) const;
 
-    std::string GetDeviceProperty(const std::string& sProperty);
+    std::string GetProperty(const std::string& sProperty);
 
     /// Return rectified camera model.
     const std::shared_ptr<calibu::CameraInterface<double>> CameraModel(size_t idx = 0) const {

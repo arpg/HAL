@@ -337,7 +337,7 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
 
 
 ///////////////////////////////////////////////////////////////////////////
-std::string XimeaDriver::GetDeviceProperty(const std::string& /*sProperty*/)
+std::string XimeaDriver::GetProperty(const std::string& /*sProperty*/)
 {
   return std::string();
 }

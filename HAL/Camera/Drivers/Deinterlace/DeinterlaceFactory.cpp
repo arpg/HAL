@@ -16,7 +16,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         const Uri input_uri = Uri(uri.url);
 

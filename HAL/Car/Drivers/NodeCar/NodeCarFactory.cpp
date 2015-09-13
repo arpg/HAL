@@ -16,7 +16,7 @@ public:
         };
     }
 
-    std::shared_ptr<CarDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CarDriverInterface> CreateDevice(const Uri& uri)
     {
         NodeCarDriver* pDriver = new NodeCarDriver(uri);
         return std::shared_ptr<CarDriverInterface>( pDriver );

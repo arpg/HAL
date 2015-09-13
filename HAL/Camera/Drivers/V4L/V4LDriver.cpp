@@ -597,7 +597,7 @@ bool V4LDriver::Capture( hal::CameraMsg& vImages )
     return true;
 }
 
-//std::string V4LDriver::GetDeviceProperty(const std::string& sProperty)
+//std::string V4LDriver::GetProperty(const std::string& sProperty)
 //{
 //}
 

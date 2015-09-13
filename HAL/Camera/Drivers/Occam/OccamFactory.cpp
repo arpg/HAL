@@ -18,7 +18,7 @@ public:
     };
     
         
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri)
     {
 
       std::string serial = uri.properties.Get<std::string>("serial", "");

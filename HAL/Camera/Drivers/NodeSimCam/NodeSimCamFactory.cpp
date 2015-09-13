@@ -17,7 +17,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         NodeSimCamDriver* pDriver = new NodeSimCamDriver(uri);
         return std::shared_ptr<CameraDriverInterface>( pDriver );

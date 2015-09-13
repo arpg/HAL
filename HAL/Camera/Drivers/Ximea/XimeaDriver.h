@@ -31,7 +31,7 @@ public:
     return std::shared_ptr<CameraDriverInterface>();
   }
 
-  std::string GetDeviceProperty(const std::string& property);
+  std::string GetProperty(const std::string& property);
 
   size_t NumChannels() const;
 

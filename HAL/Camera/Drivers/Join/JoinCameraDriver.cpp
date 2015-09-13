@@ -101,7 +101,7 @@ std::vector<hal::CameraMsg>& JoinCameraDriver::WorkTeam::process()
   return m_ImageData;
 }
 
-std::string JoinCameraDriver::GetDeviceProperty(const std::string&)
+std::string JoinCameraDriver::GetProperty(const std::string&)
 {
   return std::string();
 }

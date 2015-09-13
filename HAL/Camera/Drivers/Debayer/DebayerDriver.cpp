@@ -55,9 +55,9 @@ bool DebayerDriver::Capture( hal::CameraMsg& vImages )
   return true;
 }
 
-std::string DebayerDriver::GetDeviceProperty(const std::string& sProperty)
+std::string DebayerDriver::GetProperty(const std::string& sProperty)
 {
-  return m_Input->GetDeviceProperty(sProperty);
+  return m_Input->GetProperty(sProperty);
 }
 
 size_t DebayerDriver::NumChannels() const

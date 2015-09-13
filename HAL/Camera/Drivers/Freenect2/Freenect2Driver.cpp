@@ -205,7 +205,7 @@ bool Freenect2Driver::Capture(hal::CameraMsg& vImages) {
 	return true;
 }
 
-std::string Freenect2Driver::GetDeviceProperty(const std::string&) {
+std::string Freenect2Driver::GetProperty(const std::string&) {
 	return std::string();
 }
 

@@ -22,7 +22,7 @@ class NodeSimCamDriver : public CameraDriverInterface
     return std::shared_ptr<CameraDriverInterface>();
   }
 
-  std::string GetDeviceProperty(const std::string& sProperty);
+  std::string GetProperty(const std::string& sProperty);
 
   bool InitNode();
   bool RegisterInHost(const Uri& uri);

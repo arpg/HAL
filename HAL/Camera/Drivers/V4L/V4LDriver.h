@@ -31,7 +31,7 @@ public:
 
     bool Capture( hal::CameraMsg& vImages );
 
-//    std::string GetDeviceProperty(const std::string& sProperty);
+//    std::string GetProperty(const std::string& sProperty);
 
     inline std::shared_ptr<CameraDriverInterface> GetInputDevice() {
         return std::shared_ptr<CameraDriverInterface>();

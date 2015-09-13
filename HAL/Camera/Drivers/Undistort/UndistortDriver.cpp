@@ -97,9 +97,9 @@ bool UndistortDriver::Capture( hal::CameraMsg& vImages )
   return success;
 }
 
-std::string UndistortDriver::GetDeviceProperty(const std::string& sProperty)
+std::string UndistortDriver::GetProperty(const std::string& sProperty)
 {
-  return m_Input->GetDeviceProperty(sProperty);
+  return m_Input->GetProperty(sProperty);
 }
 
 size_t UndistortDriver::NumChannels() const

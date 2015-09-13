@@ -22,7 +22,7 @@ public:
     bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
 
-    std::string GetDeviceProperty(const std::string& sProperty);
+    std::string GetProperty(const std::string& sProperty);
 
     size_t NumChannels() const { return m_Input->NumChannels(); }
     size_t Width( size_t /*idx*/ = 0 ) const { return m_Input->Width(); }

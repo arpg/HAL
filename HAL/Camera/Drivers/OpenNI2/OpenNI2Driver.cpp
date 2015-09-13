@@ -410,7 +410,7 @@ uint16_t* OpenNI2Driver::AutoScale(const void* src, uint32_t pixelCount)
   return dest;
 }
 
-std::string OpenNI2Driver::GetDeviceProperty(const std::string& sProperty)
+std::string OpenNI2Driver::GetProperty(const std::string& sProperty)
 {
   if(sProperty == hal::DeviceDepthBaseline) {
     return std::to_string( m_DepthBaseline );

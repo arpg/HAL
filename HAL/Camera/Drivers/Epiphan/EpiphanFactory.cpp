@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri)
     {
         EpiphanDriver* pDriver = new EpiphanDriver();
         return std::shared_ptr<CameraDriverInterface>( pDriver );

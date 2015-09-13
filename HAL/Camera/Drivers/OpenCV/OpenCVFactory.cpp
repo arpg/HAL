@@ -10,7 +10,7 @@ class OpenCVFactory : public DeviceFactory<CameraDriverInterface> {
     Params() = {};
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri) {
+  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri) {
     bool bGrey            = uri.properties.Get<bool>("grey", false);
     std::string sName     = uri.properties.Get<std::string>("name", "OpenCVCam");
 

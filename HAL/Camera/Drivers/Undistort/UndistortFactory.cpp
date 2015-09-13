@@ -17,7 +17,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         const Uri input_uri = Uri(uri.url);
 
@@ -31,7 +31,7 @@ public:
 
         if(!FileExists(filename))
         {
-            std::string dir = input->GetDeviceProperty(hal::DeviceDirectory);
+            std::string dir = input->GetProperty("dir");
             while(!dir.empty() && !FileExists(dir+"/"+filename)) {
                 dir = DirUp(dir);
             }

@@ -20,7 +20,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         ImageDim Dims       = uri.properties.Get("size", ImageDim(1920,1080));
         bool bRGB           = uri.properties.Get("rgb", true);

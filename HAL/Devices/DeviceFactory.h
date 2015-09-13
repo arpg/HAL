@@ -20,29 +20,29 @@ public:
     };
     
     DeviceFactory(std::string name)
-        : m_name(name)
+        : name_(name)
     {
-        Registry().RegisterFactory(m_name, this);
+        Registry().RegisterFactory(name_, this);
     }
     
     virtual ~DeviceFactory() {}
-    virtual std::shared_ptr<BaseDevice> GetDevice(const Uri& uri) = 0;
-    
+    virtual std::shared_ptr<BaseDevice> CreateDriver(const Uri& uri) = 0;
+ 
     virtual std::vector<std::string> AvailableDevices() {
         return std::vector<std::string>();
     }
-    
+ 
     inline std::vector<Param>& Params() {
-        return m_params;
+        return params_;
     }
-    
+ 
     inline static hal::DeviceRegistry<BaseDevice>& Registry() {
         return hal::DeviceRegistry<BaseDevice>::Instance();
     }    
-    
+ 
 protected:
-    std::string m_name;
-    std::vector<Param> m_params;
+    std::string name_;
+    std::vector<Param> params_;
 };
 
 }

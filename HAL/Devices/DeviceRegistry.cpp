@@ -63,7 +63,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
   else{
     auto pf = m_factories.find(uri.scheme);
     if(pf != m_factories.end()) {
-      std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
+      std::shared_ptr<BaseDevice> dev = pf->second->CreateDriver(uri);
       return dev;
     }
     else{
@@ -72,15 +72,14 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
   }
 }
 
+// list all drivers registered with this device driver registery
 template<typename BaseDevice>
-void DeviceRegistry<BaseDevice>::PrintRegisteredDevices()
+void DeviceRegistry<BaseDevice>::ListDrivers()
 {
-/*
-  std::cout << "Registered device factories:\n";
-  for( auto it = m_factories.begin; it != m_factories.end; it++ ){
-     std::cout << it->first << std::endl;
+  std::cout << "Registered device driver factories:\n";
+  for( auto& it : m_factories ){
+     std::cout << it.first << std::endl;
   }
-*/
 }
 
 
@@ -97,4 +96,6 @@ template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
 template class DeviceRegistry<hal::CarDriverInterface>;
 
+
 }
+

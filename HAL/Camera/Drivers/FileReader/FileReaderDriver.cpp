@@ -121,8 +121,9 @@ bool FileReaderDriver::Capture(hal::CameraMsg& vImages) {
   return true;
 }
 
-std::string FileReaderDriver::GetDeviceProperty(const std::string& sProperty) {
-  if(sProperty == hal::DeviceDirectory) {
+std::string FileReaderDriver::GetProperty(const std::string& sProperty) 
+{
+  if(sProperty == "dir") {
     return m_sBaseDir;
   }
   else if(sProperty == "name") {

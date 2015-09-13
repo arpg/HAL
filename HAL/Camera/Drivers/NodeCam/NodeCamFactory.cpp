@@ -14,7 +14,7 @@ public:
     Params() = {};
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
   {
     std::string local_node = uri.properties.Get<std::string>("name", "nodecam");
     double timeout = uri.properties.Get<double>("timeout", 3.);

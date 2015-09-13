@@ -104,7 +104,7 @@ bool NodeSimCamDriver::Capture( hal::CameraMsg& vImages )
   return true;
 }
 
-std::string NodeSimCamDriver::GetDeviceProperty(const std::string& sProperty)
+std::string NodeSimCamDriver::GetProperty(const std::string& sProperty)
 {
   // TODO add property with suffix of camera (ie. DepthBaseline0, DepthBaseline1)
   // and return correct vector info

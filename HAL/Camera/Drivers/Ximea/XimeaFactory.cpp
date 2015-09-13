@@ -25,7 +25,7 @@ public:
   };
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
   {
     float fps               = uri.properties.Get<float>("fps", 0);
     int exp                 = uri.properties.Get<int>("exp", 0);

@@ -53,8 +53,8 @@ bool ProtoReaderDriver::Capture( hal::CameraMsg& vImages ) {
   return success && vImages.image_size() > 0;
 }
 
-std::string ProtoReaderDriver::GetDeviceProperty(const std::string& sProperty) {
-  if(sProperty == hal::DeviceDirectory) {
+std::string ProtoReaderDriver::GetProperty(const std::string& sProperty) {
+  if(sProperty == "dir") {
     return DirUp(m_reader.GetFilename());
   }
   return std::string();

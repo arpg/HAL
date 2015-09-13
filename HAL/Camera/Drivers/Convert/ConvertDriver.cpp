@@ -242,9 +242,9 @@ bool ConvertDriver::Capture( hal::CameraMsg& vImages )
   return true;
 }
 
-std::string ConvertDriver::GetDeviceProperty(const std::string& sProperty)
+std::string ConvertDriver::GetProperty(const std::string& sProperty)
 {
-  return m_Input->GetDeviceProperty(sProperty);
+  return m_Input->GetProperty(sProperty);
 }
 
 size_t ConvertDriver::NumChannels() const

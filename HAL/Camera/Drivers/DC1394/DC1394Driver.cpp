@@ -407,7 +407,7 @@ bool DC1394Driver::Capture( hal::CameraMsg& vImages )
 }
 
 /////////////////////////////////////////////////////////////////////////////
-std::string DC1394Driver::GetDeviceProperty(const std::string& /*sProperty*/)
+std::string DC1394Driver::GetProperty(const std::string& /*sProperty*/)
 {
   return std::string();
 }

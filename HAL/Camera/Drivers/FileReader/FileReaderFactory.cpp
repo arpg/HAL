@@ -18,7 +18,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri) {
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri) {
         size_t StartFrame  = uri.properties.Get("startframe", 0);
         bool Loop          = uri.properties.Get("loop", false);
         size_t BufferSize  = uri.properties.Get("buffer", 10);

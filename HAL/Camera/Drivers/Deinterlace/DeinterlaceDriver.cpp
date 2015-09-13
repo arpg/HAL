@@ -49,9 +49,9 @@ bool DeinterlaceDriver::Capture( hal::CameraMsg& vImages )
     return true;
 }
 
-std::string DeinterlaceDriver::GetDeviceProperty(const std::string& sProperty)
+std::string DeinterlaceDriver::GetProperty(const std::string& sProperty)
 {
-    return m_Input->GetDeviceProperty(sProperty);
+    return m_Input->GetProperty(sProperty);
 }
 
 size_t DeinterlaceDriver::NumChannels() const

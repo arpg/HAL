@@ -63,9 +63,9 @@ bool SplitDriver::Capture( hal::CameraMsg& vImages )
     return true;
 }
 
-std::string SplitDriver::GetDeviceProperty(const std::string& sProperty)
+std::string SplitDriver::GetProperty(const std::string& sProperty)
 {
-    return m_Input->GetDeviceProperty(sProperty);
+    return m_Input->GetProperty(sProperty);
 }
 
 size_t SplitDriver::NumChannels() const

@@ -10,7 +10,7 @@ class KitKatFactory : public DeviceFactory<CameraDriverInterface> {
     Params() = {};
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& /*uri*/) {
+  std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& /*uri*/) {
     return std::shared_ptr<CameraDriverInterface>(new KitKatDriver);
   }
 };

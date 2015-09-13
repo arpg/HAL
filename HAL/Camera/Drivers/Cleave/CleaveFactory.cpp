@@ -19,7 +19,7 @@ public:
     };
     
         
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri)
     {
       hal::Uri subUri(uri.url);
       int maxChannel = uri.properties.Get<int>("max", 0);

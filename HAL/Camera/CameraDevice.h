@@ -131,9 +131,9 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
-    std::string GetDeviceProperty(const std::string& sProperty)
+    std::string GetProperty(const std::string& sProperty)
     {
-        return m_cam->GetDeviceProperty(sProperty);
+        return m_cam->GetProperty(sProperty);
     }
 
     ///////////////////////////////////////////////////////////////
@@ -152,5 +152,17 @@ protected:
     hal::Uri                                m_uri;
     std::shared_ptr<CameraDriverInterface>  m_cam;
 };
+
+// Simplified access to the camera registery 
+hal::DeviceRegistry<CameraDriverInterface>& CameraRegistery()
+{
+  return hal::DeviceRegistry<CameraDriverInterface>::Instance();
+}
+
+void ListCameraDrivers()
+{
+   CameraRegistery().ListDrivers();
+}
+
 
 } /* namespace */

@@ -47,7 +47,7 @@ public:
 		return std::shared_ptr<CameraDriverInterface>();
 	}
 
-	std::string GetDeviceProperty(const std::string& sProperty);
+	std::string GetProperty(const std::string& sProperty);
 
 	size_t NumChannels() const;
 	size_t Width(size_t idx = 0) const;

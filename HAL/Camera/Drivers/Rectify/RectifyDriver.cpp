@@ -80,9 +80,9 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
   return success;
 }
 
-std::string RectifyDriver::GetDeviceProperty(const std::string& sProperty)
+std::string RectifyDriver::GetProperty(const std::string& sProperty)
 {
-  return m_input->GetDeviceProperty(sProperty);
+  return m_input->GetProperty(sProperty);
 }
 
 size_t RectifyDriver::NumChannels() const

@@ -110,7 +110,7 @@ bool EpiphanDriver::Capture( hal::CameraMsg& vImages )
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::string EpiphanDriver::GetDeviceProperty(const std::string& /*sProperty*/)
+std::string EpiphanDriver::GetProperty(const std::string& /*sProperty*/)
 {
     return std::string();
 }

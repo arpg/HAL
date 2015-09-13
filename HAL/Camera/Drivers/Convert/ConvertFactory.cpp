@@ -22,7 +22,7 @@ public:
   };
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+  std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri)
   {
     std::string sFormat = uri.properties.Get<std::string>("fmt", "MONO8");
     std::string sRange = uri.properties.Get<std::string>("range", "1");

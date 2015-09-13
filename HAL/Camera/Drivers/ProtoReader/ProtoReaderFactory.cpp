@@ -16,7 +16,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string file = ExpandTildePath(uri.url);
         size_t startframe  = uri.properties.Get("startframe", 0);

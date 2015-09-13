@@ -13,7 +13,7 @@ public:
     Params() = {};
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
   {
     std::vector<Uri> suburis = splitUri(uri.url);
     std::vector<std::shared_ptr<CameraDriverInterface>> cameras;

@@ -72,7 +72,7 @@ bool NodeCamDriver::Capture(hal::CameraMsg& vImages)
   return true;
 }
 
-std::string NodeCamDriver::GetDeviceProperty(const std::string&)
+std::string NodeCamDriver::GetProperty(const std::string&)
 {
   return std::string();
 }

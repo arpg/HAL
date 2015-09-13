@@ -22,7 +22,7 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         ImageDim Dims       = uri.properties.Get("size", ImageDim(640,480));
         unsigned int nFPS   = uri.properties.Get("fps", 30);
