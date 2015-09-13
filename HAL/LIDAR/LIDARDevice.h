@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Devices/SharedLoad.h>
+//#include <HAL/Devices/SharedLoad.h>
 
 #include <HAL/LIDAR/LIDARDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -49,9 +49,9 @@ class LIDAR : public LIDARDriverInterface
         }
 
         ///////////////////////////////////////////////////////////////
-        std::string GetDeviceProperty(const std::string& sProperty)
+        std::string GetProperty(const std::string& sProperty)
         {
-            return m_LIDAR->GetDeviceProperty(sProperty);
+            return m_LIDAR->GetProperty(sProperty);
         }
 
 

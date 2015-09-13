@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<LIDARDriverInterface> GetDevice(const Uri& /*uri*/)
+    std::shared_ptr<LIDARDriverInterface> CreateDriver(const Uri& /*uri*/)
     {
         VelodyneDriver* pDriver = new VelodyneDriver();
         return std::shared_ptr<LIDARDriverInterface>( pDriver );

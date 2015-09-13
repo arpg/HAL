@@ -14,7 +14,7 @@ public:
         };
     }
 
-    std::shared_ptr<LIDARDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<LIDARDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string file = ExpandTildePath(uri.url);
 
