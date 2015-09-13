@@ -17,7 +17,7 @@ public:
         };
     }
 
-    std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<EncoderDriverInterface> CreateDriver(const Uri& uri)
     {
         std::string portname  = uri.properties.Get("portname", std::string("/dev/pcan32"));
         int baudrate = uri.properties.Get("baudrate", 500000);

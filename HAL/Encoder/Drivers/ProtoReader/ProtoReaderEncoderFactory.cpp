@@ -14,7 +14,7 @@ public:
         };
     }
 
-    std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<EncoderDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string file = ExpandTildePath(uri.url);
 

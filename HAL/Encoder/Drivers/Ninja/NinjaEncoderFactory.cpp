@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<EncoderDriverInterface> CreateDriver(const Uri& uri)
     {
         NinjaEncoderDriver* pDriver = new NinjaEncoderDriver( uri.url );
         return std::shared_ptr<EncoderDriverInterface>( pDriver );

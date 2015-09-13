@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Devices/SharedLoad.h>
+//#include <HAL/Devices/SharedLoad.h>
 
 #include <HAL/Encoder/EncoderDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -50,9 +50,9 @@ class Encoder : public EncoderDriverInterface
         }
 
         ///////////////////////////////////////////////////////////////
-        std::string GetDeviceProperty(const std::string& sProperty)
+        std::string GetProperty(const std::string& sProperty)
         {
-            return m_Encoder->GetDeviceProperty(sProperty);
+            return m_Encoder->GetProperty(sProperty);
         }
 
 

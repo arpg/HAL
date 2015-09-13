@@ -20,7 +20,7 @@ public:
         };
     }
 
-    std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<EncoderDriverInterface> CreateDriver(const Uri& uri)
     {
         std::string local_node = uri.properties.Get<std::string>(
               "name", "nodeencoder");
