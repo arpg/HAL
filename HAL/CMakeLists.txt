@@ -151,7 +151,6 @@ add_subdirectory( IMU )
 add_subdirectory( Posys )
 add_subdirectory( Encoder )
 add_subdirectory( LIDAR )
-add_subdirectory( Car )
 add_subdirectory( Utils )
 
 set( PROTO_DIR Messages )
@@ -172,8 +171,6 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Pose.proto
     ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/Lidar.proto
-    ${PROTO_DIR}/NodeCamMessage.proto
-    ${PROTO_DIR}/NodeCar.proto
 )
 
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
