@@ -5,6 +5,8 @@ if(USB1_FOUND)
     set( BUILD_UVC true CACHE BOOL force )
 
     if( BUILD_UVC )
+    
+        message( STATUS "HAL: building 'UVC' camera driver.")
 
         add_to_hal_include_dirs(
             ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include

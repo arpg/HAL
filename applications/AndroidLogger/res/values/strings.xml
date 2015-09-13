@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_name">Logger</string>
-    <string name="action_settings">Settings</string>
-    <string name="record">Record</string>
-    <string name="stop_record">Stop</string>
-
-</resources>

@@ -10,3 +10,14 @@ Main Developers:
 * Nima Keivan
 * Steven Lovegrove
 * Gabe Sibley
+
+Dependencies
+* opencv
+* google protobuf
+* google glog
+* google gflags
+* tinyxml2
+* Sophus
+* Calibu
+
+sudo apt-get install libprotobuf-dev libopencv-dev libgoogle-glog-dev libtinyxml2-dev protobuf-compiler

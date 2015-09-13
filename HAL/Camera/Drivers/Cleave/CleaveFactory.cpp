@@ -32,7 +32,7 @@ public:
 	}
       // Create input camera
       std::shared_ptr<CameraDriverInterface> InCam =
-	DeviceRegistry<hal::CameraDriverInterface>::I().Create(subUri);      
+	DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
       CleaveDriver* rs = new CleaveDriver(InCam, maxChannel, minChannel);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }

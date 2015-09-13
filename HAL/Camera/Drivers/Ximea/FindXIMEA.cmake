@@ -19,7 +19,7 @@ find_path(XIMEA_INCLUDE_DIR
 )
 
 find_library( XIMEA_LIBRARY
-    NAMES libXIMEA_GenTL.dylib
+    NAMES libXIMEA_GenTL.dylib libXIMEA_GenTL.so
     PATHS ${XIMEA_SEARCH_PATHS}
 )
 

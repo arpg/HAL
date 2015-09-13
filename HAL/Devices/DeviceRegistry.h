@@ -6,11 +6,6 @@
 #include <memory>
 #include <map>
 
-
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
-    #error "C++11 is required to use HAL. Please enable -std=c++0x or -std=c++11 flag on compiler options."
-#endif
-
 namespace hal
 {
 
@@ -21,12 +16,13 @@ template<typename BaseDevice>
 class DeviceRegistry
 {
 public:
-    static DeviceRegistry<BaseDevice>& I();
+    /// global device registery singleton 
+    static DeviceRegistry<BaseDevice>& Instance();
 
     DeviceRegistry();
     ~DeviceRegistry();
 
-    // Register factory pointer accessible by device_name
+    /// Register factory pointer accessible by device_name
     void RegisterFactory(
             const std::string& device_name,
             DeviceFactory<BaseDevice>* factory
@@ -38,17 +34,15 @@ public:
             const std::string& alias
             );
 
-    //std::shared_ptr<BaseDevice> Create(const Uri& uri);
-    std::shared_ptr<BaseDevice> Create(const Uri& uri, const char* sDeviceType=NULL);
+    // Get factory associated with uri
+    std::shared_ptr<BaseDevice> Create(const Uri& uri);
 
     void Destroy(BaseDevice* dev);
 
+    // print the map<string,Dec> table 
+    void PrintRegisteredDevices();
+
 protected:
-    struct DevInstance
-    {
-        Uri uri;
-        std::shared_ptr<BaseDevice> dev;
-    };
 
     // Map of device names to aliases.
     std::map<std::string,std::string> m_aliases;
@@ -56,6 +50,13 @@ protected:
     // Map of device name -> factory instance
     std::map<std::string,DeviceFactory<BaseDevice>*> m_factories;
 
+/*
+    struct DevInstance
+    {
+        Uri uri;
+        std::shared_ptr<BaseDevice> dev;
+    };
+*/
 //    // Vector of running instances
 //    std::vector<DevInstance> m_instances;
 };

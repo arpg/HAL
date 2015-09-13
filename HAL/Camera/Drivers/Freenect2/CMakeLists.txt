@@ -15,6 +15,9 @@ if( BUILD_Freenect2 )
   set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)
 
   if( freenect2_FOUND )
+
+    message( STATUS "HAL: building 'Freenect2' camera driver.")
+
     add_to_hal_include_dirs( ${freenect2_INCLUDE_DIRS} )
     add_to_hal_libraries( ${freenect2_LIBRARY} )
     add_to_hal_sources( Freenect2Driver.h Freenect2Driver.cpp

@@ -6,6 +6,9 @@ if(ANDROID)
 
   set(BUILD_KitKat OFF CACHE BOOL "Build the KitKat camera driver")
   if(BUILD_KitKat)
+
+    message( STATUS "HAL: building 'KitKat' camera driver.")
+
     add_to_hal_include_dirs(${AndroidKernel_INCLUDE_DIRS})
     add_to_hal_libraries(${AndroidKernel_LIBRARIES})
 

@@ -4,6 +4,8 @@ option( BUILD_RealSense "Build RealSense Driver." OFF )
 
 if(USB1_FOUND AND BUILD_RealSense) # to be added: AND BUILD_UVC
 
+        message( STATUS "HAL: building 'RealSense' camera driver.")
+
         add_to_hal_include_dirs(
             ${CMAKE_CURRENT_SOURCE_DIR}/libuvc/include
             ${USB1_INCLUDE_DIRS}

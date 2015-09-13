@@ -3,6 +3,8 @@ option( BUILD_Occam "Build Occam Driver." OFF )
 
 if( OccamIndigo_FOUND )
     if( BUILD_Occam )
+
+        message( STATUS "HAL: building 'Occam' camera driver.")
         add_to_hal_include_dirs(
 	    ${OccamIndigo_INCLUDE_DIRS}	
         )

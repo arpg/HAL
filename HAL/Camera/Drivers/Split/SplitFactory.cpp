@@ -26,7 +26,7 @@ public:
 
         // Create input camera
         std::shared_ptr<CameraDriverInterface> InCam =
-                DeviceRegistry<hal::CameraDriverInterface>::I().Create(subUri);
+                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);
 
         std::vector<ImageRoi> vROI;
 
