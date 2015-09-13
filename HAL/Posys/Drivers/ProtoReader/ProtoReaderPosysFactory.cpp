@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<PosysDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string file = ExpandTildePath(uri.url);
 

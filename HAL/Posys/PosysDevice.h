@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Devices/SharedLoad.h>
+//#include <HAL/Devices/SharedLoad.h>
 
 #include <HAL/Posys/PosysDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -34,8 +34,8 @@ class Posys : public PosysDriverInterface {
     }
   }
 
-  std::string GetDeviceProperty(const std::string& sProperty) {
-    return m_Posys->GetDeviceProperty(sProperty);
+  std::string GetProperty(const std::string& sProperty) {
+    return m_Posys->GetProperty(sProperty);
   }
 
   bool IsRunning() const override {

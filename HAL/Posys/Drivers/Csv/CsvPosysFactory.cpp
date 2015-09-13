@@ -21,7 +21,7 @@ public:
         };
     }
 
-    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
+    std::shared_ptr<PosysDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string sDataSourceDir = hal::ExpandTildePath(uri.url);
         const int nObjectId = uri.properties.Get("id", 0);
