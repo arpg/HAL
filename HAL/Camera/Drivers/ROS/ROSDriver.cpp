@@ -1,12 +1,31 @@
 #include "ROSDriver.h"
 
+#include <boost/bind.hpp>
 
+const char* default_size="640x480";
 
-namespace hal {
+namespace hal 
+{
 
-  ROSDriver::ROSDriver(string m_topics, string m_sizes, int m_grayScale )
-    : topics(m_topics), sizes(m_sizes), grayScale(m_grayScale)
+  ROSDriver::ROSDriver( const Uri& uri )
   {
+    // sat sane default parameters
+    CameraDriverInterface::SetDefaultProperties({
+        {"topics","/image_left","Topics to subscribe to, separated by +"},
+        {"sizes", default_size,"Size of each image (wxh), separated by +"},
+        {"gray_scale","0","Gray images scaled dynamically to the output range."},
+        });
+    if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+      std::cerr << "ROSDriver knows about the following properties:\n";
+      CameraDriverInterface::PrintPropertyMap();
+      return;
+    }
+
+    topics_    = CameraDriverInterface::GetProperty<std::string>("topics", "/image_left");
+    sizes_     = CameraDriverInterface::GetProperty<std::string>("sizes", default_size);
+    grayScale_ = CameraDriverInterface::GetProperty<int>("gray_scale", 0);
+
+
     int argc = 0;
     ros::init(argc, NULL, "ros_hal", ros::init_options::AnonymousName );
     spinner = new ros::AsyncSpinner(2);
@@ -19,7 +38,7 @@ namespace hal {
     parseSizes();
     Start(); //hardcoded for the ROS camera's vid/pid
   }
-  
+ 
   ROSDriver::~ROSDriver()
   {
     Stop();
@@ -33,7 +52,7 @@ namespace hal {
   
   void ROSDriver::parseSizes()
   {
-    vector<string> sizeList = split<string>(sizes, "+");
+    vector<string> sizeList = split<string>(sizes_, "+");
     int numSizes = sizeList.size();
     for (int i=0; i< numSizes; i++)
       {
@@ -58,11 +77,19 @@ namespace hal {
     return heightList[idx];
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+  std::string ROSDriver::GetProperty(const std::string& /*sProperty*/)
+  {
+    return std::string();
+  }
+
+
+
   void ROSDriver::Start()
   {
     
     //Split the topic list and instantiate a subscriber for each one
-    topicList = split<string>(topics, "+");
+    topicList = split<string>(topics_, "+");
     topicCount = topicList.size();
 
     cout << "Creating " << topicCount << " subscribers" << endl;
@@ -162,7 +189,7 @@ namespace hal {
 	  }
 	else if ((freshImages[i]->encoding == sensor_msgs::image_encodings::MONO16 ||
 		  freshImages[i]->encoding == sensor_msgs::image_encodings::TYPE_16UC1) &&
-		 grayScale)
+		 grayScale_)
 	  {
 	    
 	    //Dynamically adjust the scale of the uint16_t to occupy the full range
@@ -355,5 +382,4 @@ namespace hal {
     destImage_sp = boost::shared_ptr<sensor_msgs::Image>(destImage);
   }
 	   
-  
 } //namespace

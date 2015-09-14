@@ -1,23 +1,18 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "V4LDriver.h"
 
 namespace hal
 {
 
-class V4LFactory : public DeviceFactory<CameraDriverInterface>
+class V4LFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     V4LFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<CameraDriverInterface>(name){}
 
     std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
-        const std::string devname = uri.url;
-        V4LDriver* pDriver = new V4LDriver(devname, IO_METHOD_MMAP);
+        V4LDriver* pDriver = new V4LDriver( uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };

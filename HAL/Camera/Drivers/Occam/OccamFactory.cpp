@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "OccamDriver.h"
 
 
@@ -6,11 +6,11 @@
 namespace hal
 {
 
-class OccamFactory : public DeviceFactory<CameraDriverInterface>
+class OccamFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     OccamFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
       Params() = {
 	{"serial", "0", "Serial number of the camera to open (default: first discovered)"},

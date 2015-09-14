@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "UvcDriver.h"
 
 namespace hal
 {
 
-class UvcFactory : public DeviceFactory<CameraDriverInterface>
+class UvcFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     UvcFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
         };

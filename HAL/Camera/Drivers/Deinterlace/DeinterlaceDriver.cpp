@@ -6,13 +6,26 @@ namespace hal
 {
 
 DeinterlaceDriver::DeinterlaceDriver(
-    std::shared_ptr<CameraDriverInterface> Input
+    std::shared_ptr<CameraDriverInterface> input_cam, 
+    const Uri& uri
   )
-    : m_Input(Input),
-      m_nImgWidth(Input->Width()),
-      m_nImgHeight(Input->Height())
+    : m_Input(input_cam),
+      m_nImgWidth(input_cam->Width()),
+      m_nImgHeight(input_cam->Height())
 {
+  // sat sane default parameters
+//  CameraDriverInterface::SetDefaultProperties({   });
+  if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "DeinterlaceDriver knows about the following properties:\n";
+    CameraDriverInterface::PrintPropertyMap();
+    return;
+  }
   m_Buffer = (unsigned char*)malloc(m_nImgHeight*m_nImgWidth*2);
+}
+
+DeinterlaceDriver::~DeinterlaceDriver()
+{
+  free(m_Buffer);
 }
 
 bool DeinterlaceDriver::Capture( hal::CameraMsg& vImages )
@@ -47,11 +60,6 @@ bool DeinterlaceDriver::Capture( hal::CameraMsg& vImages )
     pbImg->set_format( m_Message.mutable_image(0)->format() );
 
     return true;
-}
-
-std::string DeinterlaceDriver::GetProperty(const std::string& sProperty)
-{
-    return m_Input->GetProperty(sProperty);
 }
 
 size_t DeinterlaceDriver::NumChannels() const

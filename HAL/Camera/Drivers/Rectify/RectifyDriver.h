@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 #pragma GCC system_header
 #include <calibu/cam/camera_crtp.h>
@@ -16,17 +17,14 @@ namespace hal
 class RectifyDriver : public CameraDriverInterface
 {
 public:
-    RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
-            const std::shared_ptr<calibu::Rig<double>> rig);
+    RectifyDriver(std::shared_ptr<CameraDriverInterface> input, const Uri& uri);
 
     bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_input; }
+    std::shared_ptr<CameraDriverInterface> GetInputDriver() { return m_input; }
 
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;
     size_t Height( size_t /*idx*/ = 0 ) const;
-
-    std::string GetProperty(const std::string& sProperty);
 
     /// Return rectified right-from-left camera transform.
     inline const Sophus::SE3d& T_rl() const {

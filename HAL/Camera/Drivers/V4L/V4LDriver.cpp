@@ -45,12 +45,13 @@ inline std::string V4lToString(int32_t v)
     return std::string(cc);
 }
 
-V4LDriver::V4LDriver(std::string dev_name, io_method io)
-    : io(io), fd(-1), buffers(0), n_buffers(0), running(false)
+V4LDriver::V4LDriver( const Uri& uri )
+    : fd(-1), buffers(0), n_buffers(0), running(false)
 {
-    open_device(dev_name.c_str());
-    init_device(0,0,0);
-    Start();
+  io = IO_METHOD_MMAP;
+  open_device( uri.url.c_str() );
+  init_device(0,0,0);
+  Start();
 }
 
 V4LDriver::~V4LDriver()
@@ -89,11 +90,12 @@ bool V4LDriver::GrabNext( unsigned char* image )
             if (EINTR == errno)
                 continue;
 
-            throw DeviceException ("select", strerror(errno));
+            std::cerr << "VFLDriver: select() " << strerror(errno) << "\n.";
         }
 
         if (0 == r) {
-            throw DeviceException("select Timeout", strerror(errno));
+          std::cerr << "VFLDriver: select Timeout" << strerror(errno) << "\n.";
+          return false;
         }
 
         if (ReadFrame(image))
@@ -122,7 +124,8 @@ int V4LDriver::ReadFrame(unsigned char* image)
                 /* fall through */
 
             default:
-                throw DeviceException("read", strerror(errno));
+                std::cerr <<"V4LDriver: read" << strerror(errno) << "\n.";
+                return errno;
             }
         }
 
@@ -148,7 +151,8 @@ int V4LDriver::ReadFrame(unsigned char* image)
                 /* fall through */
 
             default:
-                throw DeviceException("VIDIOC_DQBUF", strerror(errno));
+               std::cerr << "V4LDriver: VIDIOC_DQBUF " << strerror(errno) << "\n";
+               return errno;
             }
         }
 
@@ -157,9 +161,10 @@ int V4LDriver::ReadFrame(unsigned char* image)
         //            process_image (buffers[buf.index].start);
         memcpy(image,buffers[buf.index].start,buffers[buf.index].length);
 
-
-        if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-            throw DeviceException("VIDIOC_QBUF", strerror(errno));
+        if (-1 == xioctl (fd, VIDIOC_QBUF, &buf)){
+          std::cerr << "V4LDriver: VIDIOC_QBUF " << strerror(errno) << "\n";
+          return errno;
+        }
 
         break;
 
@@ -180,7 +185,8 @@ int V4LDriver::ReadFrame(unsigned char* image)
                 /* fall through */
 
             default:
-                throw DeviceException("VIDIOC_DQBUF", strerror(errno));
+                std::cerr << "V4LDriver: VIDIOC_DQBUF " << strerror(errno) << "\n.";
+                return errno;
             }
         }
 
@@ -195,8 +201,10 @@ int V4LDriver::ReadFrame(unsigned char* image)
         memcpy(image,(void *)buf.m.userptr,buf.length);
 
 
-        if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-            throw DeviceException("VIDIOC_QBUF", strerror(errno));
+        if (-1 == xioctl (fd, VIDIOC_QBUF, &buf)){
+          std::cerr << "V4LDriver: VIDIOC_QBUF " << strerror(errno) << "\n.";
+            return errno;
+        } 
 
         break;
     }
@@ -217,8 +225,10 @@ void V4LDriver::Stop()
     case IO_METHOD_USERPTR:
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-        if (-1 == xioctl (fd, VIDIOC_STREAMOFF, &type))
-            throw DeviceException("VIDIOC_STREAMOFF", strerror(errno));
+        if (-1 == xioctl (fd, VIDIOC_STREAMOFF, &type)){
+            std::cerr << "V4Driver: VIDIOC_STREAMOFF " << strerror(errno) << "\n.";
+            return;
+        } 
 
         break;
     }
@@ -246,14 +256,18 @@ void V4LDriver::Start()
             buf.memory      = V4L2_MEMORY_MMAP;
             buf.index       = i;
 
-            if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-                throw DeviceException("VIDIOC_QBUF", strerror(errno));
+            if (-1 == xioctl (fd, VIDIOC_QBUF, &buf)){
+              std::cerr << "V4Ldiver: VIDIOC_QBUF " << strerror(errno) << "\n.";
+              return;
+            }
         }
 
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-        if (-1 == xioctl (fd, VIDIOC_STREAMON, &type))
-            throw DeviceException("VIDIOC_STREAMON", strerror(errno));
+        if (-1 == xioctl (fd, VIDIOC_STREAMON, &type)){
+          std::cerr << "V4LDriver: VIDIOC_STREAMON " << strerror(errno) << "\n.";
+            return;
+        }
 
         break;
 
@@ -269,14 +283,18 @@ void V4LDriver::Start()
             buf.m.userptr   = (unsigned long) buffers[i].start;
             buf.length      = buffers[i].length;
 
-            if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-                throw DeviceException("VIDIOC_QBUF", strerror(errno));
+            if (-1 == xioctl (fd, VIDIOC_QBUF, &buf)){
+              std::cerr << "V4LDriver: VIDIOC_QBUF " << strerror(errno) << "\n.";
+            return;
+            }
         }
 
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-        if (-1 == xioctl (fd, VIDIOC_STREAMON, &type))
-            throw DeviceException ("VIDIOC_STREAMON", strerror(errno));
+        if (-1 == xioctl (fd, VIDIOC_STREAMON, &type)){
+            std::cerr << "V4LDriver: VIDIOC_STREAMON " << strerror(errno) << "\n.";
+            return;
+        } 
 
         break;
     }
@@ -296,7 +314,7 @@ void V4LDriver::uninit_device()
     case IO_METHOD_MMAP:
         for (i = 0; i < n_buffers; ++i)
             if (-1 == munmap (buffers[i].start, buffers[i].length))
-                throw DeviceException ("munmap");
+                std::cerr << "V4LDriver: munmap\n";
         break;
 
     case IO_METHOD_USERPTR:
@@ -313,14 +331,14 @@ void V4LDriver::init_read(unsigned int buffer_size)
     buffers = (buffer*)calloc (1, sizeof (buffer));
 
     if (!buffers) {
-        throw DeviceException("Out of memory\n");
+       std::cerr << "V4LDriver: out of memory\n";
     }
 
     buffers[0].length = buffer_size;
     buffers[0].start = malloc (buffer_size);
 
     if (!buffers[0].start) {
-        throw DeviceException("Out of memory\n");
+        std::cerr << "V4LDriver: out of memory\n";
     }
 }
 
@@ -336,20 +354,21 @@ void V4LDriver::init_mmap()
 
     if (-1 == xioctl (fd, VIDIOC_REQBUFS, &req)) {
         if (EINVAL == errno) {
-            throw DeviceException("does not support memory mapping", strerror(errno));
+          std::cerr << "V4LDrver: machine does not support memory mapping" 
+            << strerror(errno) << "\n.";
         } else {
-            throw DeviceException ("VIDIOC_REQBUFS", strerror(errno));
+            std::cerr << "V4LDriver: VIDIOC_REQBUFS " << strerror(errno) << "\n.";
         }
     }
 
     if (req.count < 2) {
-        throw DeviceException("Insufficient buffer memory");
+        std::cerr << "Insufficient buffer memory\n";
     }
 
     buffers = (buffer*)calloc(req.count, sizeof(buffer));
 
     if (!buffers) {
-        throw DeviceException( "Out of memory\n");
+        std::cerr <<  "Out of memory\n";
     }
 
     for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
@@ -362,7 +381,7 @@ void V4LDriver::init_mmap()
         buf.index       = n_buffers;
 
         if (-1 == xioctl (fd, VIDIOC_QUERYBUF, &buf))
-            throw DeviceException ("VIDIOC_QUERYBUF", strerror(errno));
+            std::cerr << "V4LDriver: VIDIOC_QUERYBUF " << strerror(errno) << "\n";
 
         buffers[n_buffers].length = buf.length;
         buffers[n_buffers].start =
@@ -373,7 +392,7 @@ void V4LDriver::init_mmap()
                       fd, buf.m.offset);
 
         if (MAP_FAILED == buffers[n_buffers].start)
-            throw DeviceException ("mmap");
+            std::cerr << "V4LDriver: mmap\n";
     }
 }
 
@@ -393,16 +412,17 @@ void V4LDriver::init_userp(unsigned int buffer_size)
 
     if (-1 == xioctl (fd, VIDIOC_REQBUFS, &req)) {
         if (EINVAL == errno) {
-            throw DeviceException( "Does not support user pointer i/o", strerror(errno));
+            std::cerr <<  "V4LDriver: does not support user pointer i/o" 
+              << strerror(errno) << "\n";
         } else {
-            throw DeviceException ("VIDIOC_REQBUFS", strerror(errno));
+          std::cerr << "V4LDriver: VIDIOC_REQBUFS " << strerror(errno) << "\n";
         }
     }
 
     buffers = (buffer*)calloc(4, sizeof(buffer));
 
     if (!buffers) {
-        throw DeviceException( "Out of memory\n");
+        std::cerr <<  "V4LDriver: out of memory\n";
     }
 
     for (n_buffers = 0; n_buffers < 4; ++n_buffers) {
@@ -411,7 +431,7 @@ void V4LDriver::init_userp(unsigned int buffer_size)
                                              buffer_size);
 
         if (!buffers[n_buffers].start) {
-            throw DeviceException( "Out of memory\n");
+            std::cerr <<  "V4LDriver: out of memory\n";
         }
     }
 }
@@ -428,20 +448,20 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
 
     if (-1 == xioctl (fd, VIDIOC_QUERYCAP, &cap)) {
         if (EINVAL == errno) {
-            throw DeviceException("Not a V4L2 device", strerror(errno));
+            std::cerr << "V4LDriver: Not a V4L2 device " << strerror(errno) << "\n";
         } else {
-            throw DeviceException ("VIDIOC_QUERYCAP", strerror(errno));
+          std::cerr <<"V4LDriver: VIDIOC_QUERYCAP " << strerror(errno) << "\n";
         }
     }
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-        throw DeviceException("Not a video capture device");
+        std::cerr << "V4LDriver: Not a video capture device\n";
     }
 
     switch (io) {
     case IO_METHOD_READ:
         if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-            throw DeviceException("Does not support read i/o");
+            std::cerr << "V4LDriver: Does not support read i/o\n";
         }
 
         break;
@@ -449,7 +469,7 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
     case IO_METHOD_MMAP:
     case IO_METHOD_USERPTR:
         if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-            throw DeviceException("Does not support streaming i/o");
+            std::cerr << "V4LDriver: Does not support streaming i/o\n";
         }
 
         break;
@@ -490,13 +510,13 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
         fmt.fmt.pix.field       = field;
 
         if (-1 == xioctl (fd, VIDIOC_S_FMT, &fmt))
-            throw DeviceException("VIDIOC_S_FMT", strerror(errno));
+            std::cerr << "V4LDriver: VIDIOC_S_FMT " << strerror(errno) << "\n.";
     }else{
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
         /* Preserve original settings as set by v4l2-ctl for example */
         if (-1 == xioctl(fd, VIDIOC_G_FMT, &fmt))
-            throw DeviceException("VIDIOC_G_FMT", strerror(errno));
+            std::cerr << "V4LDriver: VIDIOC_G_FMT " << strerror(errno) << "\n.";
     }
 
     /* Buggy driver paranoia. */
@@ -521,7 +541,7 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
         strm.parm.capture.timeperframe.denominator = ifps;
 
         if (-1 == xioctl (fd, VIDIOC_S_PARM, &fmt))
-            throw DeviceException("VIDIOC_S_PARM", strerror(errno));
+            std::cerr << "V4LDriver: VIDIOC_S_PARM " << strerror(errno) << "\n.";
 
         fps = (float)strm.parm.capture.timeperframe.denominator / strm.parm.capture.timeperframe.numerator;
     }else{
@@ -560,7 +580,7 @@ void V4LDriver::init_device(unsigned iwidth, unsigned iheight, unsigned ifps, un
 void V4LDriver::close_device()
 {
     if (-1 == close (fd))
-        throw DeviceException("close");
+        std::cerr << "V4LDriver: close";
 
     fd = -1;
 }
@@ -570,17 +590,17 @@ void V4LDriver::open_device(const char* dev_name)
     struct stat st;
 
     if (-1 == stat (dev_name, &st)) {
-        throw DeviceException("Cannot stat device", strerror(errno));
+        std::cerr << "V4LDriver: Cannot stat device" << strerror(errno) << "\n.";
     }
 
     if (!S_ISCHR (st.st_mode)) {
-        throw DeviceException("Not device");
+        std::cerr << "V4LDriver: Not a character device.\n";
     }
 
     fd = open (dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
     if (-1 == fd) {
-        throw DeviceException("Cannot open device");
+        std::cerr << "V4LDriver: cannot open device.\n";
     }
 }
 

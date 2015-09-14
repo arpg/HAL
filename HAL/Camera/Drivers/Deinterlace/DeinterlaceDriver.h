@@ -5,6 +5,7 @@
 #include <dc1394/conversions.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 
 namespace hal
@@ -13,11 +14,14 @@ namespace hal
 class DeinterlaceDriver : public CameraDriverInterface
 {
 public:
-    DeinterlaceDriver( std::shared_ptr<CameraDriverInterface> Input
-                 );
+    DeinterlaceDriver( 
+        std::shared_ptr<CameraDriverInterface> input_cam,
+        const Uri& uri 
+        );
+    ~DeinterlaceDriver();
 
     bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
+    std::shared_ptr<CameraDriverInterface> GetInputDriver() { return m_Input; }
 
     std::string GetProperty(const std::string& sProperty);
 

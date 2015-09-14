@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "NodeSimCamDriver.h"
 
 namespace hal
 {
 
-class NodeSimCamFactory : public DeviceFactory<CameraDriverInterface>
+class NodeSimCamFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     NodeSimCamFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
             {"id", "", "Device ID (Serve the purpose of UUID)."},

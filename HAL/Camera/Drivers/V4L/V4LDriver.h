@@ -11,75 +11,82 @@
 namespace hal
 {
 
-typedef enum {
+  typedef enum {
     IO_METHOD_READ,
     IO_METHOD_MMAP,
     IO_METHOD_USERPTR,
-} io_method;
+  } io_method;
 
-struct buffer {
+  struct buffer {
     void*  start;
     size_t length;
-};
+  };
 
-// Class adapted from Pangolin
-class V4LDriver : public CameraDriverInterface
-{
-public:
-    V4LDriver(std::string dev_name, io_method io);
-    ~V4LDriver();
+  // Class adapted from Pangolin
+  class V4LDriver : public CameraDriverInterface
+  {
+    public:
+      V4LDriver( const Uri& uri );
+      ~V4LDriver();
 
-    bool Capture( hal::CameraMsg& vImages );
+      bool Capture( hal::CameraMsg& vImages );
 
-//    std::string GetProperty(const std::string& sProperty);
+      //    std::string GetProperty(const std::string& sProperty);
 
-    inline std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+      inline std::shared_ptr<CameraDriverInterface> GetInputDriver() {
         return std::shared_ptr<CameraDriverInterface>();
-    }
+      }
 
-    size_t Width( size_t idx = 0 ) const;
+      size_t Width( size_t idx = 0 ) const;
 
-    size_t Height( size_t idx = 0 ) const;
+      size_t Height( size_t idx = 0 ) const;
 
-    size_t NumChannels() const;
+      size_t NumChannels() const;
 
-protected:
-    size_t SizeBytes() const;
+      std::string GetProperty(const std::string& sProperty)
+      {
+        return sProperty;
+      }
 
-    bool GrabNext(unsigned char* image);
 
-    int ReadFrame(unsigned char* image);
 
-    void Stop();
+    protected:
+      size_t SizeBytes() const;
 
-    void Start();
+      bool GrabNext(unsigned char* image);
 
-    void uninit_device();
+      int ReadFrame(unsigned char* image);
 
-    void init_read(unsigned int buffer_size);
+      void Stop();
 
-    void init_mmap();
+      void Start();
 
-    void init_userp(unsigned int buffer_size);
+      void uninit_device();
 
-    void init_device(unsigned iwidth, unsigned iheight, unsigned ifps, unsigned v4l_format = V4L2_PIX_FMT_YUYV, v4l2_field field = V4L2_FIELD_INTERLACED);
+      void init_read(unsigned int buffer_size);
 
-    void close_device();
+      void init_mmap();
 
-    void open_device(const char* dev_name);
+      void init_userp(unsigned int buffer_size);
 
-    int pb_type;
-    int pb_format;
+      void init_device(unsigned iwidth, unsigned iheight, unsigned ifps, unsigned v4l_format = V4L2_PIX_FMT_YUYV, v4l2_field field = V4L2_FIELD_INTERLACED);
 
-    io_method io;
-    int       fd;
-    buffer*   buffers;
-    unsigned  int n_buffers;
-    bool running;
-    unsigned width;
-    unsigned height;
-    float fps;
-    size_t image_size;
-};
+      void close_device();
+
+      void open_device(const char* dev_name);
+
+      int pb_type;
+      int pb_format;
+
+      io_method io;
+      int       fd;
+      buffer*   buffers;
+      unsigned  int n_buffers;
+      bool running;
+      unsigned width;
+      unsigned height;
+      float fps;
+      size_t image_size;
+  };
 
 }

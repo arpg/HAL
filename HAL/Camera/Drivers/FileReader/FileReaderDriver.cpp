@@ -1,4 +1,3 @@
-
 #include "FileReaderDriver.h"
 
 #include <HAL/Devices/DeviceTime.h>
@@ -13,66 +12,90 @@ using namespace std;
 
 namespace hal {
 
-FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
-                                   size_t StartFrame, bool Loop,
-                                   size_t BufferSize, int cvFlags,
-                                   double frequency,
-                                   const std::string& sName,
-                                   const std::string& idString)
-    : m_bShouldRun(false),
-      m_nNumChannels(ChannelRegex.size()),
-      m_nCurrentImageIndex(StartFrame),
-      m_bLoop(Loop),
-      m_nBufferSize(BufferSize),
-      m_iCvImageReadFlags(cvFlags),
-      m_sName(sName),
-      m_sId(idString),
-      m_nFramesProcessed(0),
-      frequency_(frequency) {
-  // clear variables if previously initialized
-  m_vFileList.clear();
-
-  if(m_nNumChannels < 1) {
-    throw DeviceException("No channels specified.");
-  }
-
-  m_sBaseDir = DirUp(ChannelRegex[0]);
-
-  m_vFileList.resize(m_nNumChannels);
-
-  for(unsigned int ii = 0; ii < m_nNumChannels; ii++) {
-    // Now generate the list of files for each channel
-    std::vector< std::string >& vFiles = m_vFileList[ii];
-
-    if(!hal::WildcardFileList(ChannelRegex[ii], vFiles)) {
-      throw DeviceException("No files found from regexp", ChannelRegex[ii]);
+FileReaderDriver::FileReaderDriver( const Uri& uri ) 
+  : m_bShouldRun(false), m_nFramesProcessed(0)
+  {
+    // sat sane default parameters
+    CameraDriverInterface::SetDefaultProperties({
+        {"startframe", "0", "First frame to capture."},
+        {"loop", "false", "Play beginning once finished."},
+        {"grey", "false", "Convert internally to greyscale."},
+        {"buffer", "10", "Number of frames to cache in memory"},
+        {"frequency", "30", "Capture frequency to emulate if needed"},
+        {"name", "FileCam", "Camera name."},
+        {"id", "0", "Camera id (serial number or UUID)."}
+        });
+    if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+      std::cerr << "FileReaderDriver knows about the following properties:\n";
+      CameraDriverInterface::PrintPropertyMap();
+      return;
     }
-  }
 
-  // make sure each channel has the same number of images
-  m_nNumImages = m_vFileList[0].size();
-  for(unsigned int ii = 1; ii < m_nNumChannels; ii++){
-    if(m_vFileList[ii].size() != m_nNumImages){
-      std::stringstream sstm;
-      sstm << "Uneven number of files. Count for camera " << ii << ": " <<
-              m_vFileList[ii].size() << " vs count for camera 0: " <<
-              m_nNumImages;
-      throw DeviceException(sstm.str());
+    m_nCurrentImageIndex = GetProperty("startframe", 0);
+    m_bLoop              = GetProperty("loop", false);
+    m_nBufferSize        = GetProperty("buffer", 10);
+    m_sName              = GetProperty("name", std::string("FileCam"));
+    m_sId                = GetProperty("id", std::string());
+    frequency_           = GetProperty("frequency", 30.0);
+    bool Grey            = GetProperty("grey", false);
+    m_iCvImageReadFlags  = Grey ? 0 : -1;
+
+    std::vector<std::string> ChannelRegex = Expand(uri.url, '[', ']', ',');
+    for(std::string& s : ChannelRegex) {
+      s = ExpandTildePath(s);
     }
+    m_nNumChannels = ChannelRegex.size();
+
+
+    // clear variables if previously initialized
+    m_vFileList.clear();
+
+    if(m_nNumChannels < 1) {
+      std::cerr << "No channels specified.\n";
+      return;
+    }
+
+    m_sBaseDir = DirUp(ChannelRegex[0]);
+
+    m_vFileList.resize(m_nNumChannels);
+
+    for(unsigned int ii = 0; ii < m_nNumChannels; ii++) {
+      // Now generate the list of files for each channel
+      std::vector< std::string >& vFiles = m_vFileList[ii];
+
+      if(!hal::WildcardFileList(ChannelRegex[ii], vFiles)) {
+        std::cerr << "No files found from regexp '" << ChannelRegex[ii] << "'.\n";
+        return;
+      }
+    }
+
+    // make sure each channel has the same number of images
+    m_nNumImages = m_vFileList[0].size();
+    for(unsigned int ii = 1; ii < m_nNumChannels; ii++){
+      if(m_vFileList[ii].size() != m_nNumImages){
+        std::stringstream sstm;
+        sstm << "Uneven number of files. Count for camera " << ii << ": " <<
+          m_vFileList[ii].size() << " vs count for camera 0: " <<
+          m_nNumImages;
+        std::cerr << sstm.str();
+        return;
+      }
+    }
+
+    // fill buffer
+    m_nHead = m_nTail = 0;
+    m_vBuffer.resize(m_nBufferSize);
+    for (unsigned int ii=0; ii < m_nBufferSize; ii++) {
+      _Read(); 
+    }
+
+    // push timestamp of first image into the Virtual Device Queue
+    DeviceTime::PushTime(_GetNextTime());
+
+    // run thread to keep buffer full
+    m_bShouldRun = true;
+    m_CaptureThread.reset(new std::thread(&_ThreadCaptureFunc, this));
   }
-
-  // fill buffer
-  m_nHead = m_nTail = 0;
-  m_vBuffer.resize(m_nBufferSize);
-  for (unsigned int ii=0; ii < m_nBufferSize; ii++) {	_Read(); }
-
-  // push timestamp of first image into the Virtual Device Queue
-  DeviceTime::PushTime(_GetNextTime());
-
-  // run thread to keep buffer full
-  m_bShouldRun = true;
-  m_CaptureThread.reset(new std::thread(&_ThreadCaptureFunc, this));
-}
 
 FileReaderDriver::~FileReaderDriver() {
   m_bShouldRun = false;
@@ -87,8 +110,7 @@ FileReaderDriver::~FileReaderDriver() {
 
 // Consumer
 bool FileReaderDriver::Capture(hal::CameraMsg& vImages) {
-  if(m_nCurrentImageIndex >= m_nNumImages &&
-      m_qImageBuffer.empty() && !m_bLoop) {
+  if(m_nCurrentImageIndex >= m_nNumImages && m_qImageBuffer.empty() &&!m_bLoop){
     return false;
   }
 
@@ -121,6 +143,7 @@ bool FileReaderDriver::Capture(hal::CameraMsg& vImages) {
   return true;
 }
 
+/*
 std::string FileReaderDriver::GetProperty(const std::string& sProperty) 
 {
   if(sProperty == "dir") {
@@ -135,6 +158,7 @@ std::string FileReaderDriver::GetProperty(const std::string& sProperty)
 
   return std::string();
 }
+*/
 
 size_t FileReaderDriver::NumChannels() const {
   const hal::CameraMsg& NextFrame = m_qImageBuffer.front();
@@ -251,7 +275,7 @@ double FileReaderDriver::_GetNextTime() {
     return -1;
   }
   return (m_qImageBuffer.front().has_device_time() ?
-          m_qImageBuffer.front().device_time() : 0);
+      m_qImageBuffer.front().device_time() : 0);
 }
 
 double FileReaderDriver::_GetTimestamp(const std::string& sFileName) const {

@@ -1,6 +1,7 @@
 #include "RectifyDriver.h"
 
 #include <HAL/Messages/Image.h>
+#include <calibu/cam/camera_xml.h>
 
 namespace hal
 {
@@ -10,14 +11,42 @@ inline float lerp(unsigned char a, unsigned char b, float t)
   return (float)a + t*((float)b-(float)a);
 }
 
-RectifyDriver::RectifyDriver(std::shared_ptr<CameraDriverInterface> input,
-    const std::shared_ptr<calibu::Rig<double> > rig
-    )
+RectifyDriver::RectifyDriver(
+    std::shared_ptr<CameraDriverInterface> input,
+    const Uri& uri )
   : m_input(input)
 {
+  CameraDriverInterface::SetDefaultProperties({
+      {"file","","Cameras XML description"} 
+      });
+  if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "RectifyDriver knows about the following properties:\n";
+    CameraDriverInterface::PrintPropertyMap();
+    return;
+  }
+
+  std::string filename = ExpandTildePath(
+      CameraDriverInterface::GetProperty<std::string>("file", "cameras.xml")
+      );
+
+  if(!FileExists(filename)){
+    std::string dir = input->GetProperty<std::string>("dir");
+    while(!dir.empty() && !FileExists(dir+"/"+filename)) {
+      dir = DirUp(dir);
+    }
+    filename = (dir.empty() ? "" : dir + "/") + filename;
+  }
+
+  std::shared_ptr<calibu::Rig<double>> rig = calibu::ReadXmlRig( filename );
+  if(rig->NumCams() != 2) {
+//    throw DeviceException("Unable to find 2 cameras in file '" + filename + "'");
+    std::cerr << "RectifyDriver(): unable to find 2 cameras in file '" + filename + "'";
+    return;
+  }
+
   // Convert rig to vision frame.
   std::shared_ptr<calibu::Rig<double>> new_rig =
-      calibu::ToCoordinateConvention(rig, calibu::RdfVision);
+    calibu::ToCoordinateConvention(rig, calibu::RdfVision);
 
   // Generate lookup tables for stereo rectify.
   m_vLuts.resize(new_rig->NumCams());
@@ -45,7 +74,7 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
     vImages.Clear();
 
     hal::Image inimg[2] = { hal::Image(vIn.image(0)),
-                           hal::Image(vIn.image(1)) };
+      hal::Image(vIn.image(1)) };
 
     vImages.set_system_time(vIn.system_time());
     vImages.set_device_time(vIn.device_time());
@@ -56,7 +85,7 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
           inimg[k].Format() == hal::Format::PB_RGB) {
         num_channels = 3;
       } else if (inimg[k].Format() == hal::Format::PB_BGRA ||
-                 inimg[k].Format() == hal::Format::PB_RGBA) {
+          inimg[k].Format() == hal::Format::PB_RGBA) {
         num_channels = 4;
       }
 
@@ -67,22 +96,17 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
       pimg->set_type( (hal::Type)inimg[k].Type());
       pimg->set_format( (hal::Format)inimg[k].Format());
       pimg->mutable_data()->resize(inimg[k].Width() * inimg[k].Height() *
-                                   num_channels);
+          num_channels);
 
       hal::Image img = hal::Image(*pimg);
       calibu::Rectify(
-            m_vLuts[k], inimg[k].data(),
-            reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
-            img.Width(), img.Height(), num_channels);
+          m_vLuts[k], inimg[k].data(),
+          reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
+          img.Width(), img.Height(), num_channels);
     }
   }
 
   return success;
-}
-
-std::string RectifyDriver::GetProperty(const std::string& sProperty)
-{
-  return m_input->GetProperty(sProperty);
 }
 
 size_t RectifyDriver::NumChannels() const

@@ -3,10 +3,48 @@
 namespace hal
 {
 
-SplitDriver::SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vector<hal::ImageRoi>& vROIs )
-    : m_Input(Input), m_vROIs(vROIs)
+SplitDriver::SplitDriver(
+    std::shared_ptr<CameraDriverInterface> input_cam, 
+    const Uri& uri
+    ) : m_Input(input_cam)
 {
+  // sat sane default parameters
+  CameraDriverInterface::SetDefaultProperties({
+      {"roiN", "0+0+WidthxHeight", "Specifies the Nth region of interest."},
+      });
+  if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "SplitDriver knows about the following properties:\n";
+    CameraDriverInterface::PrintPropertyMap();
+    return;
+  }
 
+  // construct regions of interests to split
+  m_vROIs.clear();
+  const ImageRoi default_roi( 0, 0, input_cam->Width(), input_cam->Height() );
+  if( !uri.scheme.compare("split") ) {
+    while(true) {
+      std::stringstream ss;
+      ss << "roi" << (m_vROIs.size() + 1);
+      const std::string key = ss.str();
+      if(!uri.properties.Contains(key)) {
+        break;
+      }
+      m_vROIs.push_back( CameraDriverInterface::GetProperty<ImageRoi>( key, default_roi ) );
+    }
+
+    if( m_vROIs.empty() ) {
+      unsigned int nImgWidth = input_cam->Width();
+      unsigned int nImgHeight = input_cam->Height();
+      if( nImgWidth > nImgHeight ) {
+        nImgWidth = nImgWidth / 2;
+      } else {
+        nImgHeight = nImgHeight / 2;
+      }
+
+      m_vROIs.push_back( ImageRoi( 0, 0, nImgWidth, nImgHeight ) );
+      m_vROIs.push_back( ImageRoi( nImgWidth, 0, nImgWidth, nImgHeight ) );
+    }
+  }
 }
 
 bool SplitDriver::Capture( hal::CameraMsg& vImages )
@@ -61,11 +99,6 @@ bool SplitDriver::Capture( hal::CameraMsg& vImages )
     }
 
     return true;
-}
-
-std::string SplitDriver::GetProperty(const std::string& sProperty)
-{
-    return m_Input->GetProperty(sProperty);
 }
 
 size_t SplitDriver::NumChannels() const

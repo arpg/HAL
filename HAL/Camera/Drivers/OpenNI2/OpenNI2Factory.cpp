@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "OpenNI2Driver.h"
 
 namespace hal
 {
 
-class OpenNI2Factory : public DeviceFactory<CameraDriverInterface>
+class OpenNI2Factory : public DriverFactory<CameraDriverInterface>
 {
 public:
     OpenNI2Factory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
             {"size", "640x480", "Capture resolution."},

@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "DeinterlaceDriver.h"
 
 #include <string>
@@ -6,25 +6,18 @@
 namespace hal
 {
 
-class DeinterlaceFactory : public DeviceFactory<CameraDriverInterface>
+class DeinterlaceFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     DeinterlaceFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<CameraDriverInterface>(name) {}
 
     std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
         const Uri input_uri = Uri(uri.url);
-
-        // Create input camera
-        std::shared_ptr<CameraDriverInterface> Input =
+        std::shared_ptr<CameraDriverInterface> input_cam =
                 DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
-
-        DeinterlaceDriver* pDriver = new DeinterlaceDriver( Input );
+        DeinterlaceDriver* pDriver = new DeinterlaceDriver( input_cam, uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };

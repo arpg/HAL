@@ -4,7 +4,7 @@
 #include <HAL/Messages/Image.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/Uri.h>
 
 namespace hal {
@@ -49,7 +49,6 @@ public:
     ///////////////////////////////////////////////////////////////
     inline void Clear()
     {
-//        DeviceRegistry<CameraDriverInterface>::Destroy(m_cam);
         m_cam = nullptr;
     }
 
@@ -60,9 +59,9 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
-    std::shared_ptr<CameraDriverInterface> GetInputDevice()
+    std::shared_ptr<CameraDriverInterface> GetInputDriver()
     {
-        return m_cam->GetInputDevice();
+        return m_cam->GetInputDriver();
     }
 
     ///////////////////////////////////////////////////////////////
@@ -126,12 +125,6 @@ public:
     size_t Height( size_t idx = 0 ) const
     {
         return m_cam->Height(idx);
-    }
-
-    ///////////////////////////////////////////////////////////////
-    std::string GetProperty(const std::string& sProperty)
-    {
-        return m_cam->GetProperty(sProperty);
     }
 
     ///////////////////////////////////////////////////////////////

@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "Freenect2Driver.h"
 
 namespace hal
 {
 
-class Freenect2Factory : public DeviceFactory<CameraDriverInterface>
+class Freenect2Factory : public DriverFactory<CameraDriverInterface>
 {
 public:
     Freenect2Factory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
             {"size", "1920x1080", "Capture resolution."},

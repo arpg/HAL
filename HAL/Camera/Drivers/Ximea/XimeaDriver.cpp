@@ -15,31 +15,82 @@ inline void XimeaDriver::_CheckError(
 {
   if (err != XI_OK) {
     std::cerr << "Error after '" << place << "' " << err << std::endl;
-    throw DeviceException("Ximea SDK exception!");
+    std::cerr << "Ximea SDK exception\n";
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////
-XimeaDriver::XimeaDriver(
-			 std::vector<std::string>&  vector_ids,
-    float                       fps,
-    int                         exp,
-    float                       gain,
-    XI_IMG_FORMAT               mode,
-    ImageRoi                    roi,
-    int                         sync,
-    uint8_t                     binning
-    )
+XimeaDriver::XimeaDriver( const Uri& uri )
 {
+  // sat sane default parameters
+  CameraDriverInterface::SetDefaultProperties({
+      {"idN", "0", "Camera serial number. Increment N from 0 to (num serial numbers -1)"},
+      {"fps", "DEFAULT", "Capture framerate: [1, 150]"},
+      {"exp", "0", "Exposure time (microseconds): [1,1000000] (0: AUTO)"},
+      {"gain", "0.5", "Gain (dB): [-2.4, 12.0]"},
+      {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16, RGB24, RGB32"},
+      {"size", "640x480", "Capture resolution."},
+      {"roi", "0+0+640x480", "ROI resolution."},
+      {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
+      {"binning", "0", "Binning: Divide frame by this integer in hardware"}
+      });
+  if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "XimeaDriver knows about the following properties:\n";
+    CameraDriverInterface::PrintPropertyMap();
+    return;
+  }
+
+
+  float fps        = GetProperty<float>("fps", 0);
+  int exp          = GetProperty<int>("exp", 0);
+  float gain       = GetProperty<float>("gain", 0.5);
+  std::string mode = GetProperty<std::string>("mode", "MONO8");
+  ImageDim dims    = GetProperty<ImageDim>("size", ImageDim(640,480));
+  ImageRoi ROI     = GetProperty<ImageRoi>("roi", ImageRoi(0,0,0,0));
+  int sync         = GetProperty<int>("sync", 0);
+  uint8_t binning  = GetProperty<uint8_t>("binning", 0);
+
+  std::vector<std::string> vector_ids;
+  while(true) {
+    std::stringstream ss;
+    ss << "id" << vector_ids.size();
+    const std::string key = ss.str();
+    if( !uri.properties.Contains(key)) {
+      break;
+    }
+    vector_ids.push_back(GetProperty<std::string>(key, ""));
+  }
+
+  if(ROI.w == 0 && ROI.h == 0) {
+    ROI.w = dims.x;
+    ROI.h = dims.y;
+  }
+
+  XI_IMG_FORMAT xi_mode;
+  if (mode == "RAW8") {
+    xi_mode = XI_RAW8;
+  } else if (mode == "RAW16") {
+    xi_mode = XI_RAW16;
+  } else if (mode == "MONO16") {
+    xi_mode = XI_MONO16;
+  } else if (mode == "RGB24") {
+    xi_mode = XI_RGB24;
+  } else if (mode == "RGB32") {
+    xi_mode = XI_RGB32;
+  }else {
+    xi_mode = XI_MONO8;
+  }
+  image_format_ = xi_mode;
+
+
   XI_RETURN error = XI_OK;
 
   // Sync flag.
   sync_ = sync;
 
   // Initialize image size.
-  image_format_ = mode;
-  image_width_  = roi.w;
-  image_height_ = roi.h;
+  image_width_  = ROI.w;
+  image_height_ = ROI.h;
   binning_ = binning;
   
   // Get number of camera devices.
@@ -48,7 +99,8 @@ XimeaDriver::XimeaDriver(
   _CheckError(error, "xiGetNumberDevices");
 
   if (num_devices == 0) {
-    throw DeviceException("No cameras found!");
+    std::cerr << "XimeaDriver: no cameras found.\n";
+    return;
   }
 
   // If no ids are provided, all cameras will be opened.
@@ -59,8 +111,7 @@ XimeaDriver::XimeaDriver(
   }
 
   if (num_channels_ < vector_ids.size()) {
-    
-    throw DeviceException("Less cameras detected than those requested!");
+    std::cerr << "XimeaDrier: fewer cameras detected than requested.\n";
   }
 
   // Resize camera handle vector to accomodate requested cameras.
@@ -69,14 +120,11 @@ XimeaDriver::XimeaDriver(
   for (size_t ii = 0; ii < num_channels_; ++ii) {
     // Retrieving a handle to the camera device.
     // Actually open the correct one if serial numbers are specified
-    if (vector_ids.size() > 0)
-      {
-	error = xiOpenDeviceBy(XI_OPEN_BY_SN, vector_ids[ii].c_str(), &cam_handles_[ii]);
-      }
-    else
-      {
-	error = xiOpenDevice(ii, &cam_handles_[ii]);
-      }
+    if (vector_ids.size() > 0) {
+      error = xiOpenDeviceBy(XI_OPEN_BY_SN, vector_ids[ii].c_str(), &cam_handles_[ii]);
+    } else{
+      error = xiOpenDevice(ii, &cam_handles_[ii]);
+    }
     _CheckError(error, "xiOpenDevice");
   }
 
@@ -92,11 +140,11 @@ XimeaDriver::XimeaDriver(
     xiGetParamInt(handle, XI_PRM_HEIGHT XI_PRM_INFO_MAX, &max_height);
 
     // Setting "width" parameter.
-    if (image_width_ <= max_width - roi.x) {
+    if (image_width_ <= max_width - ROI.x) {
       error = xiSetParamInt(handle, XI_PRM_WIDTH, image_width_);
       _CheckError(error, "xiSetParam (width)");
 
-      int left = roi.x;
+      int left = ROI.x;
       if (left == 0) {
         left = (max_width / 2) - image_width_ / 2;
       }
@@ -106,15 +154,15 @@ XimeaDriver::XimeaDriver(
     } else {
       std::cerr << "Image width out of bounds. Maximum value: " <<
                    max_width << std::endl;
-      throw DeviceException("Image out of bounds!");
+      std::cerr << "Image out of bounds!\n";
     }
 
     // Setting "height" parameter.
-    if (image_height_ <= max_height - roi.y) {
+    if (image_height_ <= max_height - ROI.y) {
       error = xiSetParamInt(handle, XI_PRM_HEIGHT, image_height_);
       _CheckError(error, "xiSetParam (height)");
 
-      int top = roi.y;
+      int top = ROI.y;
       if (top == 0) {
         top = (max_height / 2) - image_height_ / 2;
       }
@@ -124,7 +172,7 @@ XimeaDriver::XimeaDriver(
     } else {
       std::cerr << "Image height out of bounds. Maximum value: " <<
                    max_height << std::endl;
-      throw DeviceException("Image out of bounds!");
+      std::cerr << "Image out of bounds\n";
     }
 
     //Set binning if applicable
@@ -132,7 +180,7 @@ XimeaDriver::XimeaDriver(
       error = xiSetParamInt(handle, XI_PRM_DOWNSAMPLING, binning_);
       _CheckError(error, "xiSetParam (binning)");
     }
-    
+ 
     // Setting "exposure" parameter (10ms=10000us). Default 0 is AUTO exposure.
     if (exp == 0) {
       error = xiSetParamInt(handle, XI_PRM_AEAG, 1);
@@ -144,7 +192,7 @@ XimeaDriver::XimeaDriver(
       if (exp < min_exp || exp > max_exp) {
         std::cerr << "Exposure Values = Min: " << min_exp << " - Max: "
                   << max_exp << std::endl;
-        throw DeviceException("Requested EXPOSURE not supported!");
+        std::cerr << "Requested EXPOSURE not supported\n";
       }
       error = xiSetParamInt(handle, XI_PRM_EXPOSURE, exp);
       _CheckError(error, "xiSetParam (exposure)");
@@ -168,7 +216,7 @@ XimeaDriver::XimeaDriver(
       if (gain < min_gain || gain > max_gain) {
         std::cerr << "Gain Values = Min: " << min_gain << " - Max: "
                   << max_gain << std::endl;
-        throw DeviceException("Requested GAIN not supported!");
+        std::cerr << "Requested GAIN not supported.\n";
       }
       error = xiSetParamFloat(handle, XI_PRM_GAIN, gain);
       _CheckError(error, "xiSetParam (gain)");
@@ -176,7 +224,7 @@ XimeaDriver::XimeaDriver(
 
     // Check if cameras are synced.
     if (sync_ < 0 || sync_ > 2) {
-      throw DeviceException("Sync type can only be: 0(None), 1(Software) or 2(Hardware).");
+      std::cerr << "Sync type can only be: 0(None), 1(Software) or 2(Hardware).\n";
     }
 
     // No sync. So, setting "FPS" parameter.
@@ -192,7 +240,7 @@ XimeaDriver::XimeaDriver(
         if (fps < min_fps || fps > max_fps) {
           std::cerr << "Framerate Values = Min: " << min_fps << " - Max: "
                     << max_fps << std::endl;
-          throw DeviceException("Requested FPS not supported!");
+          std::cerr << "Requested FPS not supported.\n";
         }
 
         error = xiSetParamFloat(handle, XI_PRM_FRAMERATE, fps);
@@ -226,7 +274,7 @@ XimeaDriver::XimeaDriver(
           if (fps < min_fps || fps > max_fps) {
             std::cerr << "Framerate Values = Min: " << min_fps << " - Max: "
                       << max_fps << std::endl;
-            throw DeviceException("Requested FPS not supported!");
+            std::cerr << "Requested FPS not supported.\n";
           }
 
           error = xiSetParamFloat(handle, XI_PRM_FRAMERATE, fps);
@@ -333,13 +381,6 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
   images.set_system_time(hal::Tic());
 
   return error == XI_OK ? true : false;
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-std::string XimeaDriver::GetProperty(const std::string& /*sProperty*/)
-{
-  return std::string();
 }
 
 ///////////////////////////////////////////////////////////////////////////

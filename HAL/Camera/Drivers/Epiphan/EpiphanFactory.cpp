@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "EpiphanDriver.h"
 
 namespace hal
 {
 
-class EpiphanFactory : public DeviceFactory<CameraDriverInterface>
+class EpiphanFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     EpiphanFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
         };

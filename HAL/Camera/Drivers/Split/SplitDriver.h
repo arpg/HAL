@@ -12,12 +12,13 @@ namespace hal
 class SplitDriver : public CameraDriverInterface
 {
 public:
-    SplitDriver(std::shared_ptr<CameraDriverInterface> Input, std::vector<hal::ImageRoi>& vROIs);
+    SplitDriver(
+        std::shared_ptr<CameraDriverInterface> input, 
+        const Uri& uri
+        );
 
     bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
-
-    std::string GetProperty(const std::string& sProperty);
+    std::shared_ptr<CameraDriverInterface> GetInputDriver() { return m_Input; }
 
     size_t NumChannels() const;
     size_t Width( size_t /*idx*/ = 0 ) const;

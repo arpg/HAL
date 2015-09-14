@@ -4,6 +4,7 @@
 #include <dc1394/dc1394.h>
 
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 
 namespace hal {
@@ -14,16 +15,14 @@ public:
   const static int MAX_FR = -1;
   const static int EXT_TRIG = -1;
 
-  DC1394Driver(std::vector<unsigned int>& vCamId, dc1394video_mode_t Mode,
-               unsigned int nTop, unsigned int nLeft,
-               unsigned int nWidth, unsigned int nHeight,
-               float fFPS, dc1394speed_t ISO,
-               unsigned int nDMA, float fEXP, bool ptgrey_timestamp);
+  DC1394Driver( const Uri& uri );
 
   bool Capture( hal::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
-  std::string GetProperty(const std::string& sProperty);
+  std::shared_ptr<CameraDriverInterface> GetInputDriver() 
+  { 
+    return std::shared_ptr<CameraDriverInterface>(); 
+  }
 
   size_t NumChannels() const;
   size_t Width( size_t /*idx*/ = 0 ) const;

@@ -8,57 +8,60 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "HAL/Camera/CameraDriverInterface.h"
+#include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 namespace hal {
 
-class JoinCameraDriver : public CameraDriverInterface
-{
-public:
-  JoinCameraDriver(
-      const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras);
-  virtual ~JoinCameraDriver();
-
-  bool Capture( hal::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
-    return std::shared_ptr<CameraDriverInterface>();
-  }
-
-  std::string GetProperty(const std::string& sProperty);
-
-  size_t NumChannels() const;
-  size_t Width( size_t idx = 0 ) const;
-  size_t Height( size_t idx = 0 ) const;
-
-private:
-  std::vector<std::shared_ptr<CameraDriverInterface>> m_Cameras;
-  std::vector<unsigned int> m_nImgWidth;
-  std::vector<unsigned int> m_nImgHeight;
-  unsigned int              m_nNumChannels;
-
-  class WorkTeam
+  class JoinCameraDriver : public CameraDriverInterface
   {
-  public:
-    WorkTeam(){}
-    void addWorker(std::shared_ptr<CameraDriverInterface>& cam);
-    std::vector<hal::CameraMsg>& process();
+    public:
+      JoinCameraDriver(
+          const Uri& uri
+          );
 
-  private:
-    void waitForWork(size_t workerId);
-    void workerDone(size_t workerId);
-    void Worker(std::shared_ptr<CameraDriverInterface>& cam,
-                size_t workerId);
+      virtual ~JoinCameraDriver();
 
-  private:
-    std::vector<std::thread> m_Workers;
-    std::vector<bool> m_bWorkerDone;
-    std::vector<hal::CameraMsg> m_ImageData;
-    std::mutex m_Mutex;
-    std::condition_variable m_WorkerCond, m_MasterCond;
+      bool Capture( hal::CameraMsg& vImages );
+      std::shared_ptr<CameraDriverInterface> GetInputDriver() {
+        return std::shared_ptr<CameraDriverInterface>();
+      }
+
+      std::string GetProperty(const std::string& sProperty);
+
+      size_t NumChannels() const;
+      size_t Width( size_t idx = 0 ) const;
+      size_t Height( size_t idx = 0 ) const;
+
+    private:
+      std::vector<std::shared_ptr<CameraDriverInterface>> m_Cameras;
+      std::vector<unsigned int> m_nImgWidth;
+      std::vector<unsigned int> m_nImgHeight;
+      unsigned int              m_nNumChannels;
+
+      class WorkTeam
+      {
+        public:
+          WorkTeam(){}
+          void addWorker(std::shared_ptr<CameraDriverInterface>& cam);
+          std::vector<hal::CameraMsg>& process();
+
+        private:
+          void waitForWork(size_t workerId);
+          void workerDone(size_t workerId);
+          void Worker(std::shared_ptr<CameraDriverInterface>& cam,
+              size_t workerId);
+
+        private:
+          std::vector<std::thread>             m_Workers;
+          std::vector<bool>                    m_bWorkerDone;
+          std::vector<hal::CameraMsg>          m_ImageData;
+          std::mutex                           m_Mutex;
+          std::condition_variable              m_WorkerCond;
+          std::condition_variable              m_MasterCond;
+      };
+
+      WorkTeam                  m_WorkTeam;
   };
-
-  WorkTeam                  m_WorkTeam;
-
-};
 
 }

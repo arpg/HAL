@@ -14,7 +14,7 @@ class EpiphanDriver : public CameraDriverInterface
         ~EpiphanDriver();
 
         bool Capture( hal::CameraMsg& vImages );
-        std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+        std::shared_ptr<CameraDriverInterface> GetInputDriver() { return std::shared_ptr<CameraDriverInterface>(); }
 
         std::string GetProperty(const std::string& sProperty);
 

@@ -6,11 +6,28 @@
 using namespace cv;
 using namespace hal;
 
-OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
-    : num_channels_(1),
-      force_greyscale_(force_grey),
-      cam_(cam_id) {
-  if (!cam_.isOpened()) abort();
+OpenCVDriver::OpenCVDriver( const Uri& uri )
+{
+  // sat sane default parameters
+  CameraDriverInterface::SetDefaultProperties({
+      {"id", "0", "Id of the camera to use." },
+      {"grey", "false", "convert to greyscale"}
+      });
+  if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "OpenCVDriver knows about the following properties:\n";
+    CameraDriverInterface::PrintPropertyMap();
+    return;
+  }
+
+  num_channels_ = 1;
+  force_greyscale_    = GetProperty<bool>("grey", false);
+  unsigned int cam_id = GetProperty<unsigned int>("id", 0);
+
+  cam_ = cv::VideoCapture(cam_id);
+
+  if (!cam_.isOpened()){
+    abort();
+  }
 
   img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
   img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
@@ -47,7 +64,7 @@ bool OpenCVDriver::Capture(hal::CameraMsg& images_msg) {
   }
 
   pbImg->set_data(static_cast<const unsigned char*>(cv_image.data),
-                  cv_image.elemSize() * cv_image.total());
+      cv_image.elemSize() * cv_image.total());
   return true;
 }
 

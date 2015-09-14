@@ -26,7 +26,7 @@ public:
     size_t Width( size_t /*idx*/ = 0 ) const;
     size_t Height( size_t /*idx*/ = 0 ) const;
 
-    inline std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+    inline std::shared_ptr<CameraDriverInterface> GetInputDriver() {
         return std::shared_ptr<CameraDriverInterface>();
     }
 

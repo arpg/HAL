@@ -15,7 +15,7 @@ public:
     ~UvcDriver();
     
     bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+    std::shared_ptr<CameraDriverInterface> GetInputDriver() { return std::shared_ptr<CameraDriverInterface>(); }
     bool SetExposure(int nExposure);
     
     void Start(int vid, int pid, char* sn);

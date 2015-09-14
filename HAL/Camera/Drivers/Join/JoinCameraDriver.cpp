@@ -4,22 +4,59 @@
 #include <algorithm>
 #include <thread>
 
-#include <HAL/Devices/DeviceException.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/TicToc.h>
 
 #include "JoinCameraDriver.h"
 
 using namespace hal;
 
-JoinCameraDriver::JoinCameraDriver(
-    const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras)
-  : m_Cameras(cameras)
+std::vector<Uri> _SplitUri(const std::string& url)
 {
+  const char C = '&'; // split token
+  std::vector<Uri> ret;
+  std::string::size_type begin = 0, end = 0;
+  for(; end != std::string::npos; begin = end + 1 ) {
+    end = url.find( C, begin );
+    std::string s;
+    if( end == std::string::npos )
+      s = url.substr(begin);
+    else
+      s = url.substr(begin, end - begin);
+    if( !s.empty() ) ret.emplace_back( Uri(s) );
+  }
+  return ret;
+}
+
+
+JoinCameraDriver::JoinCameraDriver(
+    const Uri& uri
+    )
+{
+  
+  std::vector<Uri> suburis = _SplitUri(uri.url);
+  std::vector<std::shared_ptr<CameraDriverInterface> > cameras;
+  m_Cameras.reserve(suburis.size());
+
+  for( const Uri& splituri : suburis ) {
+//    std::cout << "Creating stream from uri: " << splituri.ToString()
+//      << std::endl;
+    m_Cameras.emplace_back
+      (DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(splituri));
+  }
+
+  if( m_Cameras.empty() ) {
+    std::cerr << "JoinCamerDrive: no input cameras given to join\n";
+    return;
+  }
+
+  /*
   const size_t N = NumChannels();
   m_nImgWidth.reserve(N);
   m_nImgHeight.reserve(N);
-
   m_nNumChannels = 0;
+  */
+
   for( auto& cam : m_Cameras ) {
     for( size_t i = 0; i < cam->NumChannels(); ++i ) {
       m_nImgWidth.push_back(cam->Width(i));
@@ -44,12 +81,12 @@ void JoinCameraDriver::WorkTeam::addWorker(
     m_bWorkerDone.push_back(true);
   }
   m_Workers.emplace_back(std::thread(&JoinCameraDriver::WorkTeam::Worker, this,
-                                     std::ref(cam), workerId));
+        std::ref(cam), workerId));
 }
 
-void
+  void
 JoinCameraDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
-                                   size_t workerId)
+    size_t workerId)
 {
   for (;;) {
     waitForWork(workerId);
@@ -95,9 +132,9 @@ std::vector<hal::CameraMsg>& JoinCameraDriver::WorkTeam::process()
   std::fill(m_bWorkerDone.begin(), m_bWorkerDone.end(), false);
   m_WorkerCond.notify_all();
   m_MasterCond.wait(lock, [this]{
-    return std::find(m_bWorkerDone.begin(), m_bWorkerDone.end(), false)
-        == m_bWorkerDone.end();
-  });
+      return std::find(m_bWorkerDone.begin(), m_bWorkerDone.end(), false)
+      == m_bWorkerDone.end();
+      });
   return m_ImageData;
 }
 

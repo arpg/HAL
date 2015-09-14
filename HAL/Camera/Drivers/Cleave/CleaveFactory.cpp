@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "CleaveDriver.h"
 
 
@@ -6,34 +6,20 @@
 namespace hal
 {
 
-class CleaveFactory : public DeviceFactory<CameraDriverInterface>
+class CleaveFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     CleaveFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
-    {
-      Params() = {
-	{"max", "0", "Maximum channel number to pass through"},
-	{"min", "0", "Minimum channel number to pass through"},
-      };
-    };
-    
-        
+        : DriverFactory<CameraDriverInterface>(name)
+    {};
+ 
     std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri)
     {
       hal::Uri subUri(uri.url);
-      int maxChannel = uri.properties.Get<int>("max", 0);
-      int minChannel = uri.properties.Get<int>("min", 0);
-
-      if (maxChannel < minChannel)
-	{
-	  printf("Cleave: Max channel number [%u] is not >= min channel [%u]\n", maxChannel, minChannel);
-	  return NULL;
-	}
       // Create input camera
-      std::shared_ptr<CameraDriverInterface> InCam =
-	DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
-      CleaveDriver* rs = new CleaveDriver(InCam, maxChannel, minChannel);
+      std::shared_ptr<CameraDriverInterface> input =
+        DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
+      CleaveDriver* rs = new CleaveDriver(input,uri);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

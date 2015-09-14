@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "AutoExposureDriver.h"
 
 #include <unistd.h>
@@ -6,11 +6,11 @@
 namespace hal
 {
 
-class AutoExposureFactory : public DeviceFactory<CameraDriverInterface>
+class AutoExposureFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     AutoExposureFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
             {"target", "100", "The target meant brightness of the image."},

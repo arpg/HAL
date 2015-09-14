@@ -1,12 +1,12 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "KitKatDriver.h"
 
 namespace hal {
 
-class KitKatFactory : public DeviceFactory<CameraDriverInterface> {
+class KitKatFactory : public DriverFactory<CameraDriverInterface> {
  public:
   KitKatFactory(const std::string& name)
-      : DeviceFactory<CameraDriverInterface>(name) {
+      : DriverFactory<CameraDriverInterface>(name) {
     Params() = {};
   }
 

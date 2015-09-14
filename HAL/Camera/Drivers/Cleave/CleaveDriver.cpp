@@ -2,11 +2,34 @@
 
 
 
-namespace hal {
+namespace hal 
+{
 
-  CleaveDriver::CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel, int m_minChannel )
-    : maxChannel(m_maxChannel), minChannel(m_minChannel), inputCamera(Input)
+  CleaveDriver::CleaveDriver(
+      std::shared_ptr<CameraDriverInterface> input,
+      const Uri& uri 
+      )
+    : inputCamera(input)
   {
+    // sat sane default parameters
+    CameraDriverInterface::SetDefaultProperties({
+        {"max", "0", "Maximum channel number to pass through"},
+        {"min", "0", "Minimum channel number to pass through"},
+        });
+    if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+      std::cerr << "CleaveDriver knows about the following properties:\n";
+      CameraDriverInterface::PrintPropertyMap();
+      return;
+    }
+
+    maxChannel_ = GetProperty<int>("max", 0);
+    minChannel_ = GetProperty<int>("min", 0);
+
+    if(maxChannel_ < minChannel_) {
+      printf("Cleave: Max channel number [%u] is not >= min channel [%u]\n",
+          maxChannel_, minChannel_);
+      return;
+    }
 
     Start();
   }
@@ -20,7 +43,7 @@ namespace hal {
 
   size_t CleaveDriver::NumChannels() const
   {
-    return maxChannel-minChannel+1;
+    return maxChannel_-minChannel_+1;
   }
 
   size_t CleaveDriver::Width( size_t idx) const
@@ -36,7 +59,8 @@ namespace hal {
   void CleaveDriver::Start()
   {
     //to get the sizes, capture one round of imagery and throw it away
-    std::cout << "Cleave: Passing through channels " << minChannel << " to " << maxChannel << std::endl;
+    std::cout << "Cleave: Passing through channels " << minChannel_ 
+      << " to " << maxChannel_ << std::endl;
     m_InMsg.Clear();
     widths.clear();
     heights.clear();
@@ -44,7 +68,7 @@ namespace hal {
         return;
     }
 
-    for( unsigned int ii = minChannel; ii <= maxChannel; ++ii ) {
+    for( unsigned int ii = minChannel_; ii <= maxChannel_; ++ii ) {
       const hal::ImageMsg& InImg = m_InMsg.image(ii);
       widths.push_back(InImg.width());
       heights.push_back(InImg.height());
@@ -68,7 +92,7 @@ namespace hal {
         return false;
     }
 
-    for( unsigned int ii = minChannel; ii <= maxChannel; ++ii ) {
+    for( unsigned int ii = minChannel_; ii <= maxChannel_; ++ii ) {
       const hal::ImageMsg& InImg = m_InMsg.image(ii);
 
         hal::ImageMsg* pImg = vImages.add_image();
@@ -91,7 +115,6 @@ namespace hal {
 
         const unsigned int nBytesPerPixel = nChannels * nDepth;
 
-
         pImg->set_width( InImg.width());
         pImg->set_height( InImg.height() );
         pImg->mutable_data()->resize( nBytesPerPixel*InImg.width()*InImg.height() );
@@ -103,5 +126,5 @@ namespace hal {
 
     return true;
   }
-
 } //namespace
+

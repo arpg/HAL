@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "AndroidDriver.h"
 
 namespace hal
 {
 
-class AndroidFactory : public DeviceFactory<CameraDriverInterface>
+class AndroidFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     AndroidFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
         Params() = {
         };

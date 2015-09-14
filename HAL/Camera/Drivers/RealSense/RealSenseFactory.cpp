@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "RealSense.h"
 
 namespace hal
 {
 
-class RealSenseFactory : public DeviceFactory<CameraDriverInterface>
+class RealSenseFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     RealSenseFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
+        : DriverFactory<CameraDriverInterface>(name)
     {
       Params() = {
 	{"ir","0","Select ir or depth image for the second channel, 0=depth"},

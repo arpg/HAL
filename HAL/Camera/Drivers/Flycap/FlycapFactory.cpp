@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "FlycapDriver.h"
 
@@ -6,11 +6,11 @@
 namespace hal
 {
 
-class FlycapFactory : public DeviceFactory<CameraDriverInterface>
+class FlycapFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
   FlycapFactory(const std::string& name)
-    : DeviceFactory<CameraDriverInterface>(name)
+    : DriverFactory<CameraDriverInterface>(name)
   {
     Params() = {
     {"idN","0","Camera serial number."},

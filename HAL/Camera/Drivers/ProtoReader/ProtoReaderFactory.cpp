@@ -1,29 +1,19 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "ProtoReaderDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderFactory : public DeviceFactory<CameraDriverInterface>
+class ProtoReaderFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
     ProtoReaderFactory(const std::string& name)
-        : DeviceFactory<CameraDriverInterface>(name)
-    {
-        Params() = {
-            {"startframe", "0", "First frame to capture."},
-            {"id", "0", "Id of the camera in log."}
-        };
-    }
+        : DriverFactory<CameraDriverInterface>(name) {}
 
     std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri)
     {
-        const std::string file = ExpandTildePath(uri.url);
-        size_t startframe  = uri.properties.Get("startframe", 0);
-        int camId = uri.properties.Get("id", -1);
-
         ProtoReaderDriver* driver =
-            new ProtoReaderDriver(file, camId,startframe);
+            new ProtoReaderDriver( uri );
         return std::shared_ptr<CameraDriverInterface>( driver );
     }
 };

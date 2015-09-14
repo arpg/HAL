@@ -3,7 +3,8 @@
 #include <memory>
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Devices/DeviceException.h>
-#include <boost/bind.hpp>
+#include <HAL/Utils/Uri.h>
+
 #include <iostream>
 #include <vector>
 
@@ -35,12 +36,14 @@ namespace hal
   class ROSDriver : public CameraDriverInterface
   {
   public:
-    ROSDriver(string m_topics, string m_sizes, int grayScale );
+    ROSDriver( const Uri& uri );
     ~ROSDriver();
 
     const int radixMultiplier = 1000; 
     bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+    std::shared_ptr<CameraDriverInterface> GetInputDriver() { return std::shared_ptr<CameraDriverInterface>(); }
+  
+    std::string GetProperty(const std::string& /*sProperty*/);
  
     void Start();
     void Stop();
@@ -62,15 +65,14 @@ namespace hal
     void parseSizes();
 
     
-    string topics;
-    string sizes;
+    string topics_;
+    string sizes_;
+    int grayScale_;
+
     vector<string> topicList;
     vector<size_t> widthList;
     vector<size_t> heightList;
-    
     int topicCount;
-
-    int grayScale;
 
 
     //ROS variables

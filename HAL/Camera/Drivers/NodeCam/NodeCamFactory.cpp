@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Devices/DeviceException.h>
 #include "NodeCamDriver.h"
 
 namespace hal
 {
 
-class NodeCamFactory : public DeviceFactory<CameraDriverInterface>
+class NodeCamFactory : public DriverFactory<CameraDriverInterface>
 {
 public:
   NodeCamFactory(const std::string& name)
-      : DeviceFactory<CameraDriverInterface>(name)
+      : DriverFactory<CameraDriverInterface>(name)
   {
     Params() = {};
   }

@@ -5,19 +5,55 @@
 namespace hal
 {
 
-DebayerDriver::DebayerDriver( std::shared_ptr<CameraDriverInterface> Input,
-                              dc1394bayer_method_t                   Method,
-                              dc1394color_filter_t                   Filter,
-                              unsigned int                           nDepth
-                              )
-  : m_Input(Input),
-    m_nImgWidth(Input->Width()),
-    m_nImgHeight(Input->Height()),
-    m_nNumChannels(Input->NumChannels()),
-    m_Method(Method),
-    m_Filter(Filter),
-    m_nDepth(nDepth)
-{
+  DebayerDriver::DebayerDriver( 
+      std::shared_ptr<CameraDriverInterface> input_cam,
+      const Uri& uri
+      )
+    : m_Input(input_cam)
+  {
+    // sat sane default parameters
+    CameraDriverInterface::SetDefaultProperties({
+        {"method","downsample","Debayer method: nearest, simple, bilinear, hqlinear, downsample"},
+        {"filter","rggb","Debayer filter: rggb, gbrg, grbg, bggr"},
+        {"depth","8","Pixel depth: 8 or 16."}
+        });
+    if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
+      std::cerr << "DebayerReaderDriver knows about the following properties:\n";
+      CameraDriverInterface::PrintPropertyMap();
+      return;
+    }
+
+    std::string sMethod = GetProperty<std::string>("method", "downsample");
+    std::string sFilter = GetProperty<std::string>("filter", "rggb");
+
+    // dc1394bayer_method_t Method;
+    if( sMethod == "nearest" ) {
+      m_Method = DC1394_BAYER_METHOD_NEAREST;
+    } else if( sMethod == "simple" ) {
+      m_Method = DC1394_BAYER_METHOD_SIMPLE;
+    } else if( sMethod == "bilinear" ) {
+      m_Method = DC1394_BAYER_METHOD_BILINEAR;
+    } else if( sMethod == "hqlinear" ) {
+      m_Method = DC1394_BAYER_METHOD_HQLINEAR;
+    } else {
+      m_Method = DC1394_BAYER_METHOD_DOWNSAMPLE;
+    }
+    
+    // dc1394color_filter_t Filter;
+    if( sFilter == "rggb" ) {
+      m_Filter = DC1394_COLOR_FILTER_RGGB;
+    } else if( sFilter == "gbrg" ) {
+      m_Filter = DC1394_COLOR_FILTER_GBRG;
+    } else if( sFilter == "grbg" ) {
+      m_Filter = DC1394_COLOR_FILTER_GRBG;
+    } else {
+      m_Filter = DC1394_COLOR_FILTER_BGGR;
+    }
+
+    m_nImgWidth    = input_cam->Width();
+    m_nImgHeight   = input_cam->Height();
+    m_nNumChannels = input_cam->NumChannels();
+    m_nDepth       = GetProperty("depth", 8);
 }
 
 bool DebayerDriver::Capture( hal::CameraMsg& vImages )
@@ -53,11 +89,6 @@ bool DebayerDriver::Capture( hal::CameraMsg& vImages )
   }
 
   return true;
-}
-
-std::string DebayerDriver::GetProperty(const std::string& sProperty)
-{
-  return m_Input->GetProperty(sProperty);
 }
 
 size_t DebayerDriver::NumChannels() const

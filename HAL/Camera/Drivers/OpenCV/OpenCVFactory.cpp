@@ -1,22 +1,16 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "OpenCVDriver.h"
 
 namespace hal {
 
-class OpenCVFactory : public DeviceFactory<CameraDriverInterface> {
+class OpenCVFactory : public DriverFactory<CameraDriverInterface> {
  public:
   OpenCVFactory(const std::string& name)
-      : DeviceFactory<CameraDriverInterface>(name) {
-    Params() = {};
-  }
+      : DriverFactory<CameraDriverInterface>(name) {}
 
-  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri) {
-    bool bGrey            = uri.properties.Get<bool>("grey", false);
-    std::string sName     = uri.properties.Get<std::string>("name", "OpenCVCam");
-
-    unsigned int nCamId = uri.properties.Get<unsigned int>("id", 0);
-    return std::shared_ptr<CameraDriverInterface>(
-        new OpenCVDriver(nCamId, bGrey));
+  std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri) 
+  {
+    return std::shared_ptr<CameraDriverInterface>( new OpenCVDriver(uri));
   }
 };
 

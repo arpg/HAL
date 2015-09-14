@@ -18,7 +18,7 @@ class NodeSimCamDriver : public CameraDriverInterface
   virtual ~NodeSimCamDriver();
 
   bool Capture( hal::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+  std::shared_ptr<CameraDriverInterface> GetInputDriver() {
     return std::shared_ptr<CameraDriverInterface>();
   }
 
