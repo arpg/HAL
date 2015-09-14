@@ -1,18 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "ProtoReaderLIDARDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderLIDARFactory : public DeviceFactory<LIDARDriverInterface>
+class ProtoReaderLIDARFactory : public DriverFactory<LIDARDriverInterface>
 {
 public:
     ProtoReaderLIDARFactory(const std::string& name)
-        : DeviceFactory<LIDARDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<LIDARDriverInterface>(name) {}
 
     std::shared_ptr<LIDARDriverInterface> CreateDriver(const Uri& uri)
     {

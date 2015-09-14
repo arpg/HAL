@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "NinjaIMUDriver.h"
 
 namespace hal
 {
 
-class NinjaIMUFactory : public DeviceFactory<IMUDriverInterface>
+class NinjaIMUFactory : public DriverFactory<IMUDriverInterface>
 {
 public:
     NinjaIMUFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
+        : DriverFactory<IMUDriverInterface>(name)
     {
         Params() = {
         };

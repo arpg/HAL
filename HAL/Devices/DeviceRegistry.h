@@ -10,7 +10,7 @@ namespace hal
 {
 
   // Forward declaration
-  template<typename BaseDevice> class DeviceFactory;
+  template<typename BaseDevice> class DriverFactory;
 
   template<typename BaseDevice>
     class DeviceRegistry
@@ -25,7 +25,7 @@ namespace hal
         /// Register factory pointer accessible by device_name
         void RegisterFactory(
             const std::string& device_name,
-            DeviceFactory<BaseDevice>* factory
+            DriverFactory<BaseDevice>* factory
             );
 
         // Register device 'name' as alias for 'alias'
@@ -44,11 +44,11 @@ namespace hal
 
       protected:
 
-        // Map of device names to aliases.
+        // Map of driver names to aliases.
         std::map<std::string,std::string> m_aliases;
 
-        // Map of device name -> factory instance
-        std::map<std::string,DeviceFactory<BaseDevice>*> m_factories;
+        // Map of driver name -> driver factory instance
+        std::map<std::string,DriverFactory<BaseDevice>*> m_factories;
     };
 
 }

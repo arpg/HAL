@@ -24,18 +24,20 @@ CsvPosysDriver::CsvPosysDriver(
 
     // open Posys csv file
     if( sFile.empty() ) {
-      throw hal::DeviceException("PosysLog: Csv file is required.");
+      std::cerr << "PosysLog: Csv file is required.\n";
+      return;
     } else {
       m_pFile.open( sFile.c_str() );
       if( m_pFile.is_open() == false ) {
-        throw hal::DeviceException("PosysLog: Couldn't open file '" + sFile +
-                                   "'");
+        std::cerr << "PosysLog: Couldn't open file '" + sFile + "'\n";
+        return;
       }
     }
 
     // read one timestamp.. return false if error occurs
     if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
-        throw std::runtime_error("Error obtaining next timestamp");
+       std::cerr << "Error obtaining next timestamp.\n";
+       return;
     }
 
     // push timestamp to VD queue

@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/StringUtils.h>
 #include <HAL/Posys/PosysDriverInterface.h>
 
@@ -11,20 +11,16 @@
 namespace hal
 {
 
-class CsvPosysFactory : public DeviceFactory<PosysDriverInterface>
+class CsvPosysFactory : public DriverFactory<PosysDriverInterface>
 {
 public:
     CsvPosysFactory(const std::string& name)
-        : DeviceFactory<PosysDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<PosysDriverInterface>(name) {}
 
     std::shared_ptr<PosysDriverInterface> CreateDriver(const Uri& uri)
     {
         const std::string sDataSourceDir = hal::ExpandTildePath(uri.url);
-        const int nObjectId = uri.properties.Get("id", 0);
+        const int nObjectId = uri.properties.GetProperty("id", 0);
 
         std::stringstream filename;
         filename << sDataSourceDir;

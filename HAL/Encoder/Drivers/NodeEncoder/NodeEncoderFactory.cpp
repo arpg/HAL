@@ -1,4 +1,4 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 // hack to enable sleep_for (GCC < 4.8)
 #ifndef _GLIBCXX_USE_NANOSLEEP
@@ -10,11 +10,11 @@
 namespace hal
 {
 
-class NodeEncoderFactory : public DeviceFactory<EncoderDriverInterface>
+class NodeEncoderFactory : public DriverFactory<EncoderDriverInterface>
 {
 public:
     NodeEncoderFactory(const std::string& name)
-        : DeviceFactory<EncoderDriverInterface>(name)
+        : DriverFactory<EncoderDriverInterface>(name)
     {
         Params() = {
         };

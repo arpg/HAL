@@ -10,14 +10,28 @@
 namespace hal
 {
 
-///////////////////////////////////////////////////////////////////////////////
-CsvDriver::CsvDriver(
-        const std::string sFileAccel,
-        const std::string sFileGyro,
-        const std::string sFileMag,
-        const std::string sFileTimestamp
-        )
-{
+  ///////////////////////////////////////////////////////////////////////////////
+  CsvDriver::CsvDriver( const Uri& uri)
+  {
+    // sat sane default parameters
+    IMUDriverInterface::SetDefaultProperties({
+        {"accel", "accel.txt", "File with captured accelerometer data."},
+        {"gyro", "gyro.txt", "File with Captured gyro data."},
+        {"mag", "mag.txt", "File with capture magnetometer data."},
+        {"timestamp", "timestamp.txt", "FIle with captured timestampe data."}
+        });
+    if( !IMUDriverInterface::ParseUriProperties( uri.properties ) ){
+      std::cerr << "CsvDriver knows about the following properties:\n";
+      IMUDriverInterface::PrintPropertyMap();
+      return;
+    }
+
+    std::string sDataSourceDir  = hal::ExpandTildePath(uri.url);
+    std::string sFileAccel      = IMUDriverInterface::GetProperty( "accel", sDataSourceDir+"/accel.txt");
+    std::string sFileGyro       = IMUDriverInterface::GetProperty( "gyro", sDataSourceDir+"/gyro.txt");
+    std::string sFileMag        = IMUDriverInterface::GetProperty( "mag", sDataSourceDir+"/mag.txt");
+    std::string sFileTimestamp  = IMUDriverInterface::GetProperty( "timestamp", sDataSourceDir+"/timestamp.txt");
+
     m_bShouldRun = false;
     m_bHaveAccel = false;
     m_bHaveGyro = false;
@@ -29,194 +43,197 @@ CsvDriver::CsvDriver(
 
     // open IMU log files
     if( sFileTimestamp.empty() ) {
-        throw hal::DeviceException("IMULog: File with timestamps is required.");
+      std::cerr << "IMULog: File with timestamps is required.\n";
+      return;
     } else {
-        m_pFileTime.open( sFileTimestamp.c_str() );
-        if( m_pFileTime.is_open() == false ) {
-            throw hal::DeviceException("IMULog: Couldn't open required timestamp file '"+sFileTimestamp+"'");
-        }
+      m_pFileTime.open( sFileTimestamp.c_str() );
+      if( m_pFileTime.is_open() == false ) {
+        std::cerr << "IMULog: Couldn't open required timestamp file '"+sFileTimestamp+"'\n";
+        return;
+      }
     }
 
     if( sFileAccel.empty() == false ) {
-        m_pFileAccel.open( sFileAccel.c_str() );
-        if( m_pFileAccel.is_open() == false ) {
-            std::cerr << "IMULog: Couldn't open accel file '" << sFileAccel << "'" << std::endl;
-        } else {
-            m_bHaveAccel = true;
-        }
+      m_pFileAccel.open( sFileAccel.c_str() );
+      if( m_pFileAccel.is_open() == false ) {
+        std::cerr << "IMULog: Couldn't open accel file '" << sFileAccel << "'" << std::endl;
+      } else {
+        m_bHaveAccel = true;
+      }
     }
 
     if( sFileGyro.empty() == false ) {
-        m_pFileGyro.open( sFileGyro.c_str() );
-        if( m_pFileGyro.is_open() == false ) {
-            std::cerr << "IMULog: Couldn't open gyro file '" << sFileGyro << "'" << std::endl;
-        } else {
-            m_bHaveGyro = true;
-        }
+      m_pFileGyro.open( sFileGyro.c_str() );
+      if( m_pFileGyro.is_open() == false ) {
+        std::cerr << "IMULog: Couldn't open gyro file '" << sFileGyro << "'" << std::endl;
+      } else {
+        m_bHaveGyro = true;
+      }
     }
 
     if( sFileMag.empty() == false ) {
-        m_pFileMag.open( sFileMag.c_str() );
-        if( m_pFileMag.is_open() == false ) {
-            std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;
-        } else {
-            m_bHaveMag = true;
-        }
+      m_pFileMag.open( sFileMag.c_str() );
+      if( m_pFileMag.is_open() == false ) {
+        std::cerr << "IMULog: Couldn't open mag file '" << sFileMag << "'" << std::endl;
+      } else {
+        m_bHaveMag = true;
+      }
     }
 
-//    if( sFileGPS.empty() == false ) {
-//        m_pFileGPS.open( sFileGPS.c_str() );
-//        if( m_pFileTime.is_open() == false ) {
-//            throw hal::DeviceException("IMULog: Couldn't open GPS file '"+sFileGPS+"'");
-//        } else {
-//            m_bHaveGPS = true;
-//        }
-//    }
+    //    if( sFileGPS.empty() == false ) {
+    //        m_pFileGPS.open( sFileGPS.c_str() );
+    //        if( m_pFileTime.is_open() == false ) {
+    //            throw hal::DeviceException("IMULog: Couldn't open GPS file '"+sFileGPS+"'");
+    //        } else {
+    //            m_bHaveGPS = true;
+    //        }
+    //    }
 
     // read one timestamp.. return false if error occurs
     if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
-        throw std::runtime_error("Umm..");
+      std::cerr << "Umm...\n";
+      return;
     }
 
     // push timestamp to VD queue
     hal::DeviceTime::PushTime( m_dNextTime );
 
-}
+  }
 
-///////////////////////////////////////////////////////////////////////////////
-CsvDriver::~CsvDriver()
-{
+  ///////////////////////////////////////////////////////////////////////////////
+  CsvDriver::~CsvDriver()
+  {
     // close capture thread
     m_bShouldRun = false;
 
-//    // this is fugly, but we need to wake up the sleeping capture thread somehow
-//    DeviceTime::CONDVAR.notify_all();
+    //    // this is fugly, but we need to wake up the sleeping capture thread somehow
+    //    DeviceTime::CONDVAR.notify_all();
 
     // wait for capture thread to die
     m_DeviceThread.join();
 
     // close IMU log files
     if( m_pFileTime.is_open() ) {
-        m_pFileTime.close();
+      m_pFileTime.close();
     }
     if( m_pFileAccel.is_open() ) {
-        m_pFileAccel.close();
+      m_pFileAccel.close();
     }
     if( m_pFileMag.is_open() ) {
-        m_pFileMag.close();
+      m_pFileMag.close();
     }
     if( m_pFileGyro.is_open() ) {
-        m_pFileGyro.close();
+      m_pFileGyro.close();
     }
     if( m_pFileGPS.is_open() ) {
-        m_pFileGPS.close();
+      m_pFileGPS.close();
     }
-}
+  }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
-{
+  /////////////////////////////////////////////////////////////////////////////////////////
+  void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
+  {
     m_IMUCallback = callback;
     if( !m_DeviceThread.joinable() ) {
-        // start capture thread
-        m_bShouldRun = true;
-        m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
+      // start capture thread
+      m_bShouldRun = true;
+      m_DeviceThread = std::thread( &CsvDriver::_ThreadCaptureFunc, this );
     }
-}
+  }
 
-///////////////////////////////////////////////////////////////////////////////
-void CsvDriver::_ThreadCaptureFunc()
-{
+  ///////////////////////////////////////////////////////////////////////////////
+  void CsvDriver::_ThreadCaptureFunc()
+  {
     while( m_bShouldRun ) {
-        hal::DeviceTime::WaitForTime( m_dNextTime );
+      hal::DeviceTime::WaitForTime( m_dNextTime );
 
-        //---------------------------------------------------------
+      //---------------------------------------------------------
 
-        // get data and pack
-        // we already have the timestamp so no need to read it!
-        std::string     sValue;
+      // get data and pack
+      // we already have the timestamp so no need to read it!
+      std::string     sValue;
 
-        hal::ImuMsg dataIMU;
+      hal::ImuMsg dataIMU;
 
-        if( m_bHaveAccel ) {
-            hal::VectorMsg* pbVec = dataIMU.mutable_accel();
+      if( m_bHaveAccel ) {
+        hal::VectorMsg* pbVec = dataIMU.mutable_accel();
 
-            getline ( m_pFileAccel, sValue, ',' );
-            pbVec->add_data( atof( sValue.c_str() ) );
+        getline ( m_pFileAccel, sValue, ',' );
+        pbVec->add_data( atof( sValue.c_str() ) );
 
-            getline ( m_pFileAccel, sValue, ',' );
-            pbVec->add_data( atof( sValue.c_str() ) );
+        getline ( m_pFileAccel, sValue, ',' );
+        pbVec->add_data( atof( sValue.c_str() ) );
 
-            getline ( m_pFileAccel, sValue );
-            pbVec->add_data( atof( sValue.c_str() ) );
-        }
+        getline ( m_pFileAccel, sValue );
+        pbVec->add_data( atof( sValue.c_str() ) );
+      }
 
-        if( m_bHaveGyro ) {
-            hal::VectorMsg* pbVec = dataIMU.mutable_gyro();
+      if( m_bHaveGyro ) {
+        hal::VectorMsg* pbVec = dataIMU.mutable_gyro();
 
-            getline ( m_pFileGyro, sValue, ',' );
-            pbVec->add_data(  atof( sValue.c_str() ) );
+        getline ( m_pFileGyro, sValue, ',' );
+        pbVec->add_data(  atof( sValue.c_str() ) );
 
-            getline ( m_pFileGyro, sValue, ',' );
-            pbVec->add_data(  atof( sValue.c_str() ) );
+        getline ( m_pFileGyro, sValue, ',' );
+        pbVec->add_data(  atof( sValue.c_str() ) );
 
-            getline ( m_pFileGyro, sValue );
-            pbVec->add_data(  atof( sValue.c_str() ) );
-        }
+        getline ( m_pFileGyro, sValue );
+        pbVec->add_data(  atof( sValue.c_str() ) );
+      }
 
-        if( m_bHaveMag ) {
-            hal::VectorMsg* pbVec = dataIMU.mutable_mag();
+      if( m_bHaveMag ) {
+        hal::VectorMsg* pbVec = dataIMU.mutable_mag();
 
-            getline ( m_pFileMag, sValue, ',' );
-            pbVec->add_data( atof( sValue.c_str() ) );
+        getline ( m_pFileMag, sValue, ',' );
+        pbVec->add_data( atof( sValue.c_str() ) );
 
-            getline ( m_pFileMag, sValue, ',' );
-            pbVec->add_data( atof( sValue.c_str() ) );
+        getline ( m_pFileMag, sValue, ',' );
+        pbVec->add_data( atof( sValue.c_str() ) );
 
-            getline ( m_pFileMag, sValue );
-            pbVec->add_data( atof( sValue.c_str() ) );
-        }
+        getline ( m_pFileMag, sValue );
+        pbVec->add_data( atof( sValue.c_str() ) );
+      }
 
-        if( (m_bHaveAccel || m_bHaveGyro || m_bHaveMag) && m_IMUCallback ) {
-            dataIMU.set_device_time(m_dNextTimePPS);
-            dataIMU.set_system_time(m_dNextTime);
-            m_IMUCallback( dataIMU );
-        }
+      if( (m_bHaveAccel || m_bHaveGyro || m_bHaveMag) && m_IMUCallback ) {
+        dataIMU.set_device_time(m_dNextTimePPS);
+        dataIMU.set_system_time(m_dNextTime);
+        m_IMUCallback( dataIMU );
+      }
 
-//        GPSData dataGPS;
-//        dataGPS.data_present = 0;
+      //        GPSData dataGPS;
+      //        dataGPS.data_present = 0;
 
-//        if( pSelf->m_bHaveGPS ) {
-//            dataGPS.data_present = IMU_GPS_LLH;
-//            // TODO: this needs to be filled
-//            // I didn't have a log to see the format
-//        }
+      //        if( pSelf->m_bHaveGPS ) {
+      //            dataGPS.data_present = IMU_GPS_LLH;
+      //            // TODO: this needs to be filled
+      //            // I didn't have a log to see the format
+      //        }
 
-//        if( dataGPS.data_present && !pSelf->m_GPSCallback.empty() ) {
-//            dataGPS.timestamp_system = pSelf->m_dNextTime;
-//            dataIMU.timestamp_pps = pSelf->m_dNextTimePPS;
-//            pSelf->m_GPSCallback( dataGPS );
-//        }
+      //        if( dataGPS.data_present && !pSelf->m_GPSCallback.empty() ) {
+      //            dataGPS.timestamp_system = pSelf->m_dNextTime;
+      //            dataIMU.timestamp_pps = pSelf->m_dNextTimePPS;
+      //            pSelf->m_GPSCallback( dataGPS );
+      //        }
 
-        //---------------------------------------------------------
+      //---------------------------------------------------------
 
-        // break if EOF
-        if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
-            break;
-        }
+      // break if EOF
+      if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
+        break;
+      }
 
-        // pop front and push next timestamp to queue
-        hal::DeviceTime::PopAndPushTime( m_dNextTime );
+      // pop front and push next timestamp to queue
+      hal::DeviceTime::PopAndPushTime( m_dNextTime );
     }
     m_bShouldRun = false;
-}
+  }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-inline bool CsvDriver::_GetNextTime(
-        double& dNextTime,                  //< Output
-        double& dNextTimePPS                //< Output
-        )
-{
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  inline bool CsvDriver::_GetNextTime(
+      double& dNextTime,                  //< Output
+      double& dNextTimePPS                //< Output
+      )
+  {
     std::string sValue;
 
     getline ( m_pFileTime, sValue, ',' );
@@ -225,10 +242,10 @@ inline bool CsvDriver::_GetNextTime(
     dNextTimePPS = atof( sValue.c_str() );
 
     if( m_pFileTime.eof() ) {
-        return false;
+      return false;
     }
 
     return true;
-}
+  }
 
 }

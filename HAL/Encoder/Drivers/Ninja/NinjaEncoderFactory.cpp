@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "NinjaEncoderDriver.h"
 
 namespace hal
 {
 
-class NinjaEncoderFactory : public DeviceFactory<EncoderDriverInterface>
+class NinjaEncoderFactory : public DriverFactory<EncoderDriverInterface>
 {
 public:
     NinjaEncoderFactory(const std::string& name)
-        : DeviceFactory<EncoderDriverInterface>(name)
+        : DriverFactory<EncoderDriverInterface>(name)
     {
         Params() = {
         };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HAL/LIDAR/LIDARDriverInterface.h>
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/Uri.h>
 
 namespace hal {
@@ -46,11 +46,13 @@ class LIDAR : public LIDARDriverInterface
             return;
         }
 
+        /*
         ///////////////////////////////////////////////////////////////
         std::string GetProperty(const std::string& sProperty)
         {
             return m_LIDAR->GetProperty(sProperty);
         }
+        */
 
 
 protected:

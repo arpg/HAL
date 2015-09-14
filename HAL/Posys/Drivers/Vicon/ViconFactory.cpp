@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "ViconDriver.h"
 
 namespace hal
 {
 
-class ViconFactory : public DeviceFactory<PosysDriverInterface>
+class ViconFactory : public DriverFactory<PosysDriverInterface>
 {
 public:
     ViconFactory(const std::string& name)
-        : DeviceFactory<PosysDriverInterface>(name)
+        : DriverFactory<PosysDriverInterface>(name)
     {
         Params() = {
         };

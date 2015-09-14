@@ -23,16 +23,20 @@ VelodyneDriver::VelodyneDriver(int port)
     struct sockaddr_in si_me;
 
     //Creating socket.
-    if ((m_socketDescriptor=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-	throw DeviceException(strerror(errno));
+    if ((m_socketDescriptor=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1){
+      std::cerr << strerror(errno) << "\n";
+      return;
+    }
 
     memset((char *) &si_me, 0, sizeof(si_me));
     si_me.sin_family = AF_INET;
     si_me.sin_port = htons(m_port);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
     //Binding the Socket.
-    if (bind(m_socketDescriptor, (sockaddr *)&si_me, sizeof(si_me))==-1)
-	throw DeviceException(strerror(errno));
+    if (bind(m_socketDescriptor, (sockaddr *)&si_me, sizeof(si_me))==-1){
+      std::cerr << strerror(errno) << "\n";
+      return;
+    }
 }
 
 
@@ -48,8 +52,10 @@ void VelodyneDriver::_ThreadFunc()
 	pbMsg.Clear();
 
 	//TODO: all the code for recieving the packets and pack it into PbMsg.
-	if (recvfrom(m_socketDescriptor, buf, BUFLEN, 0, (sockaddr *)&si_other, (socklen_t *)&slen)==-1)
-	    throw DeviceException(strerror(errno));
+	if (recvfrom(m_socketDescriptor, buf, BUFLEN, 0, (sockaddr *)&si_other, (socklen_t *)&slen)==-1){
+	    std::cerr << strerror(errno) << "\n";
+      return;
+  }
 
 	//Now we start transfering the data to PbMsg.
 	//Assuming recvfrom ignores the 42 byte udp header, hence size of data packet is 1206.

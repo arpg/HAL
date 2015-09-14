@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HAL/Posys/PosysDriverInterface.h>
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/Uri.h>
 
 namespace hal {
@@ -32,9 +32,11 @@ class Posys : public PosysDriverInterface {
     }
   }
 
+  /*
   std::string GetProperty(const std::string& sProperty) {
     return m_Posys->GetProperty(sProperty);
   }
+  */
 
   bool IsRunning() const override {
     return m_Posys && m_Posys->IsRunning();

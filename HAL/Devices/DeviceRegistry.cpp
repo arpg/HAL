@@ -11,9 +11,9 @@ namespace hal
 {
 
 template<typename BaseDevice>
-DeviceRegistry<BaseDevice>::DeviceRegistry() {
+DeviceRegistry<BaseDevice>::DeviceRegistry() 
+{
   RegisterAlias( "bumblebee", "convert:[fmt=MONO8]//debayer://deinterlace://dc1394:[mode=FORMAT7_3]//" );
-  RegisterAlias( "twizzler",  "deinterlace://v4l://" );
 }
 
 template<typename BaseDevice>
@@ -32,7 +32,7 @@ DeviceRegistry<BaseDevice>& DeviceRegistry<BaseDevice>::Instance()
 template<typename BaseDevice>
 void DeviceRegistry<BaseDevice>::RegisterFactory(
     const std::string& device_name,
-    DeviceFactory<BaseDevice>* factory
+    DriverFactory<BaseDevice>* factory
     )
 {
   m_factories[device_name] = factory;
@@ -67,7 +67,8 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
       return dev;
     }
     else{
-      throw DeviceException("Scheme '" + uri.scheme + "' not registered for factory");
+      return nullptr;
+//      throw DeviceException("Scheme '" + uri.scheme + "' not registered for factory");
     }
   }
 }
@@ -94,7 +95,6 @@ template class DeviceRegistry<hal::EncoderDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
 template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
-template class DeviceRegistry<hal::CarDriverInterface>;
 
 
 }

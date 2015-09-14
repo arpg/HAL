@@ -35,26 +35,34 @@ void Sleep(unsigned int time)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-MicroStrainDriver::MicroStrainDriver(std::string portname,
-                                     bool capture_accel,
-                                     bool capture_gyro,
-                                     bool capture_mag,
-                                     bool capture_gps,
-                                     int gps_hz,
-                                     int imu_hz)
-    : mShouldRun(false),
-      m_bGetGPS(capture_gps),
-      m_bGetAccelerometerAHRS(capture_accel),
-      m_bGetGyroAHRS(capture_gyro),
-      m_bGetMagnetometerAHRS(capture_mag),
-      m_nHzGPS(gps_hz),
-      m_nHzAHRS(imu_hz),
-      m_sPortName(portname)
+MicroStrainDriver::MicroStrainDriver( const Uri& uri ) : mShouldRun(false)
 {
-    m_bGetEulerAHRS			= false;
-    m_bGetQuaternionAHRS	= false;
-    m_bGetAHRS = capture_accel || capture_gyro || capture_mag;
-    m_bGetTimeStampPpsAHRS  = true;
+  // sat sane default parameters
+  IMUDriverInterface::SetDefaultProperties({
+      {"accel", "1", "Capture accelerometer data."},
+      {"gyro", "1", "Capture gyro data."},
+      {"mag", "0", "Capture magnetometer data."},
+      {"gps", "0", "Capture GPS data."},
+      {"gpshz", "1", "GPS capture rate in Hz."},
+      {"imuhz", "200", "IMU capture rate in Hz."}
+      });
+  if( !IMUDriverInterface::ParseUriProperties( uri.properties ) ){
+    std::cerr << "MicroStrainDriver knows about the following properties:\n";
+    IMUDriverInterface::PrintPropertyMap();
+    return;
+    }
+
+  m_sPortName             = uri.url;
+  m_bGetAccelerometerAHRS = IMUDriverInterface::GetProperty("accel", true);
+  m_bGetGyroAHRS          = IMUDriverInterface::GetProperty("gyro", true);
+  m_bGetMagnetometerAHRS  = IMUDriverInterface::GetProperty("mag", false);
+  m_bGetGPS               = IMUDriverInterface::GetProperty("gps", false);
+  m_nHzGPS                = IMUDriverInterface::GetProperty("gpshz", 1);
+  m_nHzAHRS               = IMUDriverInterface::GetProperty("imuhz", 200);
+  m_bGetEulerAHRS			    = false;
+  m_bGetQuaternionAHRS	  = false;
+  m_bGetAHRS              = m_bGetAccelerometerAHRS || m_bGetGyroAHRS || m_bGetMagnetometerAHRS;
+  m_bGetTimeStampPpsAHRS  = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -291,7 +299,7 @@ void MicroStrainDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     mIMUCallback = callback;
     if(_Init() == false) {
-      throw DeviceException("Error initializing IMU.");
+      std::cerr << "MicroStrainDriver: Error initializing IMU.\n";
     }
 }
 

@@ -12,6 +12,12 @@ public:
     ProtoReaderIMUDriver(std::string filename);
     ~ProtoReaderIMUDriver();
     void RegisterIMUDataCallback(IMUDriverDataCallback callback);
+   
+    std::string GetProperty(const std::string& sProperty)
+    {
+      return sProperty;
+    }
+
 
   bool IsRunning() const override {
     return m_running;

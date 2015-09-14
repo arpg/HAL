@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HAL/Encoder/EncoderDriverInterface.h>
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include <HAL/Utils/Uri.h>
 
 namespace hal {
@@ -47,11 +47,13 @@ class Encoder : public EncoderDriverInterface
             return;
         }
 
+        /*
         ///////////////////////////////////////////////////////////////
         std::string GetProperty(const std::string& sProperty)
         {
             return m_Encoder->GetProperty(sProperty);
         }
+        */
 
 
 protected:

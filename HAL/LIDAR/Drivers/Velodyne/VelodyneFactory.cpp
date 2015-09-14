@@ -1,19 +1,16 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "VelodyneDriver.h"
 
 namespace hal
 {
 
-class VelodyneFactory : public DeviceFactory<LIDARDriverInterface>
+class VelodyneFactory : public DriverFactory<LIDARDriverInterface>
 {
 public:
     VelodyneFactory(const std::string& name)
-        : DeviceFactory<LIDARDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<LIDARDriverInterface>(name)
+    {}
 
     std::shared_ptr<LIDARDriverInterface> CreateDriver(const Uri& /*uri*/)
     {

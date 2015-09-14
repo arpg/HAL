@@ -1,19 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "MicroStrainPosysDriver.h"
 
 namespace hal
 {
 
-class MicroStrainPosysFactory : public DeviceFactory<PosysDriverInterface>
+class MicroStrainPosysFactory : public DriverFactory<PosysDriverInterface>
 {
 public:
     MicroStrainPosysFactory(const std::string& name)
-        : DeviceFactory<PosysDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<PosysDriverInterface>(name){}
 
     std::shared_ptr<PosysDriverInterface> CreateDriver(const Uri& /*uri*/)
     {

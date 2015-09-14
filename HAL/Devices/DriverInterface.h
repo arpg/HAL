@@ -7,11 +7,71 @@
 #include <map>
 #include <limits>
 
+#include <HAL/Utils/PropertyMap.h>
+
 namespace hal 
 {
   // Top level device driver class s.t. all drivers have properties that can be set/get.
-  class DriverInterface
+  class DriverInterface 
   {
+    public:
+
+      template<typename T>
+        void SetProperty(const std::string& key, T value)
+        {   
+          driver_properties_.SetProperty(key,value);
+        }
+
+      template<typename T>
+        T GetProperty(const std::string& key, T default_val = T() ) const
+        {
+          return driver_properties_.GetProperty(key,default_val);
+        }
+
+
+      void SetDefaultProperties( const std::vector<param_t>& params )
+      {
+         driver_properties_.SetProperties(params);
+      }
+
+      bool ParseUriProperties( const PropertyMap& m )
+      {
+        for( auto& it : m.GetPropertyMap() ){
+          if( !driver_properties_.Contains( it.first ) ){
+            std::cerr << "Unkown property: '" << it.first << "'\n";
+            return false;
+          }
+        }
+        // OK all properties are known, so just copy them in.
+        driver_properties_.SetProperties( m );
+        return true;
+      }
+
+      void PrintPropertyMap()
+      {
+        driver_properties_.PrintPropertyMap();
+      }
+
+
+    protected:
+      PropertyMap driver_properties_;
+
+/*
+    struct Param
+    {
+      std::string param;
+      std::string defaultval;
+      std::string help;
+    };
+
+    inline std::vector<Param>& Params() 
+    {
+      return params_;
+    }
+
+
+    protected:
+    std::vector<Param> params_;
     public:
         ////////////////////////////////////////////////////////////////////////
         template<class T>
@@ -124,7 +184,7 @@ namespace hal
         }
 
         std::map<std::string,std::string>   m_mPropertyMap;
-
+        */
   };
 
 }

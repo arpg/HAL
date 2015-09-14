@@ -1,14 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "PhidgetsDriver.h"
 
 namespace hal
 {
 
-class PhidgetsFactory : public DeviceFactory<IMUDriverInterface>
+class PhidgetsFactory : public DriverFactory<IMUDriverInterface>
 {
 public:
     PhidgetsFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
+        : DriverFactory<IMUDriverInterface>(name)
     {
         Params() = {
         };

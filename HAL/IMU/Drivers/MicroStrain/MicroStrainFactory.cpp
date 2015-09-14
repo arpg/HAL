@@ -1,38 +1,19 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "MicroStrainDriver.h"
 
 namespace hal
 {
 
-class MicroStrainFactory : public DeviceFactory<IMUDriverInterface>
+class MicroStrainFactory : public DriverFactory<IMUDriverInterface>
 {
 public:
     MicroStrainFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
-    {
-        Params() = {
-            {"accel", "1", "Capture accelerometer data."},
-            {"gyro", "1", "Capture gyro data."},
-            {"mag", "0", "Capture magnetometer data."},
-            {"gps", "0", "Capture GPS data."},
-            {"gpshz", "1", "GPS capture rate in Hz."},
-            {"imuhz", "200", "IMU capture rate in Hz."}
-        };
-    }
+        : DriverFactory<IMUDriverInterface>(name) {}
 
-    std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
+    std::shared_ptr<IMUDriverInterface> CreateDriver( const Uri& uri )
     {
-        bool capture_accel = uri.properties.Get("accel", true);
-        bool capture_gyro = uri.properties.Get("gyro", true);
-        bool capture_mag = uri.properties.Get("mag", false);
-        bool capture_gps = uri.properties.Get("gps", false);
-        int gps_hz = uri.properties.Get("gpshz", 1);
-        int imu_hz = uri.properties.Get("imuhz", 200);
-
-        MicroStrainDriver* pDriver =
-            new MicroStrainDriver(uri.url, capture_accel, capture_gyro,
-                                  capture_mag, capture_gps, gps_hz, imu_hz);
+        MicroStrainDriver* pDriver = new MicroStrainDriver( uri );
         return std::shared_ptr<IMUDriverInterface>( pDriver );
     }
 };

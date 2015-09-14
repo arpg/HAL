@@ -1,19 +1,16 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "ProtoReaderPosysDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderPosysFactory : public DeviceFactory<PosysDriverInterface>
+class ProtoReaderPosysFactory : public DriverFactory<PosysDriverInterface>
 {
 public:
     ProtoReaderPosysFactory(const std::string& name)
-        : DeviceFactory<PosysDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<PosysDriverInterface>(name)
+    {}
 
     std::shared_ptr<PosysDriverInterface> CreateDriver(const Uri& uri)
     {

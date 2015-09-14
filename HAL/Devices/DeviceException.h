@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include <exception>
@@ -17,3 +18,4 @@ struct DeviceException : std::exception
 };
 
 }
+*/

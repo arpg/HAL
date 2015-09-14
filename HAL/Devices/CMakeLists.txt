@@ -1,6 +1,6 @@
 set(HDRS
     DeviceException.h
-    DeviceFactory.h
+    DriverFactory.h
     DeviceRegistry.h
     DeviceTime.h
     DriverInterface.h

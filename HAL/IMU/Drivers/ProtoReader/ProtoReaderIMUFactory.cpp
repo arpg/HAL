@@ -1,23 +1,18 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "ProtoReaderIMUDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderIMUFactory : public DeviceFactory<IMUDriverInterface>
+class ProtoReaderIMUFactory : public DriverFactory<IMUDriverInterface>
 {
 public:
     ProtoReaderIMUFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<IMUDriverInterface>(name) {}
 
     std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri)
     {
       const std::string file = ExpandTildePath(uri.url);
-
       ProtoReaderIMUDriver* pDriver = new ProtoReaderIMUDriver(file);
       return std::shared_ptr<IMUDriverInterface>( pDriver );
     }

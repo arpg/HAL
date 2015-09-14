@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "PCANIMUDriver.h"
 
 namespace hal
 {
 
-class PCANIMUFactory : public DeviceFactory<IMUDriverInterface>
+class PCANIMUFactory : public DriverFactory<IMUDriverInterface>
 {
 public:
     PCANIMUFactory(const std::string& name)
-        : DeviceFactory<IMUDriverInterface>(name)
+        : DriverFactory<IMUDriverInterface>(name)
     {
         Params() = {
         {"portname", "/dev/pcan32", "Port name such as /dev/pcan32"},

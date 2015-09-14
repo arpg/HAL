@@ -8,7 +8,6 @@
 
 namespace hal {
 
-///////////////////////////////////////////////////////////////////////////////
 // Generic camera driver interface
 class CameraDriverInterface : public DriverInterface
 {

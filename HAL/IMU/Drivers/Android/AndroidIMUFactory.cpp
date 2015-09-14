@@ -1,11 +1,11 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "./AndroidIMUDriver.h"
 
 namespace hal {
-class AndroidIMUFactory : public DeviceFactory<IMUDriverInterface> {
+class AndroidIMUFactory : public DriverFactory<IMUDriverInterface> {
  public:
   AndroidIMUFactory(const std::string& name)
-      : DeviceFactory<IMUDriverInterface>(name) {
+      : DriverFactory<IMUDriverInterface>(name) {
     Params() = {};
   }
 

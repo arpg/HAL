@@ -1,15 +1,15 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 
 #include "PCANEncoderDriver.h"
 
 namespace hal
 {
 
-class PCANEncoderFactory : public DeviceFactory<EncoderDriverInterface>
+class PCANEncoderFactory : public DriverFactory<EncoderDriverInterface>
 {
 public:
     PCANEncoderFactory(const std::string& name)
-        : DeviceFactory<EncoderDriverInterface>(name)
+        : DriverFactory<EncoderDriverInterface>(name)
     {
         Params() = {
         {"portname", "/dev/pcan32", "Port name such as /dev/pcan32"},

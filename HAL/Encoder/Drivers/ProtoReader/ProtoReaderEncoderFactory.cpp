@@ -1,18 +1,14 @@
-#include <HAL/Devices/DeviceFactory.h>
+#include <HAL/Devices/DriverFactory.h>
 #include "ProtoReaderEncoderDriver.h"
 
 namespace hal
 {
 
-class ProtoReaderEncoderFactory : public DeviceFactory<EncoderDriverInterface>
+class ProtoReaderEncoderFactory : public DriverFactory<EncoderDriverInterface>
 {
 public:
     ProtoReaderEncoderFactory(const std::string& name)
-        : DeviceFactory<EncoderDriverInterface>(name)
-    {
-        Params() = {
-        };
-    }
+        : DriverFactory<EncoderDriverInterface>(name) {}
 
     std::shared_ptr<EncoderDriverInterface> CreateDriver(const Uri& uri)
     {
