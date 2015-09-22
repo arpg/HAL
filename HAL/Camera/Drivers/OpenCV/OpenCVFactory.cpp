@@ -12,11 +12,19 @@ class OpenCVFactory : public DeviceFactory<CameraDriverInterface> {
 
   std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri) {
     bool bGrey            = uri.properties.Get<bool>("grey", false);
-    std::string sName     = uri.properties.Get<std::string>("name", "OpenCVCam");
 
     unsigned int nCamId = uri.properties.Get<unsigned int>("id", 0);
-    return std::shared_ptr<CameraDriverInterface>(
-        new OpenCVDriver(nCamId, bGrey));
+
+    const std::string path = ExpandTildePath(uri.url);
+    if(path.empty()){
+		std::string sName     = uri.properties.Get<std::string>("name", "OpenCVCam");
+		return std::shared_ptr<CameraDriverInterface>(
+				new OpenCVDriver(nCamId, bGrey));
+	}else{
+		std::string sName     = uri.properties.Get<std::string>("name", "OpenCVVideoFile");
+		return std::shared_ptr<CameraDriverInterface>(
+						new OpenCVDriver(path, bGrey));
+	}
   }
 };
 

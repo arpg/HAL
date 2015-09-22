@@ -10,10 +10,14 @@ OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
     : num_channels_(1),
       force_greyscale_(force_grey),
       cam_(cam_id) {
-  if (!cam_.isOpened()) abort();
+  Initialize();
+}
 
-  img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
-  img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
+OpenCVDriver::OpenCVDriver(const std::string& sFilePath, bool force_grey)
+    : num_channels_(1),
+      force_greyscale_(force_grey),
+      cam_(sFilePath) {
+  Initialize();
 }
 
 OpenCVDriver::~OpenCVDriver() {}
@@ -61,4 +65,11 @@ size_t OpenCVDriver::Width(size_t /*idx*/) const {
 
 size_t OpenCVDriver::Height(size_t /*idx*/) const {
   return img_height_;
+}
+
+void OpenCVDriver::Initialize(){
+  if (!cam_.isOpened()) abort();
+
+  img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
+  img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
 }
