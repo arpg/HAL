@@ -9,6 +9,7 @@ class OpenCVDriver : public CameraDriverInterface
 {
  public:
   OpenCVDriver(unsigned int nCamId, bool bForceGrey);
+  OpenCVDriver(const std::string& sFilePath, bool bForceGrey);
   ~OpenCVDriver();
 
   bool Capture( hal::CameraMsg& vImages );
@@ -18,6 +19,7 @@ class OpenCVDriver : public CameraDriverInterface
   size_t Width( size_t /*idx*/ = 0 ) const;
   size_t Height( size_t /*idx*/ = 0 ) const;
  private:
+  void Initialize();
   size_t img_height_;
   size_t img_width_;
   int num_channels_;
