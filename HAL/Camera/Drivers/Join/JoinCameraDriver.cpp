@@ -32,6 +32,7 @@ JoinCameraDriver::JoinCameraDriver(
 
 JoinCameraDriver::~JoinCameraDriver()
 {
+	m_WorkTeam.stopTeam();
 }
 
 void JoinCameraDriver::WorkTeam::addWorker(
@@ -51,11 +52,12 @@ void
 JoinCameraDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
                                    size_t workerId)
 {
-  for (;;) {
+  for (;!m_bStopRequested;) {
     waitForWork(workerId);
     cam->Capture(m_ImageData[workerId]);
     workerDone(workerId);
   }
+  cam.reset();
 }
 
 void JoinCameraDriver::WorkTeam::waitForWork(size_t workerId)
@@ -69,6 +71,15 @@ void JoinCameraDriver::WorkTeam::workerDone(size_t workerId)
   std::lock_guard<std::mutex> lock(m_Mutex);
   m_bWorkerDone[workerId] = true;
   m_MasterCond.notify_one();
+}
+
+void JoinCameraDriver::WorkTeam::stopTeam(){
+	m_bStopRequested = true;
+	//let workers loop one iteration
+	process();
+	for(size_t i = 0; i < m_Workers.size(); i++){
+		m_Workers[i].join();
+	}
 }
 
 bool JoinCameraDriver::Capture( hal::CameraMsg& vImages )
