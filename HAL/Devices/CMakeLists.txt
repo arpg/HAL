@@ -1,11 +1,10 @@
 set(HDRS
-    DeviceException.h
     DriverFactory.h
-    DeviceRegistry.h
+    DeviceDriverRegistry.h
     DeviceTime.h
-    DriverInterface.h
+    DeviceDriverInterface.h
 )
 
-add_to_hal_sources( DeviceTime.cpp DeviceRegistry.cpp )
+add_to_hal_sources( DeviceTime.cpp DeviceDriverRegistry.cpp )
 
 add_to_hal_headers( ${HDRS} )

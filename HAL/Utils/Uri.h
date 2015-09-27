@@ -68,7 +68,7 @@ namespace hal
             url = str_uri.substr(nurl+2);
           }
         }else{
-          scheme = "";
+          scheme = str_uri;
           url = str_uri;
         }
       }

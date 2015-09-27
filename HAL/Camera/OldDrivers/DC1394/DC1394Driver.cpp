@@ -63,16 +63,24 @@ inline int DC1394Driver::_NearestValue(int value, int step, int min, int max)
 
 
 /////////////////////////////////////////////////////////////////////////////
-bool DC1394Driver::Init(
-    const PropertyMap& default_properties, // from factory
-    const Uri& uri 
-    )
+DC1394Driver::DC1394Driver( const Uri& uri )
 {
-  CameraDriverInterface::SetDefaultProperties( default_properties );
+  CameraDriverInterface::SetDefaultProperties({
+      {"idN","0","Camera id number."},
+      {"mode","MONO8","Video mode: RGB8, MONO8, MONO16, FORMAT7_X"},
+      {"size", "640x480", "Capture resolution."},
+      {"roi", "0+0+640x480", "ROI resolution for Format7."},
+      {"fps", "30.0", "Capture framerate."},
+      {"iso", "800", "ISO speed."},
+      {"dma", "4", "Number of DMA channels."},
+      {"exp", "AUTO", "Sets exposure to absolute value."},
+      {"ptgrey_timestamp", "false", "use point grey device timestamp."}
+      }
+  );
   if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
     std::cerr << "DC1394Driver knows about the following properties:\n";
     CameraDriverInterface::PrintPropertyMap();
-    return false;
+    return;
   }
 
   ImageDim Dims         = GetProperty<ImageDim>("size", ImageDim(640,480));
@@ -185,7 +193,7 @@ bool DC1394Driver::Init(
 
   if( pCameraList->num == 0 ) {
     std::cerr << "No DC1394 cameras found.\n";
-    return false;
+    return;
   }
 
   // If no ids are provided, all cameras will be opened.
@@ -223,14 +231,14 @@ bool DC1394Driver::Init(
       e = dc1394_video_set_operation_mode( pCam, DC1394_OPERATION_MODE_1394B );
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set DC1394_OPERATION_MODE_1394B\n";
-        return false;
+        return;
       }
     }
 
     e = dc1394_video_set_iso_speed(pCam,Speed);
     if( e != DC1394_SUCCESS ){
       std::cerr << "Could not set iso speed\n";
-      return false;
+      return;
     }
 
     //----- set framerate and mode
@@ -241,7 +249,7 @@ bool DC1394Driver::Init(
       std::cout << "Setting video mode to " << Mode << std::endl;
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set video mode\n";
-        return false;
+        return;
       }
 
       // get framerate
@@ -267,7 +275,7 @@ bool DC1394Driver::Init(
       e = dc1394_video_set_framerate(pCam, FPS);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set frame rate.\n";
-        return false;
+        return;
       }
 
     } else {
@@ -280,21 +288,21 @@ bool DC1394Driver::Init(
       e = dc1394_format7_get_mode_info(pCam, Mode, &Info);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not get format7 mode info.\n";
-        return false;
+        return;
       }
 
       // safely set the video mode
       e = dc1394_video_set_mode( pCam, Mode );
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set format7 video mode.\n";
-        return false;
+        return;
       }
 
       // set position to 0,0 so that setting any size within min and max is a valid command
       e = dc1394_format7_set_image_position(pCam, Mode, 0, 0);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set format7 image position.\n";
-        return false;
+        return;
       }
 
       // work out the desired image size
@@ -305,14 +313,14 @@ bool DC1394Driver::Init(
       e = dc1394_format7_set_image_size(pCam, Mode, nWidth, nHeight);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set format7 size.\n";
-        return false;
+        return;
       }
 
       // get the info again since many parameters depend on image size
       e = dc1394_format7_get_mode_info(pCam, Mode, &Info);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not get format7 mode info.\n";
-        return false;
+        return;
       }
 
       // work out position of roi
@@ -323,7 +331,7 @@ bool DC1394Driver::Init(
       e = dc1394_format7_set_image_position(pCam, Mode, nLeft, nTop);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set format7 size.\n";
-        return false;
+        return;
       }
 
       std::cout<<"   ROI: "<<nLeft<<" "<<nTop<<" "<<nWidth<<" "<<nHeight<<" ";
@@ -333,7 +341,7 @@ bool DC1394Driver::Init(
       e = dc1394_format7_set_packet_size(pCam, Mode, Info.max_packet_size);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set format7 packet size.\n";
-        return false;
+        return;
       }
 
       if((fFPS != MAX_FR) && (fFPS != EXT_TRIG)){
@@ -342,19 +350,19 @@ bool DC1394Driver::Init(
         e = dc1394_feature_set_absolute_control(pCam,DC1394_FEATURE_FRAME_RATE,DC1394_ON);
         if( e != DC1394_SUCCESS ){
           std::cerr << "Could not turn on absolute frame rate control.\n";
-          return false;
+          return;
         }
 
         e = dc1394_feature_set_mode(pCam,DC1394_FEATURE_FRAME_RATE,DC1394_FEATURE_MODE_MANUAL);
         if( e != DC1394_SUCCESS ){
           std::cerr << "Could not make frame rate manual.\n";
-          return false;
+          return;
         }
 
         e = dc1394_feature_set_absolute_value(pCam,DC1394_FEATURE_FRAME_RATE,fFPS);
         if( e != DC1394_SUCCESS ){
           std::cerr << "Could not set format7 framerate.\n";
-          return false;
+          return;
         }
       }
 
@@ -364,7 +372,7 @@ bool DC1394Driver::Init(
       e = dc1394_feature_get_absolute_value(pCam,DC1394_FEATURE_FRAME_RATE,&value);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not get framerate.\n";
-        return false;
+        return;
       } 
 
       std::cout << " - Framerate(shutter permitting): " << value << std::endl;
@@ -376,7 +384,7 @@ bool DC1394Driver::Init(
     e = dc1394_capture_setup(pCam, nDMA, DC1394_CAPTURE_FLAGS_DEFAULT);
     if( e != DC1394_SUCCESS ){
       std::cerr << "Could not setup camera - check settings.\n";
-      return false;
+      return;
     }
 
     //----- set exposure
@@ -397,26 +405,26 @@ bool DC1394Driver::Init(
           e = dc1394_feature_get_power(pCam, DC1394_FEATURE_EXPOSURE, &power);
           if( e != DC1394_SUCCESS ){
             std::cerr << "Could not set exposure feature.\n";
-            return false;
+            return;
           }
 
           dc1394feature_mode_t feature_mode = DC1394_FEATURE_MODE_MANUAL;
           e = dc1394_feature_set_mode(pCam, DC1394_FEATURE_EXPOSURE, feature_mode);
           if( e != DC1394_SUCCESS ){
             std::cerr << "Could not set exposure feature.\n";
-            return false;
+            return;
           }
 
           e = dc1394_feature_set_absolute_control(pCam, DC1394_FEATURE_EXPOSURE, power);
           if( e != DC1394_SUCCESS ){
             std::cerr << "Could not set exposure feature.\n";
-            return false;
+            return;
           }
 
           e = dc1394_feature_set_absolute_value(pCam, DC1394_FEATURE_EXPOSURE, fEXP);
           if( e != DC1394_SUCCESS ){
             std::cerr << "Could not set exposure value.\n";
-            return false;
+            return;
           }
         }
       } else {
@@ -429,7 +437,7 @@ bool DC1394Driver::Init(
       e = dc1394_get_control_register(pCam, 0x12F8, &frame_info_val);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not get FRAME_INFO value.\n";
-        return false;
+        return;
       }
 
 
@@ -437,14 +445,14 @@ bool DC1394Driver::Init(
       e = dc1394_set_control_register(pCam, 0x12F8, frame_info_val);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not set FRAME_INFO value.\n";
-        return false;
+        return;
       }
 
       frame_info_val = 0;
       e = dc1394_get_control_register(pCam, 0x12F8, &frame_info_val);
       if( e != DC1394_SUCCESS ){
         std::cerr << "Could not get FRAME_INFO value.\n";
-        return false;
+        return;
       }
 
       std::bitset<32> frame_info_bits(frame_info_val);
@@ -460,7 +468,7 @@ bool DC1394Driver::Init(
     e = dc1394_video_set_transmission( m_vCam[ii], DC1394_ON );
     if( e != DC1394_SUCCESS ){
       std::cerr << "Could not start camera iso transmission.\n";
-      return false;
+      return;
     }
   }
 
@@ -470,7 +478,7 @@ bool DC1394Driver::Init(
   e = dc1394_capture_dequeue( m_vCam[0], DC1394_CAPTURE_POLICY_WAIT, &pFrame );
   if( e != DC1394_SUCCESS ){
     std::cerr << "Could not capture a frame.\n";
-    return false;
+    return;
   }
 
 
@@ -496,7 +504,6 @@ bool DC1394Driver::Init(
 
   // Release the frame.
   e = dc1394_capture_enqueue( m_vCam[0], pFrame );
-  return true;
 }
 
 

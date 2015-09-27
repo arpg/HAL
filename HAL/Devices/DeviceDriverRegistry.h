@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <HAL/config.h>
@@ -6,6 +7,16 @@
 #include <memory>
 #include <map>
 
+/*
+ *
+ * Device driver registry is used to store a map from "driver name" to driver
+ * factory routines that are used to allocate actual device drivers.
+ *
+ * Deviecs are generic interfaces (e.g., "camera") that are implemented by
+ * specific drivers, drivers in turn require factories.
+ *
+ */
+
 namespace hal
 {
 
@@ -13,14 +24,14 @@ namespace hal
   template<typename BaseDevice> class DriverFactory;
 
   template<typename BaseDevice>
-    class DeviceRegistry
+    class DeviceDriverRegistry
     {
       public:
-        /// global device registery singleton 
-        static DeviceRegistry<BaseDevice>& Instance();
+        /// global device registry singleton 
+        static DeviceDriverRegistry<BaseDevice>& Registry();
 
-        DeviceRegistry();
-        ~DeviceRegistry();
+        DeviceDriverRegistry();
+        ~DeviceDriverRegistry();
 
         /// Register factory pointer accessible by device_name
         void RegisterFactory(
@@ -35,9 +46,9 @@ namespace hal
             );
 
         // Get factory associated with uri
-        std::shared_ptr<BaseDevice> Create(const Uri& uri);
+        DriverFactory<BaseDevice>& GetFactory (const Uri& uri );
 
-        void Destroy(BaseDevice* dev);
+//        void Destroy(BaseDevice* dev);
 
         // print the map<string,Dev> table 
         void ListDrivers();

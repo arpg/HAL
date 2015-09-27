@@ -3,19 +3,13 @@
 
 namespace hal
 {
-  class FileReaderFactory : public DriverFactory<CameraDriverInterface> 
-  {
+  class FileReaderFactory : public DriverFactory<CameraDriverInterface> {
     public:
-      FileReaderFactory( const std::string& driver_name, const std::vector<param_t>& default_params )
-        : DriverFactory<CameraDriverInterface>( driver_name, default_params )
-      {}
 
-      // called by CameraDevice constructors
-      std::shared_ptr<CameraDriverInterface> CreateDriver( const Uri& uri ) 
+      std::shared_ptr<CameraDriverInterface> CreateDriver(const Uri& uri) 
       {
-        FileReaderDriver* pDriver = new FileReaderDriver();
-        pDriver->Init( default_params_, uri );
-        return std::shared_ptr<CameraDriverInterface>( pDriver );
+        FileReaderDriver* filereader = new FileReaderDriver( default_params_, uri );
+        return std::shared_ptr<CameraDriverInterface>(filereader);
       }
   };
 
@@ -41,7 +35,5 @@ namespace hal
       {"name", "FileCam", "Camera name."},
       {"id", "0", "Camera id (serial number or UUID)."}
       } );
-
 }
-
 

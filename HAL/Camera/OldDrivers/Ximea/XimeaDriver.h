@@ -14,12 +14,7 @@ namespace hal {
   class XimeaDriver : public CameraDriverInterface
   {
     public:
-
-      bool Init(
-          const PropertyMap& default_properties, // from factory
-          const Uri& uri 
-          );
-
+      XimeaDriver( const Uri& uri );
 
       ~XimeaDriver();
 

@@ -20,26 +20,24 @@ inline void XimeaDriver::_CheckError(
 }
 
 ///////////////////////////////////////////////////////////////////////////
-XimeaDriver::~XimeaDriver()
-{
-  // Close devices.
-  for (HANDLE handle: cam_handles_) {
-    xiCloseDevice(handle);
-  }
-}
-
-///////////////////////////////////////////////////////////////////////////
-bool XimeaDriver::Init( 
-    const PropertyMap& default_properties, // from factory
-    const Uri& uri
-    )
+XimeaDriver::XimeaDriver( const Uri& uri )
 {
   // sat sane default parameters
-  CameraDriverInterface::SetDefaultProperties( default_properties );
+  CameraDriverInterface::SetDefaultProperties({
+      {"idN", "0", "Camera serial number. Increment N from 0 to (num serial numbers -1)"},
+      {"fps", "DEFAULT", "Capture framerate: [1, 150]"},
+      {"exp", "0", "Exposure time (microseconds): [1,1000000] (0: AUTO)"},
+      {"gain", "0.5", "Gain (dB): [-2.4, 12.0]"},
+      {"mode", "MONO8", "Video mode: RAW8, RAW16, MONO8, MONO16, RGB24, RGB32"},
+      {"size", "640x480", "Capture resolution."},
+      {"roi", "0+0+640x480", "ROI resolution."},
+      {"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
+      {"binning", "0", "Binning: Divide frame by this integer in hardware"}
+      });
   if( !CameraDriverInterface::ParseUriProperties( uri.properties ) ){
     std::cerr << "XimeaDriver knows about the following properties:\n";
     CameraDriverInterface::PrintPropertyMap();
-    return false;
+    return;
   }
 
 
@@ -102,7 +100,7 @@ bool XimeaDriver::Init(
 
   if (num_devices == 0) {
     std::cerr << "XimeaDriver: no cameras found.\n";
-    return false;
+    return;
   }
 
   // If no ids are provided, all cameras will be opened.
@@ -302,8 +300,15 @@ bool XimeaDriver::Init(
   // Reset image buffer.
   memset(&image_, 0, sizeof(image_));
   image_.size = sizeof(XI_IMG);
+}
 
-  return true;
+///////////////////////////////////////////////////////////////////////////
+XimeaDriver::~XimeaDriver()
+{
+  // Close devices.
+  for (HANDLE handle: cam_handles_) {
+    xiCloseDevice(handle);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////

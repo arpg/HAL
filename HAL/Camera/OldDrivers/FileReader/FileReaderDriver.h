@@ -9,27 +9,19 @@
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Utils/Uri.h>
 
-namespace hal 
-{
+namespace hal {
 
   class FileReaderDriver : public CameraDriverInterface {
     public:
+      FileReaderDriver( const Uri& uri );
       ~FileReaderDriver();
-
-      bool Init(
-          const PropertyMap& default_properties, // from factory
-          const Uri& uri 
-          );
-
       bool Capture( hal::CameraMsg& vImages );
-      std::shared_ptr<CameraDriverInterface> GetInputDriver()
-      {
+      std::shared_ptr<CameraDriverInterface> GetInputDriver() {
         return std::shared_ptr<CameraDriverInterface>();
       }
 
       size_t NumChannels() const;
       size_t Width( size_t idx = 0 ) const;
-
       size_t Height( size_t idx = 0 ) const;
 
     private:

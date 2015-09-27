@@ -2,14 +2,14 @@
 
 #include <memory>
 
-#include <HAL/Devices/DriverInterface.h>
+#include <HAL/Devices/DeviceDriverInterface.h>
 
 #include <HAL/Camera.pb.h>
 
 namespace hal {
 
 // Generic camera driver interface
-class CameraDriverInterface : public DriverInterface
+class CameraDriverInterface : public DeviceDriverInterface
 {
 public:
     // Pure virtual functions driver writers must implement:
