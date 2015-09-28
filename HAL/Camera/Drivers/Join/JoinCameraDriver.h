@@ -40,6 +40,7 @@ private:
   {
   public:
     WorkTeam():m_bStopRequested(false){}
+    std::vector<bool> m_bWorkerCaptureNotOver;
     void addWorker(std::shared_ptr<CameraDriverInterface>& cam);
     std::vector<hal::CameraMsg>& process();
     /**
