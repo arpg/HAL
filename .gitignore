@@ -2,3 +2,19 @@ CMakeLists.txt.user
 build
 .DS_Store
 *~
+
+##Built binaries
+libhal.so
+
+##CMake-generated files
+CMakeFiles/
+Makefile
+*.cmake
+doc-pak/
+description-pak
+install_manifest.txt
+.cproject
+.project
+CMakeCache.txt
+*.deb
+
