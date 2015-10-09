@@ -3,7 +3,6 @@
 
 #include <HAL/Utils/TicToc.h>
 
-using namespace cv;
 using namespace hal;
 
 OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
@@ -69,7 +68,11 @@ size_t OpenCVDriver::Height(size_t /*idx*/) const {
 
 void OpenCVDriver::Initialize(){
   if (!cam_.isOpened()) abort();
-
+#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
   img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
   img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
+#elif CV_VERSION_MAJOR == 3
+  img_width_ = cam_.get(cv::CAP_PROP_FRAME_WIDTH);
+  img_height_ = cam_.get(cv::CAP_PROP_FRAME_HEIGHT);
+#endif
 }

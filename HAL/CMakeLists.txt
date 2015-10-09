@@ -31,14 +31,7 @@ endif()
 find_package( Sophus REQUIRED )
 find_package( GLog REQUIRED )
 find_package( TinyXML2 QUIET )
-find_package( OpenCV QUIET COMPONENTS core)
-if( OpenCV_FOUND )
-    add_definitions( -DHAVE_OPENCV )
-    list(APPEND LINK_LIBS ${OpenCV_LIBS})
-    list(APPEND USER_INC ${OpenCV_INCLUDE_DIRS})
-else()
-    message(STATUS "OpenCV not found")
-endif()
+
 if(TinyXML2_FOUND)
   add_definitions(-DHAVE_TINYXML2)
   list(APPEND LINK_LIBS  ${TinyXML2_LIBRARIES})
@@ -53,12 +46,6 @@ list( APPEND USER_INC   ${GLog_INCLUDE_DIRS} )
 include_directories( ${LIB_INC_DIR} ${USER_INC} )
 
 list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${GLog_LIBRARIES})
-
-############################################################################
-
-# Collect all driver includes and libraries in P_INCLUDE_DIRS and P_LIBRARIES
-set_property( GLOBAL PROPERTY P_INCLUDE_DIRS ${OpenCV2_INCLUDE_DIRS} )
-set_property( GLOBAL PROPERTY P_LIBRARIES ${OpenCV2_LIBRARIES} )
 
 #############################################################################
 # HAL macros for driver writers.
@@ -75,25 +62,23 @@ macro( add_to_hal_libraries )
     foreach( lib ${ARGN} )
       # Process targets correctly
       if (TARGET ${lib})
-
-  # If the library is NOT imported, ie is in this project, we
-  # want to depend on it directly rather than through its path
-        get_target_property(is_lib_imported ${lib} IMPORTED)
-  if (NOT ${is_lib_imported})
-    set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
-  else()
-    # For imported targets, we just want to depend on the library directly
-          get_target_property(libpath ${lib} LOCATION)
-    if (libpath)
-            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
-
-      # This shouldn't really happen, but let's cover our bases.
-    else()
-      set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
-    endif()
-  endif()
+          # If the library is NOT imported, ie is in this project, we
+          # want to depend on it directly rather than through its path
+          get_target_property(is_lib_imported ${lib} IMPORTED)
+          if (NOT ${is_lib_imported})
+            set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+          else()
+            # For imported targets, we just want to depend on the library directly
+            get_target_property(libpath ${lib} LOCATION)
+            if (libpath)
+                set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
+              # This shouldn't really happen, but let's cover our bases.
+            else()
+                set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+            endif()
+          endif()
       else()			# Just add the direct path/flag to the list
-  set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
+        set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
       endif()
     endforeach()
 
@@ -263,7 +248,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 
 set( GENERATED_HEADERS ${PROTO_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
     ${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/ThirdPartyConfig.h )
-
+    
 install_package(
     PKG_NAME HAL
     LIB_NAME hal
