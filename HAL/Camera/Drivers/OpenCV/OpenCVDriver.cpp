@@ -44,7 +44,7 @@ bool OpenCVDriver::Capture(hal::CameraMsg& images_msg) {
   cv::Mat cv_image;
   if(force_greyscale_) {
     cvtColor(temp, cv_image, CV_RGB2GRAY);
-  } else if (!cv_image.isContinuous()) {
+  } else if (!temp.isContinuous()) {
     temp.copyTo(cv_image);
   } else {
     cv_image = temp;
