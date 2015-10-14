@@ -42,7 +42,7 @@ JoinCameraDriver::JoinCameraDriver(
 //    std::cout << "Creating stream from uri: " << splituri.ToString()
 //      << std::endl;
     m_Cameras.emplace_back
-      (DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(splituri));
+      (DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(splituri));
   }
 
   if( m_Cameras.empty() ) {

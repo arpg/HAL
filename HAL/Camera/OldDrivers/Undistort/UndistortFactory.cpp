@@ -17,7 +17,7 @@ public:
         // Create input camera
         const Uri input_uri = Uri(uri.url);
         std::shared_ptr<CameraDriverInterface> input =
-                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
+                DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
         UndistortDriver* pDriver = new UndistortDriver( input, uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }

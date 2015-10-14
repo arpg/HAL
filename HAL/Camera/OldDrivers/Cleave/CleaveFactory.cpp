@@ -18,7 +18,7 @@ public:
       hal::Uri subUri(uri.url);
       // Create input camera
       std::shared_ptr<CameraDriverInterface> input =
-        DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
+        DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
       CleaveDriver* rs = new CleaveDriver(input,uri);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }

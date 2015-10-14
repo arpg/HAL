@@ -11,7 +11,7 @@ class JoinFactory : public DriverFactory<IMUDriverInterface> {
   std::shared_ptr<IMUDriverInterface> CreateDriver(const Uri& uri) 
   {
     return std::shared_ptr<IMUDriverInterface>(new JoinDriver(
-        DeviceRegistry<hal::IMUDriverInterface>::Instance().Create(uri.url)));
+        DeviceDriverRegistry<hal::IMUDriverInterface>::Instance().Create(uri.url)));
   }
 };
 

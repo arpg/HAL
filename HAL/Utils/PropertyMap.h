@@ -125,7 +125,7 @@ class PropertyMap
             const std::string& description = ""
             )
         {
-          property_map_[ key ] = { key, value, description };
+          property_map_[ key ] = {key, ValToStr<T>(value), description};
         }
 
       bool Contains( const std::string& key ) const
@@ -137,7 +137,7 @@ class PropertyMap
       ////////////////////////////////////////////////////////////////////////
       const std::map<std::string,param_t>& GetPropertyMap() const
       {
-        return          property_map_;
+        return property_map_;
       }
 
     private:

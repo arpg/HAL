@@ -17,7 +17,7 @@ public:
         // Standard boiler plate... should probably be consolidated elsewhere
         const Uri input_uri = Uri(uri.url);
         std::shared_ptr<CameraDriverInterface> input =
-                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
+                DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
         RectifyDriver* pDriver = new RectifyDriver( input, uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }

@@ -13,7 +13,7 @@ class Posys : public PosysDriverInterface {
   Posys() {}
 
   Posys(const std::string& uri) : m_URI(uri) {
-    m_Posys = DeviceRegistry<PosysDriverInterface>::Instance().Create(m_URI);
+    m_Posys = DeviceDriverRegistry<PosysDriverInterface>::Instance().Create(m_URI);
   }
 
   ~Posys() {

@@ -16,7 +16,7 @@ public:
     {
         const Uri input_uri = Uri(uri.url);
         std::shared_ptr<CameraDriverInterface> input_cam =
-                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
+                DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
         DeinterlaceDriver* pDriver = new DeinterlaceDriver( input_cam, uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }

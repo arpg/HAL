@@ -20,7 +20,7 @@ class LIDAR : public LIDARDriverInterface
         LIDAR(const std::string& uri)
             : m_URI(uri)
         {
-          m_LIDAR = DeviceRegistry<LIDARDriverInterface>::Instance().Create(m_URI);
+          m_LIDAR = DeviceDriverRegistry<LIDARDriverInterface>::Instance().Create(m_URI);
         }
 
         ///////////////////////////////////////////////////////////////

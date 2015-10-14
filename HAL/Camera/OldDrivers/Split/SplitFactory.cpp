@@ -18,7 +18,7 @@ public:
         hal::Uri subUri(uri.url);
         subUri.SetProperties( uri.properties );
         std::shared_ptr<CameraDriverInterface> input =
-                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);
+                DeviceDriverRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);
         SplitDriver* pDriver = new SplitDriver( input, uri );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }

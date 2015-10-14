@@ -40,7 +40,7 @@ namespace hal
   {
     CameraFactory_t& factory = CameraFactory(driver);
     if( !&factory ){
-      std::cout << "Unknown driver: '" << driver << "'";
+      std::cout << "Unknown driver: '" << driver << "'\n";
       return false;
     }
     std::cout <<  "\nHAL '" << driver << "' driver has the following properties:\n";
@@ -60,20 +60,14 @@ namespace hal
       {
       }
 
-      ///////////////////////////////////////////////////////////////
-      Camera(const std::string& uri)
-        : m_uri(uri)
+      Camera( const std::string& uri )
       {
-        CameraFactory_t& factory = CameraFactory( m_uri );
-        m_cam = factory.CreateDriver( m_uri );
+        Init( uri );
       }
 
-      ///////////////////////////////////////////////////////////////
-      Camera(const hal::Uri& uri)
-        : m_uri(uri)
+      Camera( const hal::Uri& uri )
       {
-        CameraFactory_t& factory = CameraFactory( m_uri );
-        m_cam = factory.CreateDriver( m_uri );
+        Init( uri );
       }
 
       ///////////////////////////////////////////////////////////////
@@ -82,11 +76,51 @@ namespace hal
         Clear();
       }
 
+      // all drivers are required to have an init function.
+      // In this case (since we're the "device" not a driver we just stub out a
+      // dummy implementation.
+//      bool Init( const PropertyMap&, const Uri&) { return true; }
+
+      ///////////////////////////////////////////////////////////////
+      bool Init( const std::string& uri )
+      {
+        return Init( hal::Uri(uri) );
+      }
+
+      ///////////////////////////////////////////////////////////////
+      bool Init( const hal::Uri& uri )
+      {
+        m_uri = uri;
+        CameraFactory_t& factory = CameraFactory( m_uri );
+        if( !&factory ){
+          std::cerr << "Unknown driver: '" << m_uri.url << "'\n";
+          return false;
+        }
+        m_cam = factory.CreateDriver( device_properties_, m_uri );
+        return true;
+      }
+
+      ///////////////////////////////////////////////////////////////
+      void PrintPropertyMap()
+      {
+        device_properties_.PrintPropertyMap();
+      }
+
+
+      ///////////////////////////////////////////////////////////////
+      void PrintInfo() 
+      {
+        if( !&m_cam ){
+           std::cerr << "Error: CameraDevice has not been initialized\n";
+           return;
+        }
+        m_cam->PrintInfo();
+      }
+
       ///////////////////////////////////////////////////////////////
       inline void Reset()
       {
         Clear();
-//        m_cam = DeviceRegistry<CameraDriverInterface>::Instance().Create(m_uri);
       }
 
       ///////////////////////////////////////////////////////////////
@@ -104,12 +138,18 @@ namespace hal
       ///////////////////////////////////////////////////////////////
       std::shared_ptr<CameraDriverInterface> GetInputDriver()
       {
+        if( m_cam == nullptr ){
+          return nullptr;
+        }
         return m_cam->GetInputDriver();
       }
 
       ///////////////////////////////////////////////////////////////
       bool Capture( hal::CameraMsg& Images )
       {
+        if( m_cam == nullptr ){
+          return false;
+        }
         Images.Clear();
         return m_cam->Capture(Images);
       }
@@ -117,6 +157,9 @@ namespace hal
       ///////////////////////////////////////////////////////////////
       bool Capture( hal::ImageArray& Images )
       {
+        if( m_cam == nullptr ){
+          return false;
+        }
         return Capture( Images.Ref() );
       }
 
@@ -125,6 +168,9 @@ namespace hal
           std::vector<cv::Mat>& vImages
           )
       {
+        if( m_cam == nullptr ){
+          return false;
+        }
         std::vector<hal::ImageInfoMsg> vImageInfo;
         return Capture( vImages, vImageInfo );
       }
@@ -135,6 +181,9 @@ namespace hal
           std::vector<hal::ImageInfoMsg>& vImageInfo
           )
       {
+        if( m_cam == nullptr ){
+          return false;
+        }
         static std::shared_ptr<hal::ImageArray> pbImages =
           hal::ImageArray::Create();
         bool bRes = Capture( pbImages->Ref() );
@@ -155,20 +204,61 @@ namespace hal
       ///////////////////////////////////////////////////////////////
       size_t NumChannels() const
       {
+        if( m_cam == nullptr ){
+          return 0;
+        }
         return m_cam->NumChannels();
       }
 
       ///////////////////////////////////////////////////////////////
       size_t Width( size_t idx = 0 ) const
       {
+        if( m_cam == nullptr ){
+          return 0;
+        }
         return m_cam->Width(idx);
       }
 
       ///////////////////////////////////////////////////////////////
       size_t Height( size_t idx = 0 ) const
       {
+        if( m_cam == nullptr ){
+          return 0;
+        }
         return m_cam->Height(idx);
       }
+
+      ///////////////////////////////////////////////////////////////
+			hal::Type   PixelType() 
+			{
+				return  m_cam == nullptr ? (hal::Type)0 :m_cam->PixelType();
+			}
+
+			///////////////////////////////////////////////////////////////
+			hal::Format PixelFormat() 
+			{
+				return  m_cam == nullptr ? (hal::Format)0 :m_cam->PixelFormat();
+			}
+
+      ///////////////////////////////////////////////////////////////
+      // property map accessors
+      template<typename T>
+        void SetProperty(
+            const std::string& key, 
+            T value,
+            const std::string& description = ""
+            )
+        {
+          device_properties_.SetProperty(key,value,description);
+        }
+
+
+      ///////////////////////////////////////////////////////////////
+      template<typename T>
+        T GetProperty(const std::string& key, T default_val = T() ) const
+        {
+          return device_properties_.GetProperty(key,default_val);
+        }
 
       ///////////////////////////////////////////////////////////////
       /// Return raw camera driver pointer, optionally dynamic_cast'd
@@ -178,11 +268,15 @@ namespace hal
       template<typename CameraDriverType = CameraDriverInterface>
         CameraDriverType* GetDriver()
         {
+          if( m_cam == nullptr ){
+            return nullptr;
+          }
           CameraDriverInterface* di = m_cam.get();
           return dynamic_cast<CameraDriverType*>(di);
         }
 
     protected:
+      PropertyMap                             device_properties_;
       hal::Uri                                m_uri;
       std::shared_ptr<CameraDriverInterface>  m_cam;
   };

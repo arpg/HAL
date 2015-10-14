@@ -78,67 +78,6 @@ namespace hal
         properties.SetProperties(m);
       }
 
-      /*
-      void Print( std::ostream& os ) const
-      {
-        os << scheme << ":[";
-        properties.Print(os, '=', ',');
-        os << "]//" << url;
-      }
-
-      std::string PrintProperties() const
-      {
-        std::ostringstream oss;
-        properties.Print(oss);
-        return oss.str();
-      }
-
-      std::string ToString() const
-      {
-        std::ostringstream oss;
-        os << scheme << ":[";
-        properties.Print(os, '=', ',');
-        os << "]//" << url;
-
-
-        return oss.str();
-      }
-
-      std::ostream& Print( std::ostream& os, char keyValDelim='=', char itemDelim=',' ) const
-      {
-        if( params.empty() ) {
-          return os;
-        }
-
-        std::map<std::string,std::string>::const_iterator i = params.begin();
-
-        if(i!=params.end()) {
-          os << i->first << keyValDelim << i->second;
-        }
-
-        for(++i; i!=params.end(); ++i){
-          os << itemDelim;
-          os << i->first << keyValDelim << i->second;
-        }
-        return os;
-      }
-
-
-      void SetProperties( const std::string& props )
-      {
-        std::vector<std::string> params = Split(props, ',');
-        for(const std::string& p : params)
-        {
-          std::vector<std::string> args = Split(p, '=');
-          std::string key = args[0];
-          std::string val = args.size() > 1 ? args[1] : "";
-          Trim(key);
-          Trim(val);
-          properties.SetProperty(key, val);
-        }
-      }
-      */
-
       std::string scheme;
       std::string url;
       PropertyMap properties;

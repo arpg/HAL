@@ -12,7 +12,7 @@ namespace hal {
       IMU() {}
 
       IMU(const std::string& uri) : m_URI(uri) {
-        m_IMU = DeviceRegistry<IMUDriverInterface>::Instance().Create(m_URI);
+        m_IMU = DeviceDriverRegistry<IMUDriverInterface>::Instance().Create(m_URI);
       }
 
       ~IMU() {
@@ -21,7 +21,7 @@ namespace hal {
 
       inline void Reset() {
         Clear();
-        m_IMU = DeviceRegistry<IMUDriverInterface>::Instance().Create(m_URI);
+        m_IMU = DeviceDriverRegistry<IMUDriverInterface>::Instance().Create(m_URI);
         RegisterIMUDataCallback(m_callback);
       }
 
