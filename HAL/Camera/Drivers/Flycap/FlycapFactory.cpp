@@ -9,7 +9,7 @@ namespace hal
 	// Register this factory by creating static instance with all allowable options:
 	static FlycapFactory g_FlycapFactory("flycap",
 			{
-			{"idN","0","Camera serial number."},
+			{"ids","0","ids=<id;id;...;id> List of camera serial numbers for cameras on bus."},
 			{"mode","FORMAT7_0","Video mode: FORMAT7_0,FORMAT7_1,FORMAT7_2 etc"},
 			{"format","RGB8","pixel format"},
 			{"size", "1920x1200", "Capture resolution."},

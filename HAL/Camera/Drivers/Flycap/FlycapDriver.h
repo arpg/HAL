@@ -21,6 +21,12 @@ namespace hal
 
 			void PrintInfo()
 			{
+				printf("FlycapDriver: %lu flycap cameras found\n", m_vCams.size() );
+				for( size_t ii = 0; ii < m_vCams.size(); ii++ ){
+					FlyCapture2::CameraInfo CamInfo;
+					m_vCams[ii]->GetCameraInfo(&CamInfo);
+					printf("Camera serial number: %d\n", CamInfo.serialNumber );
+				}
 			}
 
 			hal::Type   PixelType()

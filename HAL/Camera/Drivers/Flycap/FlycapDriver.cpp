@@ -3,16 +3,27 @@
 #include "FlycapDriver.h"
 
 using namespace hal;
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 {
 	if( err != FlyCapture2::PGRERROR_OK ) {
 		err.PrintErrorTrace();
-		std::cerr << "Flycapture SDK exception!\n";
+		cerr << "Flycapture SDK exception!\n";
 	}
 }
 
+vector<string> _split(const string &s, char delim ) 
+{
+	vector<string> elems;
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		elems.push_back(item);
+	}
+	return elems;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	FlycapDriver::FlycapDriver( PropertyMap& device_properties )
@@ -25,12 +36,13 @@ inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 	// * Configure some image properties? gain, etc.
 	// * This only work for blackflies... too much hardcoded.
 
-	std::string sMode        = device_properties_.GetProperty<std::string>("mode", "FORMAT7_0");
+	string sMode        = device_properties_.GetProperty<string>("mode", "FORMAT7_0");
 	ImageDim Dims            = device_properties_.GetProperty<ImageDim>("size", ImageDim(1920,1200));
 	ImageRoi ROI             = device_properties_.GetProperty<ImageRoi>("roi", ImageRoi(0,0,0,0));
-	std::string sPixelFormat = device_properties_.GetProperty<std::string>("format", "RGB8");
-	std::string sMethod      = device_properties_.GetProperty<std::string>("debayer_method", "bilinear");
-	std::string sFilter      = device_properties_.GetProperty<std::string>("debayer_filter", "rggb");
+	string sPixelFormat = device_properties_.GetProperty<string>("format", "RGB8");
+	string sMethod      = device_properties_.GetProperty<string>("debayer_method", "bilinear");
+	string sFilter      = device_properties_.GetProperty<string>("debayer_filter", "rggb");
+
 
 	FlyCapture2::Mode Mode;
   unsigned int PacketSize = 3024;
@@ -108,16 +120,18 @@ inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 		video_type_   = hal::PB_UNSIGNED_BYTE;
 	}
 
-	std::vector<unsigned int> vID;
-	while(true){
-		std::stringstream ss;
-		ss << "id" << vID.size();
-		const std::string key = ss.str();
-		if(!device_properties_.Contains(key)) {
-			break;
+	vector<unsigned int> vID;
+	if( device_properties_.Contains("ids")) {
+		string sids = device_properties_.GetProperty("ids");
+		if( sids != "0" ){ 
+			sids = sids.substr( sids.find("<")+1, sids.find(">")-1 );
+			vector<string> ids = _split( sids, ';' );
+			for( size_t ii = 0; ii < ids.size(); ii++ ){
+				vID.push_back( atoi(ids[ii].c_str()) );
+			}
 		}
-		vID.push_back( device_properties_.GetProperty<unsigned int>( key, 0 ) );
 	}
+
 
 	if( ROI.w == 0 && ROI.h == 0 ) {
 		ROI.w = Dims.x;
@@ -137,17 +151,17 @@ inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 	_CheckError(error);
 
 	if (nTotalCams == 0) {
-		std::cerr << "No cameras found!\n";
+		cerr << "No cameras found!\n";
 		return;
 	}
 
 	if (nTotalCams < vID.size()) {
-		std::cerr << "Less cameras detected than those requested!\n";
+		cerr << "Less cameras detected than those requested!\n";
 		return;
 	}
 
 	unsigned int nNumCams;
-	// If no ids are ovided, all cameras will be opened.
+	// If no ids are provided, all cameras will be opened.
 	if (vID.empty()) {
 		nNumCams = nTotalCams;
 	} else {
@@ -243,12 +257,18 @@ inline void FlycapDriver::_CheckError( FlyCapture2::Error err )
 			error = BusMgr.GetCameraFromSerialNumber(vID[ii], &GUID);
 			_CheckError(error);
 		}
-		std::cout << "Setting up camera " << ii << std::endl;
+//		cout << "Setting up camera " << ii << endl;
 
 		// connect to camera
 		FlyCapture2::Camera* pCam = new FlyCapture2::Camera;
 		error = pCam->Connect(&GUID);
 		_CheckError(error);
+
+		// see what we can learn about these cameras
+		FlyCapture2::CameraInfo CamInfo;
+		pCam->GetCameraInfo(&CamInfo);
+//		printf("Camera serial number: %d\n", CamInfo.serialNumber );
+
 
 		// set video mode and framerate
 		error = pCam->SetFormat7Configuration(&F7Config, PacketSize);
@@ -351,19 +371,19 @@ bool FlycapDriver::Capture( hal::CameraMsg& vImages )
 		error = m_vCams[ii]->RetrieveBuffer( &Image );
 
 		if( error != FlyCapture2::PGRERROR_OK ) {
-			std::cerr << "HAL: Error grabbing image from camera." << std::endl;
-			std::cerr << "Error was: " << error.GetDescription() << std::endl;
+			cerr << "HAL: Error grabbing image from camera." << endl;
+			cerr << "Error was: " << error.GetDescription() << endl;
 			return false;
 		} 
 
 		hal::ImageMsg* pbImg = vImages.add_image();
 
 		if( Image.GetCols() != image_width_){
-			std::cerr << "Error: PGR image_width wrong size (" << Image.GetCols() << " != " << image_width_ << ")\n"; 
+			cerr << "Error: PGR image_width wrong size (" << Image.GetCols() << " != " << image_width_ << ")\n"; 
 			return false;
 		}
 		if( Image.GetRows() != image_height_ ){ 
-			std::cerr << "Error: PGR image_height wrong size (" << Image.GetRows() << " != " << image_height_ << ")\n"; 
+			cerr << "Error: PGR image_height wrong size (" << Image.GetRows() << " != " << image_height_ << ")\n"; 
 			return false;
 		}
 
@@ -388,7 +408,7 @@ bool FlycapDriver::Capture( hal::CameraMsg& vImages )
 						debayer_filter_, debayer_method_ );
 			}
 			else {
-				std::cerr << "HAL: Error! 16 bit debayering currently not supported." << std::endl;
+				cerr << "HAL: Error! 16 bit debayering currently not supported." << endl;
 			}
 		}
 		else{
