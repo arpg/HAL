@@ -121,13 +121,15 @@ vector<string> _split(const string &s, char delim )
 	}
 
 	vector<unsigned int> vID;
-	if( device_properties_.Contains("ids")) {
-		string sids = device_properties_.GetProperty("ids");
-		if( sids != "0" ){ 
-			sids = sids.substr( sids.find("<")+1, sids.find(">")-1 );
-			vector<string> ids = _split( sids, ';' );
-			for( size_t ii = 0; ii < ids.size(); ii++ ){
-				vID.push_back( atoi(ids[ii].c_str()) );
+	if( device_properties_.GetProperty<string>("ids") != "0" ){
+		if( device_properties_.Contains("ids")) {
+			string sids = device_properties_.GetProperty("ids");
+			if( sids != "0" ){ 
+				sids = sids.substr( sids.find("<")+1, sids.find(">")-1 );
+				vector<string> ids = _split( sids, ';' );
+				for( size_t ii = 0; ii < ids.size(); ii++ ){
+					vID.push_back( atoi(ids[ii].c_str()) );
+				}
 			}
 		}
 	}
@@ -161,12 +163,14 @@ vector<string> _split(const string &s, char delim )
 	}
 
 	unsigned int nNumCams;
-	// If no ids are provided, all cameras will be opened.
+	// If no ids are provided, only one camera will be opened.
 	if (vID.empty()) {
-		nNumCams = nTotalCams;
+		nNumCams = 1;
 	} else {
-		nNumCams = vID.size();
+		nNumCams = nTotalCams;
 	}
+
+	printf("going to open %d of %d cameras\n", nNumCams, nTotalCams );
 
 /*
 	// compute frame rate when in Format7 
