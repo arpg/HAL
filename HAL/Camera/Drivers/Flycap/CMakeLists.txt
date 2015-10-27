@@ -10,8 +10,6 @@ if( FLYCAP_FOUND )
     if( BUILD_Flycap )
 
         message( STATUS "HAL: building 'FlyCap' camera driver.")
-        message( STATUS "FLYCAP_LIBRARY ${FLYCAP_LIBRARY}.")
-        message( STATUS "FLYCAP_LIBRARIES ${FLYCAP_LIBRARIES}.")
         add_to_hal_include_dirs( ${FLYCAP_INCLUDE_DIR} )
         add_to_hal_libraries( ${FLYCAP_LIBRARY} ${FLYCAP_LIBRARIES} )
         add_to_hal_sources(
