@@ -14,7 +14,8 @@ namespace hal
     {
       public:
 
-        DriverFactory( const std::string& name="", const std::vector<param_t>& params={"","",""} )
+        DriverFactory( const std::string& name="",
+                       const std::vector<param_t>& params={{"","",""}} )
           : name_(name) 
         {
           default_params_.SetProperties(params);
