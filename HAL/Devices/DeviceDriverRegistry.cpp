@@ -1,8 +1,8 @@
 #include "DeviceDriverRegistry.h"
 
 #include <HAL/Camera/CameraDevice.h>
+#include <HAL/IMU/IMUDevice.h>
 //#include <HAL/Encoder/EncoderDevice.h>
-//#include <HAL/IMU/IMUDevice.h>
 //#include <HAL/LIDAR/LIDARDevice.h>
 //#include <HAL/Posys/PosysDevice.h>
 
@@ -79,8 +79,8 @@ namespace hal
 
   // Explicitly instantiate desired registries.
   template class DeviceDriverRegistry<hal::CameraDriverInterface>;
+  template class DeviceDriverRegistry<hal::IMUDriverInterface>;
 //  template class DeviceDriverRegistry<hal::EncoderDriverInterface>;
-//  template class DeviceDriverRegistry<hal::IMUDriverInterface>;
 //  template class DeviceDriverRegistry<hal::LIDARDriverInterface>;
 //  template class DeviceDriverRegistry<hal::PosysDriverInterface>;
 

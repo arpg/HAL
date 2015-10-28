@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <HAL/Devices/DriverInterface.h>
+#include <HAL/Devices/DeviceDriverInterface.h>
 #include <HAL/Imu.pb.h>
 
 namespace hal {
@@ -9,7 +9,7 @@ namespace hal {
   typedef std::function<void (hal::ImuMsg&)> IMUDriverDataCallback;
 
   /// Generic IMU driver interface
-  class IMUDriverInterface : public DriverInterface {
+  class IMUDriverInterface : public DeviceDriverInterface {
     public:
       virtual ~IMUDriverInterface() {}
       virtual void RegisterIMUDataCallback(IMUDriverDataCallback callback) = 0;

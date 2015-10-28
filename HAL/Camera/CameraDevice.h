@@ -15,28 +15,28 @@ namespace hal
 
   ///////////////////////////////////////////////////////////////////////////////
   // Simplified access to the camera registry 
-  CameraRegistry_t& CameraRegistry()
+  inline CameraRegistry_t& CameraRegistry()
   {
     return hal::DeviceDriverRegistry<CameraDriverInterface>::Registry();
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Simplified access to the camera factory
-  CameraFactory_t& CameraFactory( const Uri& uri)
+  inline CameraFactory_t& CameraFactory( const Uri& uri)
   {
     return CameraRegistry().GetFactory( uri );
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Print known camera drivers
-  void ListCameraDrivers()
+  inline void ListCameraDrivers()
   {
     CameraRegistry().ListDrivers();
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Print known camera drivers
-  bool ListCameraDriverInfo( const std::string& driver )
+  inline bool ListCameraDriverInfo( const std::string& driver )
   {
     CameraFactory_t& factory = CameraFactory(driver);
     if( !&factory ){
