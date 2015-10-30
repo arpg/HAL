@@ -3,6 +3,8 @@ set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 find_package( PVAPI QUIET )
 if( PVAPI_FOUND )
     add_definitions( -DUSE_ALLIEDVISION )
+    
+    message( STATUS "HAL: building 'AlliedVision' camera driver.")
 
     # 1) Build the library:
     set( AV_DRIVER_SOURCES AlliedVisionDriver.cpp )

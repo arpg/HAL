@@ -14,7 +14,7 @@ class IMU : public IMUDriverInterface {
   IMU() {}
 
   IMU(const std::string& uri) : m_URI(uri) {
-    m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI, "Imu");
+    m_IMU = DeviceRegistry<IMUDriverInterface>::Instance().Create(m_URI);
   }
 
   ~IMU() {
@@ -23,7 +23,7 @@ class IMU : public IMUDriverInterface {
 
   inline void Reset() {
     Clear();
-    m_IMU = DeviceRegistry<IMUDriverInterface>::I().Create(m_URI, "Imu");
+    m_IMU = DeviceRegistry<IMUDriverInterface>::Instance().Create(m_URI);
     RegisterIMUDataCallback(m_callback);
   }
 

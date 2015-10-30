@@ -7,6 +7,8 @@ if( DC1394_2_FOUND )
     set( BUILD_DC1394 true CACHE BOOL force )
 
     if( BUILD_DC1394 )
+
+        message( STATUS "HAL: building 'DC1394' (firewire) camera driver.")
         add_to_hal_libraries( ${DC1394_2_LIBRARIES} )
         add_to_hal_include_dirs( ${DC1394_2_INCLUDE_DIR} )
         add_to_hal_sources(

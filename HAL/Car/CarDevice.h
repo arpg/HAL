@@ -26,14 +26,14 @@ public:
   Car(const std::string& uri)
     :m_uri(uri)
   {
-    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+    m_car = DeviceRegistry<CarDriverInterface>::Instance().Create(m_uri);
   }
 
   ///////////////////////////////////////////////////////////////
   Car(const hal::Uri& uri)
     :m_uri(uri)
   {
-    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri,"Car");
+    m_car = DeviceRegistry<CarDriverInterface>::Instance().Create(m_uri);
   }
 
   ///////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ public:
 
   inline void Reset() {
     Clear();
-    m_car = DeviceRegistry<CarDriverInterface>::I().Create(m_uri, "Car");
+    m_car = DeviceRegistry<CarDriverInterface>::Instance().Create(m_uri);
   }
 
   ///////////////////////////////////////////////////////////////

@@ -5,6 +5,8 @@ find_package( DC1394_2 QUIET )
 if( DC1394_2_FOUND )
     add_definitions( -DUSE_FIREFLY )
 
+    message( STATUS "HAL: building 'FireFly' camera driver.")
+
     # 1) Build the library:
     set( FF_DRIVER_SOURCES FireFlyDriver.cpp )
     set( FF_DRIVER_HEADERS FireFlyDriver.h )

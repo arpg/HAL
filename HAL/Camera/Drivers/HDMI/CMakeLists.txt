@@ -1,4 +1,8 @@
 if(0)
+
+ 
+    message( STATUS "HAL: building 'HDMI' camera driver.")
+
 # 1) Build the library
 include_directories( Blackmagic )
 set( HDMI_DRIVER_SOURCES HDMIDriver.cpp Blackmagic/DeckLinkAPIDispatch.cpp CaptureDelegate.cpp)

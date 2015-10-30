@@ -23,11 +23,6 @@ link_libraries( ${HAL_LIBS} hal )
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
 
-option( BUILD_APPLICATIONS "Build applications." ON )
-if( BUILD_APPLICATIONS )
-    add_subdirectory( applications )
-endif()
-
 # make an uninstall target
 include(${CMAKE_MODULE_PATH}/cmake_uninstall.cmake.in)
 add_custom_target(uninstall

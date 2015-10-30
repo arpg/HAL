@@ -37,7 +37,7 @@ public:
     }
     
     inline static hal::DeviceRegistry<BaseDevice>& Registry() {
-        return hal::DeviceRegistry<BaseDevice>::I();
+        return hal::DeviceRegistry<BaseDevice>::Instance();
     }    
     
 protected:

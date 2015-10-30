@@ -39,9 +39,14 @@ private:
   class WorkTeam
   {
   public:
-    WorkTeam(){}
+    WorkTeam():m_bStopRequested(false){}
+    std::vector<bool> m_bWorkerCaptureNotOver;
     void addWorker(std::shared_ptr<CameraDriverInterface>& cam);
     std::vector<hal::CameraMsg>& process();
+    /**
+     * Stop the work team permanently
+     */
+    void stopTeam();
 
   private:
     void waitForWork(size_t workerId);
@@ -49,12 +54,14 @@ private:
     void Worker(std::shared_ptr<CameraDriverInterface>& cam,
                 size_t workerId);
 
+
   private:
     std::vector<std::thread> m_Workers;
     std::vector<bool> m_bWorkerDone;
     std::vector<hal::CameraMsg> m_ImageData;
     std::mutex m_Mutex;
     std::condition_variable m_WorkerCond, m_MasterCond;
+    bool m_bStopRequested;
   };
 
   WorkTeam                  m_WorkTeam;

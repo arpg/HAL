@@ -144,6 +144,10 @@ namespace hal {
 	pimg = vImages.add_image();
 
 
+	//Pass through the timestamp
+	double halStamp = freshImages[i]->header.stamp.sec + ((double)freshImages[i]->header.stamp.nsec)/1e9;
+	
+	pimg->set_timestamp(halStamp);
 	pimg->set_type(findPbType(freshImages[i]->encoding));
 	pimg->set_format(findPbFormat(freshImages[i]->encoding) );            
 	pimg->set_width(freshImages[i]->width);
@@ -207,6 +211,8 @@ namespace hal {
   {
     if (format == sensor_msgs::image_encodings::MONO8)
       return hal::PB_UNSIGNED_BYTE;
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::BGR8)
       return hal::PB_UNSIGNED_BYTE;
     if (format == sensor_msgs::image_encodings::RGB8)
@@ -228,7 +234,10 @@ namespace hal {
     //Protobuf formats are typedefed ints, ROS formats are strings
     if (format == sensor_msgs::image_encodings::MONO8)
       return hal::PB_LUMINANCE;
-  
+    
+    if (format == sensor_msgs::image_encodings::TYPE_8UC1)
+      return hal::PB_LUMINANCE;
+
     if (format == sensor_msgs::image_encodings::MONO16)
       return hal::PB_LUMINANCE;
     

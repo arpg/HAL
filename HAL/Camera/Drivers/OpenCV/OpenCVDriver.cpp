@@ -3,17 +3,20 @@
 
 #include <HAL/Utils/TicToc.h>
 
-using namespace cv;
 using namespace hal;
 
 OpenCVDriver::OpenCVDriver(unsigned int cam_id, bool force_grey)
     : num_channels_(1),
       force_greyscale_(force_grey),
       cam_(cam_id) {
-  if (!cam_.isOpened()) abort();
+  Initialize();
+}
 
-  img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
-  img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
+OpenCVDriver::OpenCVDriver(const std::string& sFilePath, bool force_grey)
+    : num_channels_(1),
+      force_greyscale_(force_grey),
+      cam_(sFilePath) {
+  Initialize();
 }
 
 OpenCVDriver::~OpenCVDriver() {}
@@ -40,7 +43,7 @@ bool OpenCVDriver::Capture(hal::CameraMsg& images_msg) {
   cv::Mat cv_image;
   if(force_greyscale_) {
     cvtColor(temp, cv_image, CV_RGB2GRAY);
-  } else if (!cv_image.isContinuous()) {
+  } else if (!temp.isContinuous()) {
     temp.copyTo(cv_image);
   } else {
     cv_image = temp;
@@ -61,4 +64,15 @@ size_t OpenCVDriver::Width(size_t /*idx*/) const {
 
 size_t OpenCVDriver::Height(size_t /*idx*/) const {
   return img_height_;
+}
+
+void OpenCVDriver::Initialize(){
+  if (!cam_.isOpened()) abort();
+#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
+  img_width_ = cam_.get(CV_CAP_PROP_FRAME_WIDTH);
+  img_height_ = cam_.get(CV_CAP_PROP_FRAME_HEIGHT);
+#elif CV_VERSION_MAJOR == 3
+  img_width_ = cam_.get(cv::CAP_PROP_FRAME_WIDTH);
+  img_height_ = cam_.get(cv::CAP_PROP_FRAME_HEIGHT);
+#endif
 }

@@ -115,7 +115,7 @@ public:
                 url = str_uri.substr(nurl+2);
             }
         }else{
-            scheme = "file";
+            scheme = "";
             url = str_uri;
         }
     }

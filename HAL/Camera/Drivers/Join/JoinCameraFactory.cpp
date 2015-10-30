@@ -24,7 +24,7 @@ public:
         std::cout << "Creating stream from uri: " << uri.ToString()
                   << std::endl;
         cameras.emplace_back
-            (DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri));
+            (DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(uri));
       } catch ( std::exception& e ) {
         throw DeviceException(std::string("Error creating driver from uri \"") +
                               uri.ToString() + "\": " + e.what());

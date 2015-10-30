@@ -21,7 +21,7 @@ public:
     {
         // Create input camera
         std::shared_ptr<CameraDriverInterface> InCam =
-                DeviceRegistry<hal::CameraDriverInterface>::I().Create(uri.url);
+                DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(uri.url);
 
         int nTarget  = uri.properties.Get("target", 100);
 

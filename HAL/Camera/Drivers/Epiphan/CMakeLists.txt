@@ -2,6 +2,8 @@
 set( BUILD_Epiphan false CACHE BOOL force )
 
 if( BUILD_Epiphan )
+    
+    message( STATUS "HAL: building 'Epiphan' camera driver.")
 
     # build V2U library
     include_directories( SDK/includes )
