@@ -8,7 +8,7 @@ if( XIMEA_FOUND )
 
     set( BUILD_Ximea true CACHE BOOL force )
 
-    if( BUILD_Ximea )
+    if( BUILD_Ximea )	
         add_to_hal_include_dirs( ${XIMEA_INCLUDE_DIR} )
         add_to_hal_libraries( ${XIMEA_LIBRARIES} )
         add_to_hal_sources(
