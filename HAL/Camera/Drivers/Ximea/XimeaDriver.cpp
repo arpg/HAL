@@ -109,6 +109,7 @@ XimeaDriver::XimeaDriver(
     //Set data rate limit
      error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
      _CheckError(error, "xiSetParam (limit_bandwidth)");
+     std::cerr << "Set bandwidth limit on camera" << std::endl;
      
     // Setting "format" parameter. Has to be set first before image size!
     error = xiSetParamInt(handle, XI_PRM_IMAGE_DATA_FORMAT, image_format_);
