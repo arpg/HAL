@@ -5,7 +5,7 @@
 #include <libfreenect2/libfreenect2.hpp>
 //#include <libfreenect2/threading.h>
 #include <libfreenect2/frame_listener_impl.h>
-
+#include <libfreenect2/packet_pipeline.h>
 #include <opencv2/opencv.hpp>
 
 #include <HAL/Devices/DeviceException.h>
@@ -21,7 +21,7 @@ const unsigned int Freenect2Driver::IR_IMAGE_HEIGHT = 424;
 
 Freenect2Driver::Freenect2Driver(unsigned int nWidth, unsigned int nHeight,
 		bool bCaptureRGB, bool bCaptureDepth, bool bCaptureIR, bool bColor,
-		bool bAlign) :
+				 bool bAlign, std::string sPipeline) :
 				m_nImgWidth(nWidth),
 				m_nImgHeight(nHeight),
 				m_bRGB(bCaptureRGB),
@@ -48,10 +48,31 @@ Freenect2Driver::Freenect2Driver(unsigned int nWidth, unsigned int nHeight,
 	m_devices.reserve(N);
 	//m_listeners.reserve(N);
 	//m_lSerialNumbers.reserve(N);
-
+	libfreenect2::PacketPipeline *pipeline = 0;
+#ifdef LIBFREENECT2_WITH_OPENCL_SUPPORT
+	if (sPipeline.compare("opencl") == 0)
+	  {
+	    pipeline = new libfreenect2::OpenCLPacketPipeline();
+	  }
+	else
+#endif
+#ifdef LIBFREENECT2_WITH_OPENGL_SUPPORT
+	  if (sPipeline.compare("opengl") == 0)
+	    {
+	      pipeline = new libfreenect2::OpenGLPacketPipeline();
+	    }
+	else
+#endif
+	  if (sPipeline.compare("cpu") == 0)
+	   pipeline = new libfreenect2::CpuPacketPipeline();
+	else
+	  {
+	    throw DeviceException("Unknown packet pipeline");
+	  }
+	
 	for (int i = 0; i < N; ++i) {
 		std::shared_ptr<libfreenect2::Freenect2Device> d(
-				m_freenect2.openDevice(i));
+								 m_freenect2.openDevice(i,pipeline));
 		if (!d)
 			throw DeviceException(
 					"Freenect2 could not open device "
@@ -137,6 +158,7 @@ bool Freenect2Driver::Capture(hal::CameraMsg& vImages) {
 			pbImg->set_height(m_nImgHeight);
 			pbImg->set_serial_number(m_devices[i].serialNumber);
 
+			
 			pbImg->set_type(hal::PB_UNSIGNED_BYTE);
 			if (m_bColor)
 				pbImg->set_format(hal::PB_BGR);
@@ -144,15 +166,34 @@ bool Freenect2Driver::Capture(hal::CameraMsg& vImages) {
 				pbImg->set_format(hal::PB_LUMINANCE);
 
 			const libfreenect2::Frame* frame = fit->second;
-			cv::Mat trg(frame->height, frame->width, CV_8UC3, frame->data);
+
+			cv::Mat rgbaTrg(frame->height, frame->width, CV_8UC4, frame->data);
+			//From http://fixall.online/well--basically-cvtcolor-only-works-with-a-fixed-set/2220695/
+			
+			std::vector<cv::Mat1b> channels_rgba;
+			cv::split(rgbaTrg, channels_rgba);
+			// create matrix with first three channels only
+			std::vector<cv::Mat1b> channels_rgb(channels_rgba.begin(),
+							    channels_rgba.begin()+3);
+			cv::Mat3b trg;
+			cv::merge(channels_rgb, trg);
+
 			if (frame->height != m_nImgHeight || frame->width != m_nImgWidth)
 				cv::resize(trg, trg, cv::Size(m_nImgWidth, m_nImgHeight));
-			if (!m_bColor)
-				cv::cvtColor(trg, trg, CV_BGR2GRAY);
 			cv::flip(trg, trg, 1);
-
-			pbImg->set_data(trg.ptr<unsigned char>(),
-					trg.rows * trg.cols * trg.channels());
+			cv::Mat1b gray;
+			if (!m_bColor)
+			  {
+			    cv::cvtColor(trg,gray, CV_BGR2GRAY,1);
+			    //Only copy one gray plane
+			    pbImg->set_data(gray.ptr<unsigned char>(),
+					gray.rows * gray.cols * 1);
+			  }
+			else
+			  {
+			    pbImg->set_data(trg.ptr<unsigned char>(),
+					    trg.rows * trg.cols * trg.channels());
+			  }
 			save_rgb = true;
 		}
 
