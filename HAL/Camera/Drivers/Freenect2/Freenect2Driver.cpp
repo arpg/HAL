@@ -53,7 +53,6 @@ Freenect2Driver::Freenect2Driver(unsigned int nWidth, unsigned int nHeight,
 	if (sPipeline.compare("opencl") == 0)
 	  {
 	    pipeline = new libfreenect2::OpenCLPacketPipeline();
-	    printf("Using OpenCL pipeline\n");
 	  }
 	else
 #endif
@@ -61,7 +60,6 @@ Freenect2Driver::Freenect2Driver(unsigned int nWidth, unsigned int nHeight,
 	  if (sPipeline.compare("opengl") == 0)
 	    {
 	      pipeline = new libfreenect2::OpenGLPacketPipeline();
-	       printf("Using OpenGL pipeline\n");
 	    }
 	else
 #endif
