@@ -160,7 +160,8 @@ void FileReaderDriver::_ThreadCaptureFunc(FileReaderDriver* pFR) {
   }
 }
 
-bool FileReaderDriver::_Read() {
+bool FileReaderDriver::_Read() 
+{
   std::unique_lock<std::mutex> lock(m_Mutex);
 
   // Wait until there is space in the buffer
@@ -188,13 +189,14 @@ bool FileReaderDriver::_Read() {
   double device_timestamp = -1;
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     hal::ImageMsg* pbImg = vImages.add_image();
+    pbImg->set_allocated_info( new hal::ImageInfoMsg );
     sFileName = m_vFileList[ii][m_nCurrentImageIndex];
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
     double timestamp = _GetTimestamp(sFileName);
     if (timestamp < 0) timestamp = m_nFramesProcessed / frequency_;
     if (device_timestamp < 0) device_timestamp = timestamp;
-    pbImg->set_timestamp(timestamp);
+    pbImg->mutable_info()->set_timestamp(timestamp);
 
     //        hal::ReadCvMat(cvImg, pbImg);
     pbImg->set_height(cvImg.rows);

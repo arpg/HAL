@@ -166,11 +166,11 @@ int Image::Format() const {
 }
 
 long int Image::SerialNumber() const {
-  return msg_->serial_number();
+  return msg_->has_info() ? msg_->info().serial_number() : 0;
 }
 
 double Image::Timestamp() const {
-  return msg_->timestamp();
+  return msg_->has_info() ? msg_->info().timestamp() : 0.0; 
 }
 
 const hal::ImageInfoMsg& Image::GetInfo() const {

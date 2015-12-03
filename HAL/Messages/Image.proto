@@ -1,11 +1,12 @@
 package hal;
 
-
 message ImageInfoMsg {
     optional double exposure = 1;
     optional double shutter = 2;
     optional double gain = 3;
     optional double gamma = 4;
+    optional double timestamp = 6;
+    optional uint64 serial_number = 8;
     optional double baseline = 50;
     optional double focal_length = 51;
 }
@@ -36,7 +37,6 @@ message ImageMsg {
     optional bytes data = 3;
     optional Type type = 4 [default = PB_UNSIGNED_BYTE];
     optional Format format = 5 [default = PB_RGB];
-    optional double timestamp = 6;
-    optional ImageInfoMsg info = 7;
-    optional uint64 serial_number = 8;
+    optional ImageInfoMsg info = 6;
 }
+

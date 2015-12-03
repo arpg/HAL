@@ -52,7 +52,10 @@ namespace hal
 			std::vector<FlyCapture2::Camera*>   m_vCams;
 			unsigned int                        image_width_;
 			unsigned int                        image_height_;
-			unsigned int                        depth_;
+			unsigned int                        bits_per_pixel_;
+			double                              frame_rate_;
+      unsigned int                        bytes_per_pixel_;
+
       // This refers to the container (not parent) CameraDevice's property map 
       PropertyMap&                        device_properties_;
 	};

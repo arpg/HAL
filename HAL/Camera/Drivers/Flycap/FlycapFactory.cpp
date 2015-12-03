@@ -20,7 +20,8 @@ namespace hal
 			{"brightness","auto","brightness setting: auto, man, abs"},
       {"debayer_method", "bilinear", "debayer method: none, nearest, simple"
 			                                 ", downsample, bilinear,hqlinear, vng, ahd"},
-      {"debayer_filter", "rggb", "debayer filter: rggb, gbrg, grbg"}
+      {"debayer_filter", "rggb", "debayer filter: rggb, gbrg, grbg"},
+			{"frame_rate", "30", "desired frame rate"}
 			}
 			);
 }

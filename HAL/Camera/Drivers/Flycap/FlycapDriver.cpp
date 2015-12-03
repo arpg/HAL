@@ -37,12 +37,12 @@ vector<string> _split(const string &s, char delim )
 	// * This only work for blackflies... too much hardcoded.
 
 	string sMode        = device_properties_.GetProperty<string>("mode", "FORMAT7_0");
-	ImageDim Dims            = device_properties_.GetProperty<ImageDim>("size", ImageDim(1920,1200));
-	ImageRoi ROI             = device_properties_.GetProperty<ImageRoi>("roi", ImageRoi(0,0,0,0));
+	ImageDim Dims       = device_properties_.GetProperty<ImageDim>("size", ImageDim(1920,1200));
+	ImageRoi ROI        = device_properties_.GetProperty<ImageRoi>("roi", ImageRoi(0,0,0,0));
 	string sPixelFormat = device_properties_.GetProperty<string>("format", "RGB8");
 	string sMethod      = device_properties_.GetProperty<string>("debayer_method", "bilinear");
 	string sFilter      = device_properties_.GetProperty<string>("debayer_filter", "rggb");
-
+	frame_rate_         = device_properties_.GetProperty<double>("frame_rate", 30.0);
 
 	FlyCapture2::Mode Mode;
   unsigned int PacketSize = 3024;
@@ -144,6 +144,7 @@ vector<string> _split(const string &s, char delim )
 	image_width_  = ROI.w;
 	image_height_ = ROI.h;
 
+
 	FlyCapture2::Error error;
 
 	FlyCapture2::BusManager BusMgr;
@@ -165,47 +166,58 @@ vector<string> _split(const string &s, char delim )
 	unsigned int nNumCams;
 	// If no ids are provided, only one camera will be opened.
 	if (vID.empty()) {
-		nNumCams = 1;
-	} else {
 		nNumCams = nTotalCams;
+	} else {
+		nNumCams = vID.size();
 	}
 
-	printf("going to open %d of %d cameras\n", nNumCams, nTotalCams );
-
-/*
-	// compute frame rate when in Format7 
-	// http://damien.douxchamps.net/ieee1394/libdc1394/faq/v1/#How_can_I_work_out_the_packet_size_for_a_wanted_frame_rate
-	float bus_period = 500;
-	float frame_rate = 30;
-	int num_packets = (int) (1.0/(bus_period*frame_rate) + 0.5);
-	int denominator = num_packets*8; 
-	int packet_size = (image_width_*image_height_*depth_ + denominator - 1)/denominator;
-	printf("computed packet_size %d (bus_period %f; frame_rate %f; num_packets %d; denom %d\n", packet_size, bus_period, frame_rate, num_packets, denominator );
-*/
 
 	// prepare Format 7 config
 	FlyCapture2::Format7ImageSettings F7Config;
 
 	if( sPixelFormat == "MONO8" ){
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
-		depth_ = 8;
+		bits_per_pixel_ = 8;
 	} else if ( sPixelFormat == "MONO16" ){
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO16;
-		depth_ = 8;
+		bits_per_pixel_ = 16;
 	} else if ( sPixelFormat == "RAW8" ){
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_RAW8;
-		depth_ = 8;
+		bits_per_pixel_ = 8;
 	} else if ( sPixelFormat == "RAW12" ){
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_RAW12;
-		depth_ = 12;
+		bits_per_pixel_ = 12;
 	} else if ( sPixelFormat == "RGB8" ){
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_RGB8;
 		debayer_method_ = (dc1394bayer_method_t)0;
-		depth_ = 8;
+		bits_per_pixel_ = 24;
 	} else{
 		F7Config.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
-		depth_ = 8;
+		bits_per_pixel_ = 8;
 	}
+
+	// now figure out actual bandwidth at desired frame_rate
+	bytes_per_pixel_ = (bits_per_pixel_+4)/8;
+	double bandwidth = image_width_ * image_height_ * frame_rate_ * bytes_per_pixel_ * nNumCams;
+	PacketSize = bandwidth / 24000;
+
+/*
+	printf("w: %d, h: %d, rate: %.1f, bpp: %d, cams: %d, bandwidth %f\n",
+			image_width_, image_height_, frame_rate_, bytes_per_pixel_, nNumCams, bandwidth ); 
+
+	// compute frame rate when in Format7 
+	// http://damien.douxchamps.net/ieee1394/libdc1394/faq/v1/#How_can_I_work_out_the_packet_size_for_a_wanted_frame_rate
+	double bus_period = 125*1e-6;
+	int num_packets = (int) (1.0/(bus_period*frame_rate_) + 0.5);
+	int denominator = num_packets*8;
+	int packet_size = (image_width_*image_height_*bits_per_pixel_ + denominator - 1)/denominator;
+
+	packet_size = bandwidth / 24000;
+	printf("computed packet_size %d (bus_period %f; frame_rate %f; num_packets %d; denom %d\n", 
+			packet_size, bus_period, frame_rate_, num_packets, denominator );
+	PacketSize = packet_size;
+  PacketSize = 8640;
+*/
 
 	F7Config.mode = Mode;
 	F7Config.height = image_height_;
@@ -407,7 +419,7 @@ bool FlycapDriver::Capture( hal::CameraMsg& vImages )
 		uint8_t* in = (uint8_t*)Image.GetData();
 		uint8_t* out = (uint8_t*)pbImg->data().data();
 		if( debayer_method_ ){
-			if(   depth_ == 8 ) {
+			if( bits_per_pixel_ == 8 ) {
 				dc1394_bayer_decoding_8bit( in, out, image_width_, image_height_,
 						debayer_filter_, debayer_method_ );
 			}
