@@ -221,6 +221,7 @@ include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
 include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
+link_directories(/usr/local/lib)
 
 set(HAL_LIBS
   ${INTERNAL_LIBS}
