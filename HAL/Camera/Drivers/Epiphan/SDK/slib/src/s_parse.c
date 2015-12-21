@@ -177,14 +177,15 @@ Bool PARSE_Long(Str s, long * n, int base)
     if (s) {
         Char * endptr = NULL;
         long number;
+        Bool test;
         while (*s && IsSpace(*s)) s++;
         number = StrTol(s, &endptr, base);
         if (endptr && endptr != s) {
-            if ((number != LONG_MAX && number != LONG_MIN)
+            test = (number != LONG_MAX && number != LONG_MIN);
 #ifdef HAVE_ERRNO
-                || (errno != ERANGE)
+            test = test || (errno != ERANGE);
 #endif /* HAVE_ERRNO */
-                ) {
+            if (test) {
                 while (*endptr && IsSpace(*endptr)) endptr++;
                 if (!*endptr) {
                     if (n) *n = number;
