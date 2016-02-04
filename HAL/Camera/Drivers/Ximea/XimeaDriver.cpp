@@ -107,10 +107,15 @@ XimeaDriver::XimeaDriver(
   bool first_cam = true; // Flag to check if we are dealing with first camera.
   for (HANDLE handle: cam_handles_) {
     //Set data rate limit
-     error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
-     _CheckError(error, "xiSetParam (limit_bandwidth)");
-     std::cerr << "Set bandwidth limit on camera" << std::endl;
-     
+    int curr_camera_data_rate;
+    error = xiGetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH, &curr_camera_data_rate);
+    _CheckError(error, "xiGetParamInt (limit_bandwidth)");
+    if (camera_data_rate < curr_camera_data_rate) {
+      error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
+      _CheckError(error, "xiSetParam (limit_bandwidth)");
+      std::cerr << "Set bandwidth limit on camera" << std::endl;
+    }
+
     // Setting "format" parameter. Has to be set first before image size!
     error = xiSetParamInt(handle, XI_PRM_IMAGE_DATA_FORMAT, image_format_);
     _CheckError(error, "xiSetParam (format)");
