@@ -133,6 +133,7 @@ add_subdirectory( Devices )
 add_subdirectory( ThirdParty )
 add_subdirectory( Camera )
 add_subdirectory( IMU )
+add_subdirectory( Gamepad )
 add_subdirectory( Posys )
 add_subdirectory( Encoder )
 add_subdirectory( LIDAR )
@@ -154,6 +155,7 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Camera.proto
     ${PROTO_DIR}/Image.proto
     ${PROTO_DIR}/Imu.proto
+    ${PROTO_DIR}/Gamepad.proto
     ${PROTO_DIR}/Pose.proto
     ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/Lidar.proto

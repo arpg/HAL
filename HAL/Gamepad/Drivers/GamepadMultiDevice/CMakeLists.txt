@@ -1,0 +1,21 @@
+# build the library
+set( GSDK_CPP GSDK/EventDispatcher.cpp )
+set( GSDK_H GSDK/EventDispatcher.h GSDK/Gamepad.h )
+if(UNIX)
+		if(APPLE)
+				find_package( IOKit REQUIRED )
+				include_directories( ${IOKit_INCLUDE_DIRS} )
+				find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+				set( GSDK_CPP ${GSDK_CPP} GSDK/Gamepad_macosx.cpp )
+		else()
+				set( GSDK_CPP ${GSDK_CPP} GSDK/Gamepad_linux.cpp )
+		endif()
+endif()
+
+set( BUILD_Gamepad true CACHE BOOL force )
+
+if( BUILD_Gamepad )
+		add_to_hal_sources( GamepadMultiDeviceDriver.h ${GSDK_H} GamepadMultiDeviceDriver.cpp GamepadMultiDeviceFactory.cpp ${GSDK_CPP} )
+#		add_to_hal_include_dirs( GamepadMultiDeviceDriver.h ${GSDK_H})
+		add_to_hal_libraries( ${IOKit_LIBRARIES} ${COREFOUNDATION_FRAMEWORK})
+endif()
