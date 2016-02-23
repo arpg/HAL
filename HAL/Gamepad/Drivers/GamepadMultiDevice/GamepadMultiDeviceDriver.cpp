@@ -11,17 +11,6 @@ GamepadDriverDataCallback GamepadMultiDeviceDriver::mGamepadCallback = nullptr;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
 const bool _verbose = false;
-#define _LINUX
-
-#if defined(_LINUX) || defined(_QNX) || defined(_OSX)
-#include <time.h>
-void Sleep(unsigned int time) {
-  struct timespec t, r;
-  t.tv_sec = time / 1000;
-  t.tv_nsec = (time % 1000) * 1000000;
-  while (nanosleep(&t, &r) == -1) t = r;
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 GamepadMultiDeviceDriver::GamepadMultiDeviceDriver() : mShouldRun(false) {

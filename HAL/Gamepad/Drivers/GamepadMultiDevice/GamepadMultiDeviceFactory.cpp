@@ -12,7 +12,7 @@ public:
         : DeviceFactory<GamepadDriverInterface>(name)
     {
         Params() = {
-            {"accel", "1", "Capture accelerometer data."},
+            {"test", "1", "test comment."},
         };
     }
 
