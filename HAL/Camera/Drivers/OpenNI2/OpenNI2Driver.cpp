@@ -299,12 +299,33 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
   openni::Status rc;
   static double d0;
 
+  // check if exposure update needed
+  if (m_colorStream.isValid() && m_exposureUpdated)
+  {
+    std::cout << "m_exposure: " << m_exposure << std::endl;
+
+    // check if using manual exposure 
+    if ( m_exposure > 0) {
+      m_colorStream.getCameraSettings()->setAutoExposureEnabled( false );
+      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( false );
+      m_colorStream.getCameraSettings()->setExposure( m_exposure );
+      m_colorStream.getCameraSettings()->setGain( m_gain );
+    }
+    // otherwise use auto-exposure 
+    else
+    {
+      m_colorStream.getCameraSettings()->setAutoExposureEnabled( true );
+      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( true );
+    }
+
+    m_exposureUpdated = false;
+  }
+
   rc = openni::OpenNI::waitForAnyStream( &m_streams[0], m_streams.size(), &changedIndex );
   if (rc != openni::STATUS_OK)	{
     printf("Wait failed\n");
     return false;
   }
-
 
   if( m_streams[changedIndex] == &m_depthStream ){
     m_depthStream.readFrame(&m_depthFrame);
@@ -337,28 +358,6 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
     if( !m_colorFrame.isValid() ){
       return false;
     }
-
-    if (m_exposureUpdated)
-    {
-      std::cout << "m_exposure: " << m_exposure << std::endl;
-
-      // check if using manual exposure 
-      if ( m_exposure > 0) {
-        m_colorStream.getCameraSettings()->setAutoExposureEnabled( false );
-        m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( false );
-        m_colorStream.getCameraSettings()->setExposure( m_exposure );
-        m_colorStream.getCameraSettings()->setGain( m_gain );
-      }
-      // otherwise use auto-exposure 
-      else
-      {
-        m_colorStream.getCameraSettings()->setAutoExposureEnabled( true );
-        m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( true );
-      }
-
-      m_exposureUpdated = false;
-    }
-
   }
   if( m_depthStream.isValid() ){
     if( !m_depthFrame.isValid() ){
