@@ -12,7 +12,6 @@ public:
         : DeviceFactory<GamepadDriverInterface>(name)
     {
         Params() = {
-            {"test", "1", "test comment."},
         };
     }
 
