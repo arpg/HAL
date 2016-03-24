@@ -17,7 +17,7 @@ include( install_package )
 
 string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-inconsistent-missing-override -Wextra")
 
 #############################################################################
 # Find required libraries

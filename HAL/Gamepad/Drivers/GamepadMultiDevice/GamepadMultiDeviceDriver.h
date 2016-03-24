@@ -17,6 +17,7 @@ class GamepadMultiDeviceDriver : public GamepadDriverInterface {
   bool IsRunning() const override { return mShouldRun; }
   double GetAxisValue(int id);
   bool IsButtonPressed(int id);
+  bool EnVerbose(bool state);
 
  private:
   static GamepadDriverDataCallback mGamepadCallback;
@@ -38,11 +39,11 @@ class GamepadMultiDeviceDriver : public GamepadDriverInterface {
   volatile bool mShouldRun;
   std::thread mDeviceThread;
   std::thread mDeviceUpdateThread;
-
-  // properties
+  static bool _verbose;
   std::vector<double> m_vAxes;
   std::vector<int> m_vButtonStates;
   std::string m_sPortName;
+
 };
 
 } /* namespace */

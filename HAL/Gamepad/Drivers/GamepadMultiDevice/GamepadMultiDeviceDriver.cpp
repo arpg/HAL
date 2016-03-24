@@ -10,10 +10,11 @@ using namespace hal;
 GamepadDriverDataCallback GamepadMultiDeviceDriver::mGamepadCallback = nullptr;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
-const bool _verbose = false;
+bool GamepadMultiDeviceDriver::_verbose;
 
 ///////////////////////////////////////////////////////////////////////////////
 GamepadMultiDeviceDriver::GamepadMultiDeviceDriver() : mShouldRun(false) {
+  _verbose = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,7 +66,7 @@ bool GamepadMultiDeviceDriver::_OnButtonDown(void* sender, const char* eventID,
 
   event = (Gamepad_buttonEvent*)eventData;
   pHandler->m_vButtonStates[event->buttonID] = event->down;
-  if (/*_verbose*/true) {
+  if (_verbose) {
     printf("Button %u down (%d) on device %u at %f\n", event->buttonID,
            (int)event->down, event->device->deviceID, event->timestamp);
   }
@@ -80,7 +81,7 @@ bool GamepadMultiDeviceDriver::_OnButtonUp(void* sender, const char* eventID,
 
   event = (Gamepad_buttonEvent*)eventData;
   pHandler->m_vButtonStates[event->buttonID] = event->down;
-  if (/*_verbose*/true) {
+  if (_verbose) {
     printf("Button %u up (%d) on device %u at %f\n", event->buttonID,
            (int)event->down, event->device->deviceID, event->timestamp);
   }
@@ -95,7 +96,7 @@ bool GamepadMultiDeviceDriver::_OnAxisMoved(void* sender, const char* eventID,
 
   event = (Gamepad_axisEvent*)eventData;
   pHandler->m_vAxes[event->axisID] = event->value;
-  if (/*_verbose*/true) {
+  if (_verbose) {
     printf("Axis %u moved to %f on device %u at %f\n", event->axisID,
            event->value, event->device->deviceID, event->timestamp);
   }
@@ -111,7 +112,7 @@ bool GamepadMultiDeviceDriver::_OnDeviceAttached(void* sender,
   GamepadMultiDeviceDriver* pHandler = (GamepadMultiDeviceDriver*)context;
 
   device = (Gamepad_device*)eventData;
-  if (/*_verbose*/true) {
+  if (_verbose) {
     printf("Device ID %u attached (vendor = 0x%X; product = 0x%X)\n",
            device->deviceID, device->vendorID, device->productID);
   }
@@ -148,15 +149,12 @@ bool GamepadMultiDeviceDriver::_OnDeviceRemoved(void* sender,
   struct Gamepad_device* device;
 
   device = (Gamepad_device*)eventData;
-  // if (verbose) {
   printf("Device ID %u removed\n", device->deviceID);
-  //}
   return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void GamepadMultiDeviceDriver::_ThreadFunc() {
-  std::cout << "_ThreadFunc called ..." << std::endl;
   Gamepad_eventDispatcher()->registerForEvent(Gamepad_eventDispatcher(),
                                               GAMEPAD_EVENT_DEVICE_ATTACHED,
                                               _OnDeviceAttached, this);
@@ -169,10 +167,15 @@ void GamepadMultiDeviceDriver::_ThreadFunc() {
 
 //////////////////////////////////////////////////////////////////////////////
 void GamepadMultiDeviceDriver::_ThreadUpdateGamepad() {
-  std::cout << "_ThreadUpdate called ..." << std::endl;
   while(1) {
     Gamepad_detectDevices();
     Gamepad_processEvents();
+    // 10ms delay is required
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+bool GamepadMultiDeviceDriver::EnVerbose(bool state) {
+  _verbose = state;
 }
