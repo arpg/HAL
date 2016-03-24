@@ -42,7 +42,6 @@ class GamepadMultiDeviceDriver : public GamepadDriverInterface {
   // properties
   std::vector<double> m_vAxes;
   std::vector<int> m_vButtonStates;
-  std::thread *m_pJoystickThread;
   std::string m_sPortName;
 };
 

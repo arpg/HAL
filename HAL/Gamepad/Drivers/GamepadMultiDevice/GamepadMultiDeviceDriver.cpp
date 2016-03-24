@@ -31,10 +31,10 @@ bool GamepadMultiDeviceDriver::_Init() {
   // Device communication parameters
 
   mShouldRun = true;
-  mDeviceThread = std::thread(
-      std::bind(&GamepadMultiDeviceDriver::_ThreadFunc, this));
   mDeviceUpdateThread = std::thread(
       std::bind(&GamepadMultiDeviceDriver::_ThreadUpdateGamepad, this));
+  mDeviceThread = std::thread(
+      std::bind(&GamepadMultiDeviceDriver::_ThreadFunc, this));
   return true;
 }
 
@@ -156,6 +156,7 @@ bool GamepadMultiDeviceDriver::_OnDeviceRemoved(void* sender,
 
 //////////////////////////////////////////////////////////////////////////////
 void GamepadMultiDeviceDriver::_ThreadFunc() {
+  std::cout << "_ThreadFunc called ..." << std::endl;
   Gamepad_eventDispatcher()->registerForEvent(Gamepad_eventDispatcher(),
                                               GAMEPAD_EVENT_DEVICE_ATTACHED,
                                               _OnDeviceAttached, this);
@@ -168,7 +169,10 @@ void GamepadMultiDeviceDriver::_ThreadFunc() {
 
 //////////////////////////////////////////////////////////////////////////////
 void GamepadMultiDeviceDriver::_ThreadUpdateGamepad() {
-
-  Gamepad_detectDevices();
-  Gamepad_processEvents();
+  std::cout << "_ThreadUpdate called ..." << std::endl;
+  while(1) {
+    Gamepad_detectDevices();
+    Gamepad_processEvents();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
