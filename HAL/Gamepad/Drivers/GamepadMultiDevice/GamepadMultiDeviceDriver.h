@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <vector>
+#include <atomic>
 #include <HAL/Gamepad/GamepadDriverInterface.h>
 
 #include "GSDK/Gamepad.h"
@@ -15,13 +16,10 @@ class GamepadMultiDeviceDriver : public GamepadDriverInterface {
   ~GamepadMultiDeviceDriver();
   void RegisterGamepadDataCallback(GamepadDriverDataCallback callback);
   bool IsRunning() const override { return mShouldRun; }
-  double GetAxisValue(int id);
-  bool IsButtonPressed(int id);
-  bool EnVerbose(bool state);
+//  void EnableVerbose(bool enable) const override { _verbose = enable; }
 
  private:
   static GamepadDriverDataCallback mGamepadCallback;
-  static void CallbackFunc();
   static bool _OnButtonDown(void *sender, const char *eventID, void *eventData,
                             void *context);
   static bool _OnButtonUp(void *sender, const char *eventID, void *eventData,
@@ -43,7 +41,9 @@ class GamepadMultiDeviceDriver : public GamepadDriverInterface {
   std::vector<double> m_vAxes;
   std::vector<int> m_vButtonStates;
   std::string m_sPortName;
-
+  static hal::GamepadMsg pbGamepadMsg;
+  static hal::VectorMsg* pbVecButtonsMsg;
+  static hal::VectorMsg* pbVecAxesMsg;
 };
 
 } /* namespace */

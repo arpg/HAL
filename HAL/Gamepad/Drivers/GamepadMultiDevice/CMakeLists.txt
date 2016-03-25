@@ -16,6 +16,5 @@ set( BUILD_Gamepad true CACHE BOOL force )
 
 if( BUILD_Gamepad )
 		add_to_hal_sources( GamepadMultiDeviceDriver.h ${GSDK_H} GamepadMultiDeviceDriver.cpp GamepadMultiDeviceFactory.cpp ${GSDK_CPP} )
-#		add_to_hal_include_dirs( GamepadMultiDeviceDriver.h ${GSDK_H})
 		add_to_hal_libraries( ${IOKit_LIBRARIES} ${COREFOUNDATION_FRAMEWORK})
 endif()

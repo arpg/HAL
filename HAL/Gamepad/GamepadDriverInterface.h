@@ -14,7 +14,8 @@ class GamepadDriverInterface : public DriverInterface {
  public:
 	virtual ~GamepadDriverInterface() {}
 	virtual void RegisterGamepadDataCallback(GamepadDriverDataCallback callback) = 0;
-  virtual bool IsRunning() const = 0;
+	virtual bool IsRunning() const = 0;
+//	virtual void EnableVerbose(bool enable) const = 0;
 };
 
 } /* namespace */

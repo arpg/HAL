@@ -5,6 +5,7 @@ import "Imu.proto";
 import "Pose.proto";
 import "Encoder.proto";
 import "Lidar.proto";
+import "Gamepad.proto";
 
 message Msg {
     optional double timestamp = 1;
@@ -13,4 +14,5 @@ message Msg {
     optional PoseMsg pose = 4;
     optional EncoderMsg encoder = 5;
     optional LidarMsg lidar = 6;
+		optional GamepadMsg gamepad = 7;
 }

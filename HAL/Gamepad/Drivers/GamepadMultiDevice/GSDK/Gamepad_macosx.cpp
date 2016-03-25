@@ -131,7 +131,7 @@ static void queueButtonEvent(struct Gamepad_device * device, double timestamp, u
 	queueInputEvent(device->eventDispatcher, down ? GAMEPAD_EVENT_BUTTON_DOWN : GAMEPAD_EVENT_BUTTON_UP, buttonEvent);
 }
 
-static void onDeviceValueChanged(void * context, IOReturn result, void * sender, IOHIDValueRef value) {
+static void onDeviceValueChanged(void * context, IOReturn /*result*/, void * /*sender*/, IOHIDValueRef value) {
 	struct Gamepad_device * deviceRecord;
 	struct Gamepad_devicePrivate * hidDeviceRecord;
 	IOHIDElementRef element;
@@ -253,7 +253,7 @@ static int IOHIDDeviceGetProductID(IOHIDDeviceRef deviceRef) {
 	return IOHIDDeviceGetIntProperty(deviceRef, CFSTR(kIOHIDProductIDKey));
 }
 
-static void onDeviceMatched(void * context, IOReturn result, void * sender, IOHIDDeviceRef device) {
+static void onDeviceMatched(void * /*context*/, IOReturn /*result*/, void * /*sender*/, IOHIDDeviceRef device) {
 	CFArrayRef elements;
 	CFIndex elementIndex;
 	IOHIDElementRef element;
@@ -386,7 +386,7 @@ static void disposeDevice(struct Gamepad_device * deviceRecord) {
 	free(deviceRecord);
 }
 
-static void onDeviceRemoved(void * context, IOReturn result, void * sender, IOHIDDeviceRef device) {
+static void onDeviceRemoved(void * /*context*/, IOReturn /*result*/, void * /*sender*/, IOHIDDeviceRef device) {
 	unsigned int deviceIndex;
 	
 	for (deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
