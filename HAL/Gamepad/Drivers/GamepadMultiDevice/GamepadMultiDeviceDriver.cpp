@@ -15,9 +15,12 @@ bool GamepadMultiDeviceDriver::_verbose;
 hal::GamepadMsg GamepadMultiDeviceDriver::pbGamepadMsg;
 hal::VectorMsg* GamepadMultiDeviceDriver::pbVecButtonsMsg;
 hal::VectorMsg* GamepadMultiDeviceDriver::pbVecAxesMsg;
+
 ///////////////////////////////////////////////////////////////////////////////
 GamepadMultiDeviceDriver::GamepadMultiDeviceDriver() : mShouldRun(false) {
+  // Set _vebose=true for debug purposes
   _verbose = false;
+
   pbVecAxesMsg = pbGamepadMsg.mutable_axes();
   pbVecButtonsMsg = pbGamepadMsg.mutable_buttons();
 }
@@ -27,8 +30,8 @@ GamepadMultiDeviceDriver::~GamepadMultiDeviceDriver() {
   mShouldRun = false;
   mDeviceThread.join();
   mDeviceUpdateThread.join();
-  delete(pbVecAxesMsg);
-  delete(pbVecButtonsMsg);
+  delete (pbVecAxesMsg);
+  delete (pbVecButtonsMsg);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,15 +58,13 @@ void GamepadMultiDeviceDriver::RegisterGamepadDataCallback(
 //////////////////////////////////////////////////////////////////////////////
 bool GamepadMultiDeviceDriver::_OnButtonDown(void* /*sender*/,
                                              const char* /*eventID*/,
-                                             void* eventData, void* context) {
+                                             void* eventData,
+                                             void* /*context*/) {
   pbGamepadMsg.set_system_time(hal::Tic());
-  struct Gamepad_buttonEvent* event;
-  GamepadMultiDeviceDriver* pHandler = (GamepadMultiDeviceDriver*)context;
+  Gamepad_buttonEvent* event;
 
   event = (Gamepad_buttonEvent*)eventData;
-  pHandler->m_vButtonStates[event->buttonID] = event->down;
-  pbVecButtonsMsg->set_data(event->buttonID,event->down);
-//  pbGamepadMsg.buttons().set_data(event->buttonID,event->down);
+  pbVecButtonsMsg->set_data(event->buttonID, event->down);
   if (mGamepadCallback) {
     mGamepadCallback(pbGamepadMsg);
   }
@@ -73,23 +74,18 @@ bool GamepadMultiDeviceDriver::_OnButtonDown(void* /*sender*/,
            (int)event->down, event->device->deviceID, event->timestamp);
   }
 
-//  delete(event);
-//  delete(pHandler);
   return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 bool GamepadMultiDeviceDriver::_OnButtonUp(void* /*sender*/,
                                            const char* /*eventID*/,
-                                           void* eventData, void* context) {
+                                           void* eventData, void* /*context*/) {
   pbGamepadMsg.set_system_time(hal::Tic());
-  struct Gamepad_buttonEvent* event;
-  GamepadMultiDeviceDriver* pHandler = (GamepadMultiDeviceDriver*)context;
+  Gamepad_buttonEvent* event;
 
   event = (Gamepad_buttonEvent*)eventData;
-  pHandler->m_vButtonStates[event->buttonID] = event->down;
-  pbVecButtonsMsg->set_data(event->buttonID,event->down);
-//  pbGamepadMsg.buttons().set_data(event->buttonID,event->down);
+  pbVecButtonsMsg->set_data(event->buttonID, event->down);
   if (mGamepadCallback) {
     mGamepadCallback(pbGamepadMsg);
   }
@@ -99,24 +95,19 @@ bool GamepadMultiDeviceDriver::_OnButtonUp(void* /*sender*/,
            (int)event->down, event->device->deviceID, event->timestamp);
   }
 
-//  delete(event);
-//  delete(pHandler);
   return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 bool GamepadMultiDeviceDriver::_OnAxisMoved(void* /*sender*/,
                                             const char* /*eventID*/,
-                                            void* eventData, void* context) {
-
+                                            void* eventData,
+                                            void* /*context*/) {
   pbGamepadMsg.set_system_time(hal::Tic());
-  struct Gamepad_axisEvent* event;
-  GamepadMultiDeviceDriver* pHandler = (GamepadMultiDeviceDriver*)context;
+  Gamepad_axisEvent* event;
 
   event = (Gamepad_axisEvent*)eventData;
-  pHandler->m_vAxes[event->axisID] = event->value;
-  pbVecAxesMsg->set_data(event->axisID,event->value);
-//  pbGamepadMsg.axes().set_data(event->axisID,event->value);
+  pbVecAxesMsg->set_data(event->axisID, event->value);
   if (mGamepadCallback) {
     mGamepadCallback(pbGamepadMsg);
   }
@@ -126,7 +117,6 @@ bool GamepadMultiDeviceDriver::_OnAxisMoved(void* /*sender*/,
            event->value, event->device->deviceID, event->timestamp);
   }
 
-//  delete(event);
   return true;
 }
 
@@ -135,7 +125,9 @@ bool GamepadMultiDeviceDriver::_OnDeviceAttached(void* /*sender*/,
                                                  const char* /*eventID*/,
                                                  void* eventData,
                                                  void* context) {
-  struct Gamepad_device* device;
+  // TODO: device and pHandler are not handled properly. device object should be
+  // created in GamepadMultiDeviceDriver class and deleted properly
+  Gamepad_device* device;
   GamepadMultiDeviceDriver* pHandler = (GamepadMultiDeviceDriver*)context;
 
   device = (Gamepad_device*)eventData;
@@ -160,25 +152,19 @@ bool GamepadMultiDeviceDriver::_OnDeviceAttached(void* /*sender*/,
 
   std::cout << "Opened joystick zero which has " << device->numAxes << " axes "
             << " and " << device->numButtons << " buttons." << std::endl;
-  pHandler->m_vAxes.resize(device->numAxes, 0);
-  pHandler->m_vButtonStates.resize(device->numButtons, 0);
 
   // reset all joystick axes and buttons
-  for (size_t ii = 0; ii < pHandler->m_vAxes.size(); ii++) {
-    pHandler->m_vAxes[ii] = 0;
+  for (size_t ii = 0; ii < device->numAxes; ii++) {
     pbVecAxesMsg->add_data(0);
   }
 
-  for (size_t ii = 0; ii < pHandler->m_vButtonStates.size(); ii++) {
-    pHandler->m_vButtonStates[ii] = 0;
+  for (size_t ii = 0; ii < device->numButtons; ii++) {
     pbVecButtonsMsg->add_data(0);
   }
   if (mGamepadCallback) {
     mGamepadCallback(pbGamepadMsg);
   }
 
-//  delete(device);
-//  delete(pHandler);
   return true;
 }
 
@@ -191,7 +177,7 @@ bool GamepadMultiDeviceDriver::_OnDeviceRemoved(void* /*sender*/,
 
   device = (Gamepad_device*)eventData;
   printf("Device ID %u removed\n", device->deviceID);
-  delete(device);
+  delete (device);
   return true;
 }
 
