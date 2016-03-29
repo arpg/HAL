@@ -27,6 +27,8 @@ class OpenNI2Driver : public CameraDriverInterface
                 bool                    bCaptureDepth,
                 bool                    bCaptureIR,
                 bool                    bAlignDepth,
+                unsigned int            nExposure,
+                unsigned int            nGain,
                 const std::string&      sn,
                 const std::string&      scmod);
 
@@ -41,6 +43,11 @@ class OpenNI2Driver : public CameraDriverInterface
         size_t NumChannels() const;
         size_t Width( size_t idx = 0 ) const;
         size_t Height( size_t idx = 0 ) const;
+        bool AutoExposure() const;
+        unsigned int Exposure() const;
+        void SetExposure(unsigned int exposure);
+        unsigned int Gain() const;
+        void SetGain(unsigned int gain);
 
     private:
 
@@ -74,6 +81,9 @@ class OpenNI2Driver : public CameraDriverInterface
         std::vector<openni::VideoStream*>    m_streams;
         std::string                          m_dev_sn;
         std::string                          m_sCameraModel;
+        unsigned int                         m_exposure;
+        unsigned int                         m_gain;
+        bool                                 m_exposureUpdated;
 };
 
 }
