@@ -6,6 +6,7 @@
 #include <HAL/LIDAR/LIDARDevice.h>
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Car/CarDevice.h>
+#include <HAL/Gamepad/GamepadDevice.h>
 
 namespace hal
 {
@@ -93,6 +94,7 @@ void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)
 template class DeviceRegistry<hal::CameraDriverInterface>;
 template class DeviceRegistry<hal::EncoderDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
+template class DeviceRegistry<hal::GamepadDriverInterface>;
 template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;
 template class DeviceRegistry<hal::CarDriverInterface>;
