@@ -136,10 +136,8 @@ bool GamepadMultiDeviceDriver::_OnDeviceAttached(void* /*sender*/,
   pbGamepadMsg.set_device_id(device->deviceID);
   pbGamepadMsg.set_vendor_id(device->vendorID);
   pbGamepadMsg.set_product_id(device->productID);
-  if (_verbose) {
-    printf("Device ID %u attached (vendor = 0x%X; product = 0x%X)\n",
-           device->deviceID, device->vendorID, device->productID);
-  }
+  printf("Device ID %u attached (vendor = 0x%X; product = 0x%X)\n",
+         device->deviceID, device->vendorID, device->productID);
 
   device->eventDispatcher->registerForEvent(device->eventDispatcher,
                                             GAMEPAD_EVENT_BUTTON_DOWN,
@@ -150,17 +148,20 @@ bool GamepadMultiDeviceDriver::_OnDeviceAttached(void* /*sender*/,
                                             GAMEPAD_EVENT_AXIS_MOVED,
                                             _OnAxisMoved, pHandler);
 
-  std::cout << "Opened joystick zero which has " << device->numAxes << " axes "
+  std::cout << "Opened joystick " << device->deviceID << " which has "
+            << device->numAxes << " axes "
             << " and " << device->numButtons << " buttons." << std::endl;
+  pbGamepadMsg.set_num_buttons(device->numButtons);
+  pbGamepadMsg.set_num_axes(device->numAxes);
 
   // reset all joystick axes and buttons
   for (size_t ii = 0; ii < device->numAxes; ii++) {
     pbVecAxesMsg->add_data(0);
   }
-
   for (size_t ii = 0; ii < device->numButtons; ii++) {
     pbVecButtonsMsg->add_data(0);
   }
+
   if (mGamepadCallback) {
     mGamepadCallback(pbGamepadMsg);
   }
@@ -176,8 +177,7 @@ bool GamepadMultiDeviceDriver::_OnDeviceRemoved(void* /*sender*/,
   struct Gamepad_device* device;
 
   device = (Gamepad_device*)eventData;
-  printf("Device ID %u removed\n", device->deviceID);
-  delete (device);
+  std::cout << "Device ID " << device->deviceID << " removed." << std::endl;
   return true;
 }
 

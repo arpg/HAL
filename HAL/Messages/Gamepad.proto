@@ -6,8 +6,10 @@ message GamepadMsg{
 		optional int32 device_id = 1;
 		optional int32 vendor_id = 2;
 		optional int32 product_id = 3;
-		optional double system_time = 4;
-		optional VectorMsg buttons = 5;
-		optional VectorMsg axes = 6;
+		optional int32 num_buttons = 4;
+		optional int32 num_axes = 5;
+		optional double system_time = 6;
+		optional VectorMsg buttons = 7;
+		optional VectorMsg axes = 8;
 }
 
