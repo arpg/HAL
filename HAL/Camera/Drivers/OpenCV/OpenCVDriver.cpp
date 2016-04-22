@@ -10,7 +10,7 @@ namespace hal
 OpenCVDriver::OpenCVDriver( PropertyMap& device_properties )
   : device_properties_(device_properties)
 {
-  // sat sane default parameters
+  // set sane default parameters
   num_channels_ = 1;
   force_greyscale_    = device_properties_.GetProperty("grey", false);
   unsigned int cam_id = device_properties_.GetProperty("id", 0);

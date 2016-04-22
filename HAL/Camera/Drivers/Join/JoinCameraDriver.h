@@ -8,23 +8,35 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "HAL/Camera/CameraDriverInterface.h"
+#include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Utils/Uri.h>
 
 namespace hal {
 
 class JoinCameraDriver : public CameraDriverInterface
 {
 public:
-  JoinCameraDriver(
-      const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras);
-  virtual ~JoinCameraDriver();
+  JoinCameraDriver( const Uri& uri );
+
+  ~JoinCameraDriver();
 
   bool Capture( hal::CameraMsg& vImages );
   std::shared_ptr<CameraDriverInterface> GetInputDevice() {
     return std::shared_ptr<CameraDriverInterface>();
   }
 
-  std::string GetDeviceProperty(const std::string& sProperty);
+
+  void PrintInfo() {}
+
+  hal::Type   PixelType()
+  {
+    return video_type_;
+  }
+
+  hal::Format PixelFormat()
+  {
+    return video_format_;
+  }
 
   size_t NumChannels() const;
   size_t Width( size_t idx = 0 ) const;
@@ -65,6 +77,8 @@ private:
   };
 
   WorkTeam                  m_WorkTeam;
+
+  PropertyMap&						device_properties_;
 
 };
 
