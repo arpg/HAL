@@ -17,6 +17,7 @@ public:
             {"ir", "false", "Capture infrared image."},
             {"color", "true", "Keep color in RGB image"},
             {"align", "false", "align RGB and Depth image"},
+	    {"pipeline", "opencl", "Processing pipeline to use: opencl, opengl, or cpu"},
         };
     }
 
@@ -28,9 +29,9 @@ public:
         bool bIR            = uri.properties.Get("ir", false);
         bool bColor         = uri.properties.Get("color", true);
         bool bAlign         = uri.properties.Get("align", false);
-
+	std::string sPipeline         = uri.properties.Get("pipeline", std::string("opencl"));
         Freenect2Driver* pDriver = new Freenect2Driver(
-                    Dims.x, Dims.y, bRGB, bDepth, bIR, bColor, bAlign );
+						       Dims.x, Dims.y, bRGB, bDepth, bIR, bColor, bAlign,sPipeline );
         return std::shared_ptr<CameraDriverInterface>( pDriver );
     }
 };

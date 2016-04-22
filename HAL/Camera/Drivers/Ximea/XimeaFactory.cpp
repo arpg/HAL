@@ -19,8 +19,9 @@ namespace hal
 				{"size", "640x480", "Capture resolution."},
 				{"roi", "0+0+0x0", "ROI resolution."},
 				{"sync", "0", "Sync type. [0: none, 1: software, 2: hardware]"},
-				{"binning", "0", "Binning: Divide frame by this integer in hardware"}
+				{"binning", "0", "Binning: Divide frame by this integer in hardware"},
+        {"bus_cams", "0", "Divide the total bus bandwidth by this number per camera"}
 				} );
 
-}
+} // namespace hal
 

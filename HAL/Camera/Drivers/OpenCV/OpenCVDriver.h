@@ -2,7 +2,16 @@
 
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Utils/Uri.h>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>//constants are defined here
+#elif CV_VERSION_MAJOR == 3
+#include <opencv2/videoio/videoio.hpp>
+#endif
+
+#include <iostream>
 
 namespace hal {
 

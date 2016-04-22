@@ -9,7 +9,6 @@ if( XIMEA_FOUND )
     set( BUILD_Ximea true CACHE BOOL force )
 
 
-message( STATUS "XIMEA_LIBRARY ${XIMEA_LIBRARY}")
 
     if( BUILD_Ximea )
         add_to_hal_include_dirs( ${XIMEA_INCLUDE_DIR} )

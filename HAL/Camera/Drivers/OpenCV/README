@@ -1,0 +1,13 @@
+The OpenCV driver allows to stream video from OpenCV VideoCapture, which can be either a camera or
+a file.
+
+Usage:
+	opencv:[id=<video_device_id>]
+			- OR -
+	opencv://<path_to_video_file>
+	
+Examples:
+	opencv:[id=2]
+	opencv:///media/lameusername/data/cap/video1_h264.mp4
+
+Note that if the <path_to_video_file> is used together with the id property, the id will be ignored.

@@ -69,6 +69,7 @@ JoinCameraDriver::JoinCameraDriver(
 
 JoinCameraDriver::~JoinCameraDriver()
 {
+	m_WorkTeam.stopTeam();
 }
 
 void JoinCameraDriver::WorkTeam::addWorker(
@@ -79,6 +80,7 @@ void JoinCameraDriver::WorkTeam::addWorker(
     std::unique_lock<std::mutex>(m_Mutex);
     m_ImageData.push_back(hal::CameraMsg());
     m_bWorkerDone.push_back(true);
+    m_bWorkerCaptureNotOver.push_back(true);
   }
   m_Workers.emplace_back(std::thread(&JoinCameraDriver::WorkTeam::Worker, this,
         std::ref(cam), workerId));
@@ -88,11 +90,12 @@ void JoinCameraDriver::WorkTeam::addWorker(
 JoinCameraDriver::WorkTeam::Worker(std::shared_ptr<CameraDriverInterface>& cam,
     size_t workerId)
 {
-  for (;;) {
+  for (;!m_bStopRequested;) {
     waitForWork(workerId);
-    cam->Capture(m_ImageData[workerId]);
+    m_bWorkerCaptureNotOver[workerId] = cam->Capture(m_ImageData[workerId]);
     workerDone(workerId);
   }
+  cam.reset();
 }
 
 void JoinCameraDriver::WorkTeam::waitForWork(size_t workerId)
@@ -108,22 +111,37 @@ void JoinCameraDriver::WorkTeam::workerDone(size_t workerId)
   m_MasterCond.notify_one();
 }
 
+void JoinCameraDriver::WorkTeam::stopTeam(){
+	m_bStopRequested = true;
+	//let workers loop one iteration
+	process();
+	for(size_t i = 0; i < m_Workers.size(); i++){
+		m_Workers[i].join();
+	}
+}
+
 bool JoinCameraDriver::Capture( hal::CameraMsg& vImages )
 {
   vImages.Clear();
   const double time = Tic();
   vImages.set_system_time(time);
   vImages.set_device_time(time);
+  unsigned activeWorkerCount = 0;
 
   std::vector<hal::CameraMsg>& results = m_WorkTeam.process();
 
+  int ixResult = 0;
   for( hal::CameraMsg& result : results ) {
-    for( int i = 0; i < result.image_size(); ++i ) {
-      vImages.add_image()->Swap(result.mutable_image(i));
+	if(m_WorkTeam.m_bWorkerCaptureNotOver[ixResult]){
+      for( int i = 0; i < result.image_size(); ++i ) {
+    	  vImages.add_image()->Swap(result.mutable_image(i));
+    	  activeWorkerCount++;
+      }
+      result.Clear();
     }
-    result.Clear();
+	ixResult++;
   }
-  return true;
+  return activeWorkerCount == results.size();
 }
 
 std::vector<hal::CameraMsg>& JoinCameraDriver::WorkTeam::process()

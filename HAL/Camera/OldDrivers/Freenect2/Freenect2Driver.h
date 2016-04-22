@@ -38,7 +38,7 @@ struct RegisteredFreenectCam {
 class Freenect2Driver: public CameraDriverInterface {
 public:
 	Freenect2Driver(unsigned int nWidth, unsigned int nHeight, bool bCaptureRGB,
-			bool bCaptureDepth, bool bCaptureIR, bool bColor, bool bAlign);
+			bool bCaptureDepth, bool bCaptureIR, bool bColor, bool bAlign, std::string sPipeline);
 
 	virtual ~Freenect2Driver();
 
