@@ -3,11 +3,11 @@
 
 namespace hal
 {
-   CREATE_DRIVER_FACTORY_CLASS(Join) // Create JoinFactory class
+   CREATE_DRIVER_FACTORY_CLASS(JoinCamera) // Create JoinFactory class
 
    // Register this factory by creating static instance of factory
 
-   static JoinFactory g_JoinFactory("join",
+   static JoinCameraFactory g_JoinCameraFactory("joincamera",
    {
    {"id", "0", "Camera id (serial number or UUID)."}
    } );

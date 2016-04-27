@@ -16,25 +16,23 @@ namespace hal {
 class JoinCameraDriver : public CameraDriverInterface
 {
 public:
-  JoinCameraDriver( const Uri& uri );
+  JoinCameraDriver( PropertyMap& device_properties );
 
   ~JoinCameraDriver();
 
   bool Capture( hal::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() {
+  std::shared_ptr<CameraDriverInterface> GetInputDriver() {
     return std::shared_ptr<CameraDriverInterface>();
   }
 
 
   void PrintInfo() {}
 
-  hal::Type   PixelType()
-  {
+  hal::Type   PixelType() {
     return video_type_;
   }
 
-  hal::Format PixelFormat()
-  {
+  hal::Format PixelFormat() {
     return video_format_;
   }
 
@@ -47,6 +45,11 @@ private:
   std::vector<unsigned int> m_nImgWidth;
   std::vector<unsigned int> m_nImgHeight;
   unsigned int              m_nNumChannels;
+
+  hal::Type										video_type_;
+  hal::Format									video_format_;
+
+  PropertyMap&						device_properties_;
 
   class WorkTeam
   {
@@ -65,9 +68,6 @@ private:
     void workerDone(size_t workerId);
     void Worker(std::shared_ptr<CameraDriverInterface>& cam,
                 size_t workerId);
-
-
-  private:
     std::vector<std::thread> m_Workers;
     std::vector<bool> m_bWorkerDone;
     std::vector<hal::CameraMsg> m_ImageData;
@@ -77,8 +77,6 @@ private:
   };
 
   WorkTeam                  m_WorkTeam;
-
-  PropertyMap&						device_properties_;
 
 };
 

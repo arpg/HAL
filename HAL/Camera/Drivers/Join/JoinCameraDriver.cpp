@@ -10,9 +10,8 @@
 
 using namespace hal;
 
-JoinCameraDriver::JoinCameraDriver(
-    const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras)
-  : m_Cameras(cameras)
+JoinCameraDriver::JoinCameraDriver( PropertyMap& device_properties )
+  : device_properties_(device_properties)
 {
   const size_t N = NumChannels();
   m_nImgWidth.reserve(N);
@@ -116,11 +115,6 @@ std::vector<hal::CameraMsg>& JoinCameraDriver::WorkTeam::process()
         == m_bWorkerDone.end();
   });
   return m_ImageData;
-}
-
-std::string JoinCameraDriver::GetDeviceProperty(const std::string&)
-{
-  return std::string();
 }
 
 size_t JoinCameraDriver::NumChannels() const

@@ -22,12 +22,6 @@ OpenCVDriver::OpenCVDriver( PropertyMap& device_properties )
   if (!cam_.isOpened()){
     abort();
   }
-
-OpenCVDriver::OpenCVDriver(const std::string& sFilePath, bool force_grey)
-    : num_channels_(1),
-      force_greyscale_(force_grey),
-      cam_(sFilePath) {
-  Initialize();
 }
 
 OpenCVDriver::~OpenCVDriver() {}

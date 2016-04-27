@@ -33,12 +33,6 @@ namespace hal
   {
     CameraRegistry().ListDrivers();
   }
-    ///////////////////////////////////////////////////////////////
-    Camera(const std::string& uri)
-        : m_uri(uri)
-    {
-        m_cam = DeviceRegistry<CameraDriverInterface>::Instance().Create(m_uri);
-    }
 
   ///////////////////////////////////////////////////////////////////////////////
   // Print known camera drivers
