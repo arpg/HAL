@@ -12,7 +12,7 @@
 
 namespace hal {
 
-class Logger {
+class HAL_EXPORT Logger {
  public:
   static Logger& GetInstance();
 

@@ -1,6 +1,7 @@
 #include "ReadImage.h"
 
 #include <fstream>
+#include <opencv2/highgui/highgui.hpp>
 
 namespace hal
 {

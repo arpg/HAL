@@ -5,7 +5,7 @@
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/StringUtils.h>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 
 #include "ReadImage.h"
 
@@ -39,6 +39,8 @@ FileReaderDriver::FileReaderDriver(const std::vector<std::string>& ChannelRegex,
   m_sBaseDir = DirUp(ChannelRegex[0]);
 
   m_vFileList.resize(m_nNumChannels);
+
+  m_vOffsets.resize(m_nNumChannels);
 
   for(unsigned int ii = 0; ii < m_nNumChannels; ii++) {
     // Now generate the list of files for each channel
@@ -191,11 +193,30 @@ bool FileReaderDriver::_Read() {
   // now fetch the next set of images
   std::string sFileName;
 
+  //pre-read filenames and collect timestamps
+  std::vector<double> timestamps(m_nNumChannels);
+  for (unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
+      if (m_nCurrentImageIndex + m_vOffsets[ii] < m_vFileList[ii].size() && m_nCurrentImageIndex + m_vOffsets[ii] >= 0) {
+          sFileName = m_vFileList[ii][m_nCurrentImageIndex + m_vOffsets[ii]];
+          timestamps[ii] = _GetTimestamp(sFileName);
+      }
+  }
+
+  //if timestamps are different send blank image
+
+  auto min_timestamp = *std::min_element(timestamps.begin(), timestamps.end());
+
   hal::CameraMsg vImages;
   double device_timestamp = -1;
   for(unsigned int ii = 0; ii < m_nNumChannels; ++ii) {
     hal::ImageMsg* pbImg = vImages.add_image();
-    sFileName = m_vFileList[ii][m_nCurrentImageIndex];
+    if (m_nCurrentImageIndex + m_vOffsets[ii] < m_vFileList[ii].size() && m_nCurrentImageIndex + m_vOffsets[ii] >= 0) {
+        sFileName = m_vFileList[ii][m_nCurrentImageIndex + m_vOffsets[ii]];
+    }
+    else
+    {
+        sFileName = m_vFileList[ii][m_nCurrentImageIndex];
+    }
     cv::Mat cvImg = _ReadFile(sFileName, m_iCvImageReadFlags);
 
     double timestamp = _GetTimestamp(sFileName);
@@ -224,6 +245,14 @@ bool FileReaderDriver::_Read() {
     if(cvImg.channels() == 3) {
       pbImg->set_format(hal::PB_RGB);
     }
+
+
+    if (std::abs(timestamps[ii] - min_timestamp) > 0.001 /*seconds = 1 ms*/) {
+        m_vOffsets[ii]--; // this image is too far in the future, process it next time
+        cvImg.setTo(0);
+    }
+
+
     pbImg->set_data(
         (const char*)cvImg.data,
         cvImg.rows * cvImg.cols * cvImg.elemSize1() * cvImg.channels());

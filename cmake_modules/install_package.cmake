@@ -140,7 +140,16 @@ function(install_package)
 
         # install library itself
         if( PACKAGE_LIB_NAME )
-            install( FILES ${_target_library} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+            if(MSVC)
+                string(REPLACE "$(Configuration)" "\${BUILD_TYPE}" _target_library ${_target_library})
+            endif()
+
+            install( TARGETS ${PACKAGE_LIB_NAME} 
+                RUNTIME DESTINATION bin
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                )
             set( PACKAGE_LIB_LINK "-l${PACKAGE_LIB_NAME}" )
         endif()
     

@@ -13,7 +13,7 @@ namespace hal
 template<typename BaseDevice> class DeviceFactory;
 
 template<typename BaseDevice>
-class DeviceRegistry
+class HAL_EXPORT DeviceRegistry
 {
 public:
     /// global device registery singleton 
