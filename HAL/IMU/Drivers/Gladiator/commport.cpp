@@ -428,6 +428,7 @@ int CommPort::setStopBits(uint8_t stopBits)
 
 void CommPort::setRS485(uint8_t enable)
 {
+  #ifdef __LINUX__
   //Taken from http://armbedded.eu/node/322
 
   struct serial_rs485 rs485conf;
@@ -447,6 +448,7 @@ void CommPort::setRS485(uint8_t enable)
       ioctl(serial_fd, TIOCSRS485, &rs485conf);
     }
 
+  #endif
   //Remove local echo (disable rx during tx)
   struct termios options;
 
