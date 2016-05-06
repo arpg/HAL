@@ -3,6 +3,13 @@
  */
 #include "commport.h"
 #define COMMPORT_MAX_READLINE_TIMEOUTS 3
+
+#ifdef __MACH__
+#define B921600 921600
+#define B460800 460800
+
+#endif
+
 CommPort::CommPort()
 {
   this->serial_name = NULL;
@@ -10,6 +17,7 @@ CommPort::CommPort()
 
 CommPort::~CommPort()
 {
+  ClosePort();
   if (this->serial_name)
     {
       delete [] this->serial_name;
@@ -135,6 +143,8 @@ int CommPort::ChangeTermSpeed(int speed)
     cfsetispeed( &term, B230400 );
     cfsetospeed( &term, B230400 );
     break;
+
+    
   case 460800:
 	cfsetispeed(&term, B460800);
 	cfsetospeed(&term, B460800);
@@ -428,6 +438,7 @@ int CommPort::setStopBits(uint8_t stopBits)
 
 void CommPort::setRS485(uint8_t enable)
 {
+  #ifdef __LINUX__
   //Taken from http://armbedded.eu/node/322
 
   struct serial_rs485 rs485conf;
@@ -447,6 +458,7 @@ void CommPort::setRS485(uint8_t enable)
       ioctl(serial_fd, TIOCSRS485, &rs485conf);
     }
 
+  #endif
   //Remove local echo (disable rx during tx)
   struct termios options;
 

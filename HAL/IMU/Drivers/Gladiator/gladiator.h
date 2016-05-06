@@ -1,5 +1,5 @@
 #ifndef __GLADIATOR_H_
-#define __GLADIATOR_H
+#define __GLADIATOR_H_
 
 #include <stdint.h>
 #include "ThreadedObject.h"

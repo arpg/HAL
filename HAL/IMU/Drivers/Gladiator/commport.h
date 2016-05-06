@@ -5,8 +5,11 @@ A serial port wrapper class
 Originally developed at Astrobotic (https://www.astrobotic.com). Used with permission
 */
 
-#include <linux/types.h>
+//#include <linux/types.h>
+#ifdef __LINUX__
 #include <linux/serial.h>
+#endif
+
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -65,7 +68,10 @@ class CommPort
     uint8_t ClearFlowControl();
     int setParity(uint8_t parity);
     int setStopBits(uint8_t stopBits);
+
+
     void setRS485(uint8_t enable);
+
  private:
 
     int serial_fd;
