@@ -17,6 +17,7 @@ CommPort::CommPort()
 
 CommPort::~CommPort()
 {
+  ClosePort();
   if (this->serial_name)
     {
       delete [] this->serial_name;
