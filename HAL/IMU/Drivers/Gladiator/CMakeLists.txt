@@ -16,8 +16,8 @@
 		GladiatorDriver.cpp
 		GladiatorFactory.cpp
 		gladiator.cpp
-		ThreadedCommand.h
-		ThreadedObject.h
+		ThreadedCommand.cc
+		ThreadedObject.cc
 		
         )
 

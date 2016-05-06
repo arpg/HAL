@@ -30,7 +30,7 @@ GladiatorDriver::~GladiatorDriver()
 bool GladiatorDriver::Init(const char* mPort)
 {
   //Instantiate a Gladiator device on the given port
-  
+  printf("GladiatorDriver: Opening IMU on port: %s\n", mPort);
   m_dev = new GladiatorIMU(mPort);
   m_dev->start();
 

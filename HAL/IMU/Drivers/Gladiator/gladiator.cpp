@@ -54,7 +54,7 @@ const uint8_t GladiatorIMU::msgSuccess[ 22 ] = {
 
 GladiatorIMU::GladiatorIMU(const char* serPort)
 {
-  //Port needs to be set to RS485, 115200,8e2
+  //Port needs to be set to RS485, 921600,8e2
   port = new CommPort();
   port->OpenPort(serPort);
   port->ChangeTermSpeed(921600);
@@ -114,7 +114,7 @@ void GladiatorIMU::run()
 
 void GladiatorIMU::sendMessage(gladiator_tx_msg_t *output )
 {
-  int i;
+  uint32_t i;
   uint8_t cksum;
   uint8_t *rawMessage;
   pauseOutput();
@@ -194,8 +194,8 @@ void GladiatorIMU::setSampleRate(uint32_t mode)
 
   //msgSuccess is returned - consume the bytes
   uint8_t rxBuffer[BUFFER_SIZE];
-  uint8_t numRead = 0;
-  numRead = port->Read(rxBuffer, sizeof(msgSuccess), SERIAL_TIMEOUT);
+  //uint8_t numRead = 0;
+  port->Read(rxBuffer, sizeof(msgSuccess), SERIAL_TIMEOUT);
   printf("GladiatorIMU: Change sample rate successful\n");
  
   //Apply it now
@@ -320,7 +320,7 @@ gladiator_rx_msg_t* GladiatorIMU::getSingleMessage()
   uint8_t foundSync = 0;
   uint8_t rxBuffer[BUFFER_SIZE];
   uint8_t numRead = 0;
-  int i;
+  uint32_t i;
   uint8_t checkSum; //limit to 8 bits to make the scheme work 
 
   while (!foundSync)
@@ -348,7 +348,7 @@ gladiator_rx_msg_t* GladiatorIMU::getSingleMessage()
 
   //Compute checksum:
   checkSum = 0;
-  for (i=0; i<sizeof(gladiator_rx_msg_t); i++)
+  for (i=0; i < sizeof(gladiator_rx_msg_t); i++)
     {
       checkSum += rxBuffer[i];
     }
@@ -418,7 +418,7 @@ void GladiatorIMU::handleStatusByte(gladiator_rx_msg_t *msg)
     {
       boardNumber[msg->uCount - 248] = msg->uStatus;
     }
-  else if (msg->uCount >= 252 && msg->uCount <= 255)
+  else if (msg->uCount >= 252 && msg->uCount < 255)
     {
       serialNumber[msg->uCount - 252] = msg->uStatus;
     }
