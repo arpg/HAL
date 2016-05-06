@@ -367,17 +367,31 @@ gladiator_rx_msg_t* GladiatorIMU::getSingleMessage()
 imu_data_t* GladiatorIMU::translate(gladiator_rx_msg_t* input)
 {
   /* Translate device-specific message into the one specified by ICD */
-  struct timespec stamp;
+ 
   imu_data_t* output = new imu_data_t;
+  #if _POSIX_TIMERS_ > 0
+  //Systems that have clock_gettime
+  struct timespec stamp;
   clock_gettime(CLOCK_REALTIME, &stamp);
-  
-  //Once time is secure, deal with the status byte
-  handleStatusByte(input);
-
   //On a 32-bit platform, struct timespec is a 8-byte structure; 64-bit is 16-byte
   //Promote as necessary
   output->tv_sec = stamp.tv_sec;
   output->tv_nsec = stamp.tv_nsec;
+  #else
+  //Mac branch:
+
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  return tv.tv_sec + 1e-6 * (tv.tv_usec);
+  output->tv_sec = tv.tv_sec;
+  output->tv_nsec = tv.tv_usec*1000;
+
+  #endif
+  
+  //Once time is secure, deal with the status byte
+  handleStatusByte(input);
+
+
   makeAccel(input->iAccX, &output->accel_x);
   makeAccel(input->iAccY, &output->accel_y);
   makeAccel(input->iAccZ, &output->accel_z);
