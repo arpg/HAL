@@ -450,12 +450,7 @@ void GladiatorIMU::makeAccel(int32_t src, int32_t* dest)
   float accel;
   accel = src*accelScale; //accel is now in g
   accel *= 10000; //accel in 10000 g
-  *dest = accel; //truncate float
-
-   if (*dest < -12000)
-    {
-      printf("Excessively low z: %d...\n", *dest);
-    }
+  *dest = accel; //truncate 
 }
 
 void GladiatorIMU::makeGyro(int32_t src, int32_t* dest)
