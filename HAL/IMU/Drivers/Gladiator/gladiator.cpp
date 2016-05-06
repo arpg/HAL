@@ -382,10 +382,8 @@ imu_data_t* GladiatorIMU::translate(gladiator_rx_msg_t* input)
 
   struct timeval tv;
   gettimeofday(&tv, 0);
-  return tv.tv_sec + 1e-6 * (tv.tv_usec);
   output->tv_sec = tv.tv_sec;
   output->tv_nsec = tv.tv_usec*1000;
-
   #endif
   
   //Once time is secure, deal with the status byte

@@ -3,6 +3,13 @@
  */
 #include "commport.h"
 #define COMMPORT_MAX_READLINE_TIMEOUTS 3
+
+#ifdef __MACH__
+#define B921600 921600
+#define B460800 460800
+
+#endif
+
 CommPort::CommPort()
 {
   this->serial_name = NULL;
@@ -135,6 +142,8 @@ int CommPort::ChangeTermSpeed(int speed)
     cfsetispeed( &term, B230400 );
     cfsetospeed( &term, B230400 );
     break;
+
+    
   case 460800:
 	cfsetispeed(&term, B460800);
 	cfsetospeed(&term, B460800);
