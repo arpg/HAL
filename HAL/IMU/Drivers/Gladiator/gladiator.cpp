@@ -418,7 +418,7 @@ void GladiatorIMU::handleStatusByte(gladiator_rx_msg_t *msg)
     {
       boardNumber[msg->uCount - 248] = msg->uStatus;
     }
-  else if (msg->uCount >= 252 && msg->uCount < 255)
+  else if (msg->uCount >= 252)
     {
       serialNumber[msg->uCount - 252] = msg->uStatus;
     }
@@ -451,6 +451,11 @@ void GladiatorIMU::makeAccel(int32_t src, int32_t* dest)
   accel = src*accelScale; //accel is now in g
   accel *= 10000; //accel in 10000 g
   *dest = accel; //truncate float
+
+   if (*dest < -12000)
+    {
+      printf("Excessively low z: %d...\n", *dest);
+    }
 }
 
 void GladiatorIMU::makeGyro(int32_t src, int32_t* dest)
