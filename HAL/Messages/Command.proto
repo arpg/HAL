@@ -1,0 +1,17 @@
+package hal;
+
+import "Matrix.proto";
+
+message CommanderMsg {
+	required int32 worldId = 1;
+
+	// Commands
+	required double force = 2;
+	required double curvature = 3;
+	required VectorMsg torques = 4;
+	required double forceDt = 5;
+	required double phi = 6;
+
+	required bool noDelay = 7;
+	required bool noUpdate = 8;
+}

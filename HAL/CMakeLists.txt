@@ -161,6 +161,7 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Lidar.proto
     ${PROTO_DIR}/NodeCamMessage.proto
     ${PROTO_DIR}/NodeCar.proto
+    ${PROTO_DIR}/Command.proto
 )
 
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
@@ -210,6 +211,7 @@ list(APPEND HAL_HEADERS
     ${PROTO_DIR}/Velodyne.h
     ${PROTO_DIR}/Matrix.h
     ${PROTO_DIR}/Pose.h
+    ${PROTO_DIR}/Command.h
    )
 
 if(BUILD_Velodyne)
