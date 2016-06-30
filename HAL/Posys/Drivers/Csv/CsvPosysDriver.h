@@ -14,6 +14,7 @@ public:
     ~CsvPosysDriver();
 
     void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+    void RegisterPosysFinishedCallback(PosysDriverFinishedCallback callback);
     bool IsRunning() const override {
       return m_bShouldRun;
     }
@@ -28,6 +29,7 @@ private:
     double                    m_dNextTimePPS;
     std::thread               m_DeviceThread;
     PosysDriverDataCallback   m_PosysCallback;
+    PosysDriverFinishedCallback   m_PosysFinishedCallback;
 };
 
 } /* namespace */

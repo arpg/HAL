@@ -34,6 +34,14 @@ class Posys : public PosysDriverInterface {
     }
   }
 
+  void RegisterPosysFinishedCallback(PosysDriverFinishedCallback callback) {
+    if (m_Posys) {
+      m_Posys->RegisterPosysFinishedCallback(callback);
+    } else {
+      std::cerr << "ERROR: no driver initialized!\n";
+    }
+  }
+
   std::string GetDeviceProperty(const std::string& sProperty) {
     return m_Posys->GetDeviceProperty(sProperty);
   }

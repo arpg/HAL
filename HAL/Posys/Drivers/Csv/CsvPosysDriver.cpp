@@ -66,6 +66,12 @@ void CsvPosysDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+void CsvPosysDriver::RegisterPosysFinishedCallback(PosysDriverFinishedCallback callback)
+{
+    m_PosysFinishedCallback = callback;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 void CsvPosysDriver::_ThreadCaptureFunc()
 {
@@ -118,6 +124,11 @@ void CsvPosysDriver::_ThreadCaptureFunc()
         hal::DeviceTime::PopAndPushTime( m_dNextTime );
     }
     m_bShouldRun = false;
+
+    // Notify that the driver stopped running
+    if (m_PosysFinishedCallback) {
+      m_PosysFinishedCallback();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
