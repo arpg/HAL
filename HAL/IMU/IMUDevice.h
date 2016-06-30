@@ -25,6 +25,7 @@ class IMU : public IMUDriverInterface {
     Clear();
     m_IMU = DeviceRegistry<IMUDriverInterface>::Instance().Create(m_URI);
     RegisterIMUDataCallback(m_callback);
+    RegisterIMUFinishedCallback(m_finished_callback);
   }
 
   void Clear() {
@@ -35,6 +36,16 @@ class IMU : public IMUDriverInterface {
     m_callback = callback;
     if( m_IMU ){
       m_IMU->RegisterIMUDataCallback( callback );
+    }else{
+      std::cerr << "ERROR: no driver initialized!\n";
+    }
+    return;
+  }
+
+  void RegisterIMUFinishedCallback(IMUDriverFinishedCallback callback) {
+    m_finished_callback = callback;
+    if( m_IMU ){
+      m_IMU->RegisterIMUFinishedCallback( callback );
     }else{
       std::cerr << "ERROR: no driver initialized!\n";
     }
@@ -53,5 +64,6 @@ class IMU : public IMUDriverInterface {
   hal::Uri                                m_URI;
   std::shared_ptr<IMUDriverInterface>     m_IMU;
   IMUDriverDataCallback m_callback;
+  IMUDriverFinishedCallback m_finished_callback;
 };
 } /* namespace hal */

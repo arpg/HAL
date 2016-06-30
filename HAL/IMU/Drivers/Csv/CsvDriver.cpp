@@ -124,6 +124,12 @@ void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+void CsvDriver::RegisterIMUFinishedCallback(IMUDriverFinishedCallback callback)
+{
+    m_IMUFinishedCallback = callback;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 void CsvDriver::_ThreadCaptureFunc()
 {
@@ -209,6 +215,11 @@ void CsvDriver::_ThreadCaptureFunc()
         hal::DeviceTime::PopAndPushTime( m_dNextTime );
     }
     m_bShouldRun = false;
+
+    // Notify that this file has finished
+    if (m_IMUFinishedCallback ){
+      m_IMUFinishedCallback();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
