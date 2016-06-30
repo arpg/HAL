@@ -109,6 +109,8 @@ void CsvPosysDriver::_ThreadCaptureFunc()
 
         // break if EOF
         if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
+            // Pop the last measurement so it does not hold up the queue
+            hal::DeviceTime::PopTime();
             break;
         }
 

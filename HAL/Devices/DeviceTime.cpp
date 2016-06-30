@@ -54,7 +54,7 @@ void ResetTime()
 ////////////////////////////////////////////////////////////////////////////////
 double NextTime()
 {
-    std::lock_guard<std::mutex> lock(MUTEX);
+    //std::lock_guard<std::mutex> lock(MUTEX);
     if( QUEUE.empty() ) {
         return 0;
     } else {
@@ -66,10 +66,9 @@ double NextTime()
 void WaitForTime(double nextTime)
 {
     // check if timestamp is the top of the queue
-    while( NextTime() < nextTime ) {
-      std::unique_lock<std::mutex> lock(MUTEX);
-      CONDVAR.wait( lock );
-    }
+    // if not, wait until the older timestamp is popped by another thread.
+    std::unique_lock<std::mutex> lock(MUTEX);
+    CONDVAR.wait( lock, [=]{return  NextTime() >= nextTime;});
 
     // TODO: Sleep for appropriate amount of time.
     if(REALTIME) {
