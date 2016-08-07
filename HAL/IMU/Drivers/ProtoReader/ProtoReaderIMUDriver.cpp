@@ -38,6 +38,9 @@ ProtoReaderIMUDriver::~ProtoReaderIMUDriver()
 void ProtoReaderIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 {
     m_callback = callback;
-    m_running = true;
-    m_callbackThread = std::thread( &ProtoReaderIMUDriver::_ThreadFunc, this );
+    if( !m_callbackThread.joinable() ) {
+        // start capture thread
+        m_running = true;
+        m_callbackThread = std::thread( &ProtoReaderIMUDriver::_ThreadFunc, this );
+    }
 }
