@@ -1,13 +1,10 @@
-/*
-    \file Master interface for all car drivers
-*/
-
 #pragma once
-
-// each car driver can have a generic set of "properties"
+#include <functional>
 #include <HAL/Devices/DriverInterface.h>
+#include <HAL/Car.pb.h>
 
 namespace hal {
+typedef std::function<void (hal::CarStateMsg&)> CarStateDriverDataCallback;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generic Car Driver Interface
@@ -17,8 +14,9 @@ class CarDriverInterface : public DriverInterface
 public:
   virtual ~CarDriverInterface() {}
 
-  virtual bool ApplyCommand( double flTorque, double flSteering,
-                             double flCommand_time) = 0;
+  virtual bool ApplyCommand( double flMotorCurrent, double flSteering) = 0;
+
+  virtual void RegisterCarStateDataCallback(CarStateDriverDataCallback callback) = 0;
 };
 
 }

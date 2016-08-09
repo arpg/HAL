@@ -7,6 +7,7 @@ import "Encoder.proto";
 import "Lidar.proto";
 import "Gamepad.proto";
 import "Command.proto";
+import "Car.proto";
 
 message Msg {
     optional double timestamp = 1;
@@ -15,6 +16,7 @@ message Msg {
     optional PoseMsg pose = 4;
     optional EncoderMsg encoder = 5;
     optional LidarMsg lidar = 6;
-		optional GamepadMsg gamepad = 7;
-		optional CommanderMsg command = 8;
+    optional GamepadMsg gamepad = 7;
+    optional CommanderMsg command = 8;
+    optional CarStateMsg vehicle_state = 9;
 }

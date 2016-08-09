@@ -1,10 +1,3 @@
-/*
-   \file CarDevice.h
-
-   Abstract device that represents a generic car.
-
- */
-
 #ifndef _CAR_DEVICE_H_
 #define _CAR_DEVICE_H_
 
@@ -52,9 +45,8 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////
-  virtual bool ApplyCommand( double flTorque, double flSteering,
-                             double flCommand_Time ) {
-    return m_car->ApplyCommand(flTorque,flSteering,flCommand_Time);
+  virtual bool ApplyCommand( double flTorque, double flSteering ) {
+    return m_car->ApplyCommand(flTorque,flSteering);
   }
 
 protected:

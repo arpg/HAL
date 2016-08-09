@@ -1,15 +1,15 @@
 #include <HAL/Devices/DeviceFactory.h>
 #include <HAL/Car/CarDriverInterface.h>
 
-#include "NodeCarDriver.h"
+#include "NinjaV3CarDriver.h"
 
 namespace hal
 {
 
-class NodeCarFactory : public DeviceFactory<CarDriverInterface>
+class NinjaV3CarFactory : public DeviceFactory<CarDriverInterface>
 {
 public:
-    NodeCarFactory(const std::string& name)
+    NinjaV3CarFactory(const std::string& name)
         : DeviceFactory<CarDriverInterface>(name)
     {
         Params() = {
@@ -18,12 +18,12 @@ public:
 
     std::shared_ptr<CarDriverInterface> GetDevice(const Uri& uri)
     {
-        NodeCarDriver* pDriver = new NodeCarDriver(uri);
+        NinjaV3CarDriver* pDriver = new NinjaV3CarDriver(uri);
         return std::shared_ptr<CarDriverInterface>( pDriver );
     }
 };
 
 // Register this factory by creating static instance of factory
-static NodeCarFactory g_NodeCarFactory("NodeCar");
+static NinjaV3CarFactory g_NinjaV3CarFactory("ninja_v3");
 
 }

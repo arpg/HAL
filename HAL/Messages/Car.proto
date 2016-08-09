@@ -1,0 +1,24 @@
+package hal;
+
+import "Matrix.proto";
+
+message CarStateMsg{
+		optional int32 device_id = 1;
+		optional int32 device_time = 2;
+		optional int32 vehicle_version = 3;
+		optional int32 num_bytes = 4;
+		optional int32 motor_current = 5;
+		optional double system_time = 6;
+		optional VectorMsg encoders = 7;
+		optional VectorMsg swing_angles = 8;
+}
+
+message CarCommandMsg{
+	optional double steering = 1;
+	optional double acceleration = 2;
+	optional int32 command_time = 3;
+}
+
+message CarSettingMsg{
+	optional int32 max_acc_limit = 1;
+}

@@ -156,11 +156,11 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Image.proto
     ${PROTO_DIR}/Imu.proto
     ${PROTO_DIR}/Gamepad.proto
+    ${PROTO_DIR}/Car.proto
     ${PROTO_DIR}/Pose.proto
     ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/Lidar.proto
     ${PROTO_DIR}/NodeCamMessage.proto
-    ${PROTO_DIR}/NodeCar.proto
     ${PROTO_DIR}/Command.proto
 )
 
