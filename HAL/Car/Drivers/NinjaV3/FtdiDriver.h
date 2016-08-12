@@ -61,23 +61,17 @@ class ComportDriver
 {
 
 public:
-    ComportDriver() : m_bIsConnected(false), m_bSimulateConnection(false) { }
+    ComportDriver() : m_bIsConnected(false) { }
 
     ~ComportDriver()
     {
-      if(m_bIsConnected && !m_bSimulateConnection ){
+      if(m_bIsConnected){
         _CloseComPort(m_PortHandle);
       }
     }
 
     bool Connect(const std::string& path,int baudrate)
     {
-      if( path == "sim"){
-        printf("Simulating serial connection\n");
-        m_bSimulateConnection = true;
-        return true;
-      }
-
       //open the given path
       m_PortHandle = _OpenComPort(path.c_str(),baudrate);
 
@@ -92,10 +86,6 @@ public:
 
     void SendCommandPacket( const float nSpeed, const float nSteering )
     {
-      if( m_bSimulateConnection ){
-        return;
-      }
-
 //    double dAccel = std::min(500.0,std::max(0.0,cmd.accel()));
 //    double dPhi = std::min(500.0,std::max(0.0,cmd.phi()));
         static CommandPacket Pkt;
@@ -113,21 +103,6 @@ public:
 
     int ReadSensorPacket(SensorPacket& Pkt)
     {
-/*      if( m_bSimulateConnection ){
-        static SensorPacket state = {};
-        Pkt = state;
-        state.Enc_LF++;
-        state.Enc_LB++;
-        state.Enc_RF++;
-        state.Enc_RB++;
-        state.ADC_Steer = 5.0*sin(0.01*state.Enc_LF);
-        state.ADC_LF = 10.0*sin(0.01*state.Enc_LF);
-        state.ADC_LB = 10.0*sin(0.01*state.Enc_LF);
-        state.ADC_RF = 10.0*sin(0.01*state.Enc_LF);
-        state.ADC_RB = 10.0*sin(0.01*state.Enc_LF);
-        return true;
-      }
-*/
       int bytesRead =  _ReadComPort(m_PortHandle,(unsigned char *)(&Pkt),sizeof(SensorPacket));
       if( bytesRead && _CheckChksum((unsigned char *)(&Pkt),sizeof(SensorPacket)-2,Pkt.chksum))
 	return bytesRead;
@@ -188,7 +163,7 @@ private:
 //          for(int jj=0;jj<bytesRead;jj++)
 //              printf(" %d,",bytes[jj]);
 //          printf("\n********************\n");
-	return 0;
+          return 0;
       }
       return bytesRead;
 
@@ -279,5 +254,4 @@ private:
 private:
     bool            m_bIsConnected;
     ComPortHandle   m_PortHandle;
-    bool            m_bSimulateConnection;
 };

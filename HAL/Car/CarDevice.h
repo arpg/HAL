@@ -44,14 +44,29 @@ public:
     m_car = DeviceRegistry<CarDriverInterface>::Instance().Create(m_uri);
   }
 
+	std::string GetDeviceProperty(const std::string& sProperty) {
+		return m_car->GetDeviceProperty(sProperty);
+	}
+
+  void RegisterCarStateDataCallback(CarStateDataCallback callback) {
+    m_callback = callback;
+    if( m_car ){
+      m_car->RegisterCarStateDataCallback( callback );
+    }else{
+      std::cerr << "ERROR: failed to register StateDriverDataCallback!\n";
+    }
+    return;
+  }
+
   ///////////////////////////////////////////////////////////////
-  virtual bool ApplyCommand( double flTorque, double flSteering ) {
-    return m_car->ApplyCommand(flTorque,flSteering);
+  virtual bool SendCarCommand( CarCommandMsg& car_command ) {
+    return m_car->SendCarCommand(car_command);
   }
 
 protected:
   hal::Uri                            m_uri;
   std::shared_ptr<CarDriverInterface> m_car;
+  CarStateDataCallback m_callback;
 };
 
 }

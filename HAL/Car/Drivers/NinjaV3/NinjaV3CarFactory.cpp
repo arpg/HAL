@@ -1,5 +1,4 @@
 #include <HAL/Devices/DeviceFactory.h>
-#include <HAL/Car/CarDriverInterface.h>
 
 #include "NinjaV3CarDriver.h"
 
