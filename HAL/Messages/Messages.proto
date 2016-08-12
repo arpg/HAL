@@ -3,7 +3,6 @@ package hal;
 import "Camera.proto";
 import "Imu.proto";
 import "Pose.proto";
-import "Encoder.proto";
 import "Lidar.proto";
 import "Gamepad.proto";
 import "Command.proto";
@@ -14,9 +13,8 @@ message Msg {
     optional CameraMsg camera = 2;
     optional ImuMsg imu = 3;
     optional PoseMsg pose = 4;
-    optional EncoderMsg encoder = 5;
-    optional LidarMsg lidar = 6;
-    optional GamepadMsg gamepad = 7;
-    optional CommanderMsg command = 8;
-    optional CarStateMsg vehicle_state = 9;
+    optional LidarMsg lidar = 5;
+    optional GamepadMsg gamepad = 6;
+    optional CommanderMsg command = 7;
+    optional CarStateMsg vehicle_state = 8;
 }

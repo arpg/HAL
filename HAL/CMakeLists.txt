@@ -135,7 +135,6 @@ add_subdirectory( Camera )
 add_subdirectory( IMU )
 add_subdirectory( Gamepad )
 add_subdirectory( Posys )
-add_subdirectory( Encoder )
 add_subdirectory( LIDAR )
 add_subdirectory( Car )
 add_subdirectory( Utils )
@@ -158,7 +157,6 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Gamepad.proto
     ${PROTO_DIR}/Car.proto
     ${PROTO_DIR}/Pose.proto
-    ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/Lidar.proto
     ${PROTO_DIR}/NodeCamMessage.proto
     ${PROTO_DIR}/Command.proto

@@ -20,9 +20,6 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType ) {
   if( eType == Msg_Type_Camera ) {
     m_Instance.m_bReadCamera = true;
   }
-  if( eType == Msg_Type_Encoder ) {
-    m_Instance.m_bReadEncoder = true;
-  }
   if( eType == Msg_Type_IMU ) {
     m_Instance.m_bReadIMU = true;
   }
@@ -38,7 +35,6 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType ) {
 Reader::Reader(const std::string& filename) : m_bRunning(true),
                                               m_bShouldRun(false),
                                               m_bReadCamera(false),
-                                              m_bReadEncoder(false),
                                               m_bReadIMU(false),
                                               m_bReadLIDAR(false),
                                               m_bReadPosys(false),
@@ -152,13 +148,12 @@ void Reader::_ThreadFunc() {
     }
 
     bool has_camera  = pMsg->has_camera();
-    bool has_encoder = pMsg->has_encoder();
     bool has_imu     = pMsg->has_imu();
     bool has_lidar   = pMsg->has_lidar();
     bool has_pose    = pMsg->has_pose();
 
     int num_message_types =
-        (has_camera + has_encoder + has_imu + has_lidar + has_pose);
+        (has_camera + has_imu + has_lidar + has_pose);
     if (num_message_types == 0) {
       LOG(WARNING) << "Message with no known data types found";
     } else if (num_message_types > 1) {
@@ -168,8 +163,6 @@ void Reader::_ThreadFunc() {
     MessageType msg_type;
     if (has_camera) {
       msg_type = Msg_Type_Camera;
-    } else if (has_encoder) {
-      msg_type = Msg_Type_Encoder;
     } else if (has_imu) {
       msg_type = Msg_Type_IMU;
     } else if (has_lidar) {
@@ -179,7 +172,6 @@ void Reader::_ThreadFunc() {
     }
 
     if ((has_camera  && m_bReadCamera)  ||
-        (has_encoder && m_bReadEncoder) ||
         (has_imu     && m_bReadIMU)     ||
         (has_lidar   && m_bReadLIDAR)   ||
         (has_pose    && m_bReadPosys)) {
@@ -242,33 +234,6 @@ std::unique_ptr<hal::CameraMsg> Reader::ReadCameraMsg(int id) {
   }
 
   return pCameraMsg;
-}
-
-std::unique_ptr<hal::EncoderMsg> Reader::ReadEncoderMsg() {
-  if( !m_bReadEncoder ) {
-    std::cerr << "warning: ReadEncoderMsg was called but"
-              << "ReadEncoder variable is set to false! " << std::endl;
-    return nullptr;
-  }
-
-  // Wait if buffer is empty
-  std::unique_lock<std::mutex> lock(m_QueueMutex);
-  while(m_bRunning && !_AmINext( Msg_Type_Encoder ) ){
-    m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
-  }
-
-  if(!m_bRunning || m_qMessages.empty()) {
-    return nullptr;
-  }
-
-  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
-  m_qMessages.pop_front();
-  m_qMessageTypes.pop_front();
-  m_ConditionDequeued.notify_one();
-
-  std::unique_ptr<hal::EncoderMsg> pEncoderMsg( new hal::EncoderMsg );
-  pEncoderMsg->Swap( pMessage->mutable_encoder() );
-  return pEncoderMsg;
 }
 
 std::unique_ptr<hal::ImuMsg> Reader::ReadImuMsg() {
@@ -393,7 +358,6 @@ bool Reader::SetInitialImage(size_t nImgID) {
 
 void Reader::EnableAll() {
   m_bReadCamera = true;
-  m_bReadEncoder = true;
   m_bReadIMU = true;
   m_bReadLIDAR = true;
   m_bReadPosys = true;
@@ -401,7 +365,6 @@ void Reader::EnableAll() {
 
 void Reader::DisableAll() {
   m_bReadCamera = false;
-  m_bReadEncoder = false;
   m_bReadIMU = false;
   m_bReadLIDAR = false;
   m_bReadPosys = false;
@@ -411,9 +374,6 @@ void Reader::Enable(MessageType type) {
   switch (type) {
     case Msg_Type_Camera:
       m_bReadCamera = true;
-      break;
-    case Msg_Type_Encoder:
-      m_bReadEncoder = true;
       break;
     case Msg_Type_IMU:
       m_bReadIMU = true;
@@ -434,9 +394,6 @@ void Reader::Disable(MessageType type) {
     case Msg_Type_Camera:
       m_bReadCamera = false;
       break;
-    case Msg_Type_Encoder:
-      m_bReadEncoder = false;
-      break;
     case Msg_Type_IMU:
       m_bReadIMU = false;
       break;
@@ -455,8 +412,6 @@ bool Reader::IsEnabled(MessageType type) const {
   switch (type) {
     case Msg_Type_Camera:
       return m_bReadCamera;
-    case Msg_Type_Encoder:
-      return m_bReadEncoder;
     case Msg_Type_IMU:
       return m_bReadIMU;
     case Msg_Type_LIDAR:
