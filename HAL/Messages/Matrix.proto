@@ -10,3 +10,6 @@ message VectorMsg {
   repeated double data = 1 [packed=true];
 }
 
+message VectorMsgInt32 {
+ repeated int32 data = 1 [packed=true];
+}

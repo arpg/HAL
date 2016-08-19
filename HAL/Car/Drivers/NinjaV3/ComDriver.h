@@ -9,24 +9,24 @@
 #include <time.h>   // time calls
 #include <sys/time.h>
 #include <time.h>
-#include <string> 
+#include <string>
+
+#define FTDI_PACKET_DELIMITER1 1
+#define FTDI_PACKET_DELIMITER2 1
 
 typedef int ComPortHandle;
 
-#define FTDI_PACKET_DELIMITER1 0xD0
-#define FTDI_PACKET_DELIMITER2 0xAA
-
-#pragma pack(1)
-struct CommandPacket
-{
-    char m_cDelimiter1;
-    char m_cDelimiter2;
-    char m_cSize;
-    float  m_nSteering;
-    float  m_nSpeed;
-    char timestamp;
-    unsigned short int m_nChksum;
-};
+//#pragma pack(1)
+//struct CommandPacket
+//{
+//    char m_cDelimiter1;
+//    char m_cDelimiter2;
+//    char m_cSize;
+//    float  m_nSteering;
+//    float  m_nSpeed;
+//    char timestamp;
+//    unsigned short int m_nChksum;
+//};
 
 #pragma pack(1)
 struct SensorPacket
@@ -66,7 +66,7 @@ public:
     ~ComportDriver()
     {
       if(m_bIsConnected){
-        _CloseComPort(m_PortHandle);
+        _CloseComPort();
       }
     }
 
@@ -84,26 +84,9 @@ public:
       return m_bIsConnected;
     }
 
-    void SendCommandPacket( const float nSpeed, const float nSteering )
-    {
-//    double dAccel = std::min(500.0,std::max(0.0,cmd.accel()));
-//    double dPhi = std::min(500.0,std::max(0.0,cmd.phi()));
-        static CommandPacket Pkt;
-        Pkt.m_cDelimiter1 = FTDI_PACKET_DELIMITER1;
-        Pkt.m_cDelimiter2 = FTDI_PACKET_DELIMITER2;
-        Pkt.m_cSize = sizeof(CommandPacket);
-        Pkt.m_nSpeed = nSpeed;
-        Pkt.m_nSteering = nSteering;
-        Pkt.timestamp++;
-        Pkt.m_nChksum = _CalcChksum((unsigned char *)(&Pkt),sizeof(CommandPacket)-2);
-        //printf("\n\n checksum isssss ::::: %d  -   %d    ,   %d\n\n",Pkt.m_nChksum,(unsigned char)(Pkt.m_nChksum & 0xFF),(unsigned char)((Pkt.m_nChksum >> 8)& 0xFF));
-        //printf("nSpeed: %f   nSteering: %f \n",Pkt.m_nSpeed, Pkt.m_nSteering);
-        _WriteComPort(m_PortHandle,(unsigned char *)(&Pkt),sizeof(CommandPacket));
-    }
-
     int ReadSensorPacket(SensorPacket& Pkt)
     {
-      int bytesRead =  _ReadComPort(m_PortHandle,(unsigned char *)(&Pkt),sizeof(SensorPacket));
+      int bytesRead =  _ReadComPort((unsigned char *)(&Pkt),sizeof(SensorPacket));
       if( bytesRead && _CheckChksum((unsigned char *)(&Pkt),sizeof(SensorPacket)-2,Pkt.chksum))
 	return bytesRead;
       else
@@ -113,7 +96,7 @@ public:
 
 private:
     
-    unsigned short int _CalcChksum(unsigned char* _data, int packDataSize)
+  unsigned short int _CalcChksum(unsigned char* _data, int packDataSize)
     {
 	unsigned short int sum = 0;
 	for( int ii=0 ; ii<packDataSize ; ii++ )
@@ -135,16 +118,16 @@ private:
 	}
     }
 
-    void _CloseComPort(ComPortHandle comPort)
+    void _CloseComPort()
     {
-      close(comPort);
+      close(m_PortHandle);
       m_bIsConnected = false;
 
     }
 
-    int _ReadComPort(ComPortHandle comPort, unsigned char* bytes, int bytesToRead)
+    int _ReadComPort(unsigned char* bytes, int bytesToRead)
     {
-      int bytesRead = read(comPort, bytes, bytesToRead);
+      int bytesRead = read(m_PortHandle, bytes, bytesToRead);
       
 //      printf("bitesRead was: %d\n",bytesRead);
 //      for(int jj=0;jj<bytesRead;jj++)
@@ -159,7 +142,7 @@ private:
 //      printf("  ii is: %d  ",ii);
       if( ii != 0 ) {
 //          std::cout << "LOSING PACKET!" << std::endl;
-          bytesRead = read(comPort, bytes, ii);
+          bytesRead = read(m_PortHandle, bytes, ii);
 //          for(int jj=0;jj<bytesRead;jj++)
 //              printf(" %d,",bytes[jj]);
 //          printf("\n********************\n");
@@ -169,9 +152,9 @@ private:
 
     }
 
-    int _WriteComPort(ComPortHandle comPort, unsigned char* bytesToWrite, int size)
+    int _WriteComPort(unsigned char* bytesToWrite, int size)
     {
-        int bytesWritten = write(comPort, bytesToWrite, size);
+        int bytesWritten = write(m_PortHandle, bytesToWrite, size);
         //printf("wrote %d bytes\n",bytesWritten);
         return bytesWritten;
     }

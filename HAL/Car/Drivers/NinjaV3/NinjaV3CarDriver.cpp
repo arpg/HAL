@@ -9,11 +9,18 @@ namespace hal {
 CarStateDataCallback NinjaV3CarDriver::car_state_callback = nullptr;
 const int DEFAULT_COMPORT_WRITE_TIMEOUT_MS = 1000;
 const int DEFAULT_COMPORT_READ_TIMEOUT_MS = 1000;
+const int num_wheels = 4;
 
-NinjaV3CarDriver::NinjaV3CarDriver(const Uri& uri) {
-  dev_name_ = uri.properties.Get<std::string>("dev", "/dev/cu.USB0");
-  dev_baudrate_ = std::stoi(uri.properties.Get<std::string>("baud", "11500"));
+NinjaV3CarDriver::NinjaV3CarDriver(std::string dev, int baud) {
+  baudrate_ = baud;
+  dev_name_ = dev;
+  packet_delimiter_ = 0xAA55AA55;
   com_connected = false;
+  pbStateMsg_encoders_ = pbStateMsg_.mutable_encoders();
+  pbStateMsg_swing_angles_ = pbStateMsg_.mutable_swing_angles();
+  if(Init() == false) {
+    throw DeviceException("Error connecting to Comport device.");
+  }
 }
 
 NinjaV3CarDriver::~NinjaV3CarDriver() {
@@ -23,27 +30,37 @@ NinjaV3CarDriver::~NinjaV3CarDriver() {
 
 void NinjaV3CarDriver::RegisterCarStateDataCallback(CarStateDataCallback callback) {
   car_state_callback = callback;
-  if(Init(dev_name_,dev_baudrate_) == false) {
-    throw DeviceException("Error connecting to Ftdi device.");
+}
+bool NinjaV3CarDriver::Init(){
+  if( comport_driver_.Connect(dev_name_,baudrate_) ) {
+   com_connected = true;
+   // create data fields for encoder and swing_angle sensors
+   for (size_t ii = 0; ii < num_wheels; ii++) {
+     pbStateMsg_encoders_->add_data(0);
+     pbStateMsg_swing_angles_->add_data(0);
+   }
+   comport_write_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportWriteThread, this));
+   comport_read_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportReadThread, this));
   }
+  return com_connected;
 }
 
-bool NinjaV3CarDriver::Init(std::string port, int baudrate){
-   if( comport_driver_.Connect(port,baudrate) ) {
-     com_connected = true;
-     comport_write_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportWriteThread, this));
-     comport_read_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportReadThread, this));
-   }
-   return true;
-}
+
 
 void NinjaV3CarDriver::ComportWriteThread(){
-  comport_driver_.SendCommandPacket(command_packet_.m_nSpeed,command_packet_.m_nSteering);
+  std::string msg;
   while(com_connected) {
-  std::cout << "car command sent ." << std::endl;
-  if(DEFAULT_COMPORT_WRITE_TIMEOUT_MS) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_COMPORT_WRITE_TIMEOUT_MS));
-  }
+    // Calculate and add Checksum
+    pbCommandMsg_.checksum = comport_driver_._CalcChksum(msg.c_str(),pbCommandMsg_.ByteSize());
+    msg.clear();
+    pbCommandMsg_.AppendToString(msg);
+    // send the command
+    comport_driver_._WriteComPort(packet_delimiter_.c_str(),packet_delimiter_.size());
+    comport_driver_._WriteComPort(msg.c_str(),pbCommandMsg_.ByteSize());
+    std::cout << "car command sent ." << std::endl;
+    if(DEFAULT_COMPORT_WRITE_TIMEOUT_MS) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_COMPORT_WRITE_TIMEOUT_MS));
+    }
   }
 }
 
@@ -68,11 +85,5 @@ void NinjaV3CarDriver::ComportReadThread(){
 }
 
 bool NinjaV3CarDriver::SendCarCommand(CarCommandMsg &command_msg){
-#warning "update the command_packet_ here. then packet will be sent by write thread"
-  pbCommandMsg = command_msg;
-  if(!car_state_callback) {
-    throw DeviceException("CarStateDataCallBack has not been registered.");
-  }
-
-}
+  pbCommandMsg_ = command_msg;
 }

@@ -3,20 +3,25 @@ package hal;
 import "Matrix.proto";
 
 message CarStateMsg{
-		optional int32 device_id = 1;
-		optional int32 device_time = 2;
-		optional int32 vehicle_version = 3;
-		optional int32 num_bytes = 4;
-		optional int32 motor_current = 5;
-		optional double system_time = 6;
-		optional VectorMsg encoders = 7;
-		optional VectorMsg swing_angles = 8;
+	optional int32 delimiter = 1;
+	optional int32 packet_size = 2;
+	optional int32 packet_type = 3;
+	optional int32 steer_angle= 4;
+	optional int32 motor_current = 5;
+	optional VectorMsgInt32 encoders = 6;
+	optional VectorMsg swing_angles = 7;
+	optional double system_time = 8;
+	optional int32 checksum = 9;
 }
 
 message CarCommandMsg{
-	optional double steering = 1;
-	optional double acceleration = 2;
-	optional int32 command_time = 3;
+	optional int32 delimiter = 1;
+	optional int32 packet_size = 2;
+	optional int32 packet_type = 3;
+	optional double steering_angle = 4;
+	optional double acceleration = 5;
+	optional double system_time = 6;
+	optional int32 checksum = 7;
 }
 
 message CarSettingMsg{
