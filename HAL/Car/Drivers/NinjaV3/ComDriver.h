@@ -11,9 +11,6 @@
 #include <time.h>
 #include <string>
 
-#define FTDI_PACKET_DELIMITER1 1
-#define FTDI_PACKET_DELIMITER2 1
-
 typedef int ComPortHandle;
 
 class ComportDriver
@@ -36,8 +33,8 @@ public:
     bool Connect(const std::string& path,int baudrate, int readbufsize)
     {
       //open the given path
+      m_readbuffsize = readbufsize;
       m_PortHandle = _OpenComPort(path.c_str(),baudrate);
-
       if(m_PortHandle <= 0){
         printf("Failed to open port at specified baudrate, aborting...\n");
         m_bIsConnected = false;
@@ -47,40 +44,14 @@ public:
       return m_bIsConnected;
     }
 
-//    int ReadSensorPacket(SensorPacket& Pkt)
-//    {
-//      int bytesRead =  _ReadComPort((unsigned char *)(&Pkt),sizeof(SensorPacket));
-//      if( bytesRead && _CheckChksum((unsigned char *)(&Pkt),sizeof(SensorPacket)-2,Pkt.chksum))
-//	return bytesRead;
-//      else
-//	return 0;
-//    }
+    int ReadSensorPacket(unsigned char* data, int size)
+    {
+      return _ReadComPort(data,size);
+    }
 
 
 private:
     
-  unsigned short int _CalcChksum(unsigned char* _data, int packDataSize)
-    {
-	unsigned short int sum = 0;
-	for( int ii=0 ; ii<packDataSize ; ii++ )
-		sum += _data[ii];
-	return sum;
-    }
-
-    bool _CheckChksum(unsigned char* _data, int bytesReceived, unsigned short int RecChksum)
-    {
-	unsigned short int sum = 0;
-	for( int ii=0 ; ii<bytesReceived ; ii++ ){
-		sum += _data[ii];
-	}
-	if( RecChksum == sum ){
-		return true;
-	}else{
-		printf("Wrong Checksum !!!   Calc: %d    Rec:%d\n",sum,RecChksum);
-		return false;
-	}
-    }
-
     void _CloseComPort()
     {
       close(m_PortHandle);
@@ -91,26 +62,6 @@ private:
     int _ReadComPort(unsigned char* bytes, int bytesToRead)
     {
       int bytesRead = read(m_PortHandle, bytes, bytesToRead);
-      
-//      printf("bitesRead was: %d\n",bytesRead);
-//      for(int jj=0;jj<bytesRead;jj++)
-//   	printf(" %d,",bytes[jj]);
-//      printf("\n********************\n");
-
-      // align
-      int ii = 0;
-      while( bytes[ii] != FTDI_PACKET_DELIMITER1 && bytes[ii+1] != FTDI_PACKET_DELIMITER2 ) {
-          ii++;
-      }
-//      printf("  ii is: %d  ",ii);
-      if( ii != 0 ) {
-//          std::cout << "LOSING PACKET!" << std::endl;
-          bytesRead = read(m_PortHandle, bytes, ii);
-//          for(int jj=0;jj<bytesRead;jj++)
-//              printf(" %d,",bytes[jj]);
-//          printf("\n********************\n");
-          return 0;
-      }
       return bytesRead;
 
     }
@@ -144,7 +95,6 @@ private:
         return -1;
 
       }
-
       //Get the current options for the port...
 
       tcgetattr(comPort, &options);

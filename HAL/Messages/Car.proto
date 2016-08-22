@@ -13,13 +13,13 @@ message CarStateMsg{
 	optional double swing_angle_fr = 8;
 	optional double swing_angle_rl = 9;
 	optional double swing_angle_rr = 10;
-	optional double device_time = 11;
+	optional int32 device_time = 11;
 }
 
 message CarCommandMsg{
 	optional double steering_angle = 1;
 	optional double throttle_percent = 2;
-	optional double device_time = 3;
+	optional int32 device_time = 3;
 }
 
 message CarSettingMsg{
