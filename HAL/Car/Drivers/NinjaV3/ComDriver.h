@@ -16,47 +16,6 @@
 
 typedef int ComPortHandle;
 
-//#pragma pack(1)
-//struct CommandPacket
-//{
-//    char m_cDelimiter1;
-//    char m_cDelimiter2;
-//    char m_cSize;
-//    float  m_nSteering;
-//    float  m_nSpeed;
-//    char timestamp;
-//    unsigned short int m_nChksum;
-//};
-
-#pragma pack(1)
-struct SensorPacket
-{
-    char m_cDelimiter1;
-    char m_cDelimiter2;
-    char m_cSize;
-    short int   Acc_x;
-    short int   Acc_y;
-    short int   Acc_z;
-    short int   Gyro_x;
-    short int   Gyro_y;
-    short int   Gyro_z;
-    short int   Mag_x;
-    short int   Mag_y;
-    short int   Mag_z;
-    int         Enc_LB;
-    int         Enc_LF;
-    int         Enc_RB;
-    int         Enc_RF;
-    short int   ADC_Steer;
-    short int   ADC_LB;
-    short int   ADC_LF;
-    short int   ADC_RB;
-    short int   ADC_RF;
-    char timestamp;
-    unsigned short int chksum;
-};
-
-
 class ComportDriver
 {
 
@@ -70,7 +29,11 @@ public:
       }
     }
 
-    bool Connect(const std::string& path,int baudrate)
+    int WriteComPort(unsigned char* bytesToWrite, int size){
+      return _WriteComPort(bytesToWrite,size);
+    }
+
+    bool Connect(const std::string& path,int baudrate, int readbufsize)
     {
       //open the given path
       m_PortHandle = _OpenComPort(path.c_str(),baudrate);
@@ -84,14 +47,14 @@ public:
       return m_bIsConnected;
     }
 
-    int ReadSensorPacket(SensorPacket& Pkt)
-    {
-      int bytesRead =  _ReadComPort((unsigned char *)(&Pkt),sizeof(SensorPacket));
-      if( bytesRead && _CheckChksum((unsigned char *)(&Pkt),sizeof(SensorPacket)-2,Pkt.chksum))
-	return bytesRead;
-      else
-	return 0;
-    }
+//    int ReadSensorPacket(SensorPacket& Pkt)
+//    {
+//      int bytesRead =  _ReadComPort((unsigned char *)(&Pkt),sizeof(SensorPacket));
+//      if( bytesRead && _CheckChksum((unsigned char *)(&Pkt),sizeof(SensorPacket)-2,Pkt.chksum))
+//	return bytesRead;
+//      else
+//	return 0;
+//    }
 
 
 private:
@@ -207,7 +170,7 @@ private:
       options.c_lflag = 0; // raw input
 
       //Time-Outs -- won't work with NDELAY option in the call to open
-      options.c_cc[VMIN]  = sizeof(SensorPacket);   // block reading until RX x characers. If x = 0, it is non-blocking.
+      options.c_cc[VMIN]  = m_readbuffsize;   // block reading until RX x characers. If x = 0, it is non-blocking.
       options.c_cc[VTIME] = 100;   // Inter-Character Timer -- i.e. timeout= x*.1 s
 
       //Set local mode and enable the receiver
@@ -237,4 +200,5 @@ private:
 private:
     bool            m_bIsConnected;
     ComPortHandle   m_PortHandle;
+    int             m_readbuffsize;
 };

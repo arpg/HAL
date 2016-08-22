@@ -12,7 +12,7 @@ class NinjaV3CarDriver : public CarDriverInterface {
  public:
   NinjaV3CarDriver(std::string dev,int baud);
   virtual ~NinjaV3CarDriver();
-  bool SendCarCommand(CarCommandMsg &command_msg) override;
+  void SendCarCommand(CarCommandMsg &command_msg) override;
   void RegisterCarStateDataCallback(CarStateDataCallback callback);
 
  private:
@@ -27,10 +27,48 @@ class NinjaV3CarDriver : public CarDriverInterface {
   void ComportReadThread();
   hal::CarCommandMsg pbCommandMsg_;
   hal::CarStateMsg pbStateMsg_;
-  hal::VectorMsg* pbStateMsg_encoders_;
-  hal::VectorMsg* pbStateMsg_swing_angles_;
-  SensorPacket sensor_packet_;
   std::string packet_delimiter_;
   bool com_connected;
+  struct ComTrDataPack{
+    char delimiter[4];
+    char pack_size;
+    char pack_type;
+    float  steering_angle;
+    float  motor_power_percent;
+    unsigned int dev_time;
+    unsigned int chksum;
+    ComTrDataPack(){
+      delimiter[0] = 0xAA;
+      delimiter[1] = 0x55;
+      delimiter[2] = 0xE1;
+      delimiter[3] = 0x1E;
+      pack_size = sizeof(ComTrDataPack)-5;
+      pack_type = 1;   // meaning data packet
+    }
+  };
+  struct ComRecDataPack
+  {
+    char delimiter[4];
+    char pack_size;
+    char pack_type;
+    float  enc1;
+    float  enc2;
+    float  enc3;
+    float  enc4;
+    float   steer_ang;
+    float   swing_ang1;
+    float   swing_ang2;
+    float   swing_ang3;
+    float   swing_ang4;
+    unsigned int dev_time;
+    unsigned int chksum;
+    ComRecDataPack(){
+      delimiter[0] = 0xAA;
+      delimiter[1] = 0x55;
+      delimiter[2] = 0xE1;
+      delimiter[3] = 0x1E;
+    }
+  };
+
 };
 }

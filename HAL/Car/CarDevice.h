@@ -59,8 +59,8 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////
-  virtual bool SendCarCommand( CarCommandMsg& car_command ) {
-    return m_car->SendCarCommand(car_command);
+  virtual void SendCarCommand( CarCommandMsg& car_command ) {
+    m_car->SendCarCommand(car_command);
   }
 
 protected:
