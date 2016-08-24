@@ -12,7 +12,7 @@ class NinjaV3CarDriver : public CarDriverInterface {
  public:
   NinjaV3CarDriver(std::string dev,int baud);
   virtual ~NinjaV3CarDriver();
-  void SendCarCommand(CarCommandMsg &command_msg) override;
+  void UpdateCarCommand(CarCommandMsg &command_msg) override;
   void RegisterCarStateDataCallback(CarStateDataCallback callback);
 
  private:

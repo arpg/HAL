@@ -62,6 +62,7 @@ private:
     int _ReadComPort(unsigned char* bytes, int bytesToRead)
     {
       int bytesRead = read(m_PortHandle, bytes, bytesToRead);
+
       return bytesRead;
 
     }

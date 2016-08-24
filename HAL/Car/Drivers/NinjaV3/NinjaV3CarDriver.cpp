@@ -16,6 +16,8 @@ NinjaV3CarDriver::NinjaV3CarDriver(std::string dev, int baud) {
   serial_buffer_write_delay_ = (int)((sizeof(ComTrDataPack)*10*1000)/baud)+1;
   if(Init() == false) {
     throw DeviceException("Error connecting to Comport device.");
+  } else {
+    std::cout << "Connection to NinjaV3Car successfull." << std::endl;
   }
 }
 
@@ -47,7 +49,7 @@ void NinjaV3CarDriver::ComportWriteThread(){
     // calculate checksum from whole packet
     unsigned int chksum = 0;
     unsigned char* data = (unsigned char*)(&tr_data_pack);
-    for(int ii=0;ii<sizeof(ComTrDataPack);ii++){
+    for(int ii=0;ii<sizeof(ComTrDataPack)-4;ii++){
       chksum += data[ii];
     }
     // send packet
@@ -59,63 +61,64 @@ void NinjaV3CarDriver::ComportWriteThread(){
 void NinjaV3CarDriver::ComportReadThread(){
   ComRecDataPack rec_data_pack;
   hal::CarStateMsg pbStateMsg_;
+  while(car_state_callback == nullptr);
+  std::cout << "RegisterCarStateDataCallback() has been registered." <<std::endl;
   while(com_connected) {
-    if(car_state_callback != nullptr) {
-      // read data from buffer
-      int bytes_received = 0;
-      bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&rec_data_pack),sizeof(ComRecDataPack));
-      if(bytes_received != sizeof(ComRecDataPack)) {
-        std::cout << "Received packet size is " << bytes_received << " expected #bytes was" << sizeof(ComRecDataPack) << std::endl;
-        // align
-//        int ii = 0;
-//        while( bytes[ii] != FTDI_PACKET_DELIMITER1 && bytes[ii+1] != FTDI_PACKET_DELIMITER2 ) {
-//            ii++;
-//        }
-//  //      printf("  ii is: %d  ",ii);
-//        if( ii != 0 ) {
-//  //          std::cout << "LOSING PACKET!" << std::endl;
-//            bytesRead = read(m_PortHandle, bytes, ii);
-//  //          for(int jj=0;jj<bytesRead;jj++)
-//  //              printf(" %d,",bytes[jj]);
-//  //          printf("\n********************\n");
-//            return 0;
-//        }
+    // read data from buffer
+    int bytes_received = 0;
+    bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&rec_data_pack),sizeof(ComRecDataPack));
+    if(bytes_received == -1) {
+      throw DeviceException("Error: Device Disconnected.");
+    }
+    if(bytes_received != sizeof(ComRecDataPack)) {
+      std::cout << "Received packet size is " << bytes_received << " expected #bytes was " << sizeof(ComRecDataPack) << std::endl;
+      // align
+      //        int ii = 0;
+      //        while( bytes[ii] != FTDI_PACKET_DELIMITER1 && bytes[ii+1] != FTDI_PACKET_DELIMITER2 ) {
+      //            ii++;
+      //        }
+      //  //      printf("  ii is: %d  ",ii);
+      //        if( ii != 0 ) {
+      //  //          std::cout << "LOSING PACKET!" << std::endl;
+      //            bytesRead = read(m_PortHandle, bytes, ii);
+      //  //          for(int jj=0;jj<bytesRead;jj++)
+      //  //              printf(" %d,",bytes[jj]);
+      //  //          printf("\n********************\n");
+      //            return 0;
+      //        }
 
-      } else {
-        // check received checksum
-        unsigned int sum = 0;
-        unsigned char* data = (unsigned char*)(&rec_data_pack);
-        for( int ii=0 ; ii<sizeof(ComRecDataPack) ; ii++ ){
-          sum += data[ii];
-        }
-        if( rec_data_pack.chksum == sum ){
-          if(rec_data_pack.pack_type == 2) {
-            pbStateMsg_.set_motor_current((double)rec_data_pack.motor_current);
-            pbStateMsg_.set_steer_angle((double)rec_data_pack.steer_ang);
-            pbStateMsg_.set_swing_angle_fl((double)rec_data_pack.swing_ang0);
-            pbStateMsg_.set_swing_angle_rl((double)rec_data_pack.swing_ang1);
-            pbStateMsg_.set_swing_angle_rr((double)rec_data_pack.swing_ang2);
-            pbStateMsg_.set_swing_angle_fr((double)rec_data_pack.swing_ang3);
-            pbStateMsg_.set_wheel_speed_fl((double)rec_data_pack.enc0);
-            pbStateMsg_.set_wheel_speed_rl((double)rec_data_pack.enc1);
-            pbStateMsg_.set_wheel_speed_rr((double)rec_data_pack.enc2);
-            pbStateMsg_.set_wheel_speed_fr((double)rec_data_pack.enc3);
-            pbStateMsg_.set_device_time(rec_data_pack.dev_time);
-            car_state_callback(pbStateMsg_);
-          } else {
-            std::cout << "Error: wrong packet type received" << std::endl;
-          }
-        }else{
-          std::cout << "Error: packet checksum didn't match" << std::endl;
-        }
-      }
     } else {
-      std::cout << "Warning: RegisterCarStateDataCallback() has not been registered." <<std::endl;
+      // check received checksum
+      unsigned int sum = 0;
+      unsigned char* data = (unsigned char*)(&rec_data_pack);
+      for( int ii=0 ; ii<sizeof(ComRecDataPack) ; ii++ ){
+        sum += data[ii];
+      }
+      if( rec_data_pack.chksum == sum ){
+        if(rec_data_pack.pack_type == 2) {
+          pbStateMsg_.set_motor_current((double)rec_data_pack.motor_current);
+          pbStateMsg_.set_steer_angle((double)rec_data_pack.steer_ang);
+          pbStateMsg_.set_swing_angle_fl((double)rec_data_pack.swing_ang0);
+          pbStateMsg_.set_swing_angle_rl((double)rec_data_pack.swing_ang1);
+          pbStateMsg_.set_swing_angle_rr((double)rec_data_pack.swing_ang2);
+          pbStateMsg_.set_swing_angle_fr((double)rec_data_pack.swing_ang3);
+          pbStateMsg_.set_wheel_speed_fl((double)rec_data_pack.enc0);
+          pbStateMsg_.set_wheel_speed_rl((double)rec_data_pack.enc1);
+          pbStateMsg_.set_wheel_speed_rr((double)rec_data_pack.enc2);
+          pbStateMsg_.set_wheel_speed_fr((double)rec_data_pack.enc3);
+          pbStateMsg_.set_device_time(rec_data_pack.dev_time);
+          car_state_callback(pbStateMsg_);
+        } else {
+          std::cout << "Error: wrong packet type received" << std::endl;
+        }
+      }else{
+        std::cout << "Error: packet checksum didn't match" << std::endl;
+      }
     }
   }
 }
 
-void NinjaV3CarDriver::SendCarCommand(CarCommandMsg &command_msg){
+void NinjaV3CarDriver::UpdateCarCommand(CarCommandMsg &command_msg){
   pbCommandMsg_ = command_msg;
 }
 }

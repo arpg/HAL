@@ -14,7 +14,7 @@ class CarDriverInterface : public DriverInterface
 public:
   virtual ~CarDriverInterface() {}
 
-  virtual void SendCarCommand( CarCommandMsg& command_msg) = 0;
+  virtual void UpdateCarCommand( CarCommandMsg& command_msg) = 0;
 
   virtual void RegisterCarStateDataCallback(CarStateDataCallback callback) = 0;
 };

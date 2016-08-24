@@ -59,8 +59,8 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////
-  virtual void SendCarCommand( CarCommandMsg& car_command ) {
-    m_car->SendCarCommand(car_command);
+  virtual void UpdateCarCommand( CarCommandMsg& car_command ) {
+    m_car->UpdateCarCommand(car_command);
   }
 
 protected:
