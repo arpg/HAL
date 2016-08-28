@@ -6,6 +6,7 @@
 
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Utils/TicToc.h>
+#include <HAL/Messages/Image.h>
 
 #include "JoinCameraDriver.h"
 
@@ -95,15 +96,16 @@ bool JoinCameraDriver::Capture( hal::CameraMsg& vImages )
 
   int ixResult = 0;
   for( hal::CameraMsg& result : results ) {
-	if(m_WorkTeam.m_bWorkerCaptureNotOver[ixResult]){
-      for( int i = 0; i < result.image_size(); ++i ) {
-    	  vImages.add_image()->Swap(result.mutable_image(i));
-    	  activeWorkerCount++;
+    if(m_WorkTeam.m_bWorkerCaptureNotOver[ixResult]){
+      for( int i = 0; i < result.image_size(); i++ ) {
+	vImages.add_image()->Swap(result.mutable_image(i));
       }
       result.Clear();
     }
-	ixResult++;
+    ixResult++;
+    activeWorkerCount++;
   }
+  
   return activeWorkerCount == results.size();
 }
 
