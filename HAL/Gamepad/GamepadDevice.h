@@ -31,7 +31,7 @@ class Gamepad : public GamepadDriverInterface {
 		m_Gamepad = nullptr;
   }
 
-	void RegisterGamepadDataCallback(GamepadDriverDataCallback callback) {
+  void RegisterGamepadDataCallback(GamepadDriverDataCallback callback) override{
     m_callback = callback;
 		if( m_Gamepad ){
 			m_Gamepad->RegisterGamepadDataCallback( callback );
@@ -41,7 +41,7 @@ class Gamepad : public GamepadDriverInterface {
     return;
   }
 
-  std::string GetDeviceProperty(const std::string& sProperty) {
+	std::string GetDeviceProperty(const std::string& sProperty) override{
 		return m_Gamepad->GetDeviceProperty(sProperty);
   }
 
