@@ -9,7 +9,6 @@ libhal.so
 ##CMake-generated files
 CMakeFiles/
 Makefile
-*.cmake
 doc-pak/
 description-pak
 install_manifest.txt
