@@ -35,11 +35,13 @@ public:
     ImageDim dims           = uri.properties.Get<ImageDim>("size", ImageDim(640,480));
     ImageRoi ROI            = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
     int sync                = uri.properties.Get<int>("sync", 0);
-    uint8_t binning         = uri.properties.Get<uint8_t>("binning", 0);
-    uint8_t bus_cams         = uri.properties.Get<uint8_t>("bus_cams", 0);
-    
-    std::vector<std::string> vector_ids;
+    int binning         = uri.properties.Get<int>("binning", 0);
+    int bus_cams        = uri.properties.Get<int>("bus_cams", 0);
 
+    std::vector<std::string> vector_ids;
+    
+    printf("bus_cams: 0x%x\n", bus_cams);
+    
     while(true) {
       std::stringstream ss;
       ss << "id" << vector_ids.size();
