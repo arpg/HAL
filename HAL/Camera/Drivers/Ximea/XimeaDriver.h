@@ -22,8 +22,8 @@ public:
               XI_IMG_FORMAT mode,
               ImageRoi roi,
               int sync,
-	      uint8_t binning,
-	      uint8_t bus_cams);
+	      int binning,
+	      int bus_cams);
 
   ~XimeaDriver();
 
@@ -52,8 +52,8 @@ private:
   unsigned int                        image_width_;
   unsigned int                        image_height_;
   int                                 sync_;
-  uint8_t                             binning_;
-  uint8_t                             bus_cams_;
+  int                                 binning_;
+  int                                 bus_cams_;
   std::deque<std::vector<double> >    sync_times_;
 
 };

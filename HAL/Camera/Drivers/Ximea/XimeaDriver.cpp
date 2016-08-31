@@ -6,7 +6,7 @@
 #include "XimeaDriver.h"
 //Limit the bandwidth available to each camera out of this bucket of data
 //Assumes that all cameras share the same host controller
-
+//From the Ximea support page, https://www.ximea.com/support/wiki/usb3/Multiple_Cameras_Setup
 
 #define USB3_HUB_DATA_RATE 2400 
 
@@ -33,11 +33,11 @@ XimeaDriver::XimeaDriver(
     XI_IMG_FORMAT               mode,
     ImageRoi                    roi,
     int                         sync,
-    uint8_t                     binning,
-    uint8_t                     bus_cams
+    int                         binning,
+    int                         bus_cams
     )
 {
-  XI_RETURN error = XI_OK;
+ XI_RETURN error = XI_OK;
 
   // Sync flag.
   sync_ = sync;
@@ -48,10 +48,11 @@ XimeaDriver::XimeaDriver(
   image_height_ = roi.h;
   binning_ = binning;
   bus_cams_ = bus_cams;
+  std::cout << "Bus cameras @ init:" << bus_cams_ << std::endl;
   
   // Get number of camera devices.
   DWORD num_devices;
-  int camera_data_rate;
+  uint16_t camera_data_rate;
   
   error = xiGetNumberDevices(&num_devices);
   _CheckError(error, "xiGetNumberDevices");
@@ -100,16 +101,20 @@ XimeaDriver::XimeaDriver(
       //if not set explicitly, assume that whatever is detected / requested is on the same bus
       bus_cams_ = num_channels_;
     }
-  
+
+
   camera_data_rate =  USB3_HUB_DATA_RATE / bus_cams_;
-  
+
   // Set parameters.
   bool first_cam = true; // Flag to check if we are dealing with first camera.
   for (HANDLE handle: cam_handles_) {
     //Set data rate limit
     int curr_camera_data_rate;
     error = xiGetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH, &curr_camera_data_rate);
+    std::cout << "Current data rate:" << curr_camera_data_rate << std::endl;
     _CheckError(error, "xiGetParamInt (limit_bandwidth)");
+    
+    std::cout << "Desired data rate:" << camera_data_rate << std::endl;
     if (camera_data_rate < curr_camera_data_rate) {
       error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
       _CheckError(error, "xiSetParam (limit_bandwidth)");
