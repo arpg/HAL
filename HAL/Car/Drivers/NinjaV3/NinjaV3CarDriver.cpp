@@ -42,14 +42,17 @@ bool NinjaV3CarDriver::Init(){
 void NinjaV3CarDriver::ComportWriteThread(){
   ComTrDataPack tr_data_pack;
   while(com_connected) {
+    {
+    std::lock_guard<std::mutex> mutex_lock(tr_mutex);
     tr_data_pack.motor_power_percent = (float)pbCommandMsg_.throttle_percent();
     tr_data_pack.steering_angle = (float)pbCommandMsg_.steering_angle();
+    tr_data_pack.dev_time = (float)pbCommandMsg_.device_time();
+    }
     // TODO: dev_time should be set to correct system time
-    tr_data_pack.dev_time = 0;
     // calculate checksum from whole packet
     unsigned int chksum = 0;
     unsigned char* data = (unsigned char*)(&tr_data_pack);
-    for(int ii=0;ii<sizeof(ComTrDataPack)-4;ii++){
+    for(int ii=0;ii<(int)sizeof(ComTrDataPack)-4;ii++){
       chksum += data[ii];
     }
     // send packet
@@ -60,65 +63,70 @@ void NinjaV3CarDriver::ComportWriteThread(){
 
 void NinjaV3CarDriver::ComportReadThread(){
   ComRecDataPack rec_data_pack;
+  int rec_data_pack_size = sizeof(ComRecDataPack);
   hal::CarStateMsg pbStateMsg_;
   while(car_state_callback == nullptr);
   std::cout << "RegisterCarStateDataCallback() has been registered." <<std::endl;
   while(com_connected) {
     // read data from buffer
     int bytes_received = 0;
-    bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&rec_data_pack),sizeof(ComRecDataPack));
-    if(bytes_received == -1) {
-      throw DeviceException("Error: Device Disconnected.");
+    char buff[rec_data_pack_size];
+    for(int ii=0; ii<rec_data_pack_size;ii++) {
+      buff[ii] = 0;
     }
-    if(bytes_received != sizeof(ComRecDataPack)) {
-      std::cout << "Received packet size is " << bytes_received << " expected #bytes was " << sizeof(ComRecDataPack) << std::endl;
+    bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&buff),rec_data_pack_size);
+    if(bytes_received == -1) {
+      throw DeviceException("Error: NinjaV3 Disconnected.");
+    }
+    // check header if didn't match do the alignment
+    if( !((buff[0]==DELIMITER0) && (buff[1]==DELIMITER1) && (buff[2]==DELIMITER2) && (buff[3]==DELIMITER3))) {
+      std::cerr << "Received packet size is " << bytes_received << " expected #bytes was " << rec_data_pack_size << std::endl;
       // align
-      //        int ii = 0;
-      //        while( bytes[ii] != FTDI_PACKET_DELIMITER1 && bytes[ii+1] != FTDI_PACKET_DELIMITER2 ) {
-      //            ii++;
-      //        }
-      //  //      printf("  ii is: %d  ",ii);
-      //        if( ii != 0 ) {
-      //  //          std::cout << "LOSING PACKET!" << std::endl;
-      //            bytesRead = read(m_PortHandle, bytes, ii);
-      //  //          for(int jj=0;jj<bytesRead;jj++)
-      //  //              printf(" %d,",bytes[jj]);
-      //  //          printf("\n********************\n");
-      //            return 0;
-      //        }
-
+      int cnt = 0;
+      while( !(buff[cnt]==DELIMITER0 && buff[(cnt+1)%rec_data_pack_size]==DELIMITER1 && buff[(cnt+2)%rec_data_pack_size]==DELIMITER2 && buff[(cnt+3)%rec_data_pack_size]==DELIMITER3) ) {
+        if(cnt<rec_data_pack_size) {
+          cnt++;
+        } else {
+          break;
+        }
+      }
+      if(cnt != 0) {
+        std::cout << "Loosing NinjaV3 COM packet. next packet will be aligned." << std::endl;
+        // read extra bytes in the begining to get ride of them
+        bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&buff),cnt);
+        if(bytes_received != cnt) {
+          std::cerr << "Failed Aligning." << std::endl;
+        }
+      }
     } else {
       // check received checksum
       unsigned int sum = 0;
-      unsigned char* data = (unsigned char*)(&rec_data_pack);
-      for( int ii=0 ; ii<sizeof(ComRecDataPack) ; ii++ ){
-        sum += data[ii];
+      for( int ii=0 ; ii<rec_data_pack_size-4 ; ii++ ){
+        sum += buff[ii];
       }
+      memcpy(&rec_data_pack,&buff,rec_data_pack_size);
       if( rec_data_pack.chksum == sum ){
-        if(rec_data_pack.pack_type == 2) {
-          pbStateMsg_.set_motor_current((double)rec_data_pack.motor_current);
-          pbStateMsg_.set_steer_angle((double)rec_data_pack.steer_ang);
-          pbStateMsg_.set_swing_angle_fl((double)rec_data_pack.swing_ang0);
-          pbStateMsg_.set_swing_angle_rl((double)rec_data_pack.swing_ang1);
-          pbStateMsg_.set_swing_angle_rr((double)rec_data_pack.swing_ang2);
-          pbStateMsg_.set_swing_angle_fr((double)rec_data_pack.swing_ang3);
-          pbStateMsg_.set_wheel_speed_fl((double)rec_data_pack.enc0);
-          pbStateMsg_.set_wheel_speed_rl((double)rec_data_pack.enc1);
-          pbStateMsg_.set_wheel_speed_rr((double)rec_data_pack.enc2);
-          pbStateMsg_.set_wheel_speed_fr((double)rec_data_pack.enc3);
-          pbStateMsg_.set_device_time(rec_data_pack.dev_time);
-          car_state_callback(pbStateMsg_);
-        } else {
-          std::cout << "Error: wrong packet type received" << std::endl;
-        }
+        pbStateMsg_.set_motor_current((double)rec_data_pack.motor_current);
+        pbStateMsg_.set_steer_angle((double)rec_data_pack.steer_ang);
+        pbStateMsg_.set_swing_angle_fl((double)rec_data_pack.swing_ang0);
+        pbStateMsg_.set_swing_angle_rl((double)rec_data_pack.swing_ang1);
+        pbStateMsg_.set_swing_angle_rr((double)rec_data_pack.swing_ang2);
+        pbStateMsg_.set_swing_angle_fr((double)rec_data_pack.swing_ang3);
+        pbStateMsg_.set_wheel_speed_fl((double)rec_data_pack.enc0);
+        pbStateMsg_.set_wheel_speed_rl((double)rec_data_pack.enc1);
+        pbStateMsg_.set_wheel_speed_rr((double)rec_data_pack.enc2);
+        pbStateMsg_.set_wheel_speed_fr((double)rec_data_pack.enc3);
+        pbStateMsg_.set_device_time(rec_data_pack.dev_time);
+        car_state_callback(pbStateMsg_);
       }else{
-        std::cout << "Error: packet checksum didn't match" << std::endl;
+        std::cerr << "Error: packet checksum didn't match" << std::endl;
       }
     }
   }
 }
 
 void NinjaV3CarDriver::UpdateCarCommand(CarCommandMsg &command_msg){
+  std::lock_guard<std::mutex> mutex_lock(tr_mutex);
   pbCommandMsg_ = command_msg;
 }
 }

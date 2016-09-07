@@ -5,6 +5,12 @@
 #include "ComDriver.h"
 #include <string>
 #include <thread>
+#include <mutex>
+
+#define DELIMITER0 (char)0xAA
+#define DELIMITER1 (char)0x55
+#define DELIMITER2 (char)0xE1
+#define DELIMITER3 (char)0x1E
 
 namespace hal {
 
@@ -29,28 +35,23 @@ class NinjaV3CarDriver : public CarDriverInterface {
   std::string packet_delimiter_;
   int serial_buffer_write_delay_;
   bool com_connected;
+  std::mutex tr_mutex;
   struct ComTrDataPack{
     char delimiter[4];
-    char pack_size;
-    char pack_type;
     float  steering_angle;
     float  motor_power_percent;
     unsigned int dev_time;
     unsigned int chksum;
     ComTrDataPack(){
-      delimiter[0] = 0xAA;
-      delimiter[1] = 0x55;
-      delimiter[2] = 0xE1;
-      delimiter[3] = 0x1E;
-      pack_size = sizeof(ComTrDataPack)-5;
-      pack_type = 1;   // meaning data packet
+      delimiter[0] = DELIMITER0;
+      delimiter[1] = DELIMITER1;
+      delimiter[2] = DELIMITER2;
+      delimiter[3] = DELIMITER3;
     }
   };
   struct ComRecDataPack
   {
     char delimiter[4];
-    char pack_size;
-    char pack_type;
     float  enc0;
     float  enc1;
     float  enc2;
