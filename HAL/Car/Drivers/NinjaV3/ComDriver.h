@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMDRIVER_H__
+#define COMDRIVER_H__
 #include <stdint.h>
 #include <stdio.h> // standard input / output functions
 #include <string.h> // string function definitions
@@ -49,6 +50,9 @@ public:
       return _ReadComPort(data,size);
     }
 
+    void Disconnect(){
+      _CloseComPort();
+    }
 
 private:
     
@@ -100,7 +104,7 @@ private:
 
       tcgetattr(comPort, &options);
 
-      //set the baud rate to 115200
+      //set the baud rate
 
       cfsetospeed(&options, baudRate);
       cfsetispeed(&options, baudRate);
@@ -122,7 +126,7 @@ private:
 
       //Time-Outs -- won't work with NDELAY option in the call to open
       options.c_cc[VMIN]  = m_readbuffsize;   // block reading until RX x characers. If x = 0, it is non-blocking.
-      options.c_cc[VTIME] = 100;   // Inter-Character Timer -- i.e. timeout= x*.1 s
+      options.c_cc[VTIME] = 1;   // Inter-Character Timer -- i.e. timeout= x*.1 s
 
       //Set local mode and enable the receiver
       options.c_cflag |= (CLOCAL | CREAD);
@@ -153,3 +157,5 @@ private:
     ComPortHandle   m_PortHandle;
     int             m_readbuffsize;
 };
+
+#endif  //COMDRIVER_H__

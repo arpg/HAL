@@ -15,13 +15,16 @@ NinjaV3CarDriver::NinjaV3CarDriver(std::string dev, int baud) {
   // caculate the time to wait after writing to send buffer
   serial_buffer_write_delay_ = (int)((sizeof(ComTrDataPack)*10*1000)/baud)+1;
   if(Init() == false) {
-    throw DeviceException("Error connecting to Comport device.");
+    throw DeviceException("Could not connect to Comport device.");
   } else {
     std::cout << "Connection to NinjaV3Car successfull." << std::endl;
   }
 }
 
 NinjaV3CarDriver::~NinjaV3CarDriver() {
+  if(com_connected) {
+    comport_driver_.Disconnect();
+  }
   comport_read_thread.join();
   comport_write_thread.join();
 }
@@ -46,17 +49,18 @@ void NinjaV3CarDriver::ComportWriteThread(){
     std::lock_guard<std::mutex> mutex_lock(tr_mutex);
     tr_data_pack.motor_power_percent = (float)pbCommandMsg_.throttle_percent();
     tr_data_pack.steering_angle = (float)pbCommandMsg_.steering_angle();
+    std::cout << "steering is -> " << tr_data_pack.steering_angle << std::endl;
     tr_data_pack.dev_time = (float)pbCommandMsg_.device_time();
     }
     // TODO: dev_time should be set to correct system time
     // calculate checksum from whole packet
     unsigned int chksum = 0;
-    unsigned char* data = (unsigned char*)(&tr_data_pack);
+    uint8_t* data = (uint8_t*)(&tr_data_pack);
     for(int ii=0;ii<(int)sizeof(ComTrDataPack)-4;ii++){
       chksum += data[ii];
     }
     // send packet
-    comport_driver_.WriteComPort((unsigned char*)(&tr_data_pack),sizeof(ComTrDataPack));
+    comport_driver_.WriteComPort((uint8_t*)(&tr_data_pack),sizeof(ComTrDataPack));
     std::this_thread::sleep_for(std::chrono::milliseconds(serial_buffer_write_delay_));
   }
 }
@@ -70,11 +74,15 @@ void NinjaV3CarDriver::ComportReadThread(){
   while(com_connected) {
     // read data from buffer
     int bytes_received = 0;
-    char buff[rec_data_pack_size];
+    uint8_t buff[rec_data_pack_size];
     for(int ii=0; ii<rec_data_pack_size;ii++) {
       buff[ii] = 0;
     }
-    bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&buff),rec_data_pack_size);
+    bytes_received = comport_driver_.ReadSensorPacket((uint8_t*)(&buff),rec_data_pack_size);
+//    std::cout << "data is: "  << std::endl;
+//    for(int ii=0;ii<bytes_received;ii++)
+//      std::cout << " , " << buff[ii] ;
+//    std::cout << std::endl;
     if(bytes_received == -1) {
       throw DeviceException("Error: NinjaV3 Disconnected.");
     }
@@ -82,21 +90,20 @@ void NinjaV3CarDriver::ComportReadThread(){
     if( !((buff[0]==DELIMITER0) && (buff[1]==DELIMITER1) && (buff[2]==DELIMITER2) && (buff[3]==DELIMITER3))) {
       std::cerr << "Received packet size is " << bytes_received << " expected #bytes was " << rec_data_pack_size << std::endl;
       // align
-      int cnt = 0;
-      while( !(buff[cnt]==DELIMITER0 && buff[(cnt+1)%rec_data_pack_size]==DELIMITER1 && buff[(cnt+2)%rec_data_pack_size]==DELIMITER2 && buff[(cnt+3)%rec_data_pack_size]==DELIMITER3) ) {
-        if(cnt<rec_data_pack_size) {
-          cnt++;
-        } else {
+      int cnt;
+      for(cnt=0;cnt<rec_data_pack_size;cnt++) {
+        if((buff[cnt]==DELIMITER0 && buff[(cnt+1)%rec_data_pack_size]==DELIMITER1 && buff[(cnt+2)%rec_data_pack_size]==DELIMITER2 && buff[(cnt+3)%rec_data_pack_size]==DELIMITER3) ) {
           break;
         }
       }
+      std::cout << "cnt is -> " << cnt << std::endl;
+      if(cnt==rec_data_pack_size-1) {
+        std::cout << "Could not find the packet header." << std::endl;
+      }
       if(cnt != 0) {
-        std::cout << "Loosing NinjaV3 COM packet. next packet will be aligned." << std::endl;
+        std::cout << "Loosing NinjaV3 COM packet." << std::endl;
         // read extra bytes in the begining to get ride of them
-        bytes_received = comport_driver_.ReadSensorPacket((unsigned char*)(&buff),cnt);
-        if(bytes_received != cnt) {
-          std::cerr << "Failed Aligning." << std::endl;
-        }
+        bytes_received = comport_driver_.ReadSensorPacket((uint8_t*)(&buff),cnt);
       }
     } else {
       // check received checksum
@@ -119,7 +126,7 @@ void NinjaV3CarDriver::ComportReadThread(){
         pbStateMsg_.set_device_time(rec_data_pack.dev_time);
         car_state_callback(pbStateMsg_);
       }else{
-        std::cerr << "Error: packet checksum didn't match" << std::endl;
+        std::cerr << "Error:  checksum didn't match" << std::endl;
       }
     }
   }

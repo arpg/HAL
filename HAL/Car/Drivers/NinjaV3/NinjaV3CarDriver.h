@@ -7,10 +7,14 @@
 #include <thread>
 #include <mutex>
 
-#define DELIMITER0 (char)0xAA
-#define DELIMITER1 (char)0x55
-#define DELIMITER2 (char)0xE1
-#define DELIMITER3 (char)0x1E
+//#define DELIMITER0 (char)0xAA
+//#define DELIMITER1 (char)0x55
+//#define DELIMITER2 (char)0xE1
+//#define DELIMITER3 (char)0x1E
+#define DELIMITER0 0xAA
+#define DELIMITER1 0x55
+#define DELIMITER2 0xE1
+#define DELIMITER3 0x1E
 
 namespace hal {
 
