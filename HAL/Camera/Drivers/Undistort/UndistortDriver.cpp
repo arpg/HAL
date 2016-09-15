@@ -24,7 +24,7 @@ UndistortDriver::UndistortDriver(std::shared_ptr<CameraDriverInterface> input,
     // For now, assume no change in scale so return same params with
     // no distortion.
     Eigen::Vector2i size_;
-    Eigen::VectorXd params_(int(calibu::LinearCamera<double>::NumParams));
+    Eigen::VectorXd params_(static_cast<int>(calibu::LinearCamera<double>::NumParams));
     size_ << cmod->Width(), cmod->Height();
     params_ << cmod->K()(0,0), cmod->K()(1,1), cmod->K()(0,2), cmod->K()(1,2);
     std::shared_ptr<calibu::CameraInterface<double>> new_cam(new calibu::LinearCamera<double>(params_, size_));
