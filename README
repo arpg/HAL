@@ -5,11 +5,16 @@ drivers like cameras, IMUs, GPS, etc.
 Feel free to report any bugs or issues at our GitHub portal. You can find us at:
 http://github.com/arpg/
 
-Main Developers:
+Active Developers:
+* Sina Aghli
+* Christoffer Heckman
+* Fernando Nobre
+* Gabe Sibley
+
+Previous Developers (thank you!):
 * Juan M. Falquez
 * Nima Keivan
 * Steven Lovegrove
-* Gabe Sibley
 
 Dependencies
 * opencv
