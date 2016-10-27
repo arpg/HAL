@@ -38,6 +38,17 @@ if(TinyXML2_FOUND)
   list(APPEND USER_INC   ${TinyXML2_INCLUDE_DIRS})
 endif()
 
+find_package(OpenCV QUIET COMPONENTS core)
+if(NOT OpenCV_FOUND)
+  message(WARNING "No OpenCV found; camera drivers disabled.")
+endif()
+set(OpenCV_FOUND FALSE)
+if(OpenCV_VERSION_MAJOR EQUAL 2)
+    find_package(OpenCV QUIET COMPONENTS core imgproc highgui)
+elseif(OpenCV_VERSION_MAJOR EQUAL 3)
+    find_package(OpenCV QUIET COMPONENTS core imgproc imgcodecs videoio)
+endif()
+
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIRS} )
 list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
@@ -131,14 +142,20 @@ endmacro()
 
 add_subdirectory( Devices )
 add_subdirectory( ThirdParty )
-add_subdirectory( Camera )
 add_subdirectory( IMU )
 add_subdirectory( Gamepad )
 add_subdirectory( Posys )
 add_subdirectory( Encoder )
-add_subdirectory( LIDAR )
 add_subdirectory( Car )
 add_subdirectory( Utils )
+
+if(OpenCV_FOUND)
+add_subdirectory( Camera )
+endif()
+
+if(BUILD_Velodyne)
+add_subdirectory( LIDAR )
+endif()
 
 set( PROTO_DIR Messages )
 
@@ -157,8 +174,8 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Imu.proto
     ${PROTO_DIR}/Gamepad.proto
     ${PROTO_DIR}/Pose.proto
-    ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/Lidar.proto
+    ${PROTO_DIR}/Encoder.proto
     ${PROTO_DIR}/NodeCamMessage.proto
     ${PROTO_DIR}/NodeCar.proto
     ${PROTO_DIR}/Command.proto
@@ -199,20 +216,26 @@ endif()
 list(APPEND HAL_SOURCES
     ${PROTO_DIR}/Logger.cpp
     ${PROTO_DIR}/Reader.cpp
-    ${PROTO_DIR}/Image.cpp
    )
 
 list(APPEND HAL_HEADERS
     ${PROTO_DIR}/Logger.h
     ${PROTO_DIR}/Reader.h
-    ${PROTO_DIR}/Image.h
-    ${PROTO_DIR}/ImageArray.h
-    ${PROTO_DIR}/ImagePyramid.h 
-    ${PROTO_DIR}/Velodyne.h
     ${PROTO_DIR}/Matrix.h
     ${PROTO_DIR}/Pose.h
     ${PROTO_DIR}/Command.h
    )
+
+if(OpenCV_FOUND)
+list(APPEND HAL_SOURCES
+    ${PROTO_DIR}/Image.cpp
+   )
+list(APPEND HAL_HEADERS
+    ${PROTO_DIR}/Image.h
+    ${PROTO_DIR}/ImageArray.h
+    ${PROTO_DIR}/ImagePyramid.h
+   )
+endif()
 
 if(BUILD_Velodyne)
     list(APPEND HAL_SOURCES ${PROTO_DIR}/Velodyne.cpp)
@@ -253,7 +276,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 
 set( GENERATED_HEADERS ${PROTO_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
     ${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/ThirdPartyConfig.h )
-    
+
 install_package(
     PKG_NAME HAL
     LIB_NAME hal

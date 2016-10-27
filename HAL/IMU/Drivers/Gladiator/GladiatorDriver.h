@@ -3,7 +3,6 @@
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <iostream>
 #include <vector>
-#include <boost/bind.hpp>
 #include <unistd.h>
 #include <mutex>
 #include <condition_variable>

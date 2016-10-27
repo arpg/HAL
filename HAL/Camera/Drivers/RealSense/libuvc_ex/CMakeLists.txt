@@ -41,13 +41,10 @@ SET(SOURCES src/ctrl.c src/ctrl-gen.c src/device.c src/diag.c
            src/frame.c src/init.c src/stream.c
            src/misc.c)
 
-find_package(OpenCV)
-
 include_directories(
   ${libuvc_SOURCE_DIR}/include
   ${libuvc_BINARY_DIR}/include
   ${LIBUSB_INCLUDE_DIR}
-  ${OPENCV_INCLUDE_DIR}
 )
 
 if(JPEG_FOUND)
