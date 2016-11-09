@@ -24,6 +24,7 @@ public:
     {
       if(m_bIsConnected){
         _CloseComPort();
+        std::cout << "closecomport called" << std::endl;
       }
     }
 
@@ -51,7 +52,10 @@ public:
     }
 
     void Disconnect(){
-      _CloseComPort();
+      if(m_bIsConnected){
+        _CloseComPort();
+        m_bIsConnected = false;
+      }
     }
 
 private:
@@ -74,7 +78,6 @@ private:
     int _WriteComPort(unsigned char* bytesToWrite, int size)
     {
         int bytesWritten = write(m_PortHandle, bytesToWrite, size);
-        //printf("wrote %d bytes\n",bytesWritten);
         return bytesWritten;
     }
 

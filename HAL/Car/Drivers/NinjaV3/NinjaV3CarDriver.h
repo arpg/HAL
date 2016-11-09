@@ -29,6 +29,8 @@ class NinjaV3CarDriver : public CarDriverInterface {
   ComportDriver       comport_driver_;
   std::string         dev_name_;
   int                 baudrate_;
+  volatile bool       should_run_;
+
   static CarStateDataCallback car_state_callback;
   std::thread comport_write_thread;
   std::thread comport_read_thread;
@@ -38,8 +40,9 @@ class NinjaV3CarDriver : public CarDriverInterface {
   hal::CarCommandMsg pbCommandMsg_;
   std::string packet_delimiter_;
   int serial_buffer_write_delay_;
-  bool com_connected;
-  std::mutex tr_mutex;
+  std::mutex comport_mutex;
+  std::mutex shouldrun_mutex;
+  std::mutex cmdmsg_mutex;
   struct ComTrDataPack{
     char delimiter[4];
     float  steering_angle;
@@ -56,19 +59,18 @@ class NinjaV3CarDriver : public CarDriverInterface {
   struct ComRecDataPack
   {
     char delimiter[4];
-    float  enc0;
-    float  enc1;
-    float  enc2;
-    float  enc3;
-    float   steer_ang;
-    float   swing_ang0;
-    float   swing_ang1;
-    float   swing_ang2;
-    float   swing_ang3;
-    float   motor_current;
+    unsigned int  enc0;
+    unsigned int  enc1;
+    unsigned int  enc2;
+    unsigned int  enc3;
+    unsigned int  steer_ang;
+    unsigned int  swing_ang0;
+    unsigned int  swing_ang1;
+    unsigned int  swing_ang2;
+    unsigned int  swing_ang3;
+    unsigned int  motor_current;
     unsigned int dev_time;
     unsigned int chksum;
   };
-
 };
 }

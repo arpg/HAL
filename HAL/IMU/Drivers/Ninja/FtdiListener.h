@@ -14,7 +14,6 @@
 
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Utils/TicToc.h>
-#include <HAL/Encoder/EncoderDriverInterface.h>
 
 
 #ifndef PrintMessage
@@ -29,7 +28,6 @@
 #endif
 
 using fPtr_IMU = void(*)(hal::ImuMsg& IMUdata);
-using fPtr_Encoder = void(*)(hal::EncoderMsg& Encoderdata);
 
 typedef int ComPortHandle;
 
@@ -89,7 +87,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  FtdiListener() : m_bIsConnected(false), m_IMUCallback(nullptr), m_EncoderCallback(nullptr)
+  FtdiListener() : m_bIsConnected(false), m_IMUCallback(nullptr)
   {
   }
 
@@ -103,17 +101,6 @@ public:
   void RegisterIMUCallback(fPtr_IMU callback)
   {
     m_IMUCallback = callback;
-    if( m_Running == false ) {
-      m_Running = true;
-      m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
-    }
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////////
-  void RegisterEncoderCallback(fPtr_Encoder callback)
-  {
-    m_EncoderCallback = callback;
     if( m_Running == false ) {
       m_Running = true;
       m_CallbackThread = std::thread( &FtdiListener::_ThreadFunc, this );
@@ -150,7 +137,7 @@ public:
     }
   }
 
-  bool IsRunning() const override {
+  bool IsRunning() const {
     return m_Running;
   }
 
@@ -308,7 +295,6 @@ private:
   void _ThreadFunc()
   {
     hal::ImuMsg      pbIMU;
-    hal::EncoderMsg  pbEncoder;
     SensorPacket    Pkt;
 
     while( m_Running ) {
@@ -342,37 +328,6 @@ private:
         (*m_IMUCallback)(pbIMU);
       }
 
-      if( m_EncoderCallback ) {
-        pbEncoder.Clear();
-
-        pbEncoder.set_device_time( hal::Tic() );
-
-        // encoders
-        pbEncoder.set_label(0, "ENC_LF");
-        pbEncoder.set_data(0, Pkt.Enc_LF);
-        pbEncoder.set_label(1, "ENC_RF");
-        pbEncoder.set_data(1, Pkt.Enc_RF);
-        pbEncoder.set_label(2, "ENC_LB");
-        pbEncoder.set_data(2, Pkt.Enc_LB);
-        pbEncoder.set_label(3, "ENC_RB");
-        pbEncoder.set_data(3, Pkt.Enc_RB);
-
-        // adcs
-        pbEncoder.set_label(4, "ADC_LB");
-        pbEncoder.set_data(4, Pkt.ADC_LB);
-        pbEncoder.set_label(5, "ADC_LF_YAW");
-        pbEncoder.set_data(5, Pkt.ADC_LF_yaw);
-        pbEncoder.set_label(6, "ADC_LF_ROLL");
-        pbEncoder.set_data(6, Pkt.ADC_LF_rol);
-        pbEncoder.set_label(7, "ADC_RB");
-        pbEncoder.set_data(7, Pkt.ADC_RB);
-        pbEncoder.set_label(8, "ADC_RF_YAW");
-        pbEncoder.set_data(8, Pkt.ADC_RF_yaw);
-        pbEncoder.set_label(9, "ADC_RF_ROLL");
-        pbEncoder.set_data(9, Pkt.ADC_RF_rol);
-
-        (*m_EncoderCallback)(pbEncoder);
-      }
     }
   }
 
@@ -384,5 +339,4 @@ private:
   bool                            m_Running;
   std::thread                     m_CallbackThread;
   fPtr_IMU                        m_IMUCallback;
-  fPtr_Encoder                    m_EncoderCallback;
 };
