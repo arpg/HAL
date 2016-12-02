@@ -20,7 +20,7 @@ namespace hal {
   
   size_t AravisDriver::NumChannels() const
   {
-    return sensorCount; //one channel for RGB, one for depth
+    return 1; 
   }
 
   size_t AravisDriver::Width( size_t idx) const
@@ -39,7 +39,7 @@ namespace hal {
     /* Mandatory glib type system initialization */
     arv_g_type_init ();
 
-    if (serialNumber == NULL)
+    if (serialNumber == "")
       {
 	/* Instantiation of the first available camera */
 	camera = arv_camera_new (NULL);
@@ -47,7 +47,7 @@ namespace hal {
     else
       {
 	//Try to find the given serial number
-	camera = arv_camera_new(serialNumber);
+	camera = arv_camera_new(serialNumber.c_str());
       }
 
     if (camera == NULL)
@@ -61,14 +61,15 @@ namespace hal {
       cout << "AravisDriver: Unable to create stream!" << endl;
       return;
     }
-    
+    int payloadSize = arv_camera_get_payload (camera);
+
     /* Push 50 buffer in the stream input buffer queue */
-    for (i = 0; i < 50; i++)
-      arv_stream_push_buffer (stream, arv_buffer_new (payload, NULL));
+    for (int i = 0; i < 50; i++)
+      arv_stream_push_buffer (stream, arv_buffer_new (payloadSize, NULL));
     
     /* Connect the control-lost signal */
     g_signal_connect (arv_camera_get_device (camera), "control-lost",
-		      G_CALLBACK (control_lost_cb), NULL);
+		      G_CALLBACK (aravis_driver_control_lost_cb), this);
     
     /* Create a new glib main loop */
     main_loop = g_main_loop_new (NULL, FALSE);
@@ -78,14 +79,20 @@ namespace hal {
 
     cout << "AravisDriver: Started main loop" << endl;
   }
+
+ 
+  static void aravis_driver_control_lost_cb (ArvDevice *device, gpointer* data)
+  {
+    //Since I can't use member functions with G_CALLBACK:
+    reinterpret_cast<AravisDriver*>(data)->control_lost_cb(device);
+  }
   
-  void  AravisDriver::control_lost_cb (ArvDevice *device)
+  void AravisDriver::control_lost_cb(ArvDevice *device)
   {
     /* Control of the device is lost. Display a message and force application exit */
     cout << "AravisDriver: Control lost" << endl;
-    cancel = true;
   }
-
+  
   void AravisDriver::Stop()
   {
     std::cout << "Stopping Aravis driver" << std::endl;
@@ -109,7 +116,7 @@ namespace hal {
       cout << "AravisDriver: Buffer popped was invalid!" << endl;
       return false;
     }
-    ArvBufferPayloadType payloadType = arv_buffer_et_payload_type(buffer);
+    ArvBufferPayloadType payloadType = arv_buffer_get_payload_type(buffer);
 
     if (payloadType != ARV_BUFFER_PAYLOAD_TYPE_IMAGE)
       {
@@ -118,7 +125,7 @@ namespace hal {
       }
 
     
-   pimg = vImages.add_image();
+   hal::ImageMsg* pimg = vImages.add_image();
    ArvPixelFormat pixFormat = arv_buffer_get_image_pixel_format(buffer);
    switch (pixFormat)
      {
@@ -138,7 +145,7 @@ namespace hal {
    pimg->set_width(arv_buffer_get_image_width(buffer));
    pimg->set_height(arv_buffer_get_image_height(buffer));
    
-   void* imageData;
+   const void* imageData;
    size_t imageSize;
 
    imageData = arv_buffer_get_data(buffer, &imageSize);

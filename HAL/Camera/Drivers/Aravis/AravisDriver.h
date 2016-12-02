@@ -29,7 +29,8 @@ using std::vector;
 
 namespace hal
 {
-
+  static void aravis_driver_control_lost_cb(ArvDevice *device, gpointer *data);
+  
   class AravisDriver : public CameraDriverInterface
   {
   public:
