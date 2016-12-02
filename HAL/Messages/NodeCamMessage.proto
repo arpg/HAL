@@ -1,3 +1,4 @@
+syntax = "proto2";
 message RegisterNodeCamReqMsg
 {
     optional bytes          uri                   =1;
