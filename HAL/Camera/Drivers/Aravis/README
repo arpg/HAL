@@ -1,0 +1,5 @@
+This driver is to support cameras accessible via Aravis.
+This includes GigE Vision as well as USB3Vision camera systems
+
+Currently, this driver only supports one camera per instantiation
+One may select the camera to open by serial number if desired.
