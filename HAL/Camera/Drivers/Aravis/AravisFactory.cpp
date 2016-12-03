@@ -13,7 +13,12 @@ public:
         : DeviceFactory<CameraDriverInterface>(name)
     {
       Params() = {
-	{"serial", "0", "Serial number of the camera to open (default: first discovered)"},
+	{"dev", "", "Device name of the camera to open (default: first discovered)"},
+	{"width","", "ROI width, default: full"},
+	{"height","", "ROI height, default: full"},
+	{"x","", "ROI left offset, default: 0"},
+	{"y","", "ROI top offset, default: 0"},
+	{"exposure","", "Exposure time (uS), default: 15000"},
       };
     };
     
@@ -21,9 +26,13 @@ public:
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
     {
 
-      std::string serial = uri.properties.Get<std::string>("serial", "");
-            
-      AravisDriver* rs = new AravisDriver(serial);
+      std::string dev = uri.properties.Get<std::string>("dev", "");
+      int width = uri.properties.Get<int>("width",0);
+      int height = uri.properties.Get<int>("height", 0);
+      int x = uri.properties.Get<int>("x",0);
+      int y = uri.properties.Get<int>("y",0);
+      int exposure = uri.properties.Get<int>("exposure", 15000);
+      AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

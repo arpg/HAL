@@ -1,4 +1,5 @@
 find_package( Aravis QUIET )
+find_package( OpenCV2 QUIET )
 option( BUILD_Aravis "Build Aravis Driver." true)
 #message( "HAL: building ${Aravis_LIBRARIES}")
 if( Aravis_FOUND )
@@ -6,10 +7,12 @@ if( Aravis_FOUND )
 
         message( STATUS "HAL: building 'Aravis' camera driver.")
         add_to_hal_include_dirs(
-	    ${Aravis_INCLUDE_DIRS}	
+	    ${Aravis_INCLUDE_DIRS}
+	    ${OpenCV2_INCLUDE_DIRS}
         )
         add_to_hal_libraries(
 	    ${Aravis_LIBRARIES}
+	    ${OpenCV2_LIBRARIES}
         )
         add_to_hal_sources(
 		AravisDriver.cpp
