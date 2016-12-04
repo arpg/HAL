@@ -133,13 +133,13 @@ namespace hal {
     printf("AravisDriver: Available pixel formats:\n");
 
     guint numFormats;
-    gint64 *pixelFormats = arv_camera_get_available_pixel_formats(camera, &numFormats);
+    const char **pixelFormats = arv_camera_get_available_pixel_formats_as_strings(camera, &numFormats);
 
     for (unsigned int i = 0; i< numFormats; i++)
       {
-	printf("Format: 0x%x\n", (unsigned int) pixelFormats[i]);
+	printf("Format: %s\n", pixelFormats[i]);
       }
-    
+    g_free(pixelFormats);
     arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
     arv_camera_set_exposure_time (camera, exposureTime);
  
