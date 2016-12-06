@@ -46,7 +46,8 @@ namespace hal
 		 int m_height,
 		 int m_x,
 		 int m_y,
-		 int m_exposure);
+		 int m_exposure,
+		 float m_gain);
     ~AravisDriver();
 
     bool Capture( hal::CameraMsg& vImages );
@@ -78,6 +79,7 @@ namespace hal
     int y;
 
     double exposureTime; //in microseconds
+    double gain; //in dB
     int roiWidth;
     int roiHeight;
     int roiX;

@@ -9,8 +9,9 @@ namespace hal {
 			     int m_height,
 			     int m_x,
 			     int m_y,
-			     int m_exposure)
-    : dev(m_dev), exposureTime(m_exposure), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y)
+			     int m_exposure,
+			     float m_gain)
+    : dev(m_dev), exposureTime(m_exposure), gain(m_gain), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y)
   {
     
     Start();
@@ -141,8 +142,14 @@ namespace hal {
       }
     g_free(pixelFormats);
     arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
+
+    printf("AravisDriver: Setting exposure to %1.2f\n", exposureTime);
     arv_camera_set_exposure_time (camera, exposureTime);
- 
+    double minGain, maxGain;
+    arv_camera_get_gain_bounds(camera, &minGain, &maxGain);
+    
+    printf("AravisDriver: Setting gain to %1.2f, limits: %1.2f to %1.2f\n", gain, minGain, maxGain);
+    arv_camera_set_gain(camera, gain);
     
     
     /* Create a new stream object */
