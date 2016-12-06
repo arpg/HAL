@@ -33,7 +33,8 @@ public:
       int x = uri.properties.Get<int>("x",0);
       int y = uri.properties.Get<int>("y",0);
       int exposure = uri.properties.Get<int>("exposure", 15000);
-      float gain = uri.properties.Get<float>("gain", 15000);
+      float gain = uri.properties.Get<float>("gain", 0.0);
+
       AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure, gain);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
