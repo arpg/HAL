@@ -129,7 +129,11 @@ namespace hal {
  
     
     arv_camera_set_region (camera, reqX, reqY, reqWidth, reqHeight);
-
+    arv_camera_set_region (camera, reqX, reqY, reqWidth, reqHeight);
+    
+    arv_camera_get_region (camera, &reqX, &reqY, &reqWidth, &reqHeight);
+    printf("AravisDriver: Camera reports ROI: %ux%u+%u+%u\n", reqWidth, reqHeight, reqX, reqY);
+ 
     //Set the camera to mono8:
     printf("AravisDriver: Available pixel formats:\n");
 
@@ -141,16 +145,21 @@ namespace hal {
 	printf("Format: %s\n", pixelFormats[i]);
       }
     g_free(pixelFormats);
-    arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
+    //arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
 
     printf("AravisDriver: Setting exposure to %1.2f\n", exposureTime);
     arv_camera_set_exposure_time (camera, exposureTime);
+ 
+    exposureTime = arv_camera_get_exposure_time (camera);
+    printf("AravisDriver: Camera reports exposure: %1.2f\n", exposureTime);
+    
     double minGain, maxGain;
     arv_camera_get_gain_bounds(camera, &minGain, &maxGain);
     
     printf("AravisDriver: Setting gain to %1.2f, limits: %1.2f to %1.2f\n", gain, minGain, maxGain);
     arv_camera_set_gain(camera, gain);
-    
+    gain = arv_camera_get_gain(camera);
+    printf("AravisDriver: Camera reports gain of %1.2f\n", gain);
     
     /* Create a new stream object */
     cout << "Aravis: Creating stream" << endl;
@@ -177,6 +186,8 @@ namespace hal {
     
     //Start the camera doing its thing
     arv_camera_set_acquisition_mode (camera, ARV_ACQUISITION_MODE_CONTINUOUS);
+    arv_camera_start_acquisition (camera);
+    arv_camera_stop_acquisition (camera);
     arv_camera_start_acquisition (camera);
     capStart = hal::Tic();
     
