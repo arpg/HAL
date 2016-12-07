@@ -6,28 +6,20 @@
 #  Aravis_LIBRARIES - link these to use the library
 
 include(LibFindMacros)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PC_Aravis REQUIRED aravis-0.6)
 
-find_path(ARAVIS_INCLUDE_DIR arv.h
-          HINTS ${PC_Aravis_INCLUDEDIR} ${PC_Aravis_INCLUDE_DIRS}
-          PATH_SUFFIXES aravis )
+find_path(ARAVIS_INCLUDE_DIR "arv.h"
+          HINTS ${PC_Aravis_INCLUDEDIR} ${PC_Aravis_INCLUDE_DIRS} /usr/local/include/aravis-0.6
+          )
 
-find_library(ARAVIS_LIBRARY NAMES ${PC_Aravis_LIBRARIES}
-             HINTS ${PC_Aravis_LIBDIR} ${PC_Aravis_LIBRARY_DIRS} )
+find_library(ARAVIS_LIBRARY
+  NAMES "aravis-0.6"
+  HINTS /usr/local/lib ${ARAVIS_ROOT}/lib)
 
-include(FindPackageHandleStandardArgs) 
-
-find_package_handle_standard_args(Aravis-0.6  DEFAULT_MSG
-                                  ARAVIS_LIBRARY ARAVIS_INCLUDE_DIR)
-				  
 mark_as_advanced(ARAVIS_INCLUDE_DIR ARAVIS_LIBRARY )
 
 find_package(GLib REQUIRED)
+find_package(GObject REQUIRED)
 
-set(Aravis_LIBRARIES ${ARAVIS_LIBRARY} ${GLib_LIBRARY})
+set(Aravis_LIBRARIES ${ARAVIS_LIBRARY} ${GLib_LIBRARY} ${GObject_LIBRARY})
 set(Aravis_INCLUDE_DIRS ${ARAVIS_INCLUDE_DIR} ${GLib_INCLUDE_DIRS})
-set(Aravis_FOUND ${PC_Aravis_FOUND})
-
-message("Aravis libs: ${Aravis_LIBRARIES}")
-message("Aravis found: ${Aravis_FOUND}")
+set(Aravis_FOUND true)
