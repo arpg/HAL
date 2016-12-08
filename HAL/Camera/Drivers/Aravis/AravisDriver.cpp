@@ -265,8 +265,13 @@ namespace hal {
     while (badBufferCount < MAX_BAD_BUFFERS)
       {
 	std::unique_lock<std::mutex> lock(bufferMutex);
-	bufferBell.wait(lock);
-    
+	if (bufferBell.wait_for(lock, std::chrono::milliseconds(1000)) == std::cv_status::timeout)
+	  {
+	    cout << "aravisDriver: Timed out waiting for an image!" << endl;
+	    badBufferCount++;
+	    continue;
+	  }
+	
 	if (buffer == NULL) {
 	  cout << "AravisDriver: Buffer popped was invalid!" << endl;
 	  //arv_stream_push_buffer (stream, buffer);
