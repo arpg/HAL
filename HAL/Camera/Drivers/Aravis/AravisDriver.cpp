@@ -1,6 +1,6 @@
 #include "AravisDriver.h"
 
-
+#define MAX_BAD_BUFFERS 10
 
 namespace hal {
 
@@ -183,6 +183,7 @@ namespace hal {
 		      G_CALLBACK (aravis_driver_control_lost_cb), this);
     g_signal_connect (stream, "new-buffer", G_CALLBACK (aravis_driver_new_buffer_cb), this);
 
+    badBufferCount = 0;
     
     //Start the camera doing its thing
     arv_camera_set_acquisition_mode (camera, ARV_ACQUISITION_MODE_CONTINUOUS);
@@ -218,8 +219,10 @@ namespace hal {
   
   void AravisDriver::new_buffer_cb(ArvStream* m_stream)
   {
-    std::lock_guard<std::mutex> guard(bufferMutex);
+    std::unique_lock<std::mutex> guard(bufferMutex);
     buffer = arv_stream_pop_buffer (m_stream);
+    guard.unlock();
+    bufferBell.notify_one();
   }
   
   void AravisDriver::Stop()
@@ -259,20 +262,32 @@ namespace hal {
     capStart = hal::Tic();
     vImages.Clear();
 
-    //Lock the buffer 
-    std::lock_guard<std::mutex> guard(bufferMutex);
-
-    if (buffer == NULL) {
-      cout << "AravisDriver: Buffer popped was invalid!" << endl;
-      //arv_stream_push_buffer (stream, buffer);
-      return false;
-    }
-    if (arv_buffer_get_status (buffer) != ARV_BUFFER_STATUS_SUCCESS)
+    while (badBufferCount < MAX_BAD_BUFFERS)
       {
-	//cout << "AravisDriver: Buffer was not successful :(" << endl;
-	arv_stream_push_buffer (stream, buffer);
-	return false;
+	std::unique_lock<std::mutex> lock(bufferMutex);
+	bufferBell.wait(lock);
+    
+	if (buffer == NULL) {
+	  cout << "AravisDriver: Buffer popped was invalid!" << endl;
+	  //arv_stream_push_buffer (stream, buffer);
+	  badBufferCount++;
+	  continue;
+	}
+	if (arv_buffer_get_status (buffer) == ARV_BUFFER_STATUS_SIZE_MISMATCH)
+	  {
+	    cout << "AravisDriver: Buffer was underrun, attempt:" << badBufferCount << endl;
+	    bufferMutex.unlock();
+	    arv_stream_push_buffer (stream, buffer);
+	    badBufferCount++;
+	    continue;
+	  }
+
+	if (arv_buffer_get_status(buffer) == ARV_BUFFER_STATUS_SUCCESS)
+	  break;
       }
+    
+    badBufferCount = 0;
+    
     ArvBufferPayloadType payloadType = arv_buffer_get_payload_type(buffer);
 
     if (payloadType != ARV_BUFFER_PAYLOAD_TYPE_IMAGE)

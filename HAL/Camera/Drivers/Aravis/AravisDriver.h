@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 #include <unistd.h>
 #include <pthread.h>
@@ -84,6 +85,7 @@ namespace hal
     int roiHeight;
     int roiX;
     int roiY;
+    int badBufferCount;
     
     double capStart;
     
@@ -92,6 +94,7 @@ namespace hal
     ArvStream *stream;
     ArvBuffer *buffer;
     std::mutex bufferMutex;
+    std::condition_variable bufferBell;
     
     GMainLoop *main_loop; //for GLib signals
     std::thread *loopThread; //to run the GLib event loop
