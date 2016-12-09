@@ -1,40 +1,83 @@
 #pragma once
 
-#include <memory>
-#include <HAL/Camera.pb.h>
-#include <HAL/Utils/Uri.h>
-#include "HAL/Camera/CameraDriverInterface.h"
-#include "HAL/Camera/Drivers/UVC/UvcDriver.h"
-
-// Usage autoexposure://uvc://
-// At the moment the autoexposure driver is only configured to work with the UVC driver, specifically
-// to control the exposure of the twizzler device. More devices should be supported in the future,
-// as well as providing functionality to change PD gains from the uri
+#include <HAL/Camera/AutoExposureCamera.h>
+#include <HAL/Camera/Drivers/AutoExposure/LightMeter.h>
+#include <HAL/Camera/Drivers/AutoExposure/PIDController.h>
 
 namespace hal
 {
 
 class AutoExposureDriver : public CameraDriverInterface
 {
-public:
-    AutoExposureDriver(const int nTarget,std::shared_ptr<CameraDriverInterface> Input);
+  public:
 
-    bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
+    AutoExposureDriver(std::shared_ptr<CameraDriverInterface> input);
 
-    std::string GetDeviceProperty(const std::string& sProperty);
+    ~AutoExposureDriver();
 
-    size_t NumChannels() const { return m_Input->NumChannels(); }
-    size_t Width( size_t /*idx*/ = 0 ) const { return m_Input->Width(); }
-    size_t Height( size_t /*idx*/ = 0 ) const { return m_Input->Height(); }
+    bool GetAutoExposureEnabled() const;
 
+    void SetAutoExposureEnabled(bool enabled);
 
-protected:
-    std::shared_ptr<CameraDriverInterface>  m_Input;
-    int m_nTarget;
-    int m_nExposure;
-    float m_fLastError;
-    UvcDriver* m_pUvcDriver;
+    double GetDesiredLuminance() const;
+
+    void SetDesiredLuminance(double luminance);
+
+    bool Capture(hal::CameraMsg& images) override;
+
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() override;
+
+    size_t NumChannels() const override;
+
+    size_t Width(size_t) const override;
+
+    size_t Height(size_t) const override;
+
+    void Reset();
+
+  private:
+
+    inline void ProcessImage(const hal::ImageMsg& image);
+
+    inline void BrightenImage(double luminance);
+
+    inline void DarkenImage(double luminance);
+
+    inline void IncreaseGain(double luminance);
+
+    inline void DecreaseGain(double luminance);
+
+    inline void ChangeExposure(double luminance);
+
+    inline void ChangeGain(double luminance);
+
+    inline PIDController::ControlFunc GetExposureControlFunc();
+
+    inline PIDController::ControlFunc GetGainControlFunc();
+
+    inline void Initialize();
+
+    inline void InitExposureController();
+
+    inline void InitGainController();
+
+  protected:
+
+    std::shared_ptr<AutoExposureCamera> m_input;
+
+    PIDController m_exposureController;
+
+    PIDController m_gainController;
+
+    LightMeter m_lightMeter;
+
+  private:
+
+    bool m_autoExposureEnabled;
+
+    double m_desiredLuminance;
+
+    bool m_changingExposure;
 };
 
-}
+} // namespace hal

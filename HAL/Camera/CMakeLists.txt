@@ -1,4 +1,5 @@
 set(HDRS
+    AutoExposureCamera.h
     CameraDevice.h
     CameraDriverInterface.h
 )

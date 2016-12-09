@@ -1,58 +1,174 @@
-#include "AutoExposureDriver.h"
-#include <HAL/Devices/DeviceException.h>
+#include <HAL/Camera/Drivers/AutoExposure/AutoExposureDriver.h>
+#include <functional>
 
 namespace hal
 {
 
-AutoExposureDriver::AutoExposureDriver(const int nTarget, std::shared_ptr<CameraDriverInterface> Input)
-    : m_Input(Input), m_nTarget(nTarget),m_nExposure(1),m_fLastError(0)
+AutoExposureDriver::AutoExposureDriver(
+    std::shared_ptr<CameraDriverInterface> input) :
+  m_input(std::dynamic_pointer_cast<AutoExposureCamera>(input)),
+  m_exposureController(GetExposureControlFunc()),
+  m_gainController(GetGainControlFunc()),
+  m_autoExposureEnabled(true),
+  m_desiredLuminance(100),
+  m_changingExposure(true)
 {
-    m_pUvcDriver = dynamic_cast<UvcDriver*>(Input.get());
-    if(m_pUvcDriver == NULL) {
-        throw DeviceException( "The input device to the autoexposure driver must be a uvc device." );
-    }
+  Initialize();
 }
 
-bool AutoExposureDriver::Capture( hal::CameraMsg& vImages )
+AutoExposureDriver::~AutoExposureDriver()
 {
-    m_pUvcDriver->SetExposure(m_nExposure);
-    m_Input->Capture( vImages );
-
-    if( vImages.image_size() > 1 ) {
-        std::cerr << "error: Autoexposure is expecting 1 image but instead got " << vImages.image_size() << "." << std::endl;
-        return false;
-    }
-
-    const hal::ImageMsg& InImg = vImages.image(0);
-
-    if( InImg.type() != hal::PB_UNSIGNED_BYTE || InImg.format() != hal::PB_LUMINANCE){
-        std::cerr << "error: Autoexposure currently only works with unsigned byte and luminance images." << std::endl;
-    }
-
-    float fMean = 0;
-    const unsigned char* pData = (const unsigned char*)&InImg.data().front();
-    for( int ii = 0, s = Width()*Height(); ii < s ; ii++ ) {
-        fMean += *pData;
-        pData++;
-    }
-
-    // calculate the mean intensity
-    fMean /= Width()*Height();
-    const float fError = m_nTarget - fMean;
-    int nNewExposure = m_nExposure +  fError*0.2 + (fError-m_fLastError)*0.1;
-    // TODO: Work out the valid maximum exposure (exposure set too high will cause flickering )
-    nNewExposure = std::max(0,std::min(500,nNewExposure));
-    m_fLastError = fError;
-
-    if( nNewExposure != m_nExposure ){
-        m_nExposure = nNewExposure;
-    }
-
-    return true;
 }
 
-std::string AutoExposureDriver::GetDeviceProperty(const std::string& sProperty)
+bool AutoExposureDriver::GetAutoExposureEnabled() const
 {
-    return m_Input->GetDeviceProperty(sProperty);
+  return m_autoExposureEnabled;
 }
+
+void AutoExposureDriver::SetAutoExposureEnabled(bool enabled)
+{
+  m_autoExposureEnabled = enabled;
+  if (!m_autoExposureEnabled) Reset();
+}
+
+double AutoExposureDriver::GetDesiredLuminance() const
+{
+  return m_desiredLuminance;
+}
+
+void AutoExposureDriver::SetDesiredLuminance(double luminance)
+{
+  m_desiredLuminance = luminance;
+  m_exposureController.setpoint = m_desiredLuminance;
+  m_gainController.setpoint = m_desiredLuminance;
+}
+
+bool AutoExposureDriver::Capture(CameraMsg& images)
+{
+  const bool success = m_input->Capture(images);
+
+  if (success && m_autoExposureEnabled)
+  {
+    const int index = m_input->GetAutoExposureImageIndex();
+    ImageMsg& image = *images.mutable_image(index);
+    ProcessImage(image);
+  }
+
+  return success;
+}
+
+std::shared_ptr<CameraDriverInterface> AutoExposureDriver::GetInputDevice()
+{
+  return m_input;
+}
+
+size_t AutoExposureDriver::NumChannels() const
+{
+  return m_input->NumChannels();
+}
+
+size_t AutoExposureDriver::Width(size_t) const
+{
+  return m_input->Width();
+}
+
+size_t AutoExposureDriver::Height(size_t) const
+{
+  return m_input->Height();
+}
+
+void AutoExposureDriver::Reset()
+{
+  m_exposureController.Reset();
+  m_gainController.Reset();
+  m_lightMeter.Reset();
+}
+
+void AutoExposureDriver::ProcessImage(const hal::ImageMsg& image)
+{
+  const double luminance = m_lightMeter.Measure(image);
+
+  (luminance < m_desiredLuminance) ?
+      BrightenImage(luminance) : DarkenImage(luminance);
+}
+
+void AutoExposureDriver::BrightenImage(double luminance)
+{
+  (m_input->GetActualFramerate() < m_input->GetDesiredFramerate()) ?
+      ChangeExposure(luminance) : IncreaseGain(luminance);
+}
+
+void AutoExposureDriver::DarkenImage(double luminance)
+{
+  (m_input->GetActualFramerate() > m_input->GetDesiredFramerate()) ?
+      ChangeExposure(luminance) : DecreaseGain(luminance);
+}
+
+void AutoExposureDriver::IncreaseGain(double luminance)
+{
+  (m_input->GetGain() < m_input->GetMaxGain()) ?
+        ChangeGain(luminance) : ChangeExposure(luminance);
+}
+
+void AutoExposureDriver::DecreaseGain(double luminance)
+{
+  (m_input->GetGain() > 0) ? ChangeGain(luminance) : ChangeExposure(luminance);
+}
+
+void AutoExposureDriver::ChangeExposure(double luminance)
+{
+  if (!m_changingExposure)
+  {
+    m_exposureController.Reset();
+    m_changingExposure = true;
+  }
+
+  m_exposureController.Update(luminance);
+}
+
+void AutoExposureDriver::ChangeGain(double luminance)
+{
+  if (m_changingExposure)
+  {
+    m_gainController.Reset();
+    m_changingExposure = false;
+  }
+
+  m_gainController.Update(luminance);
+}
+
+void AutoExposureDriver::Initialize()
+{
+  InitExposureController();
+  InitGainController();
+}
+
+PIDController::ControlFunc AutoExposureDriver::GetExposureControlFunc()
+{
+  using std::placeholders::_1;
+  return std::bind(&AutoExposureCamera::SetExposure, m_input, _1);
+}
+
+PIDController::ControlFunc AutoExposureDriver::GetGainControlFunc()
+{
+  using std::placeholders::_1;
+  return std::bind(&AutoExposureCamera::SetGain, m_input, _1);
+}
+
+void AutoExposureDriver::InitExposureController()
+{
+  m_exposureController.setpoint = m_desiredLuminance;
+  m_exposureController.Kp = 0.010;
+  m_exposureController.Ki = 0.005;
+  m_exposureController.Kd = 0.005;
+}
+
+void AutoExposureDriver::InitGainController()
+{
+  m_gainController.setpoint = m_desiredLuminance;
+  m_gainController.Kp = 0.010;
+  m_gainController.Ki = 0.005;
+  m_gainController.Kd = 0.007;
+}
+
 }
