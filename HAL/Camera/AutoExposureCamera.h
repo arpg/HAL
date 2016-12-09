@@ -11,7 +11,7 @@ class AutoExposureCamera : public CameraDriverInterface
 
     virtual int GetAutoExposureImageIndex() const = 0;
 
-    virtual void SetAutoExposureEnabled(bool enabled) = 0;
+    virtual void DisableAutoExposure() = 0;
 
     virtual double GetActualFramerate() const = 0;
 

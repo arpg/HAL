@@ -139,6 +139,7 @@ void AutoExposureDriver::ChangeGain(double luminance)
 
 void AutoExposureDriver::Initialize()
 {
+  m_input->DisableAutoExposure();
   InitExposureController();
   InitGainController();
 }
