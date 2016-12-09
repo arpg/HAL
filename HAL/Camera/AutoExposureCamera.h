@@ -395,34 +395,34 @@ class AutoExposureCamera : public CameraDriverInterface
     {
     }
 
-    bool GetAutoExposureEnabled() const
+    virtual bool GetAutoExposureEnabled() const
     {
       return m_autoExposureEnabled;
     }
 
-    void SetAutoExposureEnabled(bool enabled)
+    virtual void SetAutoExposureEnabled(bool enabled)
     {
       m_autoExposureEnabled = enabled;
       if (!m_autoExposureEnabled) Reset();
     }
 
-    double GetDesiredLuminance() const
+    virtual double GetDesiredLuminance() const
     {
       return m_desiredLuminance;
     }
 
-    void SetDesiredLuminance(double luminance)
+    virtual void SetDesiredLuminance(double luminance)
     {
       m_desiredLuminance = luminance;
       m_exposureController.setpoint = m_desiredLuminance;
       m_gainController.setpoint = m_desiredLuminance;
     }
 
-    bool Capture(CameraMsg& images)
+    virtual bool Capture(CameraMsg& images)
     {
       const bool success = CaptureImages(images);
 
-      if (success && m_autoExposureEnabled)
+      if (success && GetAutoExposureEnabled())
       {
         const int index = GetAutoExposureImageIndex();
         ImageMsg& image = *images.mutable_image(index);
@@ -432,14 +432,16 @@ class AutoExposureCamera : public CameraDriverInterface
       return success;
     }
 
-    void Reset()
+    virtual void Reset()
     {
       m_exposureController.Reset();
       m_gainController.Reset();
       m_lightMeter.Reset();
     }
 
-    void ProcessImage(const hal::ImageMsg& image)
+  protected:
+
+    virtual void ProcessImage(const hal::ImageMsg& image)
     {
       const double luminance = m_lightMeter.Measure(image);
 
@@ -447,30 +449,30 @@ class AutoExposureCamera : public CameraDriverInterface
           BrightenImage(luminance) : DarkenImage(luminance);
     }
 
-    void BrightenImage(double luminance)
+    virtual void BrightenImage(double luminance)
     {
       (GetActualFramerate() < GetDesiredFramerate()) ?
           ChangeExposure(luminance) : IncreaseGain(luminance);
     }
 
-    void DarkenImage(double luminance)
+    virtual void DarkenImage(double luminance)
     {
       (GetActualFramerate() > GetDesiredFramerate()) ?
           ChangeExposure(luminance) : DecreaseGain(luminance);
     }
 
-    void IncreaseGain(double luminance)
+    virtual void IncreaseGain(double luminance)
     {
       (GetGain() < GetMaxGain()) ?
             ChangeGain(luminance) : ChangeExposure(luminance);
     }
 
-    void DecreaseGain(double luminance)
+    virtual void DecreaseGain(double luminance)
     {
       (GetGain() > 0) ? ChangeGain(luminance) : ChangeExposure(luminance);
     }
 
-    void ChangeExposure(double luminance)
+    virtual void ChangeExposure(double luminance)
     {
       if (!m_changingExposure)
       {
@@ -481,7 +483,7 @@ class AutoExposureCamera : public CameraDriverInterface
       m_exposureController.Update(luminance);
     }
 
-    void ChangeGain(double luminance)
+    virtual void ChangeGain(double luminance)
     {
       if (m_changingExposure)
       {
@@ -491,6 +493,8 @@ class AutoExposureCamera : public CameraDriverInterface
 
       m_gainController.Update(luminance);
     }
+
+  private:
 
     void Initialize()
     {
@@ -527,7 +531,7 @@ class AutoExposureCamera : public CameraDriverInterface
       m_gainController.Kd = 0.007;
     }
 
-    virtual bool CaptureImages(const hal::CameraMsg& images) = 0;
+    virtual bool CaptureImages(hal::CameraMsg& images) = 0;
 
     virtual int GetAutoExposureImageIndex() = 0;
 
