@@ -1,8 +1,11 @@
 #pragma once
 
+#include <cfloat>
 #include <cmath>
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Devices/DeviceException.h>
+
+#include <iostream> // TODO: remove
 
 namespace hal
 {
@@ -18,6 +21,8 @@ class PIDController
     PIDController(ControlFunc function) :
       setpoint(0),
       Kp(0), Ki(0), Kd(0),
+      maxValue(1),
+      minValue(0),
       ApplyControlUpdate(function),
       lastError(0),
       integral(0)
@@ -28,11 +33,17 @@ class PIDController
     {
     }
 
-    inline void Update(double feedback)
+    inline void Update(double feedback, double state)
     {
       const double error = setpoint - feedback;
       const double update = GetControlUpdate(error);
-      ApplyControlUpdate(update);
+
+      std::cout << "Error:  " << error << std::endl;
+      std::cout << "Update: " << update << std::endl;
+
+      double newValue = state + update;
+      newValue = std::min(maxValue, std::max(minValue, newValue));
+      ApplyControlUpdate(newValue);
     }
 
     inline void Reset()
@@ -79,6 +90,10 @@ class PIDController
     double Ki;
 
     double Kd;
+
+    double maxValue;
+
+    double minValue;
 
   protected:
 
@@ -384,8 +399,8 @@ class AutoExposureCamera : public CameraDriverInterface
     AutoExposureCamera() :
       m_exposureController(GetExposureControlFunc()),
       m_gainController(GetGainControlFunc()),
-      m_autoExposureEnabled(true),
-      m_desiredLuminance(100),
+      m_autoExposureEnabled(false),
+      m_desiredLuminance(75),
       m_changingExposure(true)
     {
       Initialize();
@@ -403,7 +418,7 @@ class AutoExposureCamera : public CameraDriverInterface
     virtual void SetAutoExposureEnabled(bool enabled)
     {
       m_autoExposureEnabled = enabled;
-      if (!m_autoExposureEnabled) Reset();
+      (m_autoExposureEnabled) ? DisableAutoExposure() : Reset();
     }
 
     virtual double GetDesiredLuminance() const
@@ -444,6 +459,8 @@ class AutoExposureCamera : public CameraDriverInterface
     virtual void ProcessImage(const hal::ImageMsg& image)
     {
       const double luminance = m_lightMeter.Measure(image);
+      m_gainController.maxValue = GetMaxGain();
+      m_gainController.minValue = GetMinGain();
 
       (luminance < m_desiredLuminance) ?
           BrightenImage(luminance) : DarkenImage(luminance);
@@ -451,25 +468,47 @@ class AutoExposureCamera : public CameraDriverInterface
 
     virtual void BrightenImage(double luminance)
     {
-      (GetActualFramerate() < GetDesiredFramerate()) ?
-          ChangeExposure(luminance) : IncreaseGain(luminance);
+      if (GetExposure() < GetDesiredExposure())
+      {
+        m_exposureController.maxValue = GetDesiredExposure();
+        m_exposureController.minValue = 0;
+        ChangeExposure(luminance);
+      }
+      else
+      {
+        m_exposureController.maxValue = DBL_MAX;
+        m_exposureController.minValue = GetDesiredExposure();
+        IncreaseGain(luminance);
+      }
     }
 
     virtual void DarkenImage(double luminance)
     {
-      (GetActualFramerate() > GetDesiredFramerate()) ?
-          ChangeExposure(luminance) : DecreaseGain(luminance);
+      if (GetExposure() > GetDesiredExposure())
+      {
+        m_exposureController.maxValue = DBL_MAX;
+        m_exposureController.minValue = GetDesiredExposure();
+        ChangeExposure(luminance);
+      }
+      else
+      {
+        m_exposureController.maxValue = GetDesiredExposure();
+        m_exposureController.minValue = 0;
+        DecreaseGain(luminance);
+      }
     }
 
     virtual void IncreaseGain(double luminance)
     {
       (GetGain() < GetMaxGain()) ?
-            ChangeGain(luminance) : ChangeExposure(luminance);
+        ChangeGain(luminance) : ChangeExposure(luminance);
     }
 
     virtual void DecreaseGain(double luminance)
     {
-      (GetGain() > 0) ? ChangeGain(luminance) : ChangeExposure(luminance);
+      std::cout << "Current Gain: " << GetGain() << ", Min Gain: " << GetMinGain() << std::endl;
+      (GetGain() > GetMinGain()) ?
+        ChangeGain(luminance) : ChangeExposure(luminance);
     }
 
     virtual void ChangeExposure(double luminance)
@@ -480,7 +519,7 @@ class AutoExposureCamera : public CameraDriverInterface
         m_changingExposure = true;
       }
 
-      m_exposureController.Update(luminance);
+      m_exposureController.Update(luminance, GetExposure());
     }
 
     virtual void ChangeGain(double luminance)
@@ -491,14 +530,13 @@ class AutoExposureCamera : public CameraDriverInterface
         m_changingExposure = false;
       }
 
-      m_gainController.Update(luminance);
+      m_gainController.Update(luminance, GetGain());
     }
 
   private:
 
     void Initialize()
     {
-      DisableAutoExposure();
       InitExposureController();
       InitGainController();
     }
@@ -518,17 +556,17 @@ class AutoExposureCamera : public CameraDriverInterface
     void InitExposureController()
     {
       m_exposureController.setpoint = m_desiredLuminance;
-      m_exposureController.Kp = 0.010;
-      m_exposureController.Ki = 0.005;
-      m_exposureController.Kd = 0.005;
+      m_exposureController.Kp = 0.8;
+      m_exposureController.Ki = 0.0;
+      m_exposureController.Kd = 0.0;
     }
 
     void InitGainController()
     {
       m_gainController.setpoint = m_desiredLuminance;
-      m_gainController.Kp = 0.010;
-      m_gainController.Ki = 0.005;
-      m_gainController.Kd = 0.007;
+      m_gainController.Kp = 0.8;
+      m_gainController.Ki = 0.0;
+      m_gainController.Kd = 0.0;
     }
 
     virtual bool CaptureImages(hal::CameraMsg& images) = 0;
@@ -537,9 +575,7 @@ class AutoExposureCamera : public CameraDriverInterface
 
     virtual void DisableAutoExposure() = 0;
 
-    virtual double GetActualFramerate() = 0;
-
-    virtual double GetDesiredFramerate() = 0;
+    virtual double GetDesiredExposure() = 0;
 
     virtual double GetExposure() = 0;
 
