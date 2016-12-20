@@ -90,9 +90,10 @@ namespace hal
     double capStart;
     
     //Aravis variables
+    int payloadSize;
     ArvCamera *camera;
     ArvStream *stream;
-    ArvBuffer *buffer;
+    ArvBuffer *sharedBuffer;
     std::mutex bufferMutex;
     std::condition_variable bufferBell;
     

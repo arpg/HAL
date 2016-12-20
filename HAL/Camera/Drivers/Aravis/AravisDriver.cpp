@@ -170,14 +170,15 @@ namespace hal {
       return;
     }
     arv_stream_set_emit_signals (stream, TRUE);
-    int payloadSize = arv_camera_get_payload (camera);
+    payloadSize = arv_camera_get_payload (camera);
 
     printf("Aravis: payload: %d\n", payloadSize);
     
     /* Push 50 buffer in the stream input buffer queue */
     for (int i = 0; i < 50; i++)
       arv_stream_push_buffer (stream, arv_buffer_new (payloadSize, NULL));
-    
+
+    sharedBuffer = NULL;
     /* Connect the control-lost signal */
     g_signal_connect (arv_camera_get_device (camera), "control-lost",
 		      G_CALLBACK (aravis_driver_control_lost_cb), this);
@@ -220,7 +221,19 @@ namespace hal {
   void AravisDriver::new_buffer_cb(ArvStream* m_stream)
   {
     std::unique_lock<std::mutex> guard(bufferMutex);
-    buffer = arv_stream_pop_buffer (m_stream);
+    if (sharedBuffer == NULL)
+      {
+	sharedBuffer = arv_stream_pop_buffer (m_stream);
+	
+	//Push a new buffer into the stream while we have this one to work with
+	arv_stream_push_buffer (m_stream, arv_buffer_new (payloadSize, NULL));
+      }
+    else
+      {
+	//The old one wasn't looked at - recycle the buffer 
+	arv_stream_push_buffer (m_stream, sharedBuffer);
+	sharedBuffer = arv_stream_pop_buffer (m_stream);
+      }
     guard.unlock();
     bufferBell.notify_one();
   }
@@ -261,10 +274,10 @@ namespace hal {
   {
     capStart = hal::Tic();
     vImages.Clear();
-
+    std::unique_lock<std::mutex> lock(bufferMutex);
     while (badBufferCount < MAX_BAD_BUFFERS)
       {
-	std::unique_lock<std::mutex> lock(bufferMutex);
+
 	if (bufferBell.wait_for(lock, std::chrono::milliseconds(1000)) == std::cv_status::timeout)
 	  {
 	    cout << "aravisDriver: Timed out waiting for an image!" << endl;
@@ -272,33 +285,36 @@ namespace hal {
 	    continue;
 	  }
 	
-	if (buffer == NULL) {
+	if (sharedBuffer == NULL) {
 	  cout << "AravisDriver: Buffer popped was invalid!" << endl;
 	  //arv_stream_push_buffer (stream, buffer);
-	  badBufferCount++;
-	  continue;
+	   badBufferCount++;
+	   continue;
 	}
-	if (arv_buffer_get_status (buffer) == ARV_BUFFER_STATUS_SIZE_MISMATCH)
+	if (arv_buffer_get_status (sharedBuffer) == ARV_BUFFER_STATUS_SIZE_MISMATCH)
 	  {
 	    cout << "AravisDriver: Buffer was underrun, attempt:" << badBufferCount << endl;
-	    bufferMutex.unlock();
-	    arv_stream_push_buffer (stream, buffer);
+	    
+	    g_object_unref(sharedBuffer);
+	    sharedBuffer = NULL;
+
 	    badBufferCount++;
 	    continue;
 	  }
 
-	if (arv_buffer_get_status(buffer) == ARV_BUFFER_STATUS_SUCCESS)
+	if (arv_buffer_get_status(sharedBuffer) == ARV_BUFFER_STATUS_SUCCESS)
 	  break;
       }
     
     badBufferCount = 0;
     
-    ArvBufferPayloadType payloadType = arv_buffer_get_payload_type(buffer);
+    ArvBufferPayloadType payloadType = arv_buffer_get_payload_type(sharedBuffer);
 
     if (payloadType != ARV_BUFFER_PAYLOAD_TYPE_IMAGE)
       {
 	cout << "AravisDriver: Got unknown payload type: " << payloadType << endl;
-	arv_stream_push_buffer (stream, buffer);
+	g_object_unref(sharedBuffer);
+	sharedBuffer = NULL;
 	return false;
       }
 
@@ -306,11 +322,11 @@ namespace hal {
    
     const void* imageData;
     size_t imageSize;
-    pimg->set_width(arv_buffer_get_image_width(buffer));
-    pimg->set_height(arv_buffer_get_image_height(buffer));
+    pimg->set_width(arv_buffer_get_image_width(sharedBuffer));
+    pimg->set_height(arv_buffer_get_image_height(sharedBuffer));
    
-    imageData = arv_buffer_get_data(buffer, &imageSize);
-    ArvPixelFormat pixFormat = arv_buffer_get_image_pixel_format(buffer);
+    imageData = arv_buffer_get_data(sharedBuffer, &imageSize);
+    ArvPixelFormat pixFormat = arv_buffer_get_image_pixel_format(sharedBuffer);
 
     cv::Mat* bayerImage;
 
@@ -321,7 +337,7 @@ namespace hal {
 	pimg->set_type(hal::PB_UNSIGNED_BYTE);
 	pimg->set_format(hal::PB_BGR );
        
-	bayerImage = unBayer(buffer);
+	bayerImage = unBayer(sharedBuffer);
 
 	imageSize =bayerImage->total() * bayerImage->elemSize();
 	//printf("Debayer time: %1.6f\n", hal::Toc(capStart));
@@ -344,17 +360,20 @@ namespace hal {
 	break;
       default:
 	printf( "Unknown pixel format: 0x%x\n", pixFormat);
-	arv_stream_push_buffer (stream, buffer);
+	g_object_unref(sharedBuffer);
+	sharedBuffer = NULL;
 	return false;
 	break;
       }
 
     //Return the buffer to the pool to be filled anew
-    arv_stream_push_buffer (stream, buffer);
+    //arv_stream_push_buffer (stream, buffer);
 
     vImages.set_system_time(hal::Tic());
     //printf("Total capture time: %1.6f\n", hal::Toc(capStart));
-    return true;
+    g_object_unref(sharedBuffer);
+     sharedBuffer = NULL;
+     return true;
   }
   
   /*Split fcn from http://stackoverflow.com/questions/236129/split-a-string-in-c */
