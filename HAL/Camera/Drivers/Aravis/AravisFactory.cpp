@@ -20,6 +20,7 @@ public:
 	{"y","", "ROI top offset, default: 0"},
 	{"exposure","", "Exposure time (uS), default: 15000"},
 	{"gain","", "Gain (dB), floating point, default: 0"},
+	{"bandwidth","", "Bandwidth limit to set in Mbps, default: -1 (no limit)"},
       };
     };
     
@@ -34,8 +35,9 @@ public:
       int y = uri.properties.Get<int>("y",0);
       int exposure = uri.properties.Get<int>("exposure", 15000);
       float gain = uri.properties.Get<float>("gain", 0.0);
-
-      AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure, gain);
+      int bandwidth = uri.properties.Get<int>("bandwidth", -1);
+      
+      AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure, gain, bandwidth);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };

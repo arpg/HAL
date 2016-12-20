@@ -48,7 +48,8 @@ namespace hal
 		 int m_x,
 		 int m_y,
 		 int m_exposure,
-		 float m_gain);
+		 float m_gain,
+		 int m_bandwidth);
     ~AravisDriver();
 
     bool Capture( hal::CameraMsg& vImages );
@@ -78,13 +79,17 @@ namespace hal
     int height;
     int x;
     int y;
-
-    double exposureTime; //in microseconds
-    double gain; //in dB
+    
     int roiWidth;
     int roiHeight;
     int roiX;
     int roiY;
+
+    double exposureTime; //in microseconds
+    double gain; //in dB
+
+    int bandwidthLimit;
+    
     int badBufferCount;
     
     double capStart;

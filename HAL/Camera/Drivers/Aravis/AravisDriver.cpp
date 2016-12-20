@@ -10,8 +10,9 @@ namespace hal {
 			     int m_x,
 			     int m_y,
 			     int m_exposure,
-			     float m_gain)
-    : dev(m_dev), exposureTime(m_exposure), gain(m_gain), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y)
+			     float m_gain,
+			     int m_bandwidth)
+    : dev(m_dev), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y), exposureTime(m_exposure), gain(m_gain), bandwidthLimit(m_bandwidth)
   {
     
     Start();
@@ -134,7 +135,7 @@ namespace hal {
     arv_camera_get_region (camera, &reqX, &reqY, &reqWidth, &reqHeight);
     printf("AravisDriver: Camera reports ROI: %ux%u+%u+%u\n", reqWidth, reqHeight, reqX, reqY);
  
-    //Set the camera to mono8:
+    
     printf("AravisDriver: Available pixel formats:\n");
 
     guint numFormats;
@@ -145,6 +146,8 @@ namespace hal {
 	printf("Format: %s\n", pixelFormats[i]);
       }
     g_free(pixelFormats);
+    
+    //Set the camera to mono8:
     //arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
 
     printf("AravisDriver: Setting exposure to %1.2f\n", exposureTime);
@@ -160,6 +163,34 @@ namespace hal {
     arv_camera_set_gain(camera, gain);
     gain = arv_camera_get_gain(camera);
     printf("AravisDriver: Camera reports gain of %1.2f\n", gain);
+
+    //Set the bandwidth limit if specified
+    if (bandwidthLimit > 0)
+      {
+	//Check for Aravis support:
+	if (arv_camera_uv_is_bandwidth_control_available(camera))
+	  {
+	    unsigned int min,max;
+	    unsigned int bandwidthLimitu = (unsigned int) bandwidthLimit;
+	    arv_camera_uv_get_bandwidth_bounds(camera, &min, &max);
+	    min /= 1e6;
+	    max /= 1e6;
+	    //Limits are internally represented in bytes/s - somewhat cumbersome
+	    printf("AravisDriver: Bandwidth limits are: (%d,%d)\n", min, max); 
+	    if ((bandwidthLimitu > min) && (bandwidthLimitu < max))
+	      {
+		printf("AravisDriver: Set bandwidth limit to: %d\n", bandwidthLimit);
+		arv_camera_uv_set_bandwidth(camera, bandwidthLimitu*1e6);
+	      }
+
+	  }
+	else
+	  {
+	    printf("AravisDriver: Bandwidth control is not available on this camera\n");
+	    
+	  }
+      }
+
     
     /* Create a new stream object */
     cout << "Aravis: Creating stream" << endl;
