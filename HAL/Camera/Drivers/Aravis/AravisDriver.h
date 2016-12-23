@@ -49,7 +49,10 @@ namespace hal
 		 int m_y,
 		 int m_exposure,
 		 float m_gain,
-		 int m_bandwidth);
+		 int m_bandwidth,
+		 int m_sync,
+		 string m_syncPort,
+		 string m_syncSource);
     ~AravisDriver();
 
     bool Capture( hal::CameraMsg& vImages );
@@ -70,6 +73,8 @@ namespace hal
     void threadFunc();
     
     string dev;
+
+    
     int sensorCount;
     int deviceIndex;
     int isColor;
@@ -89,6 +94,9 @@ namespace hal
     double gain; //in dB
 
     int bandwidthLimit;
+    int sync;
+    string syncPort;
+    string syncSource;
     
     int badBufferCount;
     

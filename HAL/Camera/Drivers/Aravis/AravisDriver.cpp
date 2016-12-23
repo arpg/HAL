@@ -11,8 +11,13 @@ namespace hal {
 			     int m_y,
 			     int m_exposure,
 			     float m_gain,
-			     int m_bandwidth)
-    : dev(m_dev), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y), exposureTime(m_exposure), gain(m_gain), bandwidthLimit(m_bandwidth)
+			     int m_bandwidth,
+			     int m_sync,
+			     string m_syncPort,
+			     string m_syncSource)
+    : dev(m_dev), roiWidth(m_width), roiHeight(m_height), roiX(m_x), roiY(m_y),
+      exposureTime(m_exposure), gain(m_gain), bandwidthLimit(m_bandwidth),
+      sync(m_sync), syncPort(m_syncPort), syncSource(m_syncSource)
   {
     
     Start();
@@ -191,6 +196,66 @@ namespace hal {
 	  }
       }
 
+    /* Advertise the available sync settings */
+    const char** gpioLines;
+    guint numLines;
+    gpioLines = arv_camera_get_gpio_lines(camera, &numLines);
+
+    for (unsigned int i=0; i<numLines; i++)
+      {
+	printf("AravisDriver: Found GPIO output line: %s\n", gpioLines[i]);
+      }
+    const char** gpioSources;
+    guint numSources;
+	
+    gpioSources = arv_camera_get_gpio_output_sources(camera, &numSources);
+    for (unsigned int i=0; i<numSources; i++)
+      {
+	printf("AravisDriver: Found GPIO output source: %s\n", gpioSources[i]);
+      }
+    const char** triggerSources;
+    guint numTriggers;
+    triggerSources = arv_camera_get_trigger_sources(camera, &numTriggers);
+    for (unsigned int i=0; i < numTriggers; i++)
+      {
+	printf("AravisDriver: Found sync trigger source: %s\n", triggerSources[i]);
+      }
+    
+    /* Configure the sync settings */
+    switch (sync)
+      {
+      case 0: //Freerun:
+	printf("AravisDriver: Camera is in freerun mode\n");
+	arv_camera_clear_triggers(camera);
+	break;
+      case 1: //Slave sync
+	if (syncPort == "")
+	  syncPort = "Line1";
+	
+	arv_camera_set_trigger (camera, syncPort.c_str());
+	printf("AravisDriver: Camera syncing to %s\n", syncPort.c_str());
+	break;
+      case 2: //Master sync
+	if (syncPort == "")
+	  syncPort = "Line2";
+	printf("AravisDriver: Setting output line: %s as master\n", syncPort.c_str());
+	arv_camera_set_gpio_mode(camera, syncPort.c_str(), ARV_GPIO_MODE_OUTPUT);
+
+	ArvGpioMode syncState = arv_camera_get_gpio_mode(camera, syncPort.c_str());
+	if (syncState != ARV_GPIO_MODE_OUTPUT)
+	  {
+	    printf("AravisDriver: The camera doesn't like setting that port for output - master sync not enabled\n");
+	  }
+	else
+	  {
+	    printf("AravisDriver: Setting GPIO output source to: %s\n", syncSource.c_str());
+	    arv_camera_set_gpio_output_source(camera, syncPort.c_str(), syncSource.c_str());
+
+	    //Output sync also requires software triggering for some unclear reason
+	    arv_camera_set_trigger(camera, "Software");
+	  }
+	
+      }
     
     /* Create a new stream object */
     cout << "Aravis: Creating stream" << endl;
@@ -303,15 +368,18 @@ namespace hal {
   
   bool AravisDriver::Capture( hal::CameraMsg& vImages )
   {
+    
     capStart = hal::Tic();
     vImages.Clear();
     std::unique_lock<std::mutex> lock(bufferMutex);
     while (badBufferCount < MAX_BAD_BUFFERS)
       {
+	if (sync == 2)
+	    arv_camera_software_trigger(camera);
 
 	if (bufferBell.wait_for(lock, std::chrono::milliseconds(1000)) == std::cv_status::timeout)
 	  {
-	    cout << "aravisDriver: Timed out waiting for an image!" << endl;
+	    cout << "AravisDriver: Timed out waiting for an image!" << endl;
 	    badBufferCount++;
 	    continue;
 	  }
@@ -390,7 +458,7 @@ namespace hal {
 	 
 	break;
       default:
-	printf( "Unknown pixel format: 0x%x\n", pixFormat);
+	printf( "AravisDriver: Unknown pixel format: 0x%x\n", pixFormat);
 	g_object_unref(sharedBuffer);
 	sharedBuffer = NULL;
 	return false;

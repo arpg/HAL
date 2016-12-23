@@ -21,6 +21,9 @@ public:
 	{"exposure","", "Exposure time (uS), default: 15000"},
 	{"gain","", "Gain (dB), floating point, default: 0"},
 	{"bandwidth","", "Bandwidth limit to set in Mbps, default: -1 (no limit)"},
+	{"sync", "", "Sync config, 0: freerun, 1:master, 2:slave, default: 0"},
+	{"sync_port", "", "Sync camera GPIO port to use, default: (Master mode) Line2, (Slave mode) Line1"},
+	{"sync_source", "", "Sync camera output signal to use, default: (Master mode only) FrameActive"},
       };
     };
     
@@ -36,8 +39,10 @@ public:
       int exposure = uri.properties.Get<int>("exposure", 15000);
       float gain = uri.properties.Get<float>("gain", 0.0);
       int bandwidth = uri.properties.Get<int>("bandwidth", -1);
-      
-      AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure, gain, bandwidth);
+      int sync = uri.properties.Get<int>("sync", 0);
+      std::string syncPort = uri.properties.Get<std::string>("sync_port", "");
+      std::string syncSource = uri.properties.Get<std::string>("sync_source", "FrameActive"); 
+      AravisDriver* rs = new AravisDriver(dev, width, height, x, y, exposure, gain, bandwidth, sync, syncPort, syncSource);
       return std::shared_ptr<CameraDriverInterface>( rs );
     }
 };
