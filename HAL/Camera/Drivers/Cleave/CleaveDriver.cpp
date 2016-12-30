@@ -4,7 +4,7 @@
 
 namespace hal {
 
-  CleaveDriver::CleaveDriver(std::shared_ptr<CameraDriverInterface> Input, int m_maxChannel, int m_minChannel )
+  CleaveDriver::CleaveDriver(CameraDriverInterface* Input, int m_maxChannel, int m_minChannel )
     : maxChannel(m_maxChannel), minChannel(m_minChannel), inputCamera(Input)
   {
 

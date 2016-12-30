@@ -22,7 +22,7 @@ public:
   };
   }
 
-  std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+  CameraDriverInterface* GetDevice(const Uri& uri)
   {
     std::string sFormat = uri.properties.Get<std::string>("fmt", "MONO8");
     std::string sRange = uri.properties.Get<std::string>("range", "1");
@@ -44,12 +44,12 @@ public:
     const Uri input_uri = Uri(uri.url);
 
     // Create input camera
-    std::shared_ptr<CameraDriverInterface> Input =
+    CameraDriverInterface* Input =
         DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
 
     ConvertDriver* pDriver = new ConvertDriver( Input, sFormat, dRange, dims,
                                                 channel);
-    return std::shared_ptr<CameraDriverInterface>( pDriver );
+    return static_cast<CameraDriverInterface*>( pDriver );
   }
 };
 

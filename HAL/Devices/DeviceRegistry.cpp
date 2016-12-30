@@ -49,7 +49,7 @@ void DeviceRegistry<BaseDevice>::RegisterAlias(
 }
 
 template<typename BaseDevice>
-std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
+BaseDevice* DeviceRegistry<BaseDevice>::Create(
     const Uri& uri )
 {
   // Check for aliases
@@ -64,7 +64,7 @@ std::shared_ptr<BaseDevice> DeviceRegistry<BaseDevice>::Create(
   else{
     auto pf = m_factories.find(uri.scheme);
     if(pf != m_factories.end()) {
-      std::shared_ptr<BaseDevice> dev = pf->second->GetDevice(uri);
+      BaseDevice* dev = pf->second->GetDevice(uri);
       return dev;
     }
     else{

@@ -57,7 +57,7 @@ class LIDAR : public LIDARDriverInterface
 
 protected:
     hal::Uri                                m_URI;
-    std::shared_ptr<LIDARDriverInterface>     m_LIDAR;
+    LIDARDriverInterface*     m_LIDAR;
 
 };
 

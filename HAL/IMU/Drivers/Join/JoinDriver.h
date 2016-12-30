@@ -9,7 +9,7 @@ namespace hal {
 
 class JoinDriver : public IMUDriverInterface {
  public:
-  JoinDriver(const std::shared_ptr<IMUDriverInterface>& input);
+  JoinDriver(IMUDriverInterface* input);
   virtual ~JoinDriver() {}
 
   void RegisterIMUDataCallback(IMUDriverDataCallback callback) override {
@@ -24,7 +24,7 @@ class JoinDriver : public IMUDriverInterface {
   void HandleIMU(hal::ImuMsg& imu);
   inline bool InterpolateAccel(int* gyro_index, Eigen::VectorXd* vec) const;
 
-  std::shared_ptr<IMUDriverInterface> input_imu_;
+  IMUDriverInterface* input_imu_;
   IMUDriverDataCallback callback_;
 
   // The measurements themselves. Back is most recent.

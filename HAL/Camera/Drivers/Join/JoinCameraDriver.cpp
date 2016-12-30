@@ -16,9 +16,9 @@ JoinCameraDriver::JoinCameraDriver(
     const std::vector<std::shared_ptr<CameraDriverInterface>>& cameras)
   : m_Cameras(cameras)
 {
-  const size_t N = NumChannels();
-  m_nImgWidth.reserve(N);
-  m_nImgHeight.reserve(N);
+//  const size_t N = NumChannels();
+//  m_nImgWidth.reserve(N);
+//  m_nImgHeight.reserve(N);
 
   m_nNumChannels = 0;
   for( auto& cam : m_Cameras ) {

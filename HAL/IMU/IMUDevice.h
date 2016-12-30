@@ -62,7 +62,7 @@ class IMU : public IMUDriverInterface {
 
  protected:
   hal::Uri                                m_URI;
-  std::shared_ptr<IMUDriverInterface>     m_IMU;
+  IMUDriverInterface*     m_IMU;
   IMUDriverDataCallback m_callback;
   IMUDriverFinishedCallback m_finished_callback;
 };

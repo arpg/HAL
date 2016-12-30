@@ -19,7 +19,7 @@ public:
     };
     
         
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    CameraDriverInterface* GetDevice(const Uri& uri)
     {
       hal::Uri subUri(uri.url);
       int maxChannel = uri.properties.Get<int>("max", 0);
@@ -31,10 +31,10 @@ public:
 	  return NULL;
 	}
       // Create input camera
-      std::shared_ptr<CameraDriverInterface> InCam =
+      CameraDriverInterface* InCam =
 	DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(subUri);      
       CleaveDriver* rs = new CleaveDriver(InCam, maxChannel, minChannel);
-      return std::shared_ptr<CameraDriverInterface>( rs );
+      return static_cast<CameraDriverInterface*>( rs );
     }
 };
 

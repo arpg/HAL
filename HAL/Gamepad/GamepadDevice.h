@@ -51,7 +51,7 @@ class Gamepad : public GamepadDriverInterface {
 
  protected:
 	hal::Uri																		m_URI;
-	std::shared_ptr<GamepadDriverInterface>     m_Gamepad;
+    GamepadDriverInterface*     m_Gamepad;
 	GamepadDriverDataCallback m_callback;
 };
 } /* namespace hal */

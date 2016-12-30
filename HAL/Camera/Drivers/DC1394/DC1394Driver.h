@@ -21,7 +21,7 @@ public:
                unsigned int nDMA, float fEXP, bool ptgrey_timestamp);
 
   bool Capture( hal::CameraMsg& vImages );
-  std::shared_ptr<CameraDriverInterface> GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
+
 
   std::string GetDeviceProperty(const std::string& sProperty);
 

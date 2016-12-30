@@ -15,7 +15,7 @@ public:
         };
     }
 
-    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
+    PosysDriverInterface* GetDevice(const Uri& uri)
     {
         std::vector<std::string> Splitter = Split(uri.url, ':');
 
@@ -24,7 +24,7 @@ public:
         }
 
         ViconDriver* pDriver = new ViconDriver( Splitter[0], Splitter[1] );
-        return std::shared_ptr<PosysDriverInterface>( pDriver );
+        return static_cast<PosysDriverInterface*>( pDriver );
     }
 };
 

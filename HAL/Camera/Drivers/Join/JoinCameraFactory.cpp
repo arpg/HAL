@@ -24,7 +24,7 @@ public:
         std::cout << "Creating stream from uri: " << uri.ToString()
                   << std::endl;
         cameras.emplace_back
-            (DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(uri));
+            (DeviceRegistry<CameraDriverInterface>::Instance().Create(uri));
       } catch ( std::exception& e ) {
         throw DeviceException(std::string("Error creating driver from uri \"") +
                               uri.ToString() + "\": " + e.what());
@@ -35,6 +35,8 @@ public:
       throw DeviceException("No input cameras given to join");
     }
 
+    std::cout << cameras[0]->GetDeviceProperty("Directory") << std::endl;
+    std::cout << cameras[1]->GetDeviceProperty("Directory") << std::endl;
     JoinCameraDriver* pDriver = new JoinCameraDriver(cameras);
     return std::shared_ptr<CameraDriverInterface>( pDriver );
   }

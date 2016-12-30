@@ -59,7 +59,7 @@ public:
 
 protected:
   hal::Uri                            m_uri;
-  std::shared_ptr<CarDriverInterface> m_car;
+  CarDriverInterface* m_car;
 };
 
 }

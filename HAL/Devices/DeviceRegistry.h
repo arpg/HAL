@@ -35,7 +35,7 @@ public:
             );
 
     // Get factory associated with uri
-    std::shared_ptr<BaseDevice> Create(const Uri& uri);
+    BaseDevice* Create(const Uri& uri);
 
     void Destroy(BaseDevice* dev);
 

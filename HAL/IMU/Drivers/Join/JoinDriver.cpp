@@ -8,7 +8,7 @@ namespace hal {
 using std::placeholders::_1;
 static const size_t kBufferSize = 5;
 
-JoinDriver::JoinDriver(const std::shared_ptr<IMUDriverInterface>& input)
+JoinDriver::JoinDriver(IMUDriverInterface* input)
     : input_imu_(input), last_sent_time_(0.0) {
   input_imu_->RegisterIMUDataCallback(
       std::bind(&JoinDriver::HandleIMU, this, _1));

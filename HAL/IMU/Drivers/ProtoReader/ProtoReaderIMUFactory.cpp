@@ -14,12 +14,12 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    IMUDriverInterface* GetDevice(const Uri& uri)
     {
       const std::string file = ExpandTildePath(uri.url);
 
       ProtoReaderIMUDriver* pDriver = new ProtoReaderIMUDriver(file);
-      return std::shared_ptr<IMUDriverInterface>( pDriver );
+      return static_cast<IMUDriverInterface*>( pDriver );
     }
 };
 

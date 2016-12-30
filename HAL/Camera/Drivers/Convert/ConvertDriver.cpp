@@ -11,7 +11,7 @@ namespace hal
 {
 
 ConvertDriver::ConvertDriver(
-    std::shared_ptr<CameraDriverInterface> Input,
+    CameraDriverInterface* Input,
     const std::string& sFormat,
     double dRange,
     ImageDim dims,

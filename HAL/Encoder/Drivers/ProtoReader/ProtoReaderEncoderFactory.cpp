@@ -14,12 +14,12 @@ public:
         };
     }
 
-    std::shared_ptr<EncoderDriverInterface> GetDevice(const Uri& uri)
+    EncoderDriverInterface* GetDevice(const Uri& uri)
     {
         const std::string file = ExpandTildePath(uri.url);
 
         ProtoReaderEncoderDriver* pDriver = new ProtoReaderEncoderDriver(file);
-        return std::shared_ptr<EncoderDriverInterface>( pDriver );
+        return static_cast<EncoderDriverInterface*>( pDriver );
     }
 };
 

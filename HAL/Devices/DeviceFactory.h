@@ -26,7 +26,7 @@ public:
     }
     
     virtual ~DeviceFactory() {}
-    virtual std::shared_ptr<BaseDevice> GetDevice(const Uri& uri) = 0;
+    virtual BaseDevice* GetDevice(const Uri& uri) = 0;
     
     virtual std::vector<std::string> AvailableDevices() {
         return std::vector<std::string>();

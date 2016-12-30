@@ -16,7 +16,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    IMUDriverInterface* GetDevice(const Uri& uri)
     {
         const std::string sDataSourceDir = hal::ExpandTildePath(uri.url);
         const std::string sFileAccel = uri.properties.Get( "Accel", sDataSourceDir+"/accel.txt");
@@ -25,7 +25,7 @@ public:
         const std::string sFileTimestamp  = uri.properties.Get( "Timestamp", sDataSourceDir+"/timestamp.txt");
         
         CsvDriver* pDriver = new CsvDriver(sFileAccel, sFileGyro, sFileMag, sFileTimestamp);
-        return std::shared_ptr<IMUDriverInterface>( pDriver );
+        return static_cast<IMUDriverInterface*>( pDriver );
     }
 };
 

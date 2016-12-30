@@ -21,7 +21,7 @@ public:
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
+    IMUDriverInterface* GetDevice(const Uri& uri)
     {
         bool capture_accel = uri.properties.Get("accel", true);
         bool capture_gyro = uri.properties.Get("gyro", true);
@@ -33,7 +33,7 @@ public:
         MicroStrainDriver* pDriver =
             new MicroStrainDriver(uri.url, capture_accel, capture_gyro,
                                   capture_mag, capture_gps, gps_hz, imu_hz);
-        return std::shared_ptr<IMUDriverInterface>( pDriver );
+        return static_cast<IMUDriverInterface*>( pDriver );
     }
 };
 

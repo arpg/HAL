@@ -21,7 +21,7 @@ public:
         };
     }
 
-    std::shared_ptr<PosysDriverInterface> GetDevice(const Uri& uri)
+    PosysDriverInterface* GetDevice(const Uri& uri)
     {
         const std::string sDataSourceDir = hal::ExpandTildePath(uri.url);
         const int nObjectId = uri.properties.Get("id", 0);
@@ -34,7 +34,7 @@ public:
         }
 
         CsvPosysDriver* pDriver = new CsvPosysDriver(filename.str());
-        return std::shared_ptr<PosysDriverInterface>( pDriver );
+        return static_cast<PosysDriverInterface*>( pDriver );
     }
 };
 

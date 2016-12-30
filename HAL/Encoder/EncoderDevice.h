@@ -58,7 +58,7 @@ class Encoder : public EncoderDriverInterface
 
 protected:
     hal::Uri                                m_URI;
-    std::shared_ptr<EncoderDriverInterface> m_Encoder;
+    EncoderDriverInterface* m_Encoder;
 
 };
 

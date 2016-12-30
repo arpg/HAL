@@ -52,7 +52,7 @@ class Posys : public PosysDriverInterface {
 
  protected:
   hal::Uri                                m_URI;
-  std::shared_ptr<PosysDriverInterface>   m_Posys;
+  PosysDriverInterface*   m_Posys;
 
 };
 

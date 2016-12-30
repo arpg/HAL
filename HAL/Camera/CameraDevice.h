@@ -62,7 +62,7 @@ public:
     }
 
     ///////////////////////////////////////////////////////////////
-    std::shared_ptr<CameraDriverInterface> GetInputDevice()
+    CameraDriverInterface* GetInputDevice()
     {
         return m_cam->GetInputDevice();
     }
@@ -144,13 +144,12 @@ public:
     template<typename CameraDriverType = CameraDriverInterface>
     CameraDriverType* GetDriver()
     {
-        CameraDriverInterface* di = m_cam.get();
-        return dynamic_cast<CameraDriverType*>(di);
+        return m_cam;
     }
 
 protected:
     hal::Uri                                m_uri;
-    std::shared_ptr<CameraDriverInterface>  m_cam;
+    CameraDriverInterface*  m_cam;
 };
 
 } /* namespace */

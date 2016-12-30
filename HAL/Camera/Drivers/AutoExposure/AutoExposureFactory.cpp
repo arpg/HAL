@@ -17,16 +17,16 @@ public:
         };
     }
 
-    std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri)
+    CameraDriverInterface* GetDevice(const Uri& uri)
     {
         // Create input camera
-        std::shared_ptr<CameraDriverInterface> InCam =
+        CameraDriverInterface* InCam =
                 DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(uri.url);
 
         int nTarget  = uri.properties.Get("target", 100);
 
         AutoExposureDriver* driver = new AutoExposureDriver(nTarget,InCam);
-        return std::shared_ptr<CameraDriverInterface>( driver );
+        return CameraDriverInterface*( driver );
     }
 };
 
