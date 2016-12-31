@@ -85,6 +85,9 @@ namespace hal {
 	return;
       }
 
+    //Make sure we're not acquiring currently
+    arv_camera_stop_acquisition(camera);
+    
     printf ("Aravis: vendor name           = %s\n", arv_camera_get_vendor_name (camera));
     printf ("Aravis: model name            = %s\n", arv_camera_get_model_name (camera));
     printf ("Aravis: device id             = %s\n", arv_camera_get_device_id (camera));
@@ -129,6 +132,20 @@ namespace hal {
       {
 	width = reqWidth;
 	height = reqHeight;
+      }
+
+    // The camera has some interesting limitations on the payload, with the width and height
+    // Width and height have to be multiples of 4
+    // Payload has to be divisible by 0x800
+
+    uint32_t payloadSize = reqWidth*reqHeight;
+    if ((reqWidth % 4 != 0) || (reqHeight % 4 != 0) || (payloadSize % 0x800 != 0))
+      {
+	printf("AravisDriver: Your requested ROI may not work: \n");
+	printf("AravisDriver: width %% 4: %u\n", reqWidth % 4);
+	printf("AravisDriver: height %% 4: %u\n", reqHeight % 4);
+	printf("AravisDriver: payloadSize of %u %% 0x800: %u\n", payloadSize, payloadSize % 0x800);
+	printf("AravisDriver: Check to see if the camera accepts your settings\n");
       }
     
     printf("AravisDriver: Setting ROI to: %ux%u+%u+%u\n", reqWidth, reqHeight, reqX, reqY);
@@ -317,19 +334,14 @@ namespace hal {
   void AravisDriver::new_buffer_cb(ArvStream* m_stream)
   {
     std::unique_lock<std::mutex> guard(bufferMutex);
-    if (sharedBuffer == NULL)
+    if (sharedBuffer != NULL)
       {
-	sharedBuffer = arv_stream_pop_buffer (m_stream);
-	
-	//Push a new buffer into the stream while we have this one to work with
-	arv_stream_push_buffer (m_stream, arv_buffer_new (payloadSize, NULL));
-      }
-    else
-      {
-	//The old one wasn't looked at - recycle the buffer 
+	//Push the existing buffer back
 	arv_stream_push_buffer (m_stream, sharedBuffer);
-	sharedBuffer = arv_stream_pop_buffer (m_stream);
       }
+    
+    //Freshen the working buffer	
+    sharedBuffer = arv_stream_pop_buffer (m_stream);
     guard.unlock();
     bufferBell.notify_one();
   }
@@ -377,26 +389,22 @@ namespace hal {
 	if (sync == 2)
 	    arv_camera_software_trigger(camera);
 
-	if (bufferBell.wait_for(lock, std::chrono::milliseconds(1000)) == std::cv_status::timeout)
+	if (bufferBell.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::timeout)
 	  {
-	    cout << "AravisDriver: Timed out waiting for an image!" << endl;
+	    printf("AravisDriver: Timed out waiting for an image!\n");;
 	    badBufferCount++;
 	    continue;
 	  }
 	
 	if (sharedBuffer == NULL) {
-	  cout << "AravisDriver: Buffer popped was invalid!" << endl;
-	  //arv_stream_push_buffer (stream, buffer);
+	   printf("AravisDriver: Buffer popped was invalid!\n");
 	   badBufferCount++;
 	   continue;
 	}
 	if (arv_buffer_get_status (sharedBuffer) == ARV_BUFFER_STATUS_SIZE_MISMATCH)
 	  {
-	    cout << "AravisDriver: Buffer was underrun, attempt:" << badBufferCount << endl;
+	    printf("AravisDriver: Buffer was underrun, attempt: %d\n", badBufferCount);;
 	    
-	    g_object_unref(sharedBuffer);
-	    sharedBuffer = NULL;
-
 	    badBufferCount++;
 	    continue;
 	  }
@@ -404,16 +412,13 @@ namespace hal {
 	if (arv_buffer_get_status(sharedBuffer) == ARV_BUFFER_STATUS_SUCCESS)
 	  break;
       }
-    
     badBufferCount = 0;
-    
+        
     ArvBufferPayloadType payloadType = arv_buffer_get_payload_type(sharedBuffer);
 
     if (payloadType != ARV_BUFFER_PAYLOAD_TYPE_IMAGE)
       {
 	cout << "AravisDriver: Got unknown payload type: " << payloadType << endl;
-	g_object_unref(sharedBuffer);
-	sharedBuffer = NULL;
 	return false;
       }
 
@@ -459,19 +464,13 @@ namespace hal {
 	break;
       default:
 	printf( "AravisDriver: Unknown pixel format: 0x%x\n", pixFormat);
-	g_object_unref(sharedBuffer);
-	sharedBuffer = NULL;
 	return false;
 	break;
       }
 
-    //Return the buffer to the pool to be filled anew
-    //arv_stream_push_buffer (stream, buffer);
 
     vImages.set_system_time(hal::Tic());
     //printf("Total capture time: %1.6f\n", hal::Toc(capStart));
-    g_object_unref(sharedBuffer);
-     sharedBuffer = NULL;
      return true;
   }
   
