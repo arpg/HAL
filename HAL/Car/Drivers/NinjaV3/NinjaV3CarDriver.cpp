@@ -83,14 +83,15 @@ void NinjaV3CarDriver::ComportWriteThread(){
       chksum += data[ii];
     }
     tr_data_pack.chksum = chksum;
-    uint8_t trbuff[sizeof(tr_data_pack)];
-    memcpy(&trbuff,&tr_data_pack,sizeof(tr_data_pack));
-    std::cout << "data is: "  << std::endl;
-    for(int ii=0;ii<sizeof(tr_data_pack);ii++)
-      std::cout << " , " << static_cast<int>(trbuff[ii]);
-    std::cout << std::endl;
+//    uint8_t trbuff[sizeof(tr_data_pack)];
+//    memcpy(&trbuff,&tr_data_pack,sizeof(tr_data_pack));
+//    std::cout << "data is: "  << std::endl;
+//    for(int ii=0;ii<sizeof(tr_data_pack);ii++)
+//      std::cout << " , " << static_cast<int>(trbuff[ii]);
+//    std::cout << std::endl;
 
     // send packet
+//    std::cout << "data sent ." << std::endl;
     comport_mutex.lock();    
     comport_driver_.WriteComPort((uint8_t*)(&tr_data_pack),sizeof(ComTrDataPack));
     comport_mutex.unlock();
@@ -98,7 +99,7 @@ void NinjaV3CarDriver::ComportWriteThread(){
     shouldrun_mutex.lock();
   }
   shouldrun_mutex.unlock();
-  std::cout << "exiting write" << std::endl;
+//  std::cout << "exiting write" << std::endl;
 }
 
 void NinjaV3CarDriver::ComportReadThread(){
@@ -106,7 +107,7 @@ void NinjaV3CarDriver::ComportReadThread(){
   int rec_data_pack_size = sizeof(ComRecDataPack);
   hal::CarStateMsg pbStateMsg_;
   while(car_state_callback == nullptr);
-  std::cout << "RegisterCarStateDataCallback() has been registered." <<std::endl;
+//  std::cout << "RegisterCarStateDataCallback() has been registered." <<std::endl;
   while(should_run_) {
     shouldrun_mutex.unlock();
     // read data from buffer
@@ -144,13 +145,18 @@ void NinjaV3CarDriver::ComportReadThread(){
         std::cout << "Could not find the packet header." << std::endl;
       }
       if(cnt != 0) {
-        std::cout << "Loosing NinjaV3 COM packet." << std::endl;
+        std::cout << "Loosing COM packet." << std::endl;
         // read extra bytes in the begining to get ride of them
         comport_mutex.lock();
         bytes_received = comport_driver_.ReadSensorPacket((uint8_t*)(&buff),cnt);
         comport_mutex.unlock();
       }
     } else {
+
+//      std::cout << "data is: "  << std::endl;
+//      for(int ii=0;ii<bytes_received;ii++)
+//        std::cout << " , " << static_cast<int>(buff[ii]);
+//      std::cout << std::endl;
       // check received checksum
       unsigned int sum = 0;
       for( int ii=0 ; ii<rec_data_pack_size-4 ; ii++ ){
@@ -171,13 +177,13 @@ void NinjaV3CarDriver::ComportReadThread(){
         pbStateMsg_.set_device_time((rec_data_pack.dev_time));
         car_state_callback(pbStateMsg_);
       }else{
-        std::cerr << "Error:  checksum didn't match. received: " << rec_data_pack.chksum << " calculated: " << sum << std::endl;
+//        std::cerr << "Error:  checksum didn't match. received: " << rec_data_pack.chksum << " calculated: " << sum << std::endl;
       }
     }
     shouldrun_mutex.lock();
   }
   shouldrun_mutex.unlock();
-  std::cout << "exiting read" << std::endl;
+//  std::cout << "exiting read" << std::endl;
 }
 
 void NinjaV3CarDriver::UpdateCarCommand(CarCommandMsg &command_msg){
