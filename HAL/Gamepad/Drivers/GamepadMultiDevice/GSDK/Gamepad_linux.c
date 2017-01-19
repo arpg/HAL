@@ -20,8 +20,8 @@
   Alex Diener alex@ludobloom.com
 */
 
-#include "gamepad/Gamepad.h"
-#include "gamepad/Gamepad_private.h"
+#include "Gamepad.h"
+#include "Gamepad_private.h"
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
