@@ -17,6 +17,10 @@ void ProtoReaderIMUDriver::_ThreadFunc()
     if (std::unique_ptr<hal::ImuMsg> readmsg = m_reader.ReadImuMsg()) {
       m_callback( *readmsg );
     } else {
+      // Notify that this file has finished
+      if (m_IMUFinishedCallback ){
+        m_IMUFinishedCallback();
+      }
       break;
     }
   }
@@ -40,4 +44,10 @@ void ProtoReaderIMUDriver::RegisterIMUDataCallback(IMUDriverDataCallback callbac
     m_callback = callback;
     m_running = true;
     m_callbackThread = std::thread( &ProtoReaderIMUDriver::_ThreadFunc, this );
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+void ProtoReaderIMUDriver::RegisterIMUFinishedCallback(IMUDriverFinishedCallback callback)
+{
+    m_IMUFinishedCallback = callback;
 }

@@ -124,6 +124,12 @@ void CsvDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+void CsvDriver::RegisterIMUFinishedCallback(IMUDriverFinishedCallback callback)
+{
+    m_IMUFinishedCallback = callback;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 void CsvDriver::_ThreadCaptureFunc()
 {
@@ -202,6 +208,8 @@ void CsvDriver::_ThreadCaptureFunc()
 
         // break if EOF
         if( _GetNextTime( m_dNextTime, m_dNextTimePPS ) == false ) {
+            // Pop the last measurement so it does not hold up the queue
+            hal::DeviceTime::PopTime();
             break;
         }
 
@@ -209,6 +217,11 @@ void CsvDriver::_ThreadCaptureFunc()
         hal::DeviceTime::PopAndPushTime( m_dNextTime );
     }
     m_bShouldRun = false;
+
+    // Notify that this file has finished
+    if (m_IMUFinishedCallback ){
+      m_IMUFinishedCallback();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
