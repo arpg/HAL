@@ -168,7 +168,8 @@ namespace hal {
 	printf("Format: %s\n", pixelFormats[i]);
       }
     g_free(pixelFormats);
-    
+
+    //Do something intelligent with the pixel formats - include an arg to get gray or color
     //Set the camera to mono8:
     //arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_MONO_8);
 
@@ -232,7 +233,7 @@ namespace hal {
       }
     const char** triggerSources;
     guint numTriggers;
-    triggerSources = arv_camera_get_trigger_sources(camera, &numTriggers);
+    triggerSources = arv_camera_get_available_trigger_sources(camera, &numTriggers);
     for (unsigned int i=0; i < numTriggers; i++)
       {
 	printf("AravisDriver: Found sync trigger source: %s\n", triggerSources[i]);
@@ -437,6 +438,25 @@ namespace hal {
     switch (pixFormat)
       {
       case ARV_PIXEL_FORMAT_BAYER_GB_8:
+	//Need to unbayer via OpenCV first
+	pimg->set_type(hal::PB_UNSIGNED_BYTE);
+	pimg->set_format(hal::PB_BGR );
+       
+	bayerImage = unBayer(sharedBuffer);
+
+	imageSize =bayerImage->total() * bayerImage->elemSize();
+	//printf("Debayer time: %1.6f\n", hal::Toc(capStart));
+       
+	pimg->set_data(static_cast<const unsigned char*>(bayerImage->data), imageSize);
+	//printf("Image message time: %1.6f\n", hal::Toc(capStart));
+
+	//cv::imshow("Debayered", *bayerImage);
+	//cv::waitKey(0);
+	delete bayerImage;
+       
+	break;
+	
+      case ARV_PIXEL_FORMAT_BAYER_RG_8:
 	//Need to unbayer via OpenCV first
 	pimg->set_type(hal::PB_UNSIGNED_BYTE);
 	pimg->set_format(hal::PB_BGR );
