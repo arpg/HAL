@@ -19,7 +19,7 @@ public:
 
     std::shared_ptr<CarDriverInterface> GetDevice(const Uri& uri)
     {
-      int baud = uri.properties.Get<int>("baud", 11500);
+      int baud = uri.properties.Get<int>("baud", 115200);
       std::string dev = uri.properties.Get<std::string>("dev","/dev/ttyUSB0");
       NinjaV3CarDriver* pDriver = new NinjaV3CarDriver(dev,baud);
       return std::shared_ptr<CarDriverInterface>( pDriver );
