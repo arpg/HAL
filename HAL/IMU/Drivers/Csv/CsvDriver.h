@@ -17,6 +17,7 @@ public:
     ~CsvDriver();
 
     void RegisterIMUDataCallback(IMUDriverDataCallback callback);
+    void RegisterIMUFinishedCallback(IMUDriverFinishedCallback callback);
     bool IsRunning() const override {
       return m_bShouldRun;
     }
@@ -40,6 +41,7 @@ private:
     double                  m_dNextTimePPS;
     std::thread             m_DeviceThread;
     IMUDriverDataCallback   m_IMUCallback;
+    IMUDriverFinishedCallback m_IMUFinishedCallback;
 };
 
 } /* namespace */

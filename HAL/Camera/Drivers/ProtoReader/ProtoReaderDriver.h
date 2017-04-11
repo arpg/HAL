@@ -7,7 +7,8 @@ namespace hal {
 
 class ProtoReaderDriver : public CameraDriverInterface {
  public:
-  ProtoReaderDriver(std::string filename, int camID, size_t imageID);
+  ProtoReaderDriver(std::string filename, int camID, size_t imageID,
+                    bool realtime);
   ~ProtoReaderDriver();
 
   bool Capture( hal::CameraMsg& vImages );
@@ -26,6 +27,7 @@ class ProtoReaderDriver : public CameraDriverInterface {
   bool ReadNextCameraMessage(hal::CameraMsg& msg);
 
   bool                    m_first;
+  bool                    m_realtime;
   int                     m_camId;
   hal::Reader&             m_reader;
   hal::CameraMsg           m_nextMsg;
@@ -33,6 +35,8 @@ class ProtoReaderDriver : public CameraDriverInterface {
   std::vector<size_t>     m_width;
   std::vector<size_t>     m_height;
   size_t                  m_numChannels;
+  std::chrono::steady_clock::time_point m_start_time;
+  double                  m_first_frame_time;
 };
 
 }  // end namespace hal

@@ -12,7 +12,8 @@ public:
     {
         Params() = {
             {"startframe", "0", "First frame to capture."},
-            {"id", "0", "Id of the camera in log."}
+            {"id", "0", "Id of the camera in log."},
+            {"realtime", "0", "If the data should be played back at framerate"}
         };
     }
 
@@ -21,9 +22,10 @@ public:
         const std::string file = ExpandTildePath(uri.url);
         size_t startframe  = uri.properties.Get("startframe", 0);
         int camId = uri.properties.Get("id", -1);
+        bool realtime = uri.properties.Get("realtime", 0);
 
         ProtoReaderDriver* driver =
-            new ProtoReaderDriver(file, camId,startframe);
+            new ProtoReaderDriver(file, camId, startframe, realtime);
         return std::shared_ptr<CameraDriverInterface>( driver );
     }
 };
