@@ -24,7 +24,6 @@ public:
     {
       if(m_bIsConnected){
         _CloseComPort();
-        std::cout << "closecomport called" << std::endl;
       }
     }
 
