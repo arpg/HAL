@@ -17,6 +17,7 @@ namespace hal {
 enum MessageType {
   Msg_Type_Camera,
   Msg_Type_IMU,
+  Msg_Type_Signal,
   Msg_Type_LIDAR,
   Msg_Type_Posys
 };
@@ -54,6 +55,15 @@ class Reader {
   /// The "ReadIMU" static variable must be set to true if the reader
   /// is to queue IMU messages.
   std::unique_ptr<hal::ImuMsg> ReadImuMsg();
+
+  /// Reads the next Signal message from the message queue. If the next
+  /// message is NOT an Signal message, or the message queue is empty,
+  /// the function will block. Mostly used for Signal specific driver
+  /// implementations.
+  ///
+  /// The "ReadSignal" static variable must be set to true if the reader
+  /// is to queue Signal messages.
+  std::unique_ptr<hal::SignalMsg> ReadSignalMsg();
 
   /// Reads the next LIDAR message from the message queue. If the next
   /// message is NOT a LIDAR message, or the message queue is empty,
@@ -114,6 +124,7 @@ class Reader {
   bool                                    m_bShouldRun;
   bool                                    m_bReadCamera;
   bool                                    m_bReadIMU;
+  bool                                    m_bReadSignal;
   bool                                    m_bReadLIDAR;
   bool                                    m_bReadPosys;
   std::list<std::unique_ptr<hal::Msg> >    m_qMessages;

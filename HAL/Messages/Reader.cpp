@@ -23,6 +23,9 @@ Reader& Reader::Instance( const std::string& filename, MessageType eType ) {
   if( eType == Msg_Type_IMU ) {
     m_Instance.m_bReadIMU = true;
   }
+  if( eType == Msg_Type_Signal ) {
+    m_Instance.m_bReadSignal = true;
+  }
   if( eType == Msg_Type_LIDAR ) {
     m_Instance.m_bReadLIDAR = true;
   }
@@ -36,6 +39,7 @@ Reader::Reader(const std::string& filename) : m_bRunning(true),
                                               m_bShouldRun(false),
                                               m_bReadCamera(false),
                                               m_bReadIMU(false),
+                                              m_bReadSignal(false),
                                               m_bReadLIDAR(false),
                                               m_bReadPosys(false),
                                               m_nInitialImageID(0),
@@ -149,11 +153,12 @@ void Reader::_ThreadFunc() {
 
     bool has_camera  = pMsg->has_camera();
     bool has_imu     = pMsg->has_imu();
+    bool has_signal  = pMsg->has_signal();
     bool has_lidar   = pMsg->has_lidar();
     bool has_pose    = pMsg->has_pose();
 
     int num_message_types =
-        (has_camera + has_imu + has_lidar + has_pose);
+        (has_camera + has_imu + has_signal + has_lidar + has_pose);
     if (num_message_types == 0) {
       LOG(WARNING) << "Message with no known data types found";
     } else if (num_message_types > 1) {
@@ -165,6 +170,8 @@ void Reader::_ThreadFunc() {
       msg_type = Msg_Type_Camera;
     } else if (has_imu) {
       msg_type = Msg_Type_IMU;
+    } else if (has_signal) {
+      msg_type = Msg_Type_Signal;
     } else if (has_lidar) {
       msg_type = Msg_Type_LIDAR;
     } else if (has_pose) {
@@ -173,6 +180,7 @@ void Reader::_ThreadFunc() {
 
     if ((has_camera  && m_bReadCamera)  ||
         (has_imu     && m_bReadIMU)     ||
+        (has_signal  && m_bReadSignal)  ||
         (has_lidar   && m_bReadLIDAR)   ||
         (has_pose    && m_bReadPosys)) {
       m_qMessageTypes.push_back(msg_type);
@@ -261,6 +269,33 @@ std::unique_ptr<hal::ImuMsg> Reader::ReadImuMsg() {
   pImuMsg->Swap( pMessage->mutable_imu() );
   pImuMsg->set_system_time(pMessage->timestamp());
   return pImuMsg;
+}
+
+std::unique_ptr<hal::SignalMsg> Reader::ReadSignalMsg() {
+  if( !m_bReadSignal ) {
+    std::cerr << "warning: ReadSignalMsg was called but ReadSignal variable is set to false! " << std::endl;
+    return nullptr;
+  }
+
+  // Wait if buffer is empty
+  std::unique_lock<std::mutex> lock(m_QueueMutex);
+  while(m_bRunning && !_AmINext( Msg_Type_Signal ) ){
+    m_ConditionQueued.wait_for(lock, std::chrono::milliseconds(10));
+  }
+
+  if(!m_bRunning || m_qMessages.empty()) {
+    return nullptr;
+  }
+
+  std::unique_ptr<hal::Msg> pMessage = std::move(m_qMessages.front());
+  m_qMessages.pop_front();
+  m_qMessageTypes.pop_front();
+  m_ConditionDequeued.notify_one();
+
+  std::unique_ptr<hal::SignalMsg> pSignalMsg( new hal::SignalMsg );
+  pSignalMsg->Swap( pMessage->mutable_signal() );
+  pSignalMsg->set_system_time(pMessage->timestamp());
+  return pSignalMsg;
 }
 
 std::unique_ptr<hal::LidarMsg> Reader::ReadLidarMsg() {
@@ -359,6 +394,7 @@ bool Reader::SetInitialImage(size_t nImgID) {
 void Reader::EnableAll() {
   m_bReadCamera = true;
   m_bReadIMU = true;
+  m_bReadSignal = true;
   m_bReadLIDAR = true;
   m_bReadPosys = true;
 }
@@ -366,6 +402,7 @@ void Reader::EnableAll() {
 void Reader::DisableAll() {
   m_bReadCamera = false;
   m_bReadIMU = false;
+  m_bReadSignal = false;
   m_bReadLIDAR = false;
   m_bReadPosys = false;
 }
@@ -377,6 +414,9 @@ void Reader::Enable(MessageType type) {
       break;
     case Msg_Type_IMU:
       m_bReadIMU = true;
+      break;
+    case Msg_Type_Signal:
+      m_bReadSignal = true;
       break;
     case Msg_Type_LIDAR:
       m_bReadLIDAR = true;
@@ -397,6 +437,9 @@ void Reader::Disable(MessageType type) {
     case Msg_Type_IMU:
       m_bReadIMU = false;
       break;
+    case Msg_Type_Signal:
+      m_bReadSignal = false;
+      break;
     case Msg_Type_LIDAR:
       m_bReadLIDAR = false;
       break;
@@ -414,6 +457,8 @@ bool Reader::IsEnabled(MessageType type) const {
       return m_bReadCamera;
     case Msg_Type_IMU:
       return m_bReadIMU;
+    case Msg_Type_Signal:
+      return m_bReadSignal;
     case Msg_Type_LIDAR:
       return m_bReadLIDAR;
     case Msg_Type_Posys:

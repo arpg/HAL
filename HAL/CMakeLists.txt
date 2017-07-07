@@ -143,6 +143,7 @@ endmacro()
 add_subdirectory( Devices )
 add_subdirectory( ThirdParty )
 add_subdirectory( IMU )
+add_subdirectory( Signal )
 add_subdirectory( Gamepad )
 add_subdirectory( Posys )
 add_subdirectory( LIDAR )
@@ -172,6 +173,7 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/Camera.proto
     ${PROTO_DIR}/Image.proto
     ${PROTO_DIR}/Imu.proto
+    ${PROTO_DIR}/Signal.proto
     ${PROTO_DIR}/Gamepad.proto
     ${PROTO_DIR}/Car.proto
     ${PROTO_DIR}/Pose.proto
