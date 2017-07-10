@@ -65,7 +65,7 @@ void WiFiDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
 void WiFiDriver::_ThreadCaptureFunc()
 {
     while(mShouldRun){
-        //mip_interface_update(&mDeviceInterface,true);
+        scan("en0");
     }
     mShouldRun = false;
 }

@@ -1,9 +1,18 @@
 #pragma once
 
 #include <thread>
+#include <string>
 
 #include <HAL/Signal/SignalDriverInterface.h>
 #include <HAL/Posys/PosysDriverInterface.h>
+
+struct AccessPoint {
+  std::string ssid;
+  std::string bssid;
+  int rssi;
+};
+
+std::vector<AccessPoint> scan(std::string ifname);
 
 namespace hal {
 
