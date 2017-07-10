@@ -2,6 +2,7 @@
 
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
+#include <HAL/Signal/SignalDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Car/CarDevice.h>
@@ -91,6 +92,7 @@ void DeviceRegistry<BaseDevice>::Destroy(BaseDevice* /*dev*/)
 // Explicitly instantiate desired registries.
 template class DeviceRegistry<hal::CameraDriverInterface>;
 template class DeviceRegistry<hal::IMUDriverInterface>;
+template class DeviceRegistry<hal::SignalDriverInterface>;
 template class DeviceRegistry<hal::GamepadDriverInterface>;
 template class DeviceRegistry<hal::LIDARDriverInterface>;
 template class DeviceRegistry<hal::PosysDriverInterface>;

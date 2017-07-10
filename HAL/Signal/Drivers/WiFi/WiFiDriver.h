@@ -7,37 +7,35 @@
 
 namespace hal {
 
-class WiFiDriver : public SignalDriverInterface
-{
+  class WiFiDriver : public SignalDriverInterface
+  {
     public:
-        WiFiDriver(std::string ifname,
-                          int  scan_hz);
-        ~WiFiDriver();
-        void RegisterSignalDataCallback(SignalDriverDataCallback callback);
-  bool IsRunning() const override {
-    return mShouldRun;
-  }
+      WiFiDriver(std::string ifname,
+          int  scan_hz);
+      ~WiFiDriver();
+      void RegisterSignalDataCallback(SignalDriverDataCallback callback);
+      bool IsRunning() const override {
+        return mShouldRun;
+      }
 
-        // Auxiliary non-standard methods for Posys integration.
-        static void RegisterPosysDataCallback(PosysDriverDataCallback callback);
+      // Auxiliary non-standard methods for Posys integration.
+      static void RegisterPosysDataCallback(PosysDriverDataCallback callback);
 
     private:
-        static SignalDriverDataCallback   mSignalCallback;
-        static PosysDriverDataCallback mPosysCallback;
+      static SignalDriverDataCallback   mSignalCallback;
+      static PosysDriverDataCallback mPosysCallback;
 
-        bool _Init();
-        void _ThreadCaptureFunc();
-        bool _ActivateAHRS();
-        bool _ActivateGPS();
+      bool _Init();
+      void _ThreadCaptureFunc();
 
-        volatile bool mShouldRun;
-        std::thread mDeviceThread;
+      volatile bool mShouldRun;
+      std::thread mDeviceThread;
 
-        // properties
-        int  m_nHzScan;
-        std::string m_sIFName;
+      // properties
+      int  m_nHzScan;
+      std::string m_sIFName;
 
-};
+  };
 
 } /* namespace */
 

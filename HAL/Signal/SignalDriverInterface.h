@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <HAL/Devices/DriverInterface.h>
 #include <HAL/Signal.pb.h>
 
