@@ -22,6 +22,9 @@ std::vector<AccessPoint> scan(std::string ifname) {
   for (CWNetwork* network in scanResult)
   {
     AccessPoint ap;
+    if (([network ssid] == nullptr) || ([network bssid] == nullptr)) {
+      continue;
+    }
     ap.ssid = std::string([[network ssid] UTF8String]);
     ap.bssid = std::string([[network bssid] UTF8String]);
     ap.rssi = [network rssiValue];
