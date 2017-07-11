@@ -46,10 +46,10 @@ bool WiFiDriver::_Init()
 /////////////////////////////////////////////////////////////////////////////////////////
 void WiFiDriver::RegisterSignalDataCallback(SignalDriverDataCallback callback)
 {
-    mSignalCallback = callback;
-    if(_Init() == false) {
-      throw DeviceException("Error initializing Signal.");
-    }
+  mSignalCallback = callback;
+  if(_Init() == false) {
+    throw DeviceException("Error initializing Signal.");
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

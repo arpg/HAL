@@ -30,4 +30,3 @@ std::vector<AccessPoint> scan(std::string ifname) {
 
   return res;
 }
-
