@@ -4,7 +4,6 @@
 #include <string>
 
 #include <HAL/Signal/SignalDriverInterface.h>
-#include <HAL/Posys/PosysDriverInterface.h>
 
 struct AccessPoint {
   std::string ssid;
@@ -20,19 +19,15 @@ namespace hal {
   {
     public:
       WiFiDriver(std::string ifname,
-          int  scan_hz);
+          int  scan_period);
       ~WiFiDriver();
       void RegisterSignalDataCallback(SignalDriverDataCallback callback);
       bool IsRunning() const override {
         return mShouldRun;
       }
 
-      // Auxiliary non-standard methods for Posys integration.
-      static void RegisterPosysDataCallback(PosysDriverDataCallback callback);
-
     private:
-      static SignalDriverDataCallback   mSignalCallback;
-      static PosysDriverDataCallback mPosysCallback;
+      static SignalDriverDataCallback mSignalCallback;
 
       bool _Init();
       void _ThreadCaptureFunc();
@@ -41,7 +36,7 @@ namespace hal {
       std::thread mDeviceThread;
 
       // properties
-      int  m_nHzScan;
+      int  m_nPdScan;
       std::string m_sIFName;
 
   };

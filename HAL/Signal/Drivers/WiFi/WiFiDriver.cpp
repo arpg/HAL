@@ -13,7 +13,6 @@
 using namespace hal;
 
 SignalDriverDataCallback   WiFiDriver::mSignalCallback = nullptr;
-PosysDriverDataCallback WiFiDriver::mPosysCallback = nullptr;
 
 const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
 
@@ -21,9 +20,9 @@ const int DEFAULT_PACKET_TIMEOUT_MS = 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 WiFiDriver::WiFiDriver(std::string ifname,
-                                     int scan_hz)
+                                     int scan_period)
     : mShouldRun(false),
-      m_nHzScan(scan_hz),
+      m_nPdScan(scan_period),
       m_sIFName(ifname)
 {
 }
@@ -53,19 +52,32 @@ void WiFiDriver::RegisterSignalDataCallback(SignalDriverDataCallback callback)
     }
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-void WiFiDriver::RegisterPosysDataCallback(PosysDriverDataCallback callback)
-{
-  mPosysCallback = callback;
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////
 void WiFiDriver::_ThreadCaptureFunc()
 {
-    while(mShouldRun){
-        scan("en0");
+  while(mShouldRun){
+    hal::SignalMsg dataSignal;
+    hal::SignalScanResult *result;
+
+    std::time_t last_scan_time = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now());
+    std::vector<AccessPoint> aps = scan(m_sIFName);
+
+    dataSignal.set_device_time(hal::Tic());
+    dataSignal.set_system_time(hal::Tic());
+
+    for (unsigned int i=0; i<aps.size(); i++) {
+      result = dataSignal.add_scan_result();
+      result->set_ssid(aps[i].ssid);
+      result->set_bssid(aps[i].bssid);
+      result->set_rssi(aps[i].rssi);
     }
-    mShouldRun = false;
+
+    if (mSignalCallback) {
+      mSignalCallback(dataSignal);
+    }
+    std::this_thread::sleep_until(std::chrono::system_clock::from_time_t(
+          last_scan_time + this->m_nPdScan));
+  }
+  mShouldRun = false;
 }

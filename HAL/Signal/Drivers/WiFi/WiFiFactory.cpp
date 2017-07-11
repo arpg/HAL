@@ -12,16 +12,16 @@ public:
         : DeviceFactory<SignalDriverInterface>(name)
     {
         Params() = {
-            {"scanhz", "1", "IMU capture rate in Hz."}
+            {"scanperiod", "1", "Seconds between scans."}
         };
     }
 
     std::shared_ptr<SignalDriverInterface> GetDevice(const Uri& uri)
     {
-        float scan_hz = uri.properties.Get("scanhz", 1);
+        int scan_period = uri.properties.Get("scanperiod", 1);
 
         WiFiDriver* pDriver =
-            new WiFiDriver(uri.url, scan_hz);
+            new WiFiDriver(uri.url, scan_period);
         return std::shared_ptr<SignalDriverInterface>( pDriver );
     }
 };
