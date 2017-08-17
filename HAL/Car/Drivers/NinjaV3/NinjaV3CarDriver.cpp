@@ -4,6 +4,7 @@
 #include <HAL/Devices/DeviceException.h>
 #include <HAL/Car.pb.h>
 #include <stdint.h>
+#include <HAL/Utils/TicToc.h>
 namespace hal {
 
 CarStateDataCallback NinjaV3CarDriver::car_state_callback = nullptr;
@@ -11,44 +12,33 @@ CarStateDataCallback NinjaV3CarDriver::car_state_callback = nullptr;
 NinjaV3CarDriver::NinjaV3CarDriver(std::string dev, int baud) {
   baudrate_ = baud;
   dev_name_ = dev;
-  shouldrun_mutex.lock();
   should_run_ = true;
-  shouldrun_mutex.unlock();
   // caculate the time to wait after writing to send buffer
   serial_buffer_write_delay_ = (int)((sizeof(ComTrDataPack)*10*1000)/baud)+1;
   if(Init() == false) {
     throw DeviceException("Could not connect to Comport device.");
   } else {
-    std::cout << "Connection to NinjaV3Car successfull." << std::endl;
+    std::cout << "Connection to NinjaV3Car successful." << std::endl;
   }
 }
 
 NinjaV3CarDriver::~NinjaV3CarDriver() {
-  std::cout << "NinjaV3 destructor called." << std::endl;
   shouldrun_mutex.lock();
   should_run_ = false;
   shouldrun_mutex.unlock();
 
-  std::cout << "joining read thread" << std::endl;
   if(comport_read_thread.joinable()) {
-    std::cout << "read is joinable" << std::endl;
     comport_read_thread.join();
-    std::cout << "read thread joined" << std::endl;
   }
-  std::cout << "joining write thread" << std::endl;
   if(comport_write_thread.joinable()) {
-    std::cout << "write thread is joinable" << std::endl;
     comport_write_thread.join();
-    std::cout << "write thread joined" << std::endl;
   }
 
-  std::cout << "disconnecting comport" << std::endl;
-  comport_mutex.lock();
+//  comport_mutex.lock();
+  comport_driver2_.Disconnect();
   comport_driver_.Disconnect();
-  comport_mutex.unlock();
-  std::cout << "comport disconnected" << std::endl;
+//  comport_mutex.unlock();
 
-  std::cout << "NinjaV3 destructor finished." << std::endl;
 }
 
 void NinjaV3CarDriver::RegisterCarStateDataCallback(CarStateDataCallback callback) {
@@ -57,12 +47,13 @@ void NinjaV3CarDriver::RegisterCarStateDataCallback(CarStateDataCallback callbac
 
 bool NinjaV3CarDriver::Init(){
   bool conneciton_status = comport_driver_.Connect(dev_name_,baudrate_,sizeof(ComRecDataPack));
-  if( conneciton_status ) {
+  bool conneciton_status2 = comport_driver2_.Connect(dev_name_,baudrate_,sizeof(ComRecDataPack));
+  if( conneciton_status && conneciton_status2 ) {
     std::cout << "comport connected" << std::endl;
     comport_write_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportWriteThread, this));
     comport_read_thread = std::thread(std::bind(&NinjaV3CarDriver::ComportReadThread, this));
   }
-  return conneciton_status;
+  return conneciton_status&conneciton_status2;
 }
 
 void NinjaV3CarDriver::ComportWriteThread(){
@@ -72,6 +63,7 @@ void NinjaV3CarDriver::ComportWriteThread(){
     cmdmsg_mutex.lock();
     tr_data_pack.motor_power_percent = (float)pbCommandMsg_.throttle_percent();
     tr_data_pack.steering_angle = (float)pbCommandMsg_.steering_angle();
+    tr_data_pack.rear_steering_angle = (float)pbCommandMsg_.rear_steering_angle();
     tr_data_pack.dev_time = (float)pbCommandMsg_.device_time();
     cmdmsg_mutex.unlock();
 
@@ -92,9 +84,9 @@ void NinjaV3CarDriver::ComportWriteThread(){
 
     // send packet
 //    std::cout << "data sent ." << std::endl;
-    comport_mutex.lock();    
+    //comport_mutex.lock();
     comport_driver_.WriteComPort((uint8_t*)(&tr_data_pack),sizeof(ComTrDataPack));
-    comport_mutex.unlock();
+    //comport_mutex.unlock();
     std::this_thread::sleep_for(std::chrono::milliseconds(serial_buffer_write_delay_));
     shouldrun_mutex.lock();
   }
@@ -116,9 +108,10 @@ void NinjaV3CarDriver::ComportReadThread(){
     for(int ii=0; ii<rec_data_pack_size;ii++) {
       buff[ii] = 0;
     }
-    comport_mutex.lock();
-    bytes_received = comport_driver_.ReadSensorPacket((uint8_t*)(&buff),rec_data_pack_size);
-    comport_mutex.unlock();
+
+   // comport_mutex.lock();
+    bytes_received = comport_driver2_.ReadSensorPacket((uint8_t*)(&buff),rec_data_pack_size);
+   // comport_mutex.unlock();
 //    std::cout << "data is: "  << std::endl;
 //    for(int ii=0;ii<bytes_received;ii++)
 //      std::cout << " , " << static_cast<int>(buff[ii]);
@@ -129,7 +122,7 @@ void NinjaV3CarDriver::ComportReadThread(){
     // check header if didn't match do the alignment
     if( !((buff[0]==DELIMITER0) && (buff[1]==DELIMITER1) && (buff[2]==DELIMITER2) && (buff[3]==DELIMITER3))) {
       if(bytes_received != rec_data_pack_size) {
-        std::cerr << "Received packet size is " << bytes_received << " expected #bytes was " << rec_data_pack_size << std::endl;
+       // std::cerr << "Received packet size is " << bytes_received << " expected #bytes was " << rec_data_pack_size << std::endl;
       } else {
         std::cerr << "Packet headers didn't match." << std::endl;
       }
@@ -140,16 +133,17 @@ void NinjaV3CarDriver::ComportReadThread(){
           break;
         }
       }
-      std::cout << "Allignment shift is " << cnt << std::endl;
+      //std::cout << "Allignment shift is " << cnt << std::endl;
       if(cnt==rec_data_pack_size-1) {
-        std::cout << "Could not find the packet header." << std::endl;
+        //std::cout << "Could not find the packet header." << std::endl;
       }
       if(cnt != 0) {
-        std::cout << "Loosing COM packet." << std::endl;
+        //std::cout << "Loosing COM packet." << std::endl;
         // read extra bytes in the begining to get ride of them
-        comport_mutex.lock();
-        bytes_received = comport_driver_.ReadSensorPacket((uint8_t*)(&buff),cnt);
-        comport_mutex.unlock();
+
+     //   comport_mutex.lock();
+        bytes_received = comport_driver2_.ReadSensorPacket((uint8_t*)(&buff),cnt);
+      //  comport_mutex.unlock();
       }
     } else {
 
@@ -165,7 +159,9 @@ void NinjaV3CarDriver::ComportReadThread(){
       memcpy(&rec_data_pack,&buff,rec_data_pack_size);
       if( rec_data_pack.chksum == sum ){
         pbStateMsg_.set_motor_current((rec_data_pack.motor_current));
+        pbStateMsg_.set_batt_volt((double)rec_data_pack.batt_volt);
         pbStateMsg_.set_steer_angle((double)(rec_data_pack.steer_ang));
+        pbStateMsg_.set_rear_steer_angle((double)(rec_data_pack.rear_steer_ang));
         pbStateMsg_.set_swing_angle_fl((double)(rec_data_pack.swing_ang0));
         pbStateMsg_.set_swing_angle_rl((double)(rec_data_pack.swing_ang1));
         pbStateMsg_.set_swing_angle_rr((double)(rec_data_pack.swing_ang2));

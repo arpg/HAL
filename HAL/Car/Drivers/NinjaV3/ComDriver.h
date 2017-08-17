@@ -108,8 +108,11 @@ private:
 
       //set the baud rate
 
-      cfsetospeed(&options, baudRate);
-      cfsetispeed(&options, baudRate);
+//      cfsetospeed(&options, baudRate);
+//      cfsetispeed(&options, baudRate);
+      cfsetospeed(&options, B115200);
+      cfsetispeed(&options, B115200);
+
 
       //set the number of data bits.
       options.c_cflag &= ~CSIZE;  // Mask the character size bits

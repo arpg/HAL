@@ -398,13 +398,13 @@ static void processQueuedEvent(struct Gamepad_queuedEvent event) {
 	switch (event.eventType) {
 		case GAMEPAD_EVENT_DEVICE_ATTACHED:
 			if (Gamepad_deviceAttachCallback != NULL) {
-				Gamepad_deviceAttachCallback(event.eventData, Gamepad_deviceAttachContext);
+                Gamepad_deviceAttachCallback(event.eventData, Gamepad_deviceAttachContext);
 			}
 			break;
 			
 		case GAMEPAD_EVENT_DEVICE_REMOVED:
 			if (Gamepad_deviceRemoveCallback != NULL) {
-				Gamepad_deviceRemoveCallback(event.eventData, Gamepad_deviceRemoveContext);
+                Gamepad_deviceRemoveCallback(event.eventData, Gamepad_deviceRemoveContext);
 			}
 			break;
 			
