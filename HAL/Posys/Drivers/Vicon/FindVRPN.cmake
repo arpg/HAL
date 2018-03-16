@@ -104,7 +104,7 @@ set(_deps_libs)
 set(_deps_includes)
 set(_deps_check)
 
-find_package(quatlib ${_vrpn_quiet})
+find_package(QUATLIB ${_vrpn_quiet})
 list(APPEND _deps_libs ${QUATLIB_LIBRARIES})
 list(APPEND _deps_includes ${QUATLIB_INCLUDE_DIRS})
 list(APPEND _deps_check QUATLIB_FOUND)
