@@ -15,6 +15,7 @@ SET( XIMEA_SEARCH_PATHS
     /opt/XIMEA/lib
     /opt/XIMEA/include
     /Library/Frameworks/m3api.framework/Libraries
+    /Library/Frameworks/m3api.framework/Headers
 )
 
 find_path(XIMEA_INCLUDE_DIR
@@ -27,6 +28,7 @@ find_library( XIMEA_LIBRARY
     PATHS ${XIMEA_SEARCH_PATHS}
 )
 
+message("XIMEA vars: " ${XIMEA_INCLUDE_DIR} " " ${XIMEA_LIBRARY})
 if( XIMEA_INCLUDE_DIR AND XIMEA_LIBRARY )
     set( XIMEA_LIBRARIES ${XIMEA_LIBRARY} )
     set( XIMEA_INCLUDE_DIRS ${XIMEA_INCLUDE_DIR} )
