@@ -1,5 +1,4 @@
-#ifndef _CAR_DEVICE_H_
-#define _CAR_DEVICE_H_
+#pragma once
 
 #include <HAL/Car/CarDriverInterface.h>
 #include <HAL/Devices/DeviceFactory.h>
@@ -44,9 +43,9 @@ public:
     m_car = DeviceRegistry<CarDriverInterface>::Instance().Create(m_uri);
   }
 
-	std::string GetDeviceProperty(const std::string& sProperty) {
-		return m_car->GetDeviceProperty(sProperty);
-	}
+  std::string GetDeviceProperty(const std::string& sProperty) {
+    return m_car->GetDeviceProperty(sProperty);
+  }
 
   void RegisterCarStateDataCallback(CarStateDataCallback callback) {
     m_callback = callback;
@@ -56,6 +55,18 @@ public:
       std::cerr << "ERROR: failed to register StateDriverDataCallback!\n";
     }
     return;
+  }
+
+  ///////////////////////////////////////////////////////////////
+  /// Return raw car driver pointer, optionally dynamic_cast'd
+  /// to another type. Returns NULL if wrong type.
+  /// e.g. RectifyDriver* rectify = car.GetDriver<RectifyDriver>();
+  ///      if(rectify) {...}
+  template<typename CarDriverType = CarDriverInterface>
+  CarDriverType* GetDriver()
+  {
+      CarDriverInterface* di = m_car.get();
+      return dynamic_cast<CarDriverType*>(di);
   }
 
   ///////////////////////////////////////////////////////////////
@@ -70,5 +81,3 @@ protected:
 };
 
 }
-
-#endif
