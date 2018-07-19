@@ -15,14 +15,16 @@ ConvertDriver::ConvertDriver(
     const std::string& sFormat,
     double dRange,
     ImageDim dims,
-    int channel)
+    int channel,
+    ImageRoi roi)
   : m_Input(Input),
     m_sFormat(sFormat),
     m_nOutCvType(-1),
     m_nNumChannels(Input->NumChannels()),
     m_dRange(dRange),
     m_Dims(dims),
-    m_iChannel(channel)
+    m_iChannel(channel),
+    m_roi(roi)
 {
   // Set the correct image size on the output interface, considering the request
   // to resize the images
@@ -39,9 +41,24 @@ ConvertDriver::ConvertDriver(
     }
 
     const bool resize_requested = (m_Dims.x != 0 || m_Dims.y != 0);
+
     if (resize_requested) {
       m_nImgWidth[i] = m_Dims.x;
       m_nImgHeight[i] = m_Dims.y;
+    }
+
+    const bool crop_requested = (m_roi.w != 0 || m_roi.h != 0);
+
+    if (crop_requested) {
+
+      if (m_nImgWidth[i]  - m_roi.x < m_roi.w ||
+          m_nImgHeight[i] - m_roi.y < m_roi.h)
+      {
+        throw DeviceException("HAL: Error! invalid ROI");
+      }
+
+      m_nImgWidth[i]  = m_roi.w;
+      m_nImgHeight[i] = m_roi.h;
     }
   }
 
@@ -68,7 +85,7 @@ bool ConvertDriver::Capture( hal::CameraMsg& vImages )
 
   if (!srcGood)
     return false;
-  
+
   // Guess source color coding.
   if( m_nCvType.empty() ) {
     for(int i = 0; i < m_Message.image_size(); ++i) {
@@ -133,6 +150,14 @@ bool ConvertDriver::Capture( hal::CameraMsg& vImages )
       final_width = m_nOrigImgWidth[ii];
       final_height = m_nOrigImgHeight[ii];
     }
+
+    const bool crop_requested = (m_roi.w != 0 || m_roi.h != 0);
+    if (crop_requested)
+    {
+      final_width  = m_roi.w;
+      final_height = m_roi.h;
+    }
+
     pbImg->set_width( final_width );
     pbImg->set_height( final_height );
     pbImg->set_type( hal::PB_UNSIGNED_BYTE );
@@ -148,11 +173,21 @@ bool ConvertDriver::Capture( hal::CameraMsg& vImages )
 
     cv::Mat sImg;
     if (resize_requested) {
-      cv::resize(s_origImg, sImg, cv::Size(final_width, final_height));
+      cv::resize(s_origImg, sImg, cv::Size(m_Dims.x, m_Dims.y));
       m_nImgWidth[ii] = final_width;
       m_nImgHeight[ii] = final_height;
     } else {
       sImg = s_origImg;
+    }
+
+    if (crop_requested)
+    {
+      cv::Rect roi;
+      roi.x = m_roi.x;
+      roi.y = m_roi.y;
+      roi.width = m_roi.w;
+      roi.height = m_roi.h;
+      sImg = sImg(roi);
     }
 
     cv::Mat dImg(final_height, final_width, m_nOutCvType,

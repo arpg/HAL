@@ -18,7 +18,8 @@ public:
       {"range", "1", "Range of values of 16 and 32 bit images: ir (1023), "
                      "depth (4500) or numerical value"},
       {"size", "0x0", "Capture resolution (0x0 for unused)."},
-      {"channel", "-1", "Particular channel to convert (-1 for all)."}
+      {"channel", "-1", "Particular channel to convert (-1 for all)."},
+      {"roi", "0+0+0x0", "ROI resolution."}
   };
   }
 
@@ -28,6 +29,7 @@ public:
     std::string sRange = uri.properties.Get<std::string>("range", "1");
     ImageDim dims = uri.properties.Get<ImageDim>("size", ImageDim(0, 0));
     int channel = uri.properties.Get<int>("channel", -1);
+    ImageRoi ROI = uri.properties.Get<ImageRoi>("roi", ImageRoi(0,0,0,0));
     double dRange;
 
     if(sRange == "ir")
@@ -41,6 +43,11 @@ public:
       if(dRange == 0.) dRange = 1.;
     }
 
+    if(ROI.w == 0 && ROI.h == 0) {
+      ROI.w = dims.x;
+      ROI.h = dims.y;
+    }
+
     const Uri input_uri = Uri(uri.url);
 
     // Create input camera
@@ -48,7 +55,7 @@ public:
         DeviceRegistry<hal::CameraDriverInterface>::Instance().Create(input_uri);
 
     ConvertDriver* pDriver = new ConvertDriver( Input, sFormat, dRange, dims,
-                                                channel);
+                                                channel, ROI);
     return std::shared_ptr<CameraDriverInterface>( pDriver );
   }
 };

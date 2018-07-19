@@ -15,7 +15,8 @@ public:
                    const std::string& sFormat,
                    double dRange,
                    ImageDim dims,
-                  int channel);
+                   int channel,
+                   ImageRoi roi);
 
     bool Capture( hal::CameraMsg& vImages );
     std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
@@ -42,6 +43,7 @@ protected:
     double                                  m_dRange;
     ImageDim                                m_Dims;
     int                                     m_iChannel;
+    ImageRoi                                m_roi;
 };
 
 }
