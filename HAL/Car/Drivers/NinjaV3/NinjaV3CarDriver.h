@@ -7,10 +7,6 @@
 #include <thread>
 #include <mutex>
 
-//#define DELIMITER0 (char)0xAA
-//#define DELIMITER1 (char)0x55
-//#define DELIMITER2 (char)0xE1
-//#define DELIMITER3 (char)0x1E
 #define DELIMITER0 0xAA
 #define DELIMITER1 0x55
 #define DELIMITER2 0xE1
@@ -27,6 +23,7 @@ class NinjaV3CarDriver : public CarDriverInterface {
 
  private:
   ComportDriver       comport_driver_;
+  ComportDriver       comport_driver2_;
   std::string         dev_name_;
   int                 baudrate_;
   volatile bool       should_run_;
@@ -40,12 +37,12 @@ class NinjaV3CarDriver : public CarDriverInterface {
   hal::CarCommandMsg pbCommandMsg_;
   std::string packet_delimiter_;
   int serial_buffer_write_delay_;
-  std::mutex comport_mutex;
   std::mutex shouldrun_mutex;
   std::mutex cmdmsg_mutex;
   struct ComTrDataPack{
     char delimiter[4];
     float  steering_angle;
+    float  rear_steering_angle;
     float  motor_power_percent;
     unsigned int dev_time;
     unsigned int chksum;
@@ -59,16 +56,18 @@ class NinjaV3CarDriver : public CarDriverInterface {
   struct ComRecDataPack
   {
     char delimiter[4];
-    unsigned int  enc0;
-    unsigned int  enc1;
-    unsigned int  enc2;
-    unsigned int  enc3;
-    unsigned int  steer_ang;
+    float  enc0;
+    float  enc1;
+    float  enc2;
+    float  enc3;
+    float  steer_ang;
+    float rear_steer_ang;
     unsigned int  swing_ang0;
     unsigned int  swing_ang1;
     unsigned int  swing_ang2;
     unsigned int  swing_ang3;
     unsigned int  motor_current;
+    unsigned int batt_volt;
     unsigned int dev_time;
     unsigned int chksum;
   };

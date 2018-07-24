@@ -104,10 +104,11 @@ set(_deps_libs)
 set(_deps_includes)
 set(_deps_check)
 
-find_package(QUATLIB ${_vrpn_quiet})
-list(APPEND _deps_libs ${QUATLIB_LIBRARIES})
-list(APPEND _deps_includes ${QUATLIB_INCLUDE_DIRS})
-list(APPEND _deps_check QUATLIB_FOUND)
+# find_package(quatlib ${_vrpn_quiet})
+# list(APPEND _deps_libs ${QUATLIB_LIBRARIES})
+# list(APPEND _deps_includes ${QUATLIB_INCLUDE_DIRS})
+# list(APPEND _deps_check QUATLIB_FOUND)
+list(APPEND _deps_libs /usr/local/lib/libquat.a)
 
 if(NOT WIN32)
 	find_package(Threads ${_vrpn_quiet})
@@ -128,10 +129,11 @@ endif()
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(VRPN
-	DEFAULT_MSG
+#	DEFAULT_MSG
 	VRPN_LIBRARY
 	VRPN_INCLUDE_DIR
-	${_deps_check})
+#	${_deps_check}
+)
 
 if(VRPN_FOUND)
 	set(VRPN_INCLUDE_DIRS "${VRPN_INCLUDE_DIR}" ${_deps_includes})
