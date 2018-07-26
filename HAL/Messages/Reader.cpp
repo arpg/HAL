@@ -221,7 +221,6 @@ std::unique_ptr<hal::CameraMsg> Reader::ReadCameraMsg(int id) {
 
   std::unique_ptr<hal::CameraMsg> pCameraMsg(new hal::CameraMsg);
   pCameraMsg->Swap(m_qMessages.front()->mutable_camera());
-  pCameraMsg->set_system_time(m_qMessages.front()->timestamp());
 
   m_qMessages.pop_front();
   m_qMessageTypes.pop_front();
@@ -259,7 +258,6 @@ std::unique_ptr<hal::ImuMsg> Reader::ReadImuMsg() {
 
   std::unique_ptr<hal::ImuMsg> pImuMsg( new hal::ImuMsg );
   pImuMsg->Swap( pMessage->mutable_imu() );
-  pImuMsg->set_system_time(pMessage->timestamp());
   return pImuMsg;
 }
 
