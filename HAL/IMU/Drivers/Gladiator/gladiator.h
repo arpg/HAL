@@ -2,6 +2,7 @@
 #define __GLADIATOR_H_
 
 #include <stdint.h>
+#include <HAL/Utils/TicToc.h>
 #include "ThreadedObject.h"
 #include "ThreadedCommand.h"
 #include "commport.h"
