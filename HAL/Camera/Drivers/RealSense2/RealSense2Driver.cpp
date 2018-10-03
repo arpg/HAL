@@ -30,6 +30,30 @@ bool RealSense2Driver::Capture(CameraMsg& images)
   rs2::frameset frameset = pipeline_->wait_for_frames();
   images.set_device_time(frameset.get_timestamp());
 
+  if (capture_ir0_)
+  {
+    ImageMsg* image = images.add_image();
+    rs2::video_frame frame = frameset.get_infrared_frame(1);
+    const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
+    image->set_width(frame.get_width());
+    image->set_height(frame.get_height());
+    image->set_data(frame.get_data(), bytes);
+    image->set_format(PB_LUMINANCE);
+    image->set_type(PB_UNSIGNED_BYTE);
+  }
+
+  if (capture_ir1_)
+  {
+    ImageMsg* image = images.add_image();
+    rs2::video_frame frame = frameset.get_infrared_frame(2);
+    const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
+    image->set_width(frame.get_width());
+    image->set_height(frame.get_height());
+    image->set_data(frame.get_data(), bytes);
+    image->set_format(PB_LUMINANCE);
+    image->set_type(PB_UNSIGNED_BYTE);
+  }
+
   if (capture_color_)
   {
     ImageMsg* image = images.add_image();
@@ -52,32 +76,6 @@ bool RealSense2Driver::Capture(CameraMsg& images)
     image->set_data(frame.get_data(), bytes);
     image->set_format(PB_LUMINANCE);
     image->set_type(PB_SHORT);
-  }
-
-  if (capture_ir0_)
-  {
-    ImageMsg* image = images.add_image();
-    rs2::video_frame frame = frameset.get_infrared_frame(1);
-    const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
-    image->set_width(frame.get_width());
-    image->set_height(frame.get_height());
-    image->set_data(frame.get_data(), bytes);
-    image->set_format(PB_LUMINANCE);
-    // image->set_type(PB_UNSIGNED_BYTE);
-    image->set_type(PB_UNSIGNED_SHORT);
-  }
-
-  if (capture_ir1_)
-  {
-    ImageMsg* image = images.add_image();
-    rs2::video_frame frame = frameset.get_infrared_frame(2);
-    const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
-    image->set_width(frame.get_width());
-    image->set_height(frame.get_height());
-    image->set_data(frame.get_data(), bytes);
-    image->set_format(PB_LUMINANCE);
-    // image->set_type(PB_UNSIGNED_BYTE);
-    image->set_type(PB_UNSIGNED_SHORT);
   }
 
   return true;
@@ -115,6 +113,17 @@ bool RealSense2Driver::AutoExposure() const
 
 double RealSense2Driver::Exposure() const
 {
+  rs2::pipeline_profile pipeline_profile = pipeline_->get_active_profile();
+  std::vector<rs2::sensor> sensors = pipeline_profile.get_device().query_sensors();
+
+  for (rs2::sensor sensor: sensors)
+  {
+    if (!sensor.is<rs2::depth_sensor>())
+    {
+      return sensor.get_option(RS2_OPTION_EXPOSURE);
+    }
+  }
+
   return exposure_;
 }
 
@@ -129,6 +138,8 @@ void RealSense2Driver::SetExposure(double exposure)
   {
     if (!sensor.is<rs2::depth_sensor>())
     {
+      std::cout.flush();
+
       if (exposure_ > 0)
       {
         sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, false);
@@ -147,6 +158,10 @@ void RealSense2Driver::SetExposure(double exposure)
         sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, true);
         sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, true);
       }
+    }
+    else
+    {
+      std::cout.flush();
     }
   }
 }
@@ -192,23 +207,23 @@ void RealSense2Driver::ConfigurePipeline()
 
   if (capture_color_)
   {
-    configuration.enable_stream(RS2_STREAM_COLOR, width_, height_, RS2_FORMAT_ANY, frame_rate_);
-    // configuration.enable_stream(RS2_STREAM_COLOR, 1920, 1080, RS2_FORMAT_ANY, frame_rate_);
+    configuration.enable_stream(RS2_STREAM_COLOR, width_, height_, RS2_FORMAT_RGB8, frame_rate_);
+    // configuration.enable_stream(RS2_STREAM_COLOR, 1920, 1080, RS2_FORMAT_RGB8, frame_rate_);
   }
 
   if (capture_depth_)
   {
-    configuration.enable_stream(RS2_STREAM_DEPTH, width_, height_, RS2_FORMAT_ANY, frame_rate_);
+    configuration.enable_stream(RS2_STREAM_DEPTH, width_, height_, RS2_FORMAT_Z16, frame_rate_);
   }
 
   if (capture_ir0_)
   {
-    configuration.enable_stream(RS2_STREAM_INFRARED, 1, width_, height_, RS2_FORMAT_ANY, frame_rate_);
+    configuration.enable_stream(RS2_STREAM_INFRARED, 1, width_, height_, RS2_FORMAT_Y8, frame_rate_);
   }
 
   if (capture_ir1_)
   {
-    configuration.enable_stream(RS2_STREAM_INFRARED, 2, width_, height_, RS2_FORMAT_ANY, frame_rate_);
+    configuration.enable_stream(RS2_STREAM_INFRARED, 2, width_, height_, RS2_FORMAT_Y8, frame_rate_);
   }
 
   pipeline_->start(configuration);
@@ -246,7 +261,7 @@ void RealSense2Driver::CreateStreams()
       // std::cout << "  Description:   " << desc << std::endl;
       // std::cout << "  Current value: " << value << std::endl;
       // // std::cout << "  Current desc:  " << value_desc << std::endl;
-      // std::cout << "  Value range:   " << range.min << ".." << range.max << std::endl;
+      std::cout << "  Value range:   " << range.min << ".." << range.max << std::endl;
       // std::cout << "  Value default: " << range.def << std::endl;
       // std::cout << "  Value step:    " << range.step << std::endl;
 
@@ -255,11 +270,18 @@ void RealSense2Driver::CreateStreams()
 
     if (sensor.is<rs2::depth_sensor>())
     {
+      std::cout << "====== no exp name: " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
       rs2::depth_sensor depth_sensor = sensor.as<rs2::depth_sensor>();
       depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, emit_ir_);
+
+      if (emit_ir_)
+      {
+        depth_sensor.set_option(RS2_OPTION_LASER_POWER, 360);
+      }
     }
     else
     {
+      std::cout << "====== exp name: " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
       if (exposure_ > 0)
       {
         sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, false);
