@@ -17,12 +17,12 @@ class AutoExposureFactory : public DeviceFactory<CameraDriverInterface>
         {"i", "-1", "Integral gain (-1 driver default)"},
         {"d", "-1", "Derivative gain (-1 driver default)"},
         {"target", "127", "Target mean image intensity"},
-        {"roi", "0+0+0x0", "ROI for computing average intensity"},
+        {"roi", "0+0+0x0", "ROI for computing mean intensity"},
         {"limit", "1.0", "Exposure limit (proportional to max value)"},
         {"gain", "0.0", "Constant camera gain (proportional to max value)"},
         {"sync", "true", "Apply exposure to all camera channels"},
-        {"channel", "0", "Camera channel to auto-expose"},
-        {"color", "-1", "Target color channel (-1 all color channels) "}
+        {"channel", "0", "Camera channel for computing exposure"},
+        {"color", "-1", "Color channel for computing exposure (-1 all colors)"}
       };
     }
 
