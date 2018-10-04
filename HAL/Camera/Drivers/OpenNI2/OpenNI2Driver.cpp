@@ -50,7 +50,7 @@ OpenNI2Driver::OpenNI2Driver(
   int chosenDevice = -1;
   if (dev_sn.size() > 0)
     {
-      printf("OpenNI2Driver: Looking for user-supplied device S/N: %s\n", dev_sn.c_str() );	
+      printf("OpenNI2Driver: Looking for user-supplied device S/N: %s\n", dev_sn.c_str() );
     }
 
   openni::Array<openni::DeviceInfo> deviceList;
@@ -62,7 +62,7 @@ OpenNI2Driver::OpenNI2Driver(
     printf("  Device[%d] URI: %s Serial: %s\n", ii, oneUri.c_str(), serNum.c_str());
     if (serNum == dev_sn)
       {
-	chosenDevice = ii;
+  chosenDevice = ii;
       }
   }
 
@@ -108,7 +108,7 @@ OpenNI2Driver::OpenNI2Driver(
       printf("OpenNI2Driver: Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
       m_depthStream.destroy();
     }
-    m_depthStream.setMirroringEnabled(false);	
+    m_depthStream.setMirroringEnabled(false);
     m_streams.push_back( &m_depthStream );
   }
 
@@ -164,15 +164,15 @@ OpenNI2Driver::OpenNI2Driver(
   //Set hardware registration appropriately
   setHardwareRegistrationMode(m_bHardwareAlign);
 
-				
+
   //Setup software alignment and rectification if needed
   if(m_sCameraModel.size() > 0)
     {
       std::string modelFileName = hal::ExpandTildePath(m_sCameraModel);
       if (!hal::FileExists(modelFileName))
-	{
-	  LOG(FATAL) << "OpenNI2Driver: Could not find camera model file: " << modelFileName;
-	}
+  {
+    LOG(FATAL) << "OpenNI2Driver: Could not find camera model file: " << modelFileName;
+  }
 
       m_pRig = calibu::ReadXmlRig( modelFileName);
       Eigen::VectorXd RGBParams = m_pRig->cameras_[0]->GetParams();
@@ -186,22 +186,22 @@ OpenNI2Driver::OpenNI2Driver(
       /*
        // Convert rig to vision frame.
       std::shared_ptr<calibu::Rig<double>> new_rig =
-	calibu::ToCoordinateConvention(m_pRig, calibu::RdfVision);
+  calibu::ToCoordinateConvention(m_pRig, calibu::RdfVision);
 
       // Generate lookup tables for stereo rectify.
       m_vLuts.resize(new_rig->NumCams());
       for(size_t i=0; i< new_rig->NumCams(); ++i) {
-	m_vLuts[i] = calibu::LookupTable(new_rig->cameras_[i]->Width(), new_rig->cameras_[i]->Height());
+  m_vLuts[i] = calibu::LookupTable(new_rig->cameras_[i]->Width(), new_rig->cameras_[i]->Height());
       }
 
 
       if(new_rig->NumCams() == 2) {
-	m_pRig = calibu::CreateScanlineRectifiedLookupAndCameras(
-								new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
-								new_rig->cameras_[0], new_rig->cameras_[1],
-								m_T_nr_nl,
-								m_vLuts[0], m_vLuts[1]
-								);
+  m_pRig = calibu::CreateScanlineRectifiedLookupAndCameras(
+                new_rig->cameras_[1]->Pose().inverse()*new_rig->cameras_[0]->Pose(),
+                new_rig->cameras_[0], new_rig->cameras_[1],
+                m_T_nr_nl,
+                m_vLuts[0], m_vLuts[1]
+                );
 
 
       }
@@ -278,16 +278,16 @@ void OpenNI2Driver::setHardwareRegistrationMode(bool enable)
     {
       openni::Status rc = m_device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
       if (rc != openni::STATUS_OK)
-	{
-	  printf("OpenNI2Driver: Enabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
+  {
+    printf("OpenNI2Driver: Enabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
 
-	}
+  }
     }
     else
     {
       openni::Status rc = m_device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
       if (rc != openni::STATUS_OK)
-	printf("OpenNI2Driver: Disabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
+  printf("OpenNI2Driver: Disabling image registration mode failed: \n%s\n", openni::OpenNI::getExtendedError());
     }
   }
 }
@@ -304,14 +304,14 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
   {
     std::cout << "m_exposure: " << m_exposure << std::endl;
 
-    // check if using manual exposure 
+    // check if using manual exposure
     if ( m_exposure > 0) {
       m_colorStream.getCameraSettings()->setAutoExposureEnabled( false );
       m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( false );
       m_colorStream.getCameraSettings()->setExposure( m_exposure );
       m_colorStream.getCameraSettings()->setGain( m_gain );
     }
-    // otherwise use auto-exposure 
+    // otherwise use auto-exposure
     else
     {
       m_colorStream.getCameraSettings()->setAutoExposureEnabled( true );
@@ -423,7 +423,7 @@ uint16_t* OpenNI2Driver::AutoScale(const void* src, uint32_t pixelCount)
   for (unsigned int ii = 0; ii < pixelCount; ii++)
     {
       if (src_data[ii] > maxVal)
-	maxVal = src_data[ii];
+  maxVal = src_data[ii];
     }
 
   //Scale by the max value
@@ -498,6 +498,77 @@ void OpenNI2Driver::SetGain(unsigned int gain)
   }
 }
 
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::MaxExposure(int) const
+{
+  return 1000;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::MinExposure(int) const
+{
+  return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::MaxGain(int) const
+{
+  return 1000;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::MinGain(int) const
+{
+  return 100;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::Exposure(int)
+{
+  return m_colorStream.getCameraSettings()->getExposure();
+}
+
+///////////////////////////////////////////////////////////////////////////
+void OpenNI2Driver::SetExposure(double exposure, int)
+{
+  m_colorStream.getCameraSettings()->setExposure(exposure);
+  m_colorStream.getCameraSettings()->setAutoExposureEnabled(false);
+  m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(false);
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::Gain(int)
+{
+  return m_colorStream.getCameraSettings()->getGain();
+}
+
+///////////////////////////////////////////////////////////////////////////
+void OpenNI2Driver::SetGain(double gain, int)
+{
+  m_colorStream.getCameraSettings()->setGain(gain);
+  m_colorStream.getCameraSettings()->setAutoExposureEnabled(false);
+  m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(false);
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::ProportionalGain(int) const
+{
+  return 0.075;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::IntegralGain(int) const
+{
+  return 0.001;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double OpenNI2Driver::DerivativeGain(int) const
+{
+  return 0.05;
+}
+
+///////////////////////////////////////////////////////////////////////////
 static cv::Vec3b getColorSubpix(const cv::Mat &img, cv::Point2f pt)
 {
   cv::Mat patch;
@@ -512,13 +583,13 @@ void OpenNI2Driver::SoftwareAlign(hal::CameraMsg& vImages)
   /*
   //First, rectify the image using Calibu
   hal::Image raw_img[2] = { hal::Image(vImages.image(0)),
-			    hal::Image(vImages.image(1)) };
+          hal::Image(vImages.image(1)) };
 
   for (unsigned int k=0; k<2; k++)
     {
       calibu::Rectify(m_vLuts[k], raw_img[k].data(),
-		      reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
-		      img.Width(), img.Height(), num_channels);
+          reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
+          img.Width(), img.Height(), num_channels);
     }
   */
 

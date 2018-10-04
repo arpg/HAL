@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Camera/AutoExposureInterface.h>
 #include <HAL/Messages/ImageArray.h>
 #include <calibu/cam/camera_xml.h>
 #include <calibu/cam/camera_crtp.h>
@@ -17,7 +17,7 @@
 
 namespace hal {
 
-class OpenNI2Driver : public CameraDriverInterface
+class OpenNI2Driver : public AutoExposureInterface
 {
     public:
         OpenNI2Driver(unsigned int            nWidth,
@@ -35,7 +35,7 @@ class OpenNI2Driver : public CameraDriverInterface
         virtual ~OpenNI2Driver();
 
         bool Capture( hal::CameraMsg& vImages );
-        std::shared_ptr<CameraDriverInterface> 
+        std::shared_ptr<CameraDriverInterface>
           GetInputDevice() { return std::shared_ptr<CameraDriverInterface>(); }
 
         std::string GetDeviceProperty( const std::string& sProperty );
@@ -49,15 +49,37 @@ class OpenNI2Driver : public CameraDriverInterface
         unsigned int Gain() const;
         void SetGain(unsigned int gain);
 
+        double MaxExposure(int channel) const override;
+
+        double MinExposure(int channel) const override;
+
+        double MaxGain(int channel) const override;
+
+        double MinGain(int channel) const override;
+
+        double Exposure(int channel) override;
+
+        void SetExposure(double exposure, int channel) override;
+
+        double Gain(int channel) override;
+
+        void SetGain(double gain, int channel) override;
+
+        double ProportionalGain(int channel) const override;
+
+        double IntegralGain(int channel) const override;
+
+        double DerivativeGain(int channel) const override;
+
     private:
 
         // NB: this is not a multi-kinect driver.  If you need multi kinects,
         // just use many of these drivers with differnt device URIs.
-	std::vector<calibu::LookupTable>      m_vLuts;
+  std::vector<calibu::LookupTable>      m_vLuts;
         void SoftwareAlign( hal::CameraMsg& vImages );
-	std::string getSerial(const std::string& Uri) const;
-	uint16_t* AutoScale(const void* src, uint32_t pixelCount);
-	void setHardwareRegistrationMode(bool enable);
+  std::string getSerial(const std::string& Uri) const;
+  uint16_t* AutoScale(const void* src, uint32_t pixelCount);
+  void setHardwareRegistrationMode(bool enable);
         unsigned int                         m_height;
         unsigned int                         m_width;
         openni::VideoFrameRef                m_depthFrame;
