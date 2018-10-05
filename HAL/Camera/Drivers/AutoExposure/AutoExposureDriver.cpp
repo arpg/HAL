@@ -74,11 +74,6 @@ double AutoExposureDriver::GetExposure(const CameraMsg& images)
   const double error = m_target - feedback;
   const double update = GetUpdate(error);
   const bool constrained = IsConstrained(error, state, bound);
-  std::cout << "state:    " << state << std::endl;
-  std::cout << "gain:     " << m_input->Gain(0) << std::endl;
-  std::cout << "feedback: " << feedback << std::endl;
-  std::cout << "error:    " << error << std::endl;
-  std::cout << "update:   " << update << std::endl;
   return (constrained) ? bound : ClampExposure(state + update);
 }
 
@@ -161,8 +156,6 @@ double AutoExposureDriver::ClampExposure(double exposure) const
 
 void AutoExposureDriver::SetExposure(double exposure)
 {
-  std::cout << "exposure: " << exposure << std::endl;
-  std::cout << "-----------------" << std::endl;
   (m_sync) ? SetAllExposures(exposure) : SetExposure(m_channel, exposure);
 }
 
