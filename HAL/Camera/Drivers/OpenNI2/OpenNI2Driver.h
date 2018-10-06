@@ -106,6 +106,7 @@ class OpenNI2Driver : public AutoExposureInterface
         unsigned int                         m_exposure;
         unsigned int                         m_gain;
         bool                                 m_exposureUpdated;
+        int                                  m_frame;
 };
 
 }
