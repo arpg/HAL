@@ -15,39 +15,46 @@ class PhotoCalibFactory : public DeviceFactory<CameraDriverInterface>
       Params() =
       {
         { "file", "", "Photometric calibration file" },
-        { "channel", "0", "Image channel to correct" },
-        { "colors", "1", "Number of expected color channels" },
-        { "in", "8U", "Input image bit-depth: 8U, 16U, 32F" },
-        { "out", "8U", "Output image bit-depth: 8U, 16U, 32F" }
+        { "out", "8U", "Output image type: 8U, 16U, 32F" }
       };
     }
 
     std::shared_ptr<CameraDriverInterface> GetDevice(const Uri& uri) override
     {
-      calibu::PhotoCalibd calib;
-      ReadCalibration(uri, calib);
-      std::shared_ptr<CameraDriverInterface> input = CreateInput(uri);
-      const int channel = uri.properties.Get<int>("channel", 0);
-      const int colors = uri.properties.Get<int>("colors", 1);
-      const std::string in = uri.properties.Get<std::string>("in", "8U");
-      const std::string out = uri.properties.Get<std::string>("out", "8U");
+      calibu::PhotoRigd calib;
+      ReadPhotoRig(uri, calib);
 
-      return std::make_shared<PhotoCalibDriver>(
-          input, calib, channel, colors, in, out);
+      std::shared_ptr<CameraDriverInterface> input = CreateInput(uri);
+      const Type type = GetImageType(uri);
+
+      return std::make_shared<PhotoCalibDriver>(input, calib, type);
     }
 
   protected:
 
-    std::shared_ptr<CameraDriverInterface> CreateInput(const Uri& uri)
+    std::shared_ptr<CameraDriverInterface> CreateInput(const Uri& uri) const
     {
       return DeviceRegistry<CameraDriverInterface>::Instance().Create(uri.url);
     }
 
-    void ReadCalibration(const Uri& uri, calibu::PhotoCalibd& calib)
+    void ReadPhotoRig(const Uri& uri, calibu::PhotoRigd& rig) const
     {
       const std::string file = uri.properties.Get<std::string>("file", "");
-      calibu::PhotoCalibReader reader(file);
-      reader.Read(calib);
+      calibu::PhotoRigReader reader(file);
+      reader.Read(rig);
+    }
+
+    Type GetImageType(const Uri& uri) const
+    {
+      const std::string type = uri.properties.Get<std::string>("out", "8U");
+
+      if (type ==  "8U") return Type::PB_UNSIGNED_BYTE;
+      if (type == "16U") return Type::PB_UNSIGNED_SHORT;
+      if (type == "32F") return Type::PB_FLOAT;
+
+      std::cerr << "HAL: unsupported output image type: " << type << std::endl;
+      std::cerr << "HAL: using default image type: 8U" << std::endl;
+      return Type::PB_UNSIGNED_BYTE;
     }
 };
 
