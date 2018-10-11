@@ -48,12 +48,12 @@ size_t AutoExposureDriver::NumChannels() const
 
 size_t AutoExposureDriver::Width(size_t index) const
 {
-  return m_input->Width(m_input->Width(index));
+  return m_input->Width(index);
 }
 
 size_t AutoExposureDriver::Height(size_t index) const
 {
-  return m_input->Height(m_input->Height(index));
+  return m_input->Height(index);
 }
 
 double AutoExposureDriver::GetTargetIntensity() const

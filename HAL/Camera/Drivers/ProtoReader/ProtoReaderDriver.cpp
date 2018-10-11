@@ -7,15 +7,15 @@
 #include <iomanip>
 
 namespace hal {
-ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID,
-                                     bool realtime)
+ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t imageID, bool realtime)
     : m_first(true),
       m_camId(camID),
       m_realtime(realtime),
-      m_reader( hal::Reader::Instance(filename,hal::Msg_Type_Camera) ) {
+      m_reader( hal::Reader::Instance(filename,hal::Msg_Type_Camera) ){
   m_reader.SetInitialImage(imageID);
   while( !ReadNextCameraMessage(m_nextMsg) ) {
     std::cout << "HAL: Initializing proto-reader..." << std::endl;
+    std::cout << "HAL: proto-reader with autoepo setup..." << std::endl;
     usleep(100);
   }
 
@@ -27,6 +27,8 @@ ProtoReaderDriver::ProtoReaderDriver(std::string filename, int camID, size_t ima
   for(size_t c=0; c < m_numChannels; ++c) {
     m_width.push_back(m_nextMsg.image(c).width());
     m_height.push_back(m_nextMsg.image(c).height());
+    m_gains.push_back(1.0);
+    m_exposures.push_back(1.0);
   }
 }
 
@@ -71,41 +73,27 @@ bool ProtoReaderDriver::Capture( hal::CameraMsg& vImages ) {
       double time_since_frist_frame =
           vImages.device_time() - m_first_frame_time;
 
-
       if(time_since_frist_frame < time_elapsed_since_start){
         // this frame is in the past, skip until we catch up to the current time
-
-        /**
-        double T = time_elapsed_since_start - time_since_frist_frame;
-
-        std::cerr << std::fixed << std::setprecision(6) <<
-                     "skipping ahead - current is " << T << "s behind" <<
-                     std::endl;
-        **/
 
         while(time_since_frist_frame < time_elapsed_since_start){
           success = ReadNextCameraMessage(vImages);
           time_since_frist_frame =
                     vImages.device_time() - m_first_frame_time;
         }
-
-
       }
       else if (time_since_frist_frame > time_elapsed_since_start){
         // next frame is in the future, wait until enough time has elapsed
         double T = time_since_frist_frame - time_elapsed_since_start;
 
-        /**
-        std::cerr << std::fixed << std::setprecision(6) <<
-                     "waiting "
-                  << T << "s" << std::endl;
-        **/
-
         usleep(T*1e6);
       }
-
     }
-
+  }
+  // Apply autoexposure params on the images
+  for (int i=0; i<vImages.image_size(); i++){
+    std::cout << "exposure: " << m_exposures[i] << std::endl;
+    Image(vImages.image(i)).Mat() *= m_gains[i] * m_exposures[i];
   }
   return success && vImages.image_size() > 0;
 }
@@ -127,5 +115,49 @@ size_t ProtoReaderDriver::Width( size_t idx ) const {
 
 size_t ProtoReaderDriver::Height( size_t idx ) const {
   return m_height[idx];
+}
+
+double ProtoReaderDriver::MaxExposure(int) const {
+  return 2.0;
+}
+
+double ProtoReaderDriver::MinExposure(int) const {
+  return 0.1;
+}
+
+double ProtoReaderDriver::MaxGain(int) const {
+  return 1.0;
+}
+
+double ProtoReaderDriver::MinGain(int ) const {
+  return 1.0;
+}
+
+double ProtoReaderDriver::Exposure(int channel) {
+  return m_exposures[channel];
+}
+
+void ProtoReaderDriver::SetExposure(double exposure, int channel) {
+  m_exposures[channel] = exposure;
+}
+
+double ProtoReaderDriver::Gain(int channel) {
+  return m_gains[channel];
+}
+
+void ProtoReaderDriver::SetGain(double gain, int channel) {
+  m_gains[channel] = gain;
+}
+
+double ProtoReaderDriver::ProportionalGain(int) const {
+  return 0.075;
+}
+
+double ProtoReaderDriver::IntegralGain(int) const {
+  return 0.001;
+}
+
+double ProtoReaderDriver::DerivativeGain(int) const {
+  return 0.05;
 }
 }  // end namespace hal
