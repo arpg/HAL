@@ -1,40 +1,111 @@
 #pragma once
 
-#include <memory>
-#include <HAL/Camera.pb.h>
+#include <opencv2/opencv.hpp>
+#include <HAL/Camera/AutoExposureInterface.h>
 #include <HAL/Utils/Uri.h>
-#include "HAL/Camera/CameraDriverInterface.h"
-#include "HAL/Camera/Drivers/UVC/UvcDriver.h"
-
-// Usage autoexposure://uvc://
-// At the moment the autoexposure driver is only configured to work with the UVC driver, specifically
-// to control the exposure of the twizzler device. More devices should be supported in the future,
-// as well as providing functionality to change PD gains from the uri
 
 namespace hal
 {
 
 class AutoExposureDriver : public CameraDriverInterface
 {
-public:
-    AutoExposureDriver(const int nTarget,std::shared_ptr<CameraDriverInterface> Input);
+  public:
 
-    bool Capture( hal::CameraMsg& vImages );
-    std::shared_ptr<CameraDriverInterface> GetInputDevice() { return m_Input; }
+    AutoExposureDriver(std::shared_ptr<AutoExposureInterface> input,
+        double p, double i, double d, double target, const ImageRoi& roi,
+        double limit, double gain, bool sync, int channel, int color);
 
-    std::string GetDeviceProperty(const std::string& sProperty);
+    bool Capture(hal::CameraMsg& images) override;
 
-    size_t NumChannels() const { return m_Input->NumChannels(); }
-    size_t Width( size_t /*idx*/ = 0 ) const { return m_Input->Width(); }
-    size_t Height( size_t /*idx*/ = 0 ) const { return m_Input->Height(); }
+    std::shared_ptr<CameraDriverInterface> GetInputDevice() override;
 
+    std::string GetDeviceProperty(const std::string& property) override;
 
-protected:
-    std::shared_ptr<CameraDriverInterface>  m_Input;
-    int m_nTarget;
-    int m_nExposure;
-    float m_fLastError;
-    UvcDriver* m_pUvcDriver;
+    size_t NumChannels() const override;
+
+    size_t Width(size_t index = 0) const override;
+
+    size_t Height(size_t index = 0) const override;
+
+    double GetTargetIntensity() const;
+
+    void SetTargetIntensity(double target);
+
+  protected:
+
+    double GetExposure(const hal::CameraMsg& images);
+
+    double GetState() const;
+
+    double GetFeedback(const hal::CameraMsg& images) const;
+
+    bool IsConstrained(double error, double state, double& bound) const;
+
+    bool IsLowerConstrained(double error, double state) const;
+
+    bool IsUpperConstrained(double error, double state) const;
+
+    double GetUpdate(double error);
+
+    double GetProportionalUpdate(double error);
+
+    double GetIntegralUpdate(double error);
+
+    double GetDerivativeUpdate(double error);
+
+    double ClampExposure(double exposure) const;
+
+    void SetExposure(double exposure);
+
+    void SetAllExposures(double exposure);
+
+    void SetExposure(int channel, double exposure);
+
+  private:
+
+    void Initialize();
+
+    void CreateGains();
+
+    void CreateBounds();
+
+    void CreateRoiMask();
+
+    void CreateCameraGain();
+
+  protected:
+
+    std::shared_ptr<AutoExposureInterface> m_input;
+
+    double m_p;
+
+    double m_i;
+
+    double m_d;
+
+    double m_target;
+
+    ImageRoi m_roi;
+
+    double m_limit;
+
+    double m_gain;
+
+    bool m_sync;
+
+    int m_channel;
+
+    int m_color;
+
+    cv::Mat m_roi_mask;
+
+    double m_integral;
+
+    double m_last_error;
+
+    double m_lowerbound;
+
+    double m_upperbound;
 };
 
-}
+} // namespace hal

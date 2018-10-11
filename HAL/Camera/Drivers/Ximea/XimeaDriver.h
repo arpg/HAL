@@ -3,7 +3,7 @@
 #include <deque>
 #include <vector>
 
-#include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Camera/AutoExposureInterface.h>
 #include <HAL/Utils/Uri.h>
 
 #include <xiApi.h>
@@ -12,7 +12,7 @@
 namespace hal {
 
 
-class XimeaDriver : public CameraDriverInterface
+class XimeaDriver : public AutoExposureInterface
 {
 public:
   XimeaDriver(std::vector<std::string>& vector_ids,
@@ -22,8 +22,8 @@ public:
               XI_IMG_FORMAT mode,
               ImageRoi roi,
               int sync,
-	      int binning,
-	      int bus_cams);
+        int binning,
+        int bus_cams);
 
   ~XimeaDriver();
 
@@ -40,6 +40,28 @@ public:
   size_t Width(size_t /*idx*/ = 0) const;
 
   size_t Height(size_t /*idx*/ = 0) const;
+
+  double MaxExposure(int channel) const override;
+
+  double MinExposure(int channel) const override;
+
+  double MaxGain(int channel) const override;
+
+  double MinGain(int channel) const override;
+
+  double Exposure(int channel) override;
+
+  void SetExposure(double exposure, int channel) override;
+
+  double Gain(int channel) override;
+
+  void SetGain(double gain, int channel) override;
+
+  double ProportionalGain(int channel) const override;
+
+  double IntegralGain(int channel) const override;
+
+  double DerivativeGain(int channel) const override;
 
 private:
   void _CheckError(XI_RETURN err, std::string place);

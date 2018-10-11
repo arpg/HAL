@@ -8,7 +8,7 @@
 //Assumes that all cameras share the same host controller
 //From the Ximea support page, https://www.ximea.com/support/wiki/usb3/Multiple_Cameras_Setup
 
-#define USB3_HUB_DATA_RATE 2400 
+#define USB3_HUB_DATA_RATE 2400
 
 using namespace hal;
 
@@ -26,7 +26,7 @@ inline void XimeaDriver::_CheckError(
 
 ///////////////////////////////////////////////////////////////////////////
 XimeaDriver::XimeaDriver(
-			 std::vector<std::string>&  vector_ids,
+       std::vector<std::string>&  vector_ids,
     float                       fps,
     int                         exp,
     float                       gain,
@@ -49,11 +49,11 @@ XimeaDriver::XimeaDriver(
   binning_ = binning;
   bus_cams_ = bus_cams;
   std::cout << "Bus cameras @ init:" << bus_cams_ << std::endl;
-  
+
   // Get number of camera devices.
   DWORD num_devices;
   uint16_t camera_data_rate;
-  
+
   error = xiGetNumberDevices(&num_devices);
   _CheckError(error, "xiGetNumberDevices");
 
@@ -69,28 +69,28 @@ XimeaDriver::XimeaDriver(
   }
 
   if (num_channels_ < vector_ids.size()) {
-    
+
     throw DeviceException("Less cameras detected than those requested!");
   }
 
   // Resize camera handle vector to accomodate requested cameras.
   cam_handles_.resize(num_channels_);
-  
+
   // disable auto bandwidth calculation (before camera open)
   xiSetParamInt(0, XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF);
   std::cerr << "Ximea auto-bandwidth calc disabled" << std::endl;
-  
+
   for (size_t ii = 0; ii < num_channels_; ++ii) {
     // Retrieving a handle to the camera device.
     // Actually open the correct one if serial numbers are specified
     if (vector_ids.size() > 0)
       {
-	error = xiOpenDeviceBy(XI_OPEN_BY_SN, vector_ids[ii].c_str(), &cam_handles_[ii]);
+  error = xiOpenDeviceBy(XI_OPEN_BY_SN, vector_ids[ii].c_str(), &cam_handles_[ii]);
       }
     else
       {
-	std::cerr << "Opening Ximea index: " << ii << std::endl;
-	error = xiOpenDevice(ii, &cam_handles_[ii]);
+  std::cerr << "Opening Ximea index: " << ii << std::endl;
+  error = xiOpenDevice(ii, &cam_handles_[ii]);
       }
     _CheckError(error, "xiOpenDevice");
   }
@@ -113,7 +113,7 @@ XimeaDriver::XimeaDriver(
     error = xiGetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH, &curr_camera_data_rate);
     std::cout << "Current data rate:" << curr_camera_data_rate << std::endl;
     _CheckError(error, "xiGetParamInt (limit_bandwidth)");
-    
+
     std::cout << "Desired data rate:" << camera_data_rate << std::endl;
     if (camera_data_rate < curr_camera_data_rate) {
       error = xiSetParamInt(handle, XI_PRM_LIMIT_BANDWIDTH , camera_data_rate);
@@ -170,7 +170,7 @@ XimeaDriver::XimeaDriver(
       error = xiSetParamInt(handle, XI_PRM_DOWNSAMPLING, binning_);
       _CheckError(error, "xiSetParam (binning)");
     }
-    
+
     // Setting "exposure" parameter (10ms=10000us). Default 0 is AUTO exposure.
     if (exp == 0) {
       error = xiSetParamInt(handle, XI_PRM_AEAG, 1);
@@ -279,9 +279,9 @@ XimeaDriver::XimeaDriver(
         xiSetParamInt(handle, XI_PRM_GPI_MODE,  XI_GPI_TRIGGER);
       }
     }
-    
 
-   
+
+
   }
 
   // Start acquisition.
@@ -342,7 +342,7 @@ bool XimeaDriver::Capture(hal::CameraMsg& images)
     // Set timestamp from camera.
     images.set_device_time(image_.tsSec + 1e-6*image_.tsUSec);
     images.set_system_time(hal::Tic());
- 
+
     pb_img->set_width(image_.width);
     pb_img->set_height(image_.height);
 
@@ -405,4 +405,78 @@ size_t XimeaDriver::Width(size_t /*idx*/) const
 size_t XimeaDriver::Height(size_t /*idx*/) const
 {
   return image_height_;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::MaxExposure(int) const
+{
+  return 1000000;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::MinExposure(int) const
+{
+  return 16;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::MaxGain(int) const
+{
+  return 6;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::MinGain(int) const
+{
+  return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::Exposure(int channel)
+{
+  int result;
+  HANDLE handle = cam_handles_[channel];
+  xiGetParamInt(handle, "exposure", &result);
+  return result;
+}
+
+///////////////////////////////////////////////////////////////////////////
+void XimeaDriver::SetExposure(double exposure, int channel)
+{
+  HANDLE handle = cam_handles_[channel];
+  xiSetParamInt(handle, "exposure", exposure);
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::Gain(int channel)
+{
+  int result;
+  HANDLE handle = cam_handles_[channel];
+  xiGetParamInt(handle, "gain", &result);
+  return result;
+}
+
+///////////////////////////////////////////////////////////////////////////
+void XimeaDriver::SetGain(double gain, int channel)
+{
+  HANDLE handle = cam_handles_[channel];
+  xiSetParamInt(handle, "gain", gain);
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::ProportionalGain(int) const
+{
+  return 55.0;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::IntegralGain(int) const
+{
+  return 0.1;
+}
+
+///////////////////////////////////////////////////////////////////////////
+double XimeaDriver::DerivativeGain(int) const
+{
+  return 0.0;
 }
