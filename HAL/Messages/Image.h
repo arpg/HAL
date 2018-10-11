@@ -79,6 +79,10 @@ class Image {
     return mat_;
   }
 
+  const cv::Mat& Mat() const {
+    return mat_;
+  }
+
   template< typename T >
   T at(unsigned int row, unsigned int col) const {
     return *(T*)(RowPtr(row) + (col*sizeof(T)));

@@ -3,19 +3,21 @@
 #include <opencv2/opencv.hpp>
 #include <calibu/pcalib/pcalib.h>
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Messages/Image.h>
 
 namespace hal
 {
+
+class PhotoCorrection;
 
 class PhotoCalibDriver : public CameraDriverInterface
 {
   public:
 
     PhotoCalibDriver(std::shared_ptr<CameraDriverInterface> input,
-        calibu::PhotoCalibd& calib, int channel, int colors,
-        const std::string& in, const std::string& out);
+        calibu::PhotoRigd& rig, Type type);
 
-    bool Capture(hal::CameraMsg& images) override;
+    bool Capture(CameraMsg& images) override;
 
     std::shared_ptr<CameraDriverInterface> GetInputDevice() override;
 
@@ -27,29 +29,50 @@ class PhotoCalibDriver : public CameraDriverInterface
 
   protected:
 
-    void ApplyCorrection(hal::CameraMsg& images);
+    void Correct(CameraMsg& images);
+
+    bool ShouldCorrect(int index) const;
 
   private:
 
     void Initialize();
 
-    void CreateResponseTables();
+    void CaptureFormats();
 
-    void CreateVignettingTables();
+    void ValidateResponse();
+
+    void ValidateVignetting();
+
+    void CreateCorrections();
+
+    bool CorrectionNeeded(int index) const;
+
+    std::shared_ptr<PhotoCorrection> CreateCorrection(size_t index) const;
+
+    template <int channels>
+    std::shared_ptr<PhotoCorrection> CreateCorrection(size_t index) const;
+
+    template <int channels, typename in_type>
+    std::shared_ptr<PhotoCorrection> CreateCorrection(int index) const;
+
+    template <int channels, typename in_type, typename out_type>
+    std::shared_ptr<PhotoCorrection> CreateCorrection(int index) const;
 
   protected:
 
     std::shared_ptr<CameraDriverInterface> input_;
 
-    calibu::PhotoCalibd calib_;
-
-    int channel_;
+    calibu::PhotoRigd rig_;
 
     int colors_;
 
-    std::string in_depth_;
+    Type out_type_;
 
-    std::string out_depth_;
+    std::vector<Type> in_types_;
+
+    std::vector<Format> in_formats_;
+
+    std::vector<std::shared_ptr<PhotoCorrection>> corrections_;
 };
 
 } // namespace hal
