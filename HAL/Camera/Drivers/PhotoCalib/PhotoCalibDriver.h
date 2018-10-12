@@ -64,8 +64,6 @@ class PhotoCalibDriver : public CameraDriverInterface
 
     calibu::PhotoRigd rig_;
 
-    int colors_;
-
     Type out_type_;
 
     std::vector<Type> in_types_;

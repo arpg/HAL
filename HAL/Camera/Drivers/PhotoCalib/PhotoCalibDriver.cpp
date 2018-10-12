@@ -388,6 +388,8 @@ bool PhotoCalibDriver::ShouldCorrect(int index) const
 void PhotoCalibDriver::Initialize()
 {
   CaptureFormats();
+  ValidateResponse();
+  ValidateVignetting();
   CreateCorrections();
 }
 
@@ -407,6 +409,47 @@ void PhotoCalibDriver::CaptureFormats()
     const ImageMsg& image = images.image(i);
     in_formats_[i] = image.format();
     in_types_[i] = image.type();
+  }
+}
+
+void PhotoCalibDriver::ValidateResponse()
+{
+  // validate each camera
+  for (std::shared_ptr<calibu::PhotoCamerad> camera : rig_.cameras)
+  {
+    // check if valid camera
+    if (camera == nullptr) continue;
+
+    // check if additional response needed
+    if (camera->responses.empty() || camera->responses.size() == 2)
+    {
+      // add linear response
+      std::shared_ptr<calibu::LinearResponse<double>> response;
+      response = std::make_shared<calibu::LinearResponse<double>>();
+      camera->responses.push_back(response);
+    }
+  }
+}
+
+void PhotoCalibDriver::ValidateVignetting()
+{
+  // validate each camera
+  for (size_t i = 0; i < rig_.cameras.size(); ++i)
+  {
+    // check if valid camera
+    std::shared_ptr<calibu::PhotoCamerad> camera = rig_.cameras[i];
+    if (camera == nullptr) continue;
+
+    // check if additional vignetting needed
+    if (camera->vignettings.empty() || camera->vignettings.size() == 2)
+    {
+      // add uniform vignetting
+      const int w = input_->Width(i);
+      const int h = input_->Height(i);
+      std::shared_ptr<calibu::UniformVignetting<double>> vignetting;
+      vignetting = std::make_shared<calibu::UniformVignetting<double>>(w, h);
+      camera->vignettings.push_back(vignetting);
+    }
   }
 }
 
