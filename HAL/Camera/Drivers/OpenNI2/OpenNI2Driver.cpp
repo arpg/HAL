@@ -320,7 +320,6 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
         ++m_frame;
       }
 
-      std::cout << "e: " << exposure << ", g: " << gain << std::endl;
       m_colorStream.getCameraSettings()->setGain( gain );
       m_colorStream.getCameraSettings()->setExposure( exposure );
       m_colorStream.getCameraSettings()->setAutoExposureEnabled( false );
