@@ -44,10 +44,6 @@ class OpenNI2Driver : public AutoExposureInterface
         size_t Width( size_t idx = 0 ) const;
         size_t Height( size_t idx = 0 ) const;
         bool AutoExposure() const;
-        unsigned int Exposure() const;
-        void SetExposure(unsigned int exposure);
-        unsigned int Gain() const;
-        void SetGain(unsigned int gain);
 
         double MaxExposure(int channel) const override;
 
@@ -105,7 +101,6 @@ class OpenNI2Driver : public AutoExposureInterface
         std::string                          m_sCameraModel;
         unsigned int                         m_exposure;
         unsigned int                         m_gain;
-        bool                                 m_exposureUpdated;
         int                                  m_frame;
 };
 

@@ -73,6 +73,8 @@ class AutoExposureDriver : public CameraDriverInterface
 
     void CreateCameraGain();
 
+    void CreateCameraStream();
+
   protected:
 
     std::shared_ptr<AutoExposureInterface> m_input;

@@ -32,7 +32,6 @@ OpenNI2Driver::OpenNI2Driver(
   m_exposure = nExposure;
   m_gain = nGain;
   m_sCameraModel = scmod;
-  m_exposureUpdated = true;
   m_frame = 0;
 
   if (m_bHardwareAlign && (m_sCameraModel.size() > 0))
@@ -301,39 +300,22 @@ bool OpenNI2Driver::Capture( hal::CameraMsg& vImages )
   static double d0;
 
   // check if exposure update needed
-  if (m_colorStream.isValid()) //  && m_exposureUpdated)
+  if (m_colorStream.isValid())
   {
     // check if using manual exposure
-    if ( m_exposure > 0) {
-
-      int gain = m_gain;
-      int exposure = m_exposure;
-
-      if (m_frame < 3)
-      {
-        gain += (gain > 0.5 * MaxGain(0)) ? -1 : 0;
-        exposure += (exposure > 0.5 * MaxExposure(0)) ? -1 : 0;
-
-        gain += (m_frame % 2);
-        exposure += (m_frame % 2);
-
-        ++m_frame;
-      }
-
-      std::cout << "e: " << exposure << ", g: " << gain << std::endl;
-      m_colorStream.getCameraSettings()->setGain( gain );
-      m_colorStream.getCameraSettings()->setExposure( exposure );
-      m_colorStream.getCameraSettings()->setAutoExposureEnabled( false );
-      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( false );
+    if (m_exposure > 0)
+    {
+      m_colorStream.getCameraSettings()->setGain(m_gain);
+      m_colorStream.getCameraSettings()->setExposure(m_exposure);
+      m_colorStream.getCameraSettings()->setAutoExposureEnabled(false);
+      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(false);
     }
     // otherwise use auto-exposure
     else
     {
-      m_colorStream.getCameraSettings()->setAutoExposureEnabled( true );
-      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled( true );
+      m_colorStream.getCameraSettings()->setAutoExposureEnabled(true);
+      m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(true);
     }
-
-    m_exposureUpdated = false;
   }
 
   rc = openni::OpenNI::waitForAnyStream( &m_streams[0], m_streams.size(), &changedIndex );
@@ -485,34 +467,6 @@ bool OpenNI2Driver::AutoExposure() const
   return m_exposure == 0;
 }
 
-unsigned int OpenNI2Driver::Exposure() const
-{
-  return m_exposure;
-}
-
-void OpenNI2Driver::SetExposure(unsigned int exposure)
-{
-  if (m_exposure != exposure)
-  {
-    m_exposure = exposure;
-    m_exposureUpdated = true;
-  }
-}
-
-unsigned int OpenNI2Driver::Gain() const
-{
-  return m_gain;
-}
-
-void OpenNI2Driver::SetGain(unsigned int gain)
-{
-  if (m_gain != gain)
-  {
-    m_gain = gain;
-    m_exposureUpdated = true;
-  }
-}
-
 ///////////////////////////////////////////////////////////////////////////
 double OpenNI2Driver::MaxExposure(int) const
 {
@@ -546,9 +500,7 @@ double OpenNI2Driver::Exposure(int)
 ///////////////////////////////////////////////////////////////////////////
 void OpenNI2Driver::SetExposure(double exposure, int)
 {
-  m_colorStream.getCameraSettings()->setExposure(exposure);
-  m_colorStream.getCameraSettings()->setAutoExposureEnabled(false);
-  m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(false);
+  m_exposure = exposure;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -560,9 +512,7 @@ double OpenNI2Driver::Gain(int)
 ///////////////////////////////////////////////////////////////////////////
 void OpenNI2Driver::SetGain(double gain, int)
 {
-  m_colorStream.getCameraSettings()->setGain(gain);
-  m_colorStream.getCameraSettings()->setAutoExposureEnabled(false);
-  m_colorStream.getCameraSettings()->setAutoWhiteBalanceEnabled(false);
+  m_gain = gain;
 }
 
 ///////////////////////////////////////////////////////////////////////////

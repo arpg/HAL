@@ -64,6 +64,8 @@ double AutoExposureDriver::GetTargetIntensity() const
 void AutoExposureDriver::SetTargetIntensity(double target)
 {
   m_target = target;
+  m_integral = 0.0;
+  m_last_error = 0.0;
 }
 
 double AutoExposureDriver::GetExposure(const CameraMsg& images)
@@ -179,6 +181,7 @@ void AutoExposureDriver::Initialize()
   CreateBounds();
   CreateRoiMask();
   CreateCameraGain();
+  CreateCameraStream();
 }
 
 void AutoExposureDriver::CreateGains()
@@ -216,6 +219,17 @@ void AutoExposureDriver::CreateCameraGain()
   const double min = m_input->MinGain(m_channel);
   const double max = m_input->MaxGain(m_channel);
   m_gain = m_gain * (max - min) + min;
+}
+
+void AutoExposureDriver::CreateCameraStream()
+{
+  const double range = m_upperbound - m_lowerbound;
+  m_input->SetExposure(0.1 * range + m_lowerbound);
+
+  CameraMsg images;
+  m_input->Capture(images);
+  m_input->Capture(images);
+  m_input->Capture(images);
 }
 
 } // namespace hal
