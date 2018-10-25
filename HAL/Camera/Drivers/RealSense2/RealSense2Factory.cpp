@@ -19,9 +19,9 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
         {"depth", "true", "Capture Depth image"},
         {"ir0", "false", "Capture first IR image"},
         {"ir1", "false", "Capture second IR image"},
-        {"emitter", "true", "Enable IR emitter"},
-        {"exposure", "0", "Exposure value, 0 for auto-exposure"},
-        {"gain", "0", "Camera gain"},
+        {"emitter", "0.462", "Laser emitter strength, 0 to disable"},
+        {"exposure", "0", "RGB exposure value, 0 for auto-exposure"},
+        {"gain", "64", "RGB camera gain"},
       };
     }
 
@@ -32,14 +32,24 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
       bool capture_depth = uri.properties.Get("depth", true);
       bool capture_ir0   = uri.properties.Get("ir0", false);
       bool capture_ir1   = uri.properties.Get("ir1", false);
-      bool emit_ir       = uri.properties.Get("emitter", true);
       double exposure    = uri.properties.Get("exposure", 0.0);
-      double gain        = uri.properties.Get("gain", 0.0);
-      int fps            = uri.properties.Get("fps", 30);
+      double gain        = uri.properties.Get("gain", 64);
+      double emitter     = uri.properties.Get("emitter", 0.462);
+      int frame_rate     = uri.properties.Get("fps", 30);
 
-      return std::make_shared<RealSense2Driver>(dims.x, dims.y, fps,
-          capture_color, capture_depth, capture_ir0, capture_ir1, emit_ir,
-          exposure, gain);
+      std::shared_ptr<RealSense2Driver> driver =
+          std::make_shared<RealSense2Driver>(dims.x, dims.y, frame_rate,
+          capture_color, capture_depth, capture_ir0, capture_ir1);
+
+      if (capture_color)
+      {
+        const int channel = capture_ir0 + capture_ir1;
+        driver->SetExposure(exposure, channel);
+        driver->SetGain(gain, channel);
+      }
+
+      driver->SetEmitter(emitter);
+      return driver;
     }
 };
 
