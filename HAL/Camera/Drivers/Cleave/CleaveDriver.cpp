@@ -61,12 +61,15 @@ namespace hal {
 
   bool CleaveDriver::Capture( hal::CameraMsg& vImages )
   {
-
     vImages.Clear();
     m_InMsg.Clear();
+
     if( inputCamera->Capture( m_InMsg ) == false ) {
         return false;
     }
+
+    vImages.set_device_time(m_InMsg.device_time());
+    vImages.set_system_time(m_InMsg.system_time());
 
     for( unsigned int ii = minChannel; ii <= maxChannel; ++ii ) {
       const hal::ImageMsg& InImg = m_InMsg.image(ii);
