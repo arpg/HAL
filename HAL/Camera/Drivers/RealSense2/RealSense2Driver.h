@@ -2,6 +2,7 @@
 
 #include <librealsense2/rs.hpp>
 #include <HAL/Camera/AutoExposureInterface.h>
+#include "RealSense2Cam.h"
 
 namespace hal
 {
@@ -59,11 +60,7 @@ class RealSense2Driver : public AutoExposureInterface
 
     void DisableAutoExposure(int channel, double exposure);
 
-    void CaptureInfraredStream(int index, CameraMsg& images);
 
-    void CaptureColorStream(CameraMsg& images);
-
-    void CaptureDepthStream(CameraMsg& images);
 
     bool IsColorStream(int channel) const;
 
@@ -75,41 +72,11 @@ class RealSense2Driver : public AutoExposureInterface
 
     void Initialize();
 
-    void CreatePipeline();
-
-    void ConfigurePipeline();
-
-    void CreateConfiguration();
-
-    void ConfigureInfraredStream(int index);
-
-    void ConfigureColorStream();
-
-    void ConfigureDepthStream();
-
-    void CreateSensors();
-
-    void CreateStreams();
-
-    void CreateInfraredStream(int index);
-
-    void CreateColorStream();
-
-    void CreateDepthStream();
 
   protected:
 
-    std::unique_ptr<rs2::pipeline> pipeline_;
-
-    std::unique_ptr<rs2::config> configuration_;
-
-    std::vector<rs2::video_stream_profile> streams_;
-
-    rs2::sensor depth_sensor_;
-
-    rs2::sensor color_sensor_;
-
-    rs2::frameset frameset_;
+    std::vector<RealSense2Cam*> cams_;
+    int num_streams_per_cam_;
 
     int width_;
 
@@ -124,12 +91,6 @@ class RealSense2Driver : public AutoExposureInterface
     bool capture_ir1_;
 
     int frame_rate_;
-
-    double exposure_;
-
-    double gain_;
-
-    double emitter_;
 };
 
 } // namespace hal
