@@ -92,9 +92,9 @@ bool ProtoReaderDriver::Capture( hal::CameraMsg& vImages ) {
   }
   // Apply autoexposure params on the images
   for (int i=0; i<vImages.image_size(); i++){
-    std::cout << "exposure: " << m_exposures[i] << std::endl;
     Image(vImages.image(i)).Mat() *= m_gains[i] * m_exposures[i];
   }
+  // std::cout << "exposure: " << m_exposures[0] << std::endl;
   return success && vImages.image_size() > 0;
 }
 
@@ -118,7 +118,7 @@ size_t ProtoReaderDriver::Height( size_t idx ) const {
 }
 
 double ProtoReaderDriver::MaxExposure(int) const {
-  return 2.0;
+  return 5.0;
 }
 
 double ProtoReaderDriver::MinExposure(int) const {
