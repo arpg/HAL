@@ -75,6 +75,7 @@ void GladiatorDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
 	     //Pass through the timestamp
 	     dataIMU.set_device_time(halStamp);
 	     dataIMU.set_system_time(hal::Tic());
+	     // dataIMU.set_system_time(halStamp);
 	     m_IMUCallback( dataIMU );
 	   }
       }
