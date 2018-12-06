@@ -48,7 +48,11 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
         driver->SetGain(gain, channel);
       }
 
-      driver->SetEmitter(emitter);
+      for (size_t i = 0; i < driver->NumDevices(); ++i)
+      {
+        driver->SetEmitter(i, emitter);
+      }
+
       return driver;
     }
 };

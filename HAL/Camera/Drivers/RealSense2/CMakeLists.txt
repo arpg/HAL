@@ -6,6 +6,8 @@ if(RealSense2_FOUND AND BUILD_RealSense2)
   message(STATUS "HAL: building 'RealSense2' camera driver.")
 
   set(SOURCES
+    RealSense2Device.h
+    RealSense2Device.cpp
     RealSense2Driver.h
     RealSense2Driver.cpp
     RealSense2Factory.cpp

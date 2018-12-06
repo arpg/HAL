@@ -6,6 +6,8 @@
 namespace hal
 {
 
+class RealSense2Device;
+
 class RealSense2Driver : public AutoExposureInterface
 {
   public:
@@ -49,67 +51,39 @@ class RealSense2Driver : public AutoExposureInterface
 
     double DerivativeGain(int channel = 0) const override;
 
-    double Emitter() const;
+    double Emitter(int device) const;
 
-    void SetEmitter(double emitter) const;
+    void SetEmitter(int device, double emitter) const;
+
+    size_t NumDevices() const;
 
   protected:
 
-    void EnableAutoExposure(int channel);
+    std::shared_ptr<RealSense2Device> Device(int channel);
 
-    void DisableAutoExposure(int channel, double exposure);
+    std::shared_ptr<const RealSense2Device> Device(int channel) const;
 
-    void CaptureInfraredStream(int index, CameraMsg& images);
-
-    void CaptureColorStream(CameraMsg& images);
-
-    void CaptureDepthStream(CameraMsg& images);
-
-    bool IsColorStream(int channel) const;
-
-    const rs2::sensor& GetSensor(int channel) const;
-
-    rs2::sensor& GetSensor(int channel);
+    static bool ValidDevice(rs2::device& device);
 
   private:
 
     void Initialize();
 
-    void CreatePipeline();
+    void CreateDevices();
 
-    void ConfigurePipeline();
+    void SetChannelCount();
 
-    void CreateConfiguration();
-
-    void ConfigureInfraredStream(int index);
-
-    void ConfigureColorStream();
-
-    void ConfigureDepthStream();
-
-    void CreateSensors();
-
-    void CreateStreams();
-
-    void CreateInfraredStream(int index);
-
-    void CreateColorStream();
-
-    void CreateDepthStream();
+    void CreateMapping();
 
   protected:
 
-    std::unique_ptr<rs2::pipeline> pipeline_;
+    std::vector<std::shared_ptr<RealSense2Device>> devices_;
 
-    std::unique_ptr<rs2::config> configuration_;
+    std::vector<int> device_map_;
 
-    std::vector<rs2::video_stream_profile> streams_;
+    std::vector<int> channel_map_;
 
-    rs2::sensor depth_sensor_;
-
-    rs2::sensor color_sensor_;
-
-    rs2::frameset frameset_;
+    int channel_count_;
 
     int width_;
 
@@ -124,12 +98,6 @@ class RealSense2Driver : public AutoExposureInterface
     bool capture_ir1_;
 
     int frame_rate_;
-
-    double exposure_;
-
-    double gain_;
-
-    double emitter_;
 };
 
 } // namespace hal
