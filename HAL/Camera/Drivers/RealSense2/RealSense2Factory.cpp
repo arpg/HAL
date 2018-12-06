@@ -13,6 +13,7 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
     {
       Params() =
       {
+        {"idN", "0", "Camera serial number, where N is zero-base index"},
         {"size", "640x480", "Capture resolution"},
         {"fps", "30", "Capture framerate"},
         {"rgb", "true", "Capture RGB image"},
@@ -37,9 +38,20 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
       double emitter     = uri.properties.Get("emitter", 0.462);
       int frame_rate     = uri.properties.Get("fps", 30);
 
+      std::vector<std::string> ids;
+
+      while (true)
+      {
+        std::stringstream stream;
+        stream << "id" << ids.size();
+        const std::string key = stream.str();
+        if (!uri.properties.Contains(key)) break;
+        ids.push_back(uri.properties.Get<std::string>(key, ""));
+      }
+
       std::shared_ptr<RealSense2Driver> driver =
           std::make_shared<RealSense2Driver>(dims.x, dims.y, frame_rate,
-          capture_color, capture_depth, capture_ir0, capture_ir1);
+          capture_color, capture_depth, capture_ir0, capture_ir1, ids);
 
       if (capture_color)
       {
@@ -48,7 +60,11 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
         driver->SetGain(gain, channel);
       }
 
-      driver->SetEmitter(emitter);
+      for (size_t i = 0; i < driver->NumDevices(); ++i)
+      {
+        driver->SetEmitter(i, emitter);
+      }
+
       return driver;
     }
 };

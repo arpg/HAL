@@ -1,4 +1,6 @@
 #include "RealSense2Driver.h"
+#include "RealSense2Device.h"
+
 #include <iostream>
 
 namespace hal
@@ -6,7 +8,8 @@ namespace hal
 
 RealSense2Driver::RealSense2Driver(int width, int height, int frame_rate,
     bool capture_color, bool capture_depth, bool capture_ir0,
-    bool capture_ir1) :
+    bool capture_ir1, const std::vector<std::string>& ids) :
+  ids_(ids),
   width_(width),
   height_(height),
   capture_color_(capture_color),
@@ -24,18 +27,17 @@ RealSense2Driver::~RealSense2Driver()
 
 bool RealSense2Driver::Capture(CameraMsg& images)
 {
-  frameset_ = pipeline_->wait_for_frames();
-  images.set_device_time(frameset_.get_timestamp());
-  if (capture_ir0_) CaptureInfraredStream(1, images);
-  if (capture_ir1_) CaptureInfraredStream(2, images);
-  if (capture_color_) CaptureColorStream(images);
-  if (capture_depth_) CaptureDepthStream(images);
+  for (size_t i = 0; i < devices_.size(); ++i)
+  {
+    if (!devices_[i]->Capture(images)) return false;
+  }
+
   return true;
 }
 
 std::shared_ptr<CameraDriverInterface> RealSense2Driver::GetInputDevice()
 {
-  return std::shared_ptr<CameraDriverInterface>();
+  return nullptr;
 }
 
 std::string RealSense2Driver::GetDeviceProperty(const std::string&)
@@ -45,291 +47,189 @@ std::string RealSense2Driver::GetDeviceProperty(const std::string&)
 
 size_t RealSense2Driver::NumChannels() const
 {
-  return streams_.size();
+  return channel_count_;
 }
 
 size_t RealSense2Driver::Width(size_t index) const
 {
-  return streams_[index].width();
+  return Device(index)->Width(channel_map_[index]);
 }
 
 size_t RealSense2Driver::Height(size_t index) const
 {
-  return streams_[index].height();
+  return Device(index)->Height(channel_map_[index]);
 }
 
 double RealSense2Driver::MaxExposure(int channel) const
 {
-  const rs2_option option = RS2_OPTION_EXPOSURE;
-  const rs2::sensor& sensor = GetSensor(channel);
-  const rs2::option_range range = sensor.get_option_range(option);
-  return range.max;
+  return Device(channel)->MaxExposure(channel_map_[channel]);
 }
 
 double RealSense2Driver::MinExposure(int channel) const
 {
-  const rs2_option option = RS2_OPTION_EXPOSURE;
-  const rs2::sensor& sensor = GetSensor(channel);
-  const rs2::option_range range = sensor.get_option_range(option);
-  return range.min;
+  return Device(channel)->MinExposure(channel_map_[channel]);
 }
 
 double RealSense2Driver::MaxGain(int channel) const
 {
-  const rs2_option option = RS2_OPTION_GAIN;
-  const rs2::sensor& sensor = GetSensor(channel);
-  const rs2::option_range range = sensor.get_option_range(option);
-  return range.max;
+  return Device(channel)->MaxGain(channel_map_[channel]);
 }
 
 double RealSense2Driver::MinGain(int channel) const
 {
-  const rs2_option option = RS2_OPTION_GAIN;
-  const rs2::sensor& sensor = GetSensor(channel);
-  const rs2::option_range range = sensor.get_option_range(option);
-  return range.min;
+  return Device(channel)->MinGain(channel_map_[channel]);
 }
 
 double RealSense2Driver::Exposure(int channel)
 {
-  const rs2_option option = RS2_OPTION_EXPOSURE;
-  const rs2::sensor& sensor = GetSensor(channel);
-  return sensor.get_option(option);
+  return Device(channel)->Exposure(channel_map_[channel]);
 }
 
 void RealSense2Driver::SetExposure(double exposure, int channel)
 {
-  (exposure > 0) ?
-      DisableAutoExposure(channel, exposure) :
-      EnableAutoExposure(channel);
+  Device(channel)->SetExposure(exposure, channel_map_[channel]);
 }
 
 double RealSense2Driver::Gain(int channel)
 {
-  const rs2_option option = RS2_OPTION_GAIN;
-  const rs2::sensor& sensor = GetSensor(channel);
-  return sensor.get_option(option);
+  return Device(channel)->Gain(channel_map_[channel]);
 }
 
 void RealSense2Driver::SetGain(double gain, int channel)
 {
-  gain_ = gain;
-  const rs2_option option = RS2_OPTION_GAIN;
-  const rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(option, gain_);
+  Device(channel)->SetGain(gain, channel_map_[channel]);
 }
 
 double RealSense2Driver::ProportionalGain(int channel) const
 {
-  return IsColorStream(channel) ? 0.45 : 2.5;
+  return Device(channel)->ProportionalGain(channel_map_[channel]);
 }
 
 double RealSense2Driver::IntegralGain(int channel) const
 {
-  return IsColorStream(channel) ? 0.01 : 0.1;
+  return Device(channel)->IntegralGain(channel_map_[channel]);
 }
 
 double RealSense2Driver::DerivativeGain(int channel) const
 {
-  return IsColorStream(channel) ? 0.5 : 3.0;
+  return Device(channel)->DerivativeGain(channel_map_[channel]);
 }
 
-double RealSense2Driver::Emitter() const
+double RealSense2Driver::Emitter(int device) const
 {
-  if (depth_sensor_.get_option(RS2_OPTION_EMITTER_ENABLED))
-  {
-    const rs2_option option = RS2_OPTION_LASER_POWER;
-    const double value = depth_sensor_.get_option(option);
-    const rs2::option_range range = depth_sensor_.get_option_range(option);
-    return (value - range.min) / (range.max - range.min);
-  }
-
-  return 0.0;
+  return devices_[device]->Emitter();
 }
 
-void RealSense2Driver::SetEmitter(double emitter) const
+void RealSense2Driver::SetEmitter(int device, double emitter) const
 {
-  emitter = std::max(0.0, std::min(1.0, emitter));
-  const rs2_option option = RS2_OPTION_LASER_POWER;
-  depth_sensor_.set_option(RS2_OPTION_EMITTER_ENABLED, emitter <= 0.0);
-  const rs2::option_range range = depth_sensor_.get_option_range(option);
-  emitter = range.min + emitter * (range.max - range.min);
-  depth_sensor_.set_option(option, emitter);
+  devices_[device]->SetEmitter(emitter);
 }
 
-void RealSense2Driver::EnableAutoExposure(int channel)
+size_t RealSense2Driver::NumDevices() const
 {
-  rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, true);
-
-  if (IsColorStream(channel))
-  {
-    sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, true);
-    sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, true);
-  }
+  return devices_.size();
 }
 
-void RealSense2Driver::DisableAutoExposure(int channel, double exposure)
+std::shared_ptr<RealSense2Device> RealSense2Driver::Device(int channel)
 {
-  rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, false);
-  sensor.set_option(RS2_OPTION_EXPOSURE, exposure);
-
-  if (IsColorStream(channel))
-  {
-    sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, false);
-    sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, false);
-    sensor.set_option(RS2_OPTION_WHITE_BALANCE, 3250);
-  }
+  return devices_[device_map_[channel]];
 }
 
-void RealSense2Driver::CaptureInfraredStream(int index, CameraMsg& images)
+std::shared_ptr<const RealSense2Device> RealSense2Driver::Device(
+    int channel) const
 {
-  ImageMsg* image = images.add_image();
-  rs2::video_frame frame = frameset_.get_infrared_frame(index);
-  const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
-  image->set_width(frame.get_width());
-  image->set_height(frame.get_height());
-  image->set_data(frame.get_data(), bytes);
-  image->set_format(PB_LUMINANCE);
-  image->set_type(PB_UNSIGNED_BYTE);
+  return devices_[device_map_[channel]];
 }
 
-void RealSense2Driver::CaptureColorStream(CameraMsg& images)
+bool RealSense2Driver::ValidDevice(rs2::device& device, const std::string& id)
 {
-  ImageMsg* image = images.add_image();
-  rs2::video_frame frame = frameset_.get_color_frame();
-  const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
-  image->set_width(frame.get_width());
-  image->set_height(frame.get_height());
-  image->set_data(frame.get_data(), bytes);
-  image->set_type(PB_UNSIGNED_BYTE);
-  image->set_format(PB_RGB);
+  if (!ValidDevice(device)) return false;
+  return (id == device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
 }
 
-void RealSense2Driver::CaptureDepthStream(CameraMsg& images)
+bool RealSense2Driver::ValidDevice(rs2::device& device)
 {
-  ImageMsg* image = images.add_image();
-  rs2::video_frame frame = frameset_.get_depth_frame();
-  const size_t bytes = frame.get_stride_in_bytes() * frame.get_height();
-  image->set_width(frame.get_width());
-  image->set_height(frame.get_height());
-  image->set_data(frame.get_data(), bytes);
-  image->set_format(PB_LUMINANCE);
-  image->set_type(PB_SHORT);
-}
-
-bool RealSense2Driver::IsColorStream(int channel) const
-{
-  return streams_[channel].stream_type() == RS2_STREAM_COLOR;
-}
-
-const rs2::sensor& RealSense2Driver::GetSensor(int channel) const
-{
-  return IsColorStream(channel) ? color_sensor_ : depth_sensor_;
-}
-
-rs2::sensor&RealSense2Driver::GetSensor(int channel)
-{
-  return IsColorStream(channel) ? color_sensor_ : depth_sensor_;
+  static const std::string prefix = "Intel RealSense";
+  if (!device.supports(RS2_CAMERA_INFO_NAME)) return false;
+  const std::string name = device.get_info(RS2_CAMERA_INFO_NAME);
+  auto result = std::mismatch(prefix.begin(), prefix.end(), name.begin());
+  return result.first == prefix.end();
 }
 
 void RealSense2Driver::Initialize()
 {
-  CreatePipeline();
-  ConfigurePipeline();
-  CreateSensors();
-  CreateStreams();
+  CreateDevices();
+  SetChannelCount();
+  CreateMapping();
 }
 
-void RealSense2Driver::CreatePipeline()
+void RealSense2Driver::CreateDevices()
 {
-  rs2::pipeline* pointer = new rs2::pipeline;
-  pipeline_ = std::unique_ptr<rs2::pipeline>(pointer);
+  (ids_.empty()) ? CreateAllDevices() : CreateSelectedDevices();
 }
 
-void RealSense2Driver::ConfigurePipeline()
+void RealSense2Driver::CreateSelectedDevices()
 {
-  CreateConfiguration();
-  if (capture_ir0_) ConfigureInfraredStream(1);
-  if (capture_ir1_) ConfigureInfraredStream(2);
-  if (capture_color_) ConfigureColorStream();
-  if (capture_depth_) ConfigureDepthStream();
-  pipeline_->start(*configuration_);
-}
+  rs2::context context;
+  rs2::device_list devices = context.query_devices();
 
-void RealSense2Driver::CreateConfiguration()
-{
-  rs2::config* pointer = new rs2::config();
-  configuration_ = std::unique_ptr<rs2::config>(pointer);
-  configuration_->disable_all_streams();
-}
-
-void RealSense2Driver::ConfigureInfraredStream(int index)
-{
-  const int rate = frame_rate_;
-  const rs2_format format = RS2_FORMAT_Y8;
-  const rs2_stream stream = RS2_STREAM_INFRARED;
-  configuration_->enable_stream(stream, index, width_, height_, format, rate);
-}
-
-void RealSense2Driver::ConfigureColorStream()
-{
-  const int rate = frame_rate_;
-  const rs2_format format = RS2_FORMAT_RGB8;
-  const rs2_stream stream = RS2_STREAM_COLOR;
-  configuration_->enable_stream(stream, width_, height_, format, rate);
-}
-
-void RealSense2Driver::ConfigureDepthStream()
-{
-  const int rate = frame_rate_;
-  const rs2_format format = RS2_FORMAT_Z16;
-  const rs2_stream stream = RS2_STREAM_DEPTH;
-  configuration_->enable_stream(stream, width_, height_, format, rate);
-}
-
-void RealSense2Driver::CreateSensors()
-{
-  rs2::pipeline_profile pipeline_profile = pipeline_->get_active_profile();
-  const rs2::device device = pipeline_profile.get_device();
-  std::vector<rs2::sensor> sensors = device.query_sensors();
-
-  for (rs2::sensor sensor: sensors)
+  for (const std::string& id : ids_)
   {
-    (sensor.is<rs2::depth_sensor>()) ?
-        depth_sensor_ = sensor : color_sensor_ = sensor;
+    for (rs2::device&& device : devices)
+    {
+      if (ValidDevice(device, id))
+      {
+        devices_.push_back(std::make_shared<RealSense2Device>(device, width_,
+            height_, frame_rate_, capture_color_, capture_depth_, capture_ir0_,
+            capture_ir1_));
+      }
+    }
   }
 }
 
-void RealSense2Driver::CreateStreams()
+void RealSense2Driver::CreateAllDevices()
 {
-  if (capture_ir0_) CreateInfraredStream(1);
-  if (capture_ir1_) CreateInfraredStream(2);
-  if (capture_color_) CreateColorStream();
-  if (capture_depth_) CreateDepthStream();
+  rs2::context context;
+  rs2::device_list devices = context.query_devices();
+
+  for (rs2::device&& device : devices)
+  {
+    if (ValidDevice(device))
+    {
+      devices_.push_back(std::make_shared<RealSense2Device>(device, width_,
+          height_, frame_rate_, capture_color_, capture_depth_, capture_ir0_,
+          capture_ir1_));
+    }
+  }
 }
 
-void RealSense2Driver::CreateInfraredStream(int index)
+void RealSense2Driver::SetChannelCount()
 {
-  rs2::pipeline_profile profile = pipeline_->get_active_profile();
-  rs2::stream_profile stream = profile.get_stream(RS2_STREAM_INFRARED, index);
-  streams_.push_back(stream.as<rs2::video_stream_profile>());
+  channel_count_ = 0;
+
+  for (size_t i = 0; i < devices_.size(); ++i)
+  {
+    channel_count_ += devices_[i]->NumChannels();
+  }
 }
 
-void RealSense2Driver::CreateColorStream()
+void RealSense2Driver::CreateMapping()
 {
-  rs2::pipeline_profile profile = pipeline_->get_active_profile();
-  rs2::stream_profile stream = profile.get_stream(RS2_STREAM_COLOR);
-  streams_.push_back(stream.as<rs2::video_stream_profile>());
-}
+  size_t index = 0;
+  device_map_.resize(channel_count_);
+  channel_map_.resize(channel_count_);
 
-void RealSense2Driver::CreateDepthStream()
-{
-  rs2::pipeline_profile profile = pipeline_->get_active_profile();
-  rs2::stream_profile stream = profile.get_stream(RS2_STREAM_DEPTH);
-  streams_.push_back(stream.as<rs2::video_stream_profile>());
-}
+  for (size_t i = 0; i < devices_.size(); ++i)
+  {
+    const size_t count = devices_[i]->NumChannels();
 
+    for (size_t j = 0; j < count; ++j)
+    {
+      device_map_[index] = i;
+      channel_map_[index] = j;
+      ++index;
+    }
+  }
+}
 
 } // namespace hal
