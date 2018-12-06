@@ -13,7 +13,8 @@ class RealSense2Driver : public AutoExposureInterface
   public:
 
     RealSense2Driver(int width, int height, int frame_rate, bool capture_color,
-        bool capture_depth, bool capture_ir0, bool capture_ir1);
+        bool capture_depth, bool capture_ir0, bool capture_ir1,
+        const std::vector<std::string>& ids);
 
     virtual ~RealSense2Driver();
 
@@ -63,6 +64,8 @@ class RealSense2Driver : public AutoExposureInterface
 
     std::shared_ptr<const RealSense2Device> Device(int channel) const;
 
+    static bool ValidDevice(rs2::device& device, const std::string& id);
+
     static bool ValidDevice(rs2::device& device);
 
   private:
@@ -70,6 +73,10 @@ class RealSense2Driver : public AutoExposureInterface
     void Initialize();
 
     void CreateDevices();
+
+    void CreateSelectedDevices();
+
+    void CreateAllDevices();
 
     void SetChannelCount();
 
@@ -82,6 +89,8 @@ class RealSense2Driver : public AutoExposureInterface
     std::vector<int> device_map_;
 
     std::vector<int> channel_map_;
+
+    std::vector<std::string> ids_;
 
     int channel_count_;
 

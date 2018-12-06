@@ -8,7 +8,8 @@ namespace hal
 
 RealSense2Driver::RealSense2Driver(int width, int height, int frame_rate,
     bool capture_color, bool capture_depth, bool capture_ir0,
-    bool capture_ir1) :
+    bool capture_ir1, const std::vector<std::string>& ids) :
+  ids_(ids),
   width_(width),
   height_(height),
   capture_color_(capture_color),
@@ -140,6 +141,12 @@ std::shared_ptr<const RealSense2Device> RealSense2Driver::Device(
   return devices_[device_map_[channel]];
 }
 
+bool RealSense2Driver::ValidDevice(rs2::device& device, const std::string& id)
+{
+  if (!ValidDevice(device)) return false;
+  return (id == device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
+}
+
 bool RealSense2Driver::ValidDevice(rs2::device& device)
 {
   static const std::string prefix = "Intel RealSense";
@@ -157,6 +164,30 @@ void RealSense2Driver::Initialize()
 }
 
 void RealSense2Driver::CreateDevices()
+{
+  (ids_.empty()) ? CreateAllDevices() : CreateSelectedDevices();
+}
+
+void RealSense2Driver::CreateSelectedDevices()
+{
+  rs2::context context;
+  rs2::device_list devices = context.query_devices();
+
+  for (const std::string& id : ids_)
+  {
+    for (rs2::device&& device : devices)
+    {
+      if (ValidDevice(device, id))
+      {
+        devices_.push_back(std::make_shared<RealSense2Device>(device, width_,
+            height_, frame_rate_, capture_color_, capture_depth_, capture_ir0_,
+            capture_ir1_));
+      }
+    }
+  }
+}
+
+void RealSense2Driver::CreateAllDevices()
 {
   rs2::context context;
   rs2::device_list devices = context.query_devices();
