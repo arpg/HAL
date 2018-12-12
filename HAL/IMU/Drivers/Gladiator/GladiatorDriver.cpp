@@ -52,33 +52,33 @@ void GladiatorDriver::RegisterIMUDataCallback(IMUDriverDataCallback callback)
   }
 }
   
-  void GladiatorDriver::service()
-  {
+void GladiatorDriver::service()
+{
     while (m_bShouldRun)
-      {
-	imu_data_t* rawIMU = (imu_data_t*) m_dev->WaitData();
-	//Translate the imu packet from the fixed point to the floating point
-	 hal::ImuMsg dataIMU;
-	 hal::VectorMsg* pbAccel = dataIMU.mutable_accel();
-	 pbAccel->add_data(rawIMU->accel_x*ACCL_TO_M_S2);
-	 pbAccel->add_data(rawIMU->accel_y*ACCL_TO_M_S2);
-	 pbAccel->add_data(rawIMU->accel_z*ACCL_TO_M_S2);
+    {
+		imu_data_t* rawIMU = (imu_data_t*) m_dev->WaitData();
+		//Translate the imu packet from the fixed point to the floating point
+		hal::ImuMsg dataIMU;
+	 	hal::VectorMsg* pbAccel = dataIMU.mutable_accel();
+	 	pbAccel->add_data(rawIMU->accel_x*ACCL_TO_M_S2);
+	 	pbAccel->add_data(rawIMU->accel_y*ACCL_TO_M_S2);
+	 	pbAccel->add_data(rawIMU->accel_z*ACCL_TO_M_S2);
 	 
-	 hal::VectorMsg* pbGyro = dataIMU.mutable_gyro();
-	 pbGyro->add_data(rawIMU->gyro_x*GYRO_TO_RAD_S);
-	 pbGyro->add_data(rawIMU->gyro_y*GYRO_TO_RAD_S);
-	 pbGyro->add_data(rawIMU->gyro_z*GYRO_TO_RAD_S);
-	 double halStamp = rawIMU->tv_sec + ((double)rawIMU->tv_nsec)/1e9;
+	 	hal::VectorMsg* pbGyro = dataIMU.mutable_gyro();
+	 	pbGyro->add_data(rawIMU->gyro_x*GYRO_TO_RAD_S);
+	 	pbGyro->add_data(rawIMU->gyro_y*GYRO_TO_RAD_S);
+	 	pbGyro->add_data(rawIMU->gyro_z*GYRO_TO_RAD_S);
+	 	double halStamp = rawIMU->tv_sec + ((double)rawIMU->tv_nsec)/1e9;
 	 
-	 if( m_IMUCallback )
-	   {
-	     //Pass through the timestamp
-	     dataIMU.set_device_time(halStamp);
-	     dataIMU.set_system_time(halStamp);
-	     m_IMUCallback( dataIMU );
-	   }
-      }
-  }
+		if( m_IMUCallback )
+	 	{
+	    	//Pass through the timestamp
+	    	dataIMU.set_device_time(halStamp);
+	    	dataIMU.set_system_time(halStamp);
+	    	m_IMUCallback( dataIMU );
+	    }
+    }
+}
 }
 
 
