@@ -1,7 +1,6 @@
 set( CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH} )
 
-# find_package( VRPN QUIET )
-find_package( VRPN REQUIRED )
+find_package( VRPN QUIET )
 
 if( VRPN_FOUND )
     set( BUILD_Vicon true CACHE BOOL force )
