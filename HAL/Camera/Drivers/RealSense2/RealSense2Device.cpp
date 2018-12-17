@@ -1,5 +1,5 @@
 #include "RealSense2Device.h"
-
+#include <HAL/Utils/TicToc.h>
 #include <iostream>
 
 namespace hal
@@ -28,6 +28,7 @@ bool RealSense2Device::Capture(CameraMsg& images)
 {
   frameset_ = pipeline_->wait_for_frames();
   images.set_device_time(frameset_.get_timestamp());
+  images.set_system_time(hal::Tic());
   if (capture_ir0_) CaptureInfraredStream(1, images);
   if (capture_ir1_) CaptureInfraredStream(2, images);
   if (capture_color_) CaptureColorStream(images);
