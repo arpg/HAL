@@ -250,7 +250,7 @@ bool MicroStrainDriver::_Init()
 
 
     // Start up device
-    if(mip_interface_init(device_id, m_sPortName, baudrate, &mDeviceInterface,
+    if(mip_interface_init(device_id, baudrate, &mDeviceInterface,
                           DEFAULT_PACKET_TIMEOUT_MS) != MIP_INTERFACE_OK) {
         return false;
     }
@@ -310,7 +310,7 @@ void MicroStrainDriver::RegisterPosysDataCallback(PosysDriverDataCallback callba
 void MicroStrainDriver::_ThreadCaptureFunc()
 {
     while(mShouldRun){
-        mip_interface_update(&mDeviceInterface,true);
+        mip_interface_update(&mDeviceInterface);
     }
     mShouldRun = false;
 }

@@ -2,7 +2,7 @@
 //
 //! @file    mip_sdk_gps.c 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP GPS Descriptor Set Definition File
 //
@@ -10,17 +10,20 @@
 //
 //  mip.h
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
+//
+//!@section CHANGES
+//! 
 //
 //!@section LICENSE
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -347,4 +350,57 @@ void mip_gps_hw_status_byteswap(mip_gps_hw_status *hw_status)
 }
 
 
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! void mip_gps_dgps_info_byteswap(mip_gps_dgps_info *dgps_info)
+//
+//! @section DESCRIPTION
+//! Byteswap a DGPS Info Structure.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_gps_dgps_info *dgps_info - The structure to be byteswapped.
+//
+//! @section NOTES
+//! 
+//! None
+//
+/////////////////////////////////////////////////////////////////////////////
+
+void mip_gps_dgps_info_byteswap(mip_gps_dgps_info *dgps_info)
+{
+ byteswap_inplace(&dgps_info->age,                 sizeof(float));
+ byteswap_inplace(&dgps_info->base_station_id,     sizeof(s16));
+ byteswap_inplace(&dgps_info->base_station_status, sizeof(s16));
+ byteswap_inplace(&dgps_info->num_dgps_channels,   sizeof(u16));
+ byteswap_inplace(&dgps_info->valid_flags,         sizeof(u16));
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! void mip_gps_dgps_channel_status_byteswap(mip_gps_dgps_channel_status *dgps_channel_status)
+//
+//! @section DESCRIPTION
+//! Byteswap a DGPS Channel Status Structure.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_gps_dgps_channel_status *dgps_channel_status - The structure to be byteswapped.
+//
+//! @section NOTES
+//! 
+//! None
+//
+/////////////////////////////////////////////////////////////////////////////
+
+void mip_gps_dgps_channel_status_byteswap(mip_gps_dgps_channel_status *dgps_channel_status)
+{
+ byteswap_inplace(&dgps_channel_status->age,                         sizeof(float));
+ byteswap_inplace(&dgps_channel_status->pseudorange_correction,      sizeof(float));
+ byteswap_inplace(&dgps_channel_status->pseudorange_rate_correction, sizeof(float));
+ byteswap_inplace(&dgps_channel_status->valid_flags,                 sizeof(u16));
+}
 

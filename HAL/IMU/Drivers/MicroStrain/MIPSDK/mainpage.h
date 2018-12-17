@@ -2,7 +2,7 @@
 //
 //! @file    mainpage.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //! @mainpage 
 //! @section intro Introduction
 //!
@@ -30,18 +30,19 @@
 //! \n\n
 //! @section support Support 
 //!
-//! Please visit the <A HREF="http://www.microstrain.com">Microstrain Homepage</A>
+//! Please visit the <A HREF="http://www.microstrain.com">Lord Microstrain Sensing Systems Homepage</A>
 //! to contact support or access the latest support documentation for your device(s).
 //! \n\n\n
 //!
-//! @section license License
-//! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING\n
-//! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER\n 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE\n
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY\n
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY\n 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH\n
-//! THEIR PRODUCTS.\n
+//!@section LICENSE
+//!
+//! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
+//! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 

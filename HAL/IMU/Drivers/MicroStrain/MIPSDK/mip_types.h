@@ -2,7 +2,7 @@
 //
 //! @file    mip_types.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP Data Type Definition File
 //
@@ -10,7 +10,7 @@
 //
 //  
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
 //
 //!@section CHANGES
 //! 
@@ -19,11 +19,11 @@
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -44,21 +44,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 //! @def 
 
-#ifndef __STM32F10x_H
-#ifndef __STM32F10x_TYPE_H
-#ifndef __STM32F2xx_H
 
+typedef signed long long s64;
 typedef int   s32;
 typedef short s16;
 typedef char  s8;
 
+typedef unsigned long long u64;
 typedef unsigned int   u32;
 typedef unsigned short u16;
 typedef unsigned char  u8;
 
-#endif
-#endif
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -2,7 +2,7 @@
 //
 //! @file    ring_buffer.c 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description Implements a Ring Buffer in C.
 //
@@ -10,17 +10,20 @@
 //
 //  mip.h
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
+//
+//!@section CHANGES
+//! 
 //
 //!@section LICENSE
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -422,7 +425,7 @@ u16 ring_buffer_write_multi(ring_buffer *buffer, u8 *entry_buff, u32 num_entries
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 ring_buffer_read(ring_buffer *buffer, u8 *entry, u32 /*max_bytes*/)
+u16 ring_buffer_read(ring_buffer *buffer, u8 *entry, u32 max_bytes)
 {
  u32 i; 
   

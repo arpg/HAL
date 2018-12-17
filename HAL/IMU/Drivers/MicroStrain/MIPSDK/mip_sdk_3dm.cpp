@@ -2,7 +2,7 @@
 //
 //! @file    mip_sdk_3dm.c 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP 3DM Descriptor Set Definition File
 //
@@ -10,17 +10,20 @@
 //
 //  mip.h
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
+//
+//!@section CHANGES
+//! 
 //
 //!@section LICENSE
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -167,7 +170,7 @@ u16 mip_3dm_cmd_poll_gps(mip_interface *device_interface, u8 option_selector, u8
 /////////////////////////////////////////////////////////////////////////////
 //
 //! @fn
-//! u16 mip_3dm_cmd_poll_nav(mip_interface *device_interface, u8 option_selector, 
+//! u16 mip_3dm_cmd_poll_filter(mip_interface *device_interface, u8 option_selector, 
 //!                          u8 num_descriptors, u8 *descriptor_list)
 //
 //! @section DESCRIPTION
@@ -197,7 +200,7 @@ u16 mip_3dm_cmd_poll_gps(mip_interface *device_interface, u8 option_selector, u8
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_3dm_cmd_poll_nav(mip_interface *device_interface, u8 option_selector, u8 num_descriptors, u8 *descriptor_list)
+u16 mip_3dm_cmd_poll_filter(mip_interface *device_interface, u8 option_selector, u8 num_descriptors, u8 *descriptor_list)
 {
  u8  command_data[MIP_MAX_PAYLOAD_SIZE]= {0};
  u8  wait_for_response = 0;
@@ -346,7 +349,7 @@ u16 mip_3dm_cmd_get_gps_base_rate(mip_interface *device_interface, u16 *base_rat
 /////////////////////////////////////////////////////////////////////////////
 //
 //! @fn
-//! u16 mip_3dm_cmd_get_nav_base_rate(mip_interface *device_interface, u16 *base_rate)
+//! u16 mip_3dm_cmd_get_filter_base_rate(mip_interface *device_interface, u16 *base_rate)
 //
 //! @section DESCRIPTION
 //! Request the base rate of the NAV data.
@@ -366,7 +369,7 @@ u16 mip_3dm_cmd_get_gps_base_rate(mip_interface *device_interface, u16 *base_rat
 //!
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_3dm_cmd_get_nav_base_rate(mip_interface *device_interface, u16 *base_rate)
+u16 mip_3dm_cmd_get_filter_base_rate(mip_interface *device_interface, u16 *base_rate)
 {
  u8 *response_data;
  u16 response_data_size;
@@ -663,7 +666,7 @@ u16 mip_3dm_cmd_gps_message_format(mip_interface *device_interface, u8 function_
 /////////////////////////////////////////////////////////////////////////////
 //
 //! @fn
-//! u16 mip_3dm_cmd_nav_message_format(mip_interface *device_interface, u8 function_selector, 
+//! u16 mip_3dm_cmd_filter_message_format(mip_interface *device_interface, u8 function_selector, 
 //!                                    u8 *num_entries, u8 *descriptors, u16 *descimation)
 //
 //! @section DESCRIPTION
@@ -701,7 +704,7 @@ u16 mip_3dm_cmd_gps_message_format(mip_interface *device_interface, u8 function_
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_3dm_cmd_nav_message_format(mip_interface *device_interface, u8 function_selector, u8 *num_entries, u8 *descriptors, u16 *decimation)
+u16 mip_3dm_cmd_filter_message_format(mip_interface *device_interface, u8 function_selector, u8 *num_entries, u8 *descriptors, u16 *decimation)
 {
  u8  i;
  u8 *response_data;
@@ -1042,7 +1045,6 @@ u16 mip_3dm_cmd_ahrs_signal_conditioning(mip_interface *device_interface, u8 fun
  u16 response_data_size;
  u16 return_code;
  u8  command_data[sizeof(u8) + sizeof(mip_ahrs_signal_settings)] = {0};
-// u32 *word_ptr;
  mip_field_header         *field_header_ptr;
  mip_ahrs_signal_settings *settings_ptr;
  
@@ -1564,4 +1566,756 @@ u16 mip_3dm_cmd_device_status(mip_interface *device_interface, u16 model_number,
  }
  
  return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_low_pass_filter_settings(mip_interface *device_interface, u8 function_selector, mip_low_pass_filter_settings *filter_settings)
+//
+//! @section DESCRIPTION
+//! Get or set low pass filter settings for scaled data quantities.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] mip_low_pass_filter_settings *filter_settings - structure specifying the data type to be filtered and the filter parameters. 
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_low_pass_filter_settings(mip_interface *device_interface, u8 function_selector, mip_low_pass_filter_settings *filter_settings){
+
+ u8 *response_data;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + sizeof(mip_low_pass_filter_settings)] = {0};
+ mip_field_header         *field_header_ptr;
+ mip_low_pass_filter_settings *settings_ptr;
+ 
+ //Fill-in the command data
+ command_data[0] = function_selector;
+ settings_ptr    = (mip_low_pass_filter_settings*)&command_data[1];
+ 
+ memcpy(settings_ptr, filter_settings, sizeof(mip_low_pass_filter_settings));
+  
+ //Byteswap the baudrate if enabled
+ if(MIP_SDK_CONFIG_BYTESWAP)
+ {
+  byteswap_inplace(&settings_ptr->cutoff_frequency, sizeof(u16));
+ }  
+ 
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_LOW_PASS_FILTER_SETTINGS, command_data, 
+                                                        sizeof(u8) + sizeof(mip_low_pass_filter_settings), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_ADVANCED_DATA_FILTER) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + sizeof(mip_low_pass_filter_settings)))
+  {
+   memcpy(filter_settings, response_data + sizeof(mip_field_header), sizeof(mip_low_pass_filter_settings));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    byteswap_inplace(&filter_settings->cutoff_frequency,  sizeof(u16));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_accel_bias(mip_interface *device_interface, u8 function_selector, float *bias_vector)
+//
+//! @section DESCRIPTION
+//! Get or set Accelerometer x, y, z bias vector.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *bias_vector		- pointer to array containing input bias vector on write commands or to contain output bias vector on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_accel_bias(mip_interface *device_interface, u8 function_selector, float *bias_vector){
+
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + 3*sizeof(float)] = {0};
+ mip_field_header         *field_header_ptr;
+ float *bias_element_pointer;
+ 
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE){
+
+  memcpy(&command_data[1], &bias_vector[0], 3*sizeof(float));
+
+  bias_element_pointer = (float *)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   for(i=0;i<3;i++)
+    byteswap_inplace(&bias_element_pointer[i], sizeof(float));
+  }  
+
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_ACCEL_BIAS, command_data, 
+                                                        sizeof(u8) + 3*sizeof(float), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_ACCEL_BIAS_VECTOR) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 3*sizeof(float)))
+  {
+   memcpy(bias_vector, response_data + sizeof(mip_field_header), 3*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<3;i++)
+     byteswap_inplace(&bias_vector[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_gyro_bias(mip_interface *device_interface, u8 function_selector, float *bias_vector)
+//
+//! @section DESCRIPTION
+//! Get or set Accelerometer x, y, z bias vector.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *bias_vector		- pointer to array containing input bias vector on write commands or to contain output bias vector on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_gyro_bias(mip_interface *device_interface, u8 function_selector, float *bias_vector)
+{
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + 3*sizeof(float)] = {0};
+ mip_field_header         *field_header_ptr;
+ float *bias_element_pointer;
+
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE){
+
+  memcpy(&command_data[1], &bias_vector[0], 3*sizeof(float));
+
+  bias_element_pointer = (float *)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   for(i=0;i<3;i++)
+    byteswap_inplace(&bias_element_pointer[i], sizeof(float));
+  }  
+
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_GYRO_BIAS, command_data, 
+                                                        sizeof(u8) + 3*sizeof(float), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_GYRO_BIAS_VECTOR) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 3*sizeof(float)))
+  {
+   memcpy(bias_vector, response_data + sizeof(mip_field_header), 3*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<3;i++)
+     byteswap_inplace(&bias_vector[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_coning_sculling_compensation(mip_interface *device_interface, u8 function_selector, u8 *enable)
+//
+//! @section DESCRIPTION
+//! Set or read setting of coning and sculling compensation enable.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface - The device interface.
+//! @param [in] u8 function_selector            - Selects which function to perform.
+//! @param [in,out] u8 *enable                  - the enable/disable flag. (used to set or get depending on \c function_selector)
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! \n Possible \c function_selector values:\n
+//!    \li 0x01 - Use New Settings
+//!    \li 0x02 - Read Current Settings
+//!    \li 0x03 - Save Current Settings as Startup Settings
+//!    \li 0x04 - Load Saved Settings
+//!    \li 0x05 - Load Factory Default Settings
+//!
+//! \c enable may be NULL for the following \c function_selector values:
+//!
+//!    \li 0x03 - Save Current Settings as Startup Settings
+//!    \li 0x04 - Load Saved Settings
+//!    \li 0x05 - Load Factory Default Settings
+//!
+//! \n Possible \c enable values:\n
+//!    \li 0x00 - Disable Coning and Sculling compensation
+//!    \li 0x01 - Enable Coning and Sculling compensation
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_coning_sculling_compensation(mip_interface *device_interface, u8 function_selector, u8 *enable)
+{
+ u8 *response_data;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[2] = {0};
+ mip_field_header *field_header_ptr;
+ 
+ 
+ //Fill-in the command data
+ command_data[0] = function_selector;
+ 
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE)
+ {
+  command_data[1] = *enable;
+ }
+ 
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CDM_CONING_AND_SCULLING_ENABLE, command_data, 
+                                                        2, &response_data, &response_data_size, MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_CONING_AND_SCULLING_ENABLE) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + sizeof(u8)))
+  {
+   memcpy(enable, response_data + sizeof(mip_field_header), sizeof(u8));
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_capture_gyro_bias(mip_interface *device_interface, u8 function_selector, float *bias_vector)
+//
+//! @section DESCRIPTION
+//! Get or set Accelerometer x, y, z bias vector.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *bias_vector		    - Pointer to array containing input bias vector on write commands or to contain output bias vector on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_capture_gyro_bias(mip_interface *device_interface, u16 duration_ms, float *bias_vector)
+{
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u16 command_data = duration_ms;
+ mip_field_header         *field_header_ptr;
+
+ //Byteswap if enabled
+ if(MIP_SDK_CONFIG_BYTESWAP)
+ {
+  byteswap_inplace(&command_data, sizeof(u16));
+ }  
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_CAPTURE_GYRO_BIAS, (u8 *)&command_data, 
+                                                        sizeof(u16), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_GYRO_BIAS_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_GYRO_BIAS_VECTOR) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 3*sizeof(float)))
+  {
+   memcpy(bias_vector, response_data + sizeof(mip_field_header), 3*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<3;i++)
+     byteswap_inplace(&bias_vector[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_hard_iron(mip_interface *device_interface, u8 function_selector, float *vector)
+//
+//! @section DESCRIPTION
+//! Get or set the Hard Iron x, y, z vector.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *vector		        - Pointer to array containing input hard iron vector on write commands or to contain output hard iron vector on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_hard_iron(mip_interface *device_interface, u8 function_selector, float *vector)
+{
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + 3*sizeof(float)] = {0};
+ mip_field_header *field_header_ptr;
+ float *vector_pointer;
+
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE)
+ {
+  memcpy(&command_data[1], &vector[0], 3*sizeof(float));
+
+  vector_pointer = (float *)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   for(i=0;i<3;i++)
+    byteswap_inplace(&vector_pointer[i], sizeof(float));
+  }  
+
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_HARD_IRON_VECTOR, command_data, 
+                                                        sizeof(u8) + 3*sizeof(float), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_HARD_IRON_VECTOR) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 3*sizeof(float)))
+  {
+   memcpy(vector, response_data + sizeof(mip_field_header), 3*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<3;i++)
+     byteswap_inplace(&vector[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_soft_iron(mip_interface *device_interface, u8 function_selector, float *matrix)
+//
+//! @section DESCRIPTION
+//! Get or set the Soft Iron 3x3 matrix.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *vector		        - Pointer to array containing input soft iron 3x3 matrix on write commands or to contain output soft iron 3x3 matrix on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_soft_iron(mip_interface *device_interface, u8 function_selector, float *matrix)
+{
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + 9*sizeof(float)] = {0};
+ mip_field_header *field_header_ptr;
+ float *matrix_pointer;
+
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE)
+ {
+  memcpy(&command_data[1], &matrix[0], 9*sizeof(float));
+
+  matrix_pointer = (float *)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   for(i=0;i<9;i++)
+    byteswap_inplace(&matrix_pointer[i], sizeof(float));
+  }  
+
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_SOFT_IRON_MATRIX, command_data, 
+                                                        sizeof(u8) + 9*sizeof(float), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_SOFT_IRON_MATRIX) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 9*sizeof(float)))
+  {
+   memcpy(matrix, response_data + sizeof(mip_field_header), 9*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<9;i++)
+     byteswap_inplace(&matrix[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_sensor2vehicle_tranformation(mip_interface *device_interface, u8 function_selector, float euler_angles[3])
+//
+//! @section DESCRIPTION
+//! Get or set the sensor-to-vehicle transformation in Euler angle format.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] float *vector		        - Pointer to array containing input Euler angles on write commands or to contain output Euler angles on read commands.
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_sensor2vehicle_tranformation(mip_interface *device_interface, u8 function_selector, float euler_angles[3])
+{
+ u8 *response_data, i;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + 3*sizeof(float)] = {0};
+ mip_field_header *field_header_ptr;
+ float *angle_pointer;
+
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE)
+ {
+  memcpy(&command_data[1], &euler_angles[0], 3*sizeof(float));
+
+  angle_pointer = (float *)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   for(i=0;i<3;i++)
+    byteswap_inplace(&angle_pointer[i], sizeof(float));
+  }  
+
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CDM_SENSOR2VEHICLE_TRANSFORMATION, command_data, 
+                                                        sizeof(u8) + 3*sizeof(float), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_SENSOR2VEHICLE_TRANSFORMATION) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + 3*sizeof(float)))
+  {
+   memcpy(euler_angles, response_data + sizeof(mip_field_header), 3*sizeof(float));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    for(i=0;i<3;i++)
+     byteswap_inplace(&euler_angles[i], sizeof(float));
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_complementary_filter_settings(mip_interface *device_interface, u8 function_selector, mip_complementary_filter_settings *settings)
+//
+//! @section DESCRIPTION
+//! Get or set complementary filter settings.  
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8 function_selector            - The model number of the device.
+//! @param [in,out] mip_complementary_filter_settings *settings - structure for the complementary filter parameters. 
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! Please see the device DCP for valid status selector values and the format of the returned message.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_complementary_filter_settings(mip_interface *device_interface, u8 function_selector, mip_complementary_filter_settings *settings)
+{
+ u8 *response_data;
+ u16 response_data_size;
+ u16 return_code;
+ u8  command_data[sizeof(u8) + sizeof(mip_complementary_filter_settings)] = {0};
+ mip_field_header *field_header_ptr;
+ mip_complementary_filter_settings *settings_pointer;
+
+ //Fill-in the command data
+ command_data[0] = function_selector;
+  
+ if(function_selector == MIP_FUNCTION_SELECTOR_WRITE)
+ {
+  memcpy(&command_data[1], settings, sizeof(mip_complementary_filter_settings));
+
+  settings_pointer = (mip_complementary_filter_settings*)(&command_data[1]);
+
+  //Byteswap if enabled
+  if(MIP_SDK_CONFIG_BYTESWAP)
+  {
+   byteswap_inplace(&settings_pointer->north_compensation_time_constant, sizeof(float));
+   byteswap_inplace(&settings_pointer->up_compensation_time_constant,    sizeof(float));
+  }  
+ }
+
+ return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_COMPLEMENTARY_FILTER, command_data, 
+                                                        sizeof(u8) + sizeof(mip_complementary_filter_settings), &response_data, &response_data_size, 
+                                                        MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
+ 
+ //Copy the data to the provided buffer on success if present
+ if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
+ {
+  field_header_ptr = (mip_field_header*)response_data;
+  
+  if((field_header_ptr->descriptor == MIP_3DM_REPLY_COMPLEMENTARY_FILTER) &&
+     (field_header_ptr->size >= sizeof(mip_field_header) + sizeof(mip_complementary_filter_settings)))
+  {
+   memcpy(settings, response_data + sizeof(mip_field_header), sizeof(mip_complementary_filter_settings));
+   
+   //Byteswap the baudrate if enabled
+   if(MIP_SDK_CONFIG_BYTESWAP)
+   {
+    byteswap_inplace(&settings->north_compensation_time_constant, sizeof(float));
+    byteswap_inplace(&settings->up_compensation_time_constant,    sizeof(float)); 
+   }   
+  }
+  else 
+   return_code = MIP_INTERFACE_ERROR;
+ }
+ 
+ return return_code;
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @fn
+//! u16 mip_3dm_cmd_rtcm_23_message(mip_interface *device_interface, u8* raw_data, u16 num_bytes)
+//
+//! @section DESCRIPTION
+//! Send a raw RTCM 2.3 Message to the device
+//
+//! @section DETAILS
+//!
+//! @param [in] mip_interface *device_interface	- The device interface.
+//! @param [in] u8* raw_data                    - Buffer containing "num_bytes" of a RTCM 2.3 message.
+//! @param [in] u16 num_bytes                   - Size of the RTCM message. 
+//
+//! @retval MIP_INTERFACE_ERROR  When there is a problem with the command format or the\n
+//!                              the device communications failed.\n
+//! @retval MIP_INTERFACE_OK     The command was successful.\n
+//
+//! @section NOTES
+//! 
+//! This function will send multiple commands when the number of bytes in "raw_data"\n
+//! is larger than MIP_MAX_PAYLOAD_DATA_SIZE.
+//
+/////////////////////////////////////////////////////////////////////////////
+
+u16 mip_3dm_cmd_rtcm_23_message(mip_interface *device_interface, u8* raw_data, u16 num_bytes)
+{
+ u16 curr_byte = 0, bytes_to_send;
+
+ //Loop through the raw data bytes and send in MIP_MAX_PAYLOAD_DATA_SIZE size chunks
+ while(curr_byte < num_bytes)
+ {
+  bytes_to_send = num_bytes - curr_byte;
+
+  if(bytes_to_send > MIP_MAX_PAYLOAD_DATA_SIZE)
+	bytes_to_send = MIP_MAX_PAYLOAD_DATA_SIZE;
+ 
+  //Send the data
+  if(mip_interface_send_command(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_RAW_RTCM_2_3_MESSAGE, &raw_data[curr_byte], 
+                                bytes_to_send, 1, MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS) != MIP_INTERFACE_OK)
+  {
+   return MIP_INTERFACE_ERROR;
+  }
+  else
+  {
+   //Increment the current byte index
+   curr_byte += bytes_to_send;
+  }
+ }
+
+ return MIP_INTERFACE_OK;
 }
