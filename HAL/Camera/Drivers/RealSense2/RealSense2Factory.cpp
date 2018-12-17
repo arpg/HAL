@@ -60,6 +60,16 @@ class RealSense2Factory : public DeviceFactory<CameraDriverInterface>
         driver->SetGain(gain, channel);
       }
 
+      // if (capture_ir0)
+      // {
+      //   driver->SetExposure(2000, 0);
+      // }
+
+      // if (capture_ir1)
+      // {
+      //   driver->SetExposure(2000, capture_ir0);
+      // }
+
       for (size_t i = 0; i < driver->NumDevices(); ++i)
       {
         driver->SetEmitter(i, emitter);

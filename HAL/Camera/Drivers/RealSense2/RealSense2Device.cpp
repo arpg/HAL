@@ -119,7 +119,11 @@ void RealSense2Device::SetGain(double gain, int channel)
   gain_ = gain;
   const rs2_option option = RS2_OPTION_GAIN;
   const rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(option, gain_);
+
+  if (sensor.supports(RS2_OPTION_GAIN))
+  {
+    sensor.set_option(option, gain_);
+  }
 }
 
 double RealSense2Device::ProportionalGain(int channel) const
@@ -163,26 +167,34 @@ void RealSense2Device::SetEmitter(double emitter) const
 void RealSense2Device::EnableAutoExposure(int channel)
 {
   rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, true);
 
-  if (IsColorStream(channel))
+  if (sensor.supports(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
   {
-    sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, true);
-    sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, true);
+    sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, true);
+
+    if (IsColorStream(channel))
+    {
+      sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, true);
+      sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, true);
+    }
   }
 }
 
 void RealSense2Device::DisableAutoExposure(int channel, double exposure)
 {
   rs2::sensor& sensor = GetSensor(channel);
-  sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, false);
-  sensor.set_option(RS2_OPTION_EXPOSURE, exposure);
 
-  if (IsColorStream(channel))
+  if (sensor.supports(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
   {
-    sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, false);
-    sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, false);
-    sensor.set_option(RS2_OPTION_WHITE_BALANCE, 3250);
+    sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, false);
+    sensor.set_option(RS2_OPTION_EXPOSURE, exposure);
+
+    if (IsColorStream(channel))
+    {
+      sensor.set_option(RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, false);
+      sensor.set_option(RS2_OPTION_BACKLIGHT_COMPENSATION, false);
+      sensor.set_option(RS2_OPTION_WHITE_BALANCE, 3250);
+    }
   }
 }
 
