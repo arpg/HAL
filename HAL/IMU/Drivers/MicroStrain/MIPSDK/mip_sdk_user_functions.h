@@ -59,7 +59,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-u16 mip_sdk_port_open(void **port_handle, int port_num, int baudrate);
+u16 mip_sdk_port_open(void **port_handle, std::string device_name, int port_num, int baudrate);
 u16 mip_sdk_port_close(void *port_handle);
 
 u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_written, u32 timeout_ms);

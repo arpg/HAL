@@ -37,7 +37,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "mip_sdk_interface.h"
-
+#include <iostream>
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -66,13 +66,13 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-u16 mip_interface_init(u32 com_port, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val)
+u16 mip_interface_init(u32 com_port, std::string device_name, u32 baudrate, mip_interface *device_interface, u32 packet_timeout_val)
 {
  u16 i;
   
  device_interface->port_handle = NULL; 
  //Attempt to open the port
- if(mip_sdk_port_open(&device_interface->port_handle, com_port, baudrate) != MIP_USER_FUNCTION_OK)
+ if(mip_sdk_port_open(&device_interface->port_handle, device_name, com_port, baudrate) != MIP_USER_FUNCTION_OK)
   return MIP_INTERFACE_ERROR; 
   
   
@@ -984,12 +984,10 @@ u16 mip_interface_send_preformatted_command_with_response(mip_interface *device_
  if((device_interface == NULL) ||(command == NULL) || (command_size == 0))
   return MIP_INTERFACE_ERROR;
   
- 
  //Send the packet
  if(mip_sdk_port_write(device_interface->port_handle, command, command_size, &bytes_written, timeout_ms) != MIP_INTERFACE_OK)
   return MIP_INTERFACE_ERROR;
    
- 
  //Set the command set and descriptor information
  command_set        = header_ptr->descriptor_set;
  
@@ -999,8 +997,7 @@ u16 mip_interface_send_preformatted_command_with_response(mip_interface *device_
  }
  
  command_descriptor = field_header_ptr->descriptor;
-
-                                             
+                                           
  //Wait for the response from the device
  return_code = __mip_interface_wait_for_response(device_interface, command_set, command_descriptor, 
                                                  &acknack_response, response_data, response_data_size, timeout_ms);

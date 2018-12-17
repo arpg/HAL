@@ -37,6 +37,7 @@
 
 #include "mip_sdk_3dm.h"
 #include "mip_sdk_user_functions.h"
+#include <iostream>
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -487,7 +488,7 @@ u16 mip_3dm_cmd_ahrs_message_format(mip_interface *device_interface, u8 function
  
  return_code = mip_interface_send_command_with_response(device_interface, MIP_3DM_COMMAND_SET, MIP_3DM_CMD_AHRS_MESSAGE_FORMAT, command_data, 
                                                         command_data_size, &response_data, &response_data_size, MIP_INTERFACE_DEFAULT_COMMAND_RESPONSE_TIMEOUT_MS);
- 
+
  //Copy the data to the provided buffer on success if present
  if((return_code == MIP_INTERFACE_OK) && (response_data != NULL))
  {
