@@ -299,11 +299,11 @@ bool MicroStrainDriver::_Init()
     //std::this_thread::sleep_for(std::chrono::milliseconds(500));
     u8 imu_decimation = (u8)((float)base_rate/(float)m_nHzAHRS);
 
-    u8 ahrs_data_stream_format_num_entries = 2;
+    u8 ahrs_data_stream_format_num_entries = 3;
     u8  ahrs_data_stream_format_descriptors[10] = {0};
     u16 ahrs_data_stream_format_decimation[10]  = {0};
 
-    ahrs_data_stream_format_descriptors[2] = MIP_AHRS_DATA_TIME_STAMP_INTERNAL;
+    ahrs_data_stream_format_descriptors[2] = MIP_AHRS_DATA_TIME_STAMP_GPS;
     ahrs_data_stream_format_descriptors[0] = MIP_AHRS_DATA_ACCEL_SCALED;
     ahrs_data_stream_format_descriptors[1] = MIP_AHRS_DATA_GYRO_SCALED;
     ahrs_data_stream_format_decimation[0] = imu_decimation;
