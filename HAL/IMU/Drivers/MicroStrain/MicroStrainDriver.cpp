@@ -130,7 +130,6 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         mip_ahrs_gps_timestamp_byteswap(&curr_ahrs_gps_timestamp);
                         pbImuMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
                         pbPoseMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
-                        std::cout << "timestamp: " << curr_ahrs_gps_timestamp.tow << std::endl;
                     }break;
 
                     // Scaled Accelerometer
@@ -274,16 +273,26 @@ bool MicroStrainDriver::_Init()
     while(mip_base_cmd_get_device_info(&mDeviceInterface, &device_info) != MIP_INTERFACE_OK) { }
     memcpy(model_name, device_info.model_name, BASE_DEVICE_INFO_PARAM_LENGTH*2);
 
-    std::cout << "model name: " << model_name << std::endl;
+    // trim whitespace from name string
+    std::string name_string(model_name);
+    size_t str_start = name_string.find_first_not_of(' ');
+    size_t str_end = name_string.find_last_not_of(' ');
+    name_string = name_string.substr(str_start, (str_end - str_start + 1));
+
+    std::cout << "model name: " << name_string << std::endl;
 
     // TO DO: set time and magnetometer fields based on model name
     //        just using values for gx5-15 for now
-    m_bGetTimeStampGpsCorrelationAHRS = true;
-    m_bGetTimeStampPpsAHRS = false;
-    if (m_bGetMagnetometerAHRS)
+    if (name_string.find("GX5") != std::string::npos)
     {
-        std::cout << "magnetometer not supported on gx5-15, setting magnetometer to false";
-        m_bGetMagnetometerAHRS = false;
+        std::cout << "PPS timestamp not supported on GX5, switching to GPS timestamp" << std::endl;
+        m_bGetTimeStampGpsCorrelationAHRS = true;
+        m_bGetTimeStampPpsAHRS = false;
+        if (m_bGetMagnetometerAHRS)
+        {
+            std::cout << "magnetometer not supported on GX5, setting magnetometer to false";
+            m_bGetMagnetometerAHRS = false;
+        }
     }
 
     if (mip_interface_add_descriptor_set_callback(&mDeviceInterface, MIP_AHRS_DATA_SET, this, &CallbackFunc)
@@ -357,7 +366,6 @@ bool MicroStrainDriver::_ActivateAHRS()
 
     u16 base_rate = 0;
     while (mip_3dm_cmd_get_ahrs_base_rate(&mDeviceInterface, &base_rate) != MIP_INTERFACE_OK);
-    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
     u8 decimation = (u8)((float)base_rate/(float)m_nHzAHRS);
 
     u8 ahrs_data_stream_format_num_entries;
