@@ -101,23 +101,35 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
             hal::ImuMsg pbImuMsg;
             hal::PoseMsg pbPoseMsg;
 
+            pbImuMsg.set_system_time(hal::Tic());
+            pbPoseMsg.set_system_time(hal::Tic());
+
             // Read each field in packet.
             // For little-endian targets, byteswap the data field
             while(mip_get_next_field(packet, &field_header, &field_data, &field_offset) == MIP_OK)
             {
                 switch(field_header->descriptor)
                 {
+                    // get pps timestamp, not available on gx5-15
                     case MIP_AHRS_DATA_TIME_STAMP_PPS:
                     {
                         mip_ahrs_1pps_timestamp curr_ahrs_pps_timestamp;
                         memcpy(&curr_ahrs_pps_timestamp, field_data, sizeof(mip_ahrs_1pps_timestamp));
                         mip_ahrs_1pps_timestamp_byteswap(&curr_ahrs_pps_timestamp);
                         pbImuMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
-                        pbImuMsg.set_system_time(hal::Tic());
 
                         // TODO It is probably better to use a differnent time specific for the GPS??
                         pbPoseMsg.set_device_time(curr_ahrs_pps_timestamp.seconds + 1E-9 * curr_ahrs_pps_timestamp.nanoseconds);
-                        pbPoseMsg.set_system_time(hal::Tic());
+                    }break;
+
+                    // get gps time, only time available with gx5-15
+                    case MIP_AHRS_DATA_TIME_STAMP_GPS:
+                    {
+                        mip_ahrs_gps_timestamp curr_ahrs_gps_timestamp;
+                        memcpy(&curr_ahrs_gps_timestamp, field_data, sizeof(mip_ahrs_gps_timestamp));
+                        mip_ahrs_gps_timestamp_byteswap(&curr_ahrs_gps_timestamp);
+                        pbImuMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
+                        pbPoseMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
                     }break;
 
                     // Scaled Accelerometer
@@ -255,75 +267,45 @@ bool MicroStrainDriver::_Init()
         return false;
     }
 
-    // Listen to commands only (no data output)
-    //while(mip_base_cmd_idle(&mDeviceInterface) != MIP_INTERFACE_OK) { }
-
-    // Get device and print model name
+    // Get device info and model name
     base_device_info_field device_info;
-
     char model_name[BASE_DEVICE_INFO_PARAM_LENGTH*2+1] = {0};
+    while(mip_base_cmd_get_device_info(&mDeviceInterface, &device_info) != MIP_INTERFACE_OK) { }
+    memcpy(model_name, device_info.model_name, BASE_DEVICE_INFO_PARAM_LENGTH*2);
 
-    //while(mip_base_cmd_get_device_info(&mDeviceInterface, &device_info) != MIP_INTERFACE_OK) { }
+    std::cout << "model name: " << model_name << std::endl;
 
-    //memcpy(model_name, device_info.model_name, BASE_DEVICE_INFO_PARAM_LENGTH*2);
+    // TO DO: set time and magnetometer fields based on model name
+    //        just using values for gx5-15 for now
+    m_bGetTimeStampGpsCorrelationAHRS = true;
+    m_bGetTimeStampPpsAHRS = false;
+    if (m_bGetMagnetometerAHRS)
+    {
+        std::cout << "magnetometer not supported on gx5-15, setting magnetometer to false";
+        m_bGetMagnetometerAHRS = false;
+    }
 
     if (mip_interface_add_descriptor_set_callback(&mDeviceInterface, MIP_AHRS_DATA_SET, this, &CallbackFunc)
         != MIP_INTERFACE_OK)
-    {
-        std::cout << "can't set up ahrs callback" << std::endl;
         return false;
-    }
 
-    std::cout << "setting up com mode" << std::endl;
     u8 com_mode = MIP_SDK_GX4_45_IMU_STANDARD_MODE;
-
     while (mip_system_com_mode(&mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE, &com_mode) 
         != MIP_INTERFACE_OK);
-
-    std::cout << "setting read mode" << std::endl;
 
     while (mip_system_com_mode(&mDeviceInterface, MIP_FUNCTION_SELECTOR_READ, &com_mode)
         != MIP_INTERFACE_OK);
 
     if (com_mode != MIP_SDK_GX4_45_IMU_STANDARD_MODE)
-    {
-        std::cout << "failed to set standard mode" << std::endl;
-    }
-    std::cout << "setting idle" << std::endl;
+        return false;
+
     while (mip_base_cmd_idle(&mDeviceInterface) != MIP_INTERFACE_OK);
     //std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    u16 base_rate = 0;
-    while (mip_3dm_cmd_get_ahrs_base_rate(&mDeviceInterface, &base_rate) != MIP_INTERFACE_OK);
-    std::cout << "AHRS base rate: " << base_rate << std::endl;
-    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    u8 imu_decimation = (u8)((float)base_rate/(float)m_nHzAHRS);
-
-    u8 ahrs_data_stream_format_num_entries = 3;
-    u8  ahrs_data_stream_format_descriptors[10] = {0};
-    u16 ahrs_data_stream_format_decimation[10]  = {0};
-
-    ahrs_data_stream_format_descriptors[2] = MIP_AHRS_DATA_TIME_STAMP_GPS;
-    ahrs_data_stream_format_descriptors[0] = MIP_AHRS_DATA_ACCEL_SCALED;
-    ahrs_data_stream_format_descriptors[1] = MIP_AHRS_DATA_GYRO_SCALED;
-    ahrs_data_stream_format_decimation[0] = imu_decimation;
-    ahrs_data_stream_format_decimation[1] = imu_decimation;
-    ahrs_data_stream_format_decimation[2] = imu_decimation;
-
-    while (mip_3dm_cmd_ahrs_message_format(&mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE, &ahrs_data_stream_format_num_entries, ahrs_data_stream_format_descriptors, ahrs_data_stream_format_decimation) != MIP_INTERFACE_OK);
-    std::cout << "set message format" << std::endl;
-    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    
-
-    while (mip_3dm_cmd_poll_ahrs(&mDeviceInterface, MIP_3DM_POLLING_ENABLE_ACK_NACK, ahrs_data_stream_format_num_entries, ahrs_data_stream_format_descriptors) != MIP_INTERFACE_OK);
-    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    u8 enable = 0x01;
-    while (mip_3dm_cmd_continuous_data_stream(&mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE, MIP_3DM_AHRS_DATASTREAM, &enable) != MIP_INTERFACE_OK);
-
-    //if(m_bGetAHRS){
-    //    if(!_ActivateAHRS())
-    //        return false;
-    //}
+    if(m_bGetAHRS){
+        if(!_ActivateAHRS())
+            return false;
+    }
     if(m_bGetGPS){
         if(!_ActivateGPS())
             return false;
@@ -372,14 +354,79 @@ bool MicroStrainDriver::_ActivateAHRS()
 {
     std::cout << "Activating AHRS..." << std::endl;
 
+    u16 base_rate = 0;
+    while (mip_3dm_cmd_get_ahrs_base_rate(&mDeviceInterface, &base_rate) != MIP_INTERFACE_OK);
+    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    u8 decimation = (u8)((float)base_rate/(float)m_nHzAHRS);
+
+    u8 ahrs_data_stream_format_num_entries;
+    u8  ahrs_data_stream_format_descriptors[10] = {0};
+    u16 ahrs_data_stream_format_decimation[10]  = {0};
+
+    int idx = 0;
+    if (m_bGetTimeStampPpsAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_TIME_STAMP_PPS;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if (m_bGetTimeStampGpsCorrelationAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_TIME_STAMP_GPS;
+        ahrs_data_stream_format_decimation[idx] = decimation;
+        idx++;
+    }
+    if(m_bGetEulerAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_EULER_ANGLES;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if(m_bGetQuaternionAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_QUATERNION;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if(m_bGetAccelerometerAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_ACCEL_SCALED;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if(m_bGetGyroAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_GYRO_SCALED;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+    if(m_bGetMagnetometerAHRS)
+    {
+        ahrs_data_stream_format_descriptors[idx] = MIP_AHRS_DATA_MAG_SCALED;
+        ahrs_data_stream_format_decimation[idx]  = decimation;
+        idx++;
+    }
+
+    ahrs_data_stream_format_num_entries = idx;
+
+    while (mip_3dm_cmd_ahrs_message_format(&mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE, &ahrs_data_stream_format_num_entries, ahrs_data_stream_format_descriptors, ahrs_data_stream_format_decimation) != MIP_INTERFACE_OK);
+
+    while (mip_3dm_cmd_poll_ahrs(&mDeviceInterface, MIP_3DM_POLLING_ENABLE_ACK_NACK, ahrs_data_stream_format_num_entries, ahrs_data_stream_format_descriptors) != MIP_INTERFACE_OK);
+
+    u8 enable = 0x01;
+    while (mip_3dm_cmd_continuous_data_stream(&mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE, MIP_3DM_AHRS_DATASTREAM, &enable) != MIP_INTERFACE_OK);
+
+    return true; 
+
+    /* Compatible with gx3-35
     // Turn AHRS On
     u8 power_state = MIP_3DM_POWER_STATE_ON;
     std::cout << "setting power state" << std::endl;
-    /*
+    
     while(mip_3dm_cmd_power_state(
         &mDeviceInterface, MIP_FUNCTION_SELECTOR_WRITE,
         MIP_3DM_POWER_STATE_DEVICE_AHRS, &power_state) != MIP_INTERFACE_OK) { }
-    */
+    
     std::cout << "power state set" << std::endl;
 
     // Specify Data we're interested in receiving (and level of decimation)
@@ -441,7 +488,7 @@ bool MicroStrainDriver::_ActivateAHRS()
 
     // Setup callbacks for AHRS mode
     if(mip_interface_add_descriptor_set_callback(
-        &mDeviceInterface, MIP_AHRS_DATA_SET, this /*NULL*/,
+        &mDeviceInterface, MIP_AHRS_DATA_SET, this,
         &CallbackFunc) != MIP_INTERFACE_OK)
         return false;
 
@@ -456,6 +503,8 @@ bool MicroStrainDriver::_ActivateAHRS()
     std::cout << "done activating AHRS" << std::endl;
 
     return true;
+
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
