@@ -130,6 +130,7 @@ void MicroStrainDriver::CallbackFunc(void* /*user_ptr*/, u8 *packet, u16 /*packe
                         mip_ahrs_gps_timestamp_byteswap(&curr_ahrs_gps_timestamp);
                         pbImuMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
                         pbPoseMsg.set_device_time(curr_ahrs_gps_timestamp.tow);
+                        std::cout << "timestamp: " << curr_ahrs_gps_timestamp.tow << std::endl;
                     }break;
 
                     // Scaled Accelerometer
