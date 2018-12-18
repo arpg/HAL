@@ -2,7 +2,7 @@
 //
 //! @file    mip_sdk_ahrs.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP AHRS Descriptor Set Definitions
 //
@@ -10,7 +10,7 @@
 //
 //  
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
 //
 //!@section CHANGES
 //! 
@@ -19,11 +19,11 @@
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -80,29 +80,13 @@
 #define MIP_AHRS_DATA_STAB_MAG	      			0x10	// 12: 3 single (vector) (Gauss)
 #define MIP_AHRS_DATA_STAB_ACCEL				0x11	// 12: 3 single (vector) (g)
 #define MIP_AHRS_DATA_TIME_STAMP_GPS			0x12	// 14: double GPS TOW u16 GPS week number u16 flags 
+#define MIP_AHRS_DATA_PRESSURE_SCALED		    0x17 
+
+
 
 #define MIP_AHRS_DATA_ASPP			      		0x81	// MicroStrain ASPP packet
 #define MIP_AHRS_DATA_GXSB		         		0x82	// MicroStrain GX series single byte command
 
-//AHRS Supported Descriptors Macro
-#define IS_AHRS_DATA_DESCRIPTOR(DESC) (((DESC) == MIP_AHRS_DATA_ACCEL_RAW)                 || \
-                                       ((DESC) == MIP_AHRS_DATA_GYRO_RAW)                  || \
-                                       ((DESC) == MIP_AHRS_DATA_MAG_RAW)                   || \
-                                       ((DESC) == MIP_AHRS_DATA_ACCEL_SCALED)              || \
-                                       ((DESC) == MIP_AHRS_DATA_GYRO_SCALED)               || \
-                                       ((DESC) == MIP_AHRS_DATA_MAG_SCALED)                || \
-                                       ((DESC) == MIP_AHRS_DATA_DELTA_THETA)               || \
-                                       ((DESC) == MIP_AHRS_DATA_DELTA_VELOCITY)            || \
-                                       ((DESC) == MIP_AHRS_DATA_ORIENTATION_MATRIX)        || \
-                                       ((DESC) == MIP_AHRS_DATA_QUATERNION)                || \
-                                       ((DESC) == MIP_AHRS_DATA_ORIENTATION_UPDATE_MATRIX) || \
-                                       ((DESC) == MIP_AHRS_DATA_TEMPERATURE_RAW)           || \
-                                       ((DESC) == MIP_AHRS_DATA_TIME_STAMP_INTERNAL)       || \
-                                       ((DESC) == MIP_AHRS_DATA_TIME_STAMP_PPS)            || \
-                                       ((DESC) == MIP_AHRS_DATA_TIME_STAMP_GPS)            || \
-                                       ((DESC) == MIP_AHRS_DATA_EULER_ANGLES)              || \
-                                       ((DESC) == MIP_AHRS_DATA_STAB_MAG)                  || \
-                                       ((DESC) == MIP_AHRS_DATA_STAB_ACCEL))
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -151,6 +135,11 @@ typedef struct _mip_ahrs_scaled_mag
 {
  float scaled_mag[3];       //Gauss
 }mip_ahrs_scaled_mag;
+
+typedef struct _ahrs_scaled_pressure_mip_field 
+{
+ float scaled_pressure;       //mBar
+}ahrs_scaled_pressure_mip_field;
 
 
 ///
@@ -262,6 +251,33 @@ typedef struct _mip_ahrs_signal_settings
  u8  mag_bandwidth;
  u16 reserved;
 }mip_ahrs_signal_settings;
+
+
+///
+// Complementary Filter Settings
+///
+
+typedef struct _mip_complementary_filter_settings
+{
+ u8    up_compensation_enable;
+ u8    north_compensation_enable;
+ float up_compensation_time_constant;
+ float north_compensation_time_constant;
+}mip_complementary_filter_settings;
+
+
+///
+// Scaled data low pass filter settings
+///
+
+typedef struct _mip_low_pass_filter_settings
+{
+ u8		data_type;
+ u8		filter_type_selector;
+ u8		manual_cutoff;
+ u16	cutoff_frequency;
+ u8		reserved;	
+}mip_low_pass_filter_settings;
 
 #pragma pack()
 

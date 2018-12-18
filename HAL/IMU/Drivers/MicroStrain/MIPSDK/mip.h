@@ -2,7 +2,7 @@
 //
 //! @file    mip.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP Definition, Packet Parsing, and Construction Functions
 //
@@ -10,20 +10,20 @@
 //
 //  mip_types.h
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
 //
 //!@section CHANGES
-//! 7/8/2010	fpm changed sync bytes to "ue", added packet descriptors
+//! 
 //
 //!@section LICENSE
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -62,11 +62,12 @@
 #define MIP_SYNC_BYTE2         0x65
 
 //MIP Packet Sizes
-#define MIP_HEADER_SIZE	       sizeof(mip_header)		
-#define MIP_CHECKSUM_SIZE      2
-#define MIP_MAX_PAYLOAD_SIZE   255
-#define MIP_FIELD_HEADER_SIZE  sizeof(mip_field_header)
-#define MIP_MAX_PACKET_SIZE    (MIP_HEADER_SIZE + MIP_MAX_PAYLOAD_SIZE + MIP_CHECKSUM_SIZE)
+#define MIP_HEADER_SIZE	          sizeof(mip_header)		
+#define MIP_CHECKSUM_SIZE         2
+#define MIP_MAX_PAYLOAD_SIZE      255
+#define MIP_MAX_PAYLOAD_DATA_SIZE 253
+#define MIP_FIELD_HEADER_SIZE     sizeof(mip_field_header)
+#define MIP_MAX_PACKET_SIZE       (MIP_HEADER_SIZE + MIP_MAX_PAYLOAD_SIZE + MIP_CHECKSUM_SIZE)
 
 
 ////////////////////////////////////////////////////////////////////////////////

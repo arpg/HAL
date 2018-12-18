@@ -1,11 +1,17 @@
 #pragma once
 
 #include <thread>
+#include <chrono>
 
 #include <HAL/IMU/IMUDriverInterface.h>
 #include <HAL/Posys/PosysDriverInterface.h>
 
 #include "MIPSDK/mip_sdk.h"
+#include "MIPSDK/mip_gx4_imu.h"
+#include "MIPSDK/mip_gx4_45.h"
+
+#define MIP_SDK_GX4_45_IMU_STANDARD_MODE  0x01
+#define MIP_SDK_GX4_45_IMU_DIRECT_MODE  0x02
 
 namespace hal {
 

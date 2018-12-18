@@ -2,7 +2,7 @@
 //
 //! @file    mip_sdk_user_functions.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description Target-Specific, User-Defined Functions Definitions
 //
@@ -10,7 +10,7 @@
 //
 //  
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
 //
 //!@section CHANGES
 //! 
@@ -19,11 +19,11 @@
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -38,7 +38,6 @@
 
 #include "mip.h"
 #include <string>
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -60,7 +59,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-u16 mip_sdk_port_open(void **port_handle, int port_num, std::string device_name, int baudrate);
+u16 mip_sdk_port_open(void **port_handle, std::string device_name, int port_num, int baudrate);
 u16 mip_sdk_port_close(void *port_handle);
 
 u16 mip_sdk_port_write(void *port_handle, u8 *buffer, u32 num_bytes, u32 *bytes_written, u32 timeout_ms);

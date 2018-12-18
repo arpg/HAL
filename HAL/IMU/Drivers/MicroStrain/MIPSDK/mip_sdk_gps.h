@@ -2,7 +2,7 @@
 //
 //! @file    mip_sdk_gps.h 
 //! @author  Nathan Miller
-//! @version 1.0
+//! @version 1.1
 //
 //! @description MIP GPS Descriptor Set Definitions
 //
@@ -10,7 +10,7 @@
 //
 //  
 // 
-//! @copyright 2011 Microstrain. 
+//!@copyright 2014 Lord Microstrain Sensing Systems. 
 //
 //!@section CHANGES
 //! 
@@ -19,11 +19,11 @@
 //!
 //! THE PRESENT SOFTWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING 
 //! CUSTOMERS WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER 
-//! FOR THEM TO SAVE TIME. AS A RESULT, MICROSTRAIN SHALL NOT BE HELD LIABLE 
-//! FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY 
-//! CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR THE USE MADE BY 
-//! CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH 
-//! THEIR PRODUCTS.
+//! FOR THEM TO SAVE TIME. AS A RESULT, LORD MICROSTRAIN SENSING SYSTEMS
+//! SHALL NOT BE HELD LIABLE FOR ANY DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES 
+//! WITH RESPECT TO ANY CLAIMS ARISING FROM THE CONTENT OF SUCH SOFTWARE AND/OR 
+//! THE USE MADE BY CUSTOMERS OF THE CODING INFORMATION CONTAINED HEREIN IN CONNECTION 
+//! WITH THEIR PRODUCTS.
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -86,19 +86,6 @@
 #define MIP_GPS_DATA_FIX_INFO            	0x0B
 #define MIP_GPS_DATA_SV_INFO             	0x0C
 #define MIP_GPS_DATA_HW_STATUS	           	0x0D
-
-//GPS Supported Descriptors Macro
-#define IS_GPS_DATA_DESCRIPTOR(DESC) (((DESC) == MIP_GPS_DATA_LLH_POS)       || \
-                                      ((DESC) == MIP_GPS_DATA_ECEF_POS)      || \
-                                      ((DESC) == MIP_GPS_DATA_NED_VELOCITY)  || \
-                                      ((DESC) == MIP_GPS_DATA_ECEF_VELOCITY) || \
-                                      ((DESC) == MIP_GPS_DATA_DOP)           || \
-                                      ((DESC) == MIP_GPS_DATA_UTC_TIME)      || \
-                                      ((DESC) == MIP_GPS_DATA_GPS_TIME)      || \
-                                      ((DESC) == MIP_GPS_DATA_CLOCK_INFO)    || \
-                                      ((DESC) == MIP_GPS_DATA_FIX_INFO)      || \
-                                      ((DESC) == MIP_GPS_DATA_SV_INFO)       || \
-                                      ((DESC) == MIP_GPS_DATA_HW_STATUS))
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +419,35 @@ typedef struct _mip_gps_hw_status
 }mip_gps_hw_status;
 
 
+///
+// DGPS Information
+///
+
+typedef struct _mip_gps_dgps_info
+{
+ float age;
+ s16   base_station_id;
+ s16   base_station_status;
+ u16   num_dgps_channels;
+ u16   valid_flags;
+}mip_gps_dgps_info;
+
+
+///
+// DGPS Channel Status
+///
+
+typedef struct _mip_gps_dgps_channel_status
+{
+ u8    sv_id;
+ float age;
+ float pseudorange_correction;
+ float pseudorange_rate_correction;
+ u16   valid_flags;
+}mip_gps_dgps_channel_status;
+
+
+
 #pragma pack()
 
 
@@ -454,6 +470,7 @@ void mip_gps_time_byteswap(mip_gps_time *gps_time);
 void mip_gps_clock_info_byteswap(mip_gps_clock_info *clock_info);
 void mip_gps_hw_status_byteswap(mip_gps_hw_status *hw_status);
 
-
+void mip_gps_dgps_info_byteswap(mip_gps_dgps_info *dgps_info);
+void mip_gps_dgps_channel_status_byteswap(mip_gps_dgps_channel_status *dgps_channel_status);
 
 #endif

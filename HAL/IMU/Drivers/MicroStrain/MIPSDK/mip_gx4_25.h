@@ -1,10 +1,10 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-//! @file    mip_gx3_45.h 
+//! @file    mip_gx4_25.h 
 //! @author  Nathan Miller
 //! @version 1.1
 //
-//! @description MIP GX3-45 Specific Structures and Definitions
+//! @description MIP GX4-25 Specific Structures and Definitions
 //
 // External dependencies:
 //
@@ -27,9 +27,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-
-#ifndef _MIP_GX3_45_H
-#define _MIP_GX3_45_H
+#ifndef _MIP_GX4_25_H
+#define _MIP_GX4_25_H
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -45,17 +44,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-//! @def 
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// GX3-45 PARAMETERS
+// GX4 PARAMETERS
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#define GX3_45_MODEL_NUMBER			6226
+#define GX4_25_MODEL_NUMBER    6234
 
+#define GX4_25_BASIC_STATUS_SEL		    1
+#define GX4_25_DIAGNOSTICS_STATUS_SEL	2
 
 
 
@@ -70,61 +70,62 @@
 
 ///
 // Device Basic Status (returned in MIP_REPLY_DESC_3DM_DEVICE_STATUS field
-// when status_selector = 3DM_GX3_45_BASIC_STATUS_SEL)
+// when status_selector = GX4_25_BASIC_STATUS_SEL)
 ///
 
-#define GX3_45_BASIC_STATUS_SEL		1
-
-typedef struct _gx3_45_basic_status_field
+typedef struct _gx4_25_basic_status_field
 {
- u16 device_model;		// always 3DM_GX3_45_MODEL_NUMBER
- u8  status_selector;	// always 3DM_GX3_45_BASIC_STATUS_SEL
- u8  com_mode;
- u8  com_device;
- u32 settings_flags;
+ u16 device_model;		// always GX4_25_MODEL_NUMBER
+ u8  status_selector;	// always GX4_25_BASIC_STATUS_SEL
  
- u16 com1_port_state;
- u32 com1_port_baudrate;
-}gx3_45_basic_status_field;
+ u32 status_flags;
+ 
+ //System variables
+ u32 system_timer_ms;
+}gx4_25_basic_status_field;
+
 
 ///
 // Device Diagnostic Status (returned in MIP_REPLY_DESC_3DM_DEVICE_STATUS field
-// when status_selector = 3DM_GX3_45_DIAGNOSTICS_STATUS_SEL)
+// when status_selector = GX4_25_DIAGNOSTICS_STATUS_SEL)
 ///
 
-#define GX3_45_DIAGNOSTICS_STATUS_SEL	2
-
-typedef struct _gx3_45_diagnostic_status_field
+typedef struct _gx4_25_diagnostic_status_field
 {
- u16 device_model;		// always 3DM_GX3_45_MODEL_NUMBER
- u8  status_selector;	// always 3DM_GX3_45_DIAGNOSTICS_STATUS_SEL
- u8  com_mode;
- u8  com_device;
- u32 settings_flags;
+ u16 device_model;		// always GX4_25_MODEL_NUMBER
+ u8  status_selector;	// always GX4_25_DIAGNOSTICS_STATUS_SEL
  
- u16 com1_port_state;
- u32 com1_port_baudrate;
+ u32 status_flags;
+ 
+ //System variables
+ u32 system_timer_ms;
+ 
+ //PPS Stats
+ u32 num_pps_triggers;
+ u32 last_pps_trigger_ms;
+ 
+ //Enabled streams
+ u8 imu_stream_enabled;
+ u8 filter_stream_enabled;
+
+ //Dropped packets (number of packets)
+ u32 imu_dropped_packets;
+ u32 filter_dropped_packets;
+ 
+ //Com port stats
  u32 com1_port_bytes_written,  com1_port_bytes_read;
  u32 com1_port_write_overruns, com1_port_read_overruns;
  
- u16 usb_port_state;
- u32 usb_port_bytes_written,  usb_port_bytes_read; 
- u32 usb_port_write_overruns, usb_port_read_overruns;
+ //USB stats
+ u32 usb_bytes_written,  usb_bytes_read;
+ u32 usb_write_overruns, usb_read_overruns;
+ 
+ //IMU Interface stats
+ u32 imu_parser_errors;
+ u32 imu_message_count;
+ u32 imu_last_message_ms;
 
- u16 gps_driver_state;
- u16 gps_port_state;
- u32 gps_port_bytes_written,  gps_port_bytes_read;
- u32 gps_port_write_overruns, gps_port_read_overruns;
- u32 gps_messages_processed;
- u32 gps_messages_delayed;
-  
- u16 imu_driver_state;
- u16 imu_port_state;
- u32 imu_port_bytes_written,  imu_port_bytes_read;
- u32 imu_port_write_overruns, imu_port_read_overruns;
- u32 imu_messages_processed;
- u32 imu_messages_delayed;
-}gx3_45_device_status_field;
+}gx4_25_diagnostic_device_status_field;
 
 
 #pragma pack()

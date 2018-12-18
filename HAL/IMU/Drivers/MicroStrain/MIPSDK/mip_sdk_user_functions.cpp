@@ -121,7 +121,7 @@ int Purge(ComPortHandle comPortHandle){
 //
 /////////////////////////////////////////////////////////////////////////////
 
-u16 mip_sdk_port_open(void **port_handle, int port_num, std::string device_name, int /*baudrate*/)
+u16 mip_sdk_port_open(void **port_handle, std::string device_name, int port_num, int /*baudrate*/)
 {
     const std::string comPortPath = DeviceById(port_num, device_name);
     if( comPortPath.empty() ) {
