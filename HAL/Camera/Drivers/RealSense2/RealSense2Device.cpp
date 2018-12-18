@@ -186,7 +186,11 @@ void RealSense2Device::DisableAutoExposure(int channel, double exposure)
 
   if (sensor.supports(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
   {
-    sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, false);
+    if (sensor.get_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE))
+    {
+      sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, false);
+    }
+
     sensor.set_option(RS2_OPTION_EXPOSURE, exposure);
 
     if (IsColorStream(channel))
