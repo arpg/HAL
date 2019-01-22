@@ -16,7 +16,7 @@ void CCONV SpatialDataHandler(PhidgetSpatialHandle spatial, void *userptr,
 
 class PhidgetsDriver : public IMUDriverInterface {
  public:
-  PhidgetsDriver();
+  PhidgetsDriver(int imu_hz);
   ~PhidgetsDriver();
   bool Init();
   void RegisterIMUDataCallback(IMUDriverDataCallback callback);

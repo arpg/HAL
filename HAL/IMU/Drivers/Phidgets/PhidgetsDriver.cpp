@@ -36,7 +36,7 @@ void CCONV SpatialDataHandler(PhidgetSpatialHandle spatial, void *userptr,
 
 
 ///////////////////////////////////////////////////////////////////////////
-hal::PhidgetsDriver::PhidgetsDriver() : m_hSpatial(0) {
+hal::PhidgetsDriver::PhidgetsDriver(int imu_hz) : m_hSpatial(0) {
   Init();
 }
 

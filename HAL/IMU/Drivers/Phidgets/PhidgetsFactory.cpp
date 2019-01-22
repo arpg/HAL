@@ -11,12 +11,14 @@ public:
         : DeviceFactory<IMUDriverInterface>(name)
     {
         Params() = {
+             {"imuhz", "200", "IMU capture rate in Hz."}
         };
     }
 
-    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& /*uri*/)
+    std::shared_ptr<IMUDriverInterface> GetDevice(const Uri& uri)
     {
-        PhidgetsDriver* pDriver = new PhidgetsDriver();
+        int imu_hz = uri.properties.Get("imuhz", 200);
+        PhidgetsDriver* pDriver = new PhidgetsDriver( imu_hz );
         return std::shared_ptr<IMUDriverInterface>( pDriver );
     }
 };
