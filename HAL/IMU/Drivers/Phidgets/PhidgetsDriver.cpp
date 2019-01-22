@@ -36,7 +36,10 @@ void CCONV SpatialDataHandler(PhidgetSpatialHandle spatial, void *userptr,
 
 
 ///////////////////////////////////////////////////////////////////////////
-hal::PhidgetsDriver::PhidgetsDriver(int imu_hz) : m_hSpatial(0) {
+hal::PhidgetsDriver::PhidgetsDriver(int imu_hz)
+  : m_hSpatial(0),
+    m_nHzAHRS(imu_hz)
+{
   Init();
 }
 
@@ -116,6 +119,12 @@ bool hal::PhidgetsDriver::Init() {
   // Requires the handle for the Spatial, the callback handler function that will be called,
   // and an arbitrary pointer that will be supplied to the callback function (may be NULL)
   PhidgetSpatial_setOnSpatialDataHandler(m_hSpatial, SpatialDataHandler, this);
+
+  // Set the data rate according to specifications; number of ms between
+  // measurements. This number must be divisible by 8, or =4.
+  uint32_t interval = (m_nHzAHRS == 250) ? 4 : 8*(uint32_t)ceil(1/(double)m_nHzAHRS*1000/8);
+//  std::cout << "interval is: " << interval << std::endl;
+  PhidgetSpatial_setDataInterval(m_hSpatial, interval);
 
   // open the spatial object for device connections
   Phidget_open((PhidgetHandle)m_hSpatial);

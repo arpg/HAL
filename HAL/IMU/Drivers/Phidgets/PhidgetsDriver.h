@@ -36,6 +36,7 @@ class PhidgetsDriver : public IMUDriverInterface {
  private:
   PhidgetSpatialHandle m_hSpatial;
   IMUDriverDataCallback m_ImuCallback;
+  int m_nHzAHRS;
 };
 
 } // namespace hal
