@@ -138,7 +138,7 @@ namespace hal {
 	  }
 	initComplete = 1;
       }
-    
+    double timestamp = 0.0; 
     for (int i =0; i< topicCount; i++)
       {
 	pimg = vImages.add_image();
@@ -146,7 +146,13 @@ namespace hal {
 
 	//Pass through the timestamp
 	double halStamp = freshImages[i]->header.stamp.sec + ((double)freshImages[i]->header.stamp.nsec)/1e9;
-	
+        if (timestamp == 0.0)
+          timestamp = halStamp;
+        else if (std::fabs(timestamp - halStamp) > 0.005)
+          std::cout << "timestamps misaligned " << timestamp - halStamp  << std::endl;
+        else 
+          std::cout << "all good!" << std::endl;
+        vImages.set_system_time(halStamp); // assumes stereo images are synced
 	pimg->set_timestamp(halStamp);
 	pimg->set_type(findPbType(freshImages[i]->encoding));
 	pimg->set_format(findPbFormat(freshImages[i]->encoding) );            
