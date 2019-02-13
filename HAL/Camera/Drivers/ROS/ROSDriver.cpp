@@ -150,8 +150,6 @@ namespace hal {
           timestamp = halStamp;
         else if (std::fabs(timestamp - halStamp) > 0.005)
           std::cout << "timestamps misaligned " << timestamp - halStamp  << std::endl;
-        else 
-          std::cout << "all good!" << std::endl;
         vImages.set_system_time(halStamp); // assumes stereo images are synced
 	pimg->set_timestamp(halStamp);
 	pimg->set_type(findPbType(freshImages[i]->encoding));
@@ -295,15 +293,14 @@ namespace hal {
     // checks if all images have same timestamp within 5ms
     bool all_updated = true;
     if (topicList.size() > 1)
-    {
-      double first_stamp = freshImages[0]->header.stamp.toSec();
-      for (int i = 1; i < topicList.size(); i++)
+    { 
+      double first_stamp = freshImages[topicIndex]->header.stamp.toSec();
+      for (int i = 0; i < topicList.size(); i++)
       {
-        if (std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
+        if (freshImages[i] && std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
           all_updated = false;
       }
     }
-
     pthread_mutex_unlock(&topicLocks[topicIndex]);
     //Ring the bell if all images in freshImages are up to date
     if (all_updated) pthread_cond_signal(&newTopic);
