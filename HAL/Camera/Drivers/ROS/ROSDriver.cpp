@@ -294,11 +294,19 @@ namespace hal {
     bool all_updated = true;
     if (topicList.size() > 1)
     { 
-      double first_stamp = freshImages[topicIndex]->header.stamp.toSec();
-      for (int i = 0; i < topicList.size(); i++)
+      if (freshImages[0])
       {
-        if (freshImages[i] && std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
-          all_updated = false;
+        double first_stamp = freshImages[0]->header.stamp.toSec();
+        for (int i = 1; i < topicList.size(); i++)
+        {
+          if (freshImages[i] && 
+              std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
+            all_updated = false;
+        }
+      } 
+      else
+      {
+        all_updated = false;
       }
     }
     pthread_mutex_unlock(&topicLocks[topicIndex]);
