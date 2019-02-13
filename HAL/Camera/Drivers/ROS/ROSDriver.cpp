@@ -299,9 +299,15 @@ namespace hal {
         double first_stamp = freshImages[0]->header.stamp.toSec();
         for (int i = 1; i < topicList.size(); i++)
         {
-          if (freshImages[i] && 
-              std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
+          if (freshImages[i])
+          {
+            if (std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
+              all_updated = false;
+          }
+          else
+          {
             all_updated = false;
+          }
         }
       } 
       else
