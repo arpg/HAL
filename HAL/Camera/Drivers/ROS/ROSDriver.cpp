@@ -287,14 +287,26 @@ namespace hal {
 
   void ROSDriver::imageCallback(const sensor_msgs::Image::ConstPtr& msg, int topicIndex)
   {
-    //Something arrived - put it in the right spot!
-    //cout << "Updating image: " << topicIndex << endl;
+    //Something arrived - put it in the right spot! 
     pthread_mutex_lock(&topicLocks[topicIndex]);
     freshImages[topicIndex] = msg;
 
+    // check if all images have been updated
+    // checks if all images have same timestamp within 5ms
+    bool all_updated = true;
+    if (topicList.size() > 1)
+    {
+      double first_stamp = freshImages[0]->header.stamp.toSec();
+      for (int i = 1; i < topicList.size(); i++)
+      {
+        if (std::fabs(first_stamp - freshImages[i]->header.stamp.toSec()) > 0.005)
+          all_updated = false;
+      }
+    }
+
     pthread_mutex_unlock(&topicLocks[topicIndex]);
-    //Ring the bell
-    pthread_cond_signal(&newTopic);
+    //Ring the bell if all images in freshImages are up to date
+    if (all_updated) pthread_cond_signal(&newTopic);
   }
 
   void ROSDriver::makeFixedPoint(sensor_msgs::ImagePtr &destImage_sp, const sensor_msgs::ImageConstPtr srcImage)
