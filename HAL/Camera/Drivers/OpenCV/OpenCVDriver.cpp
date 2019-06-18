@@ -42,7 +42,7 @@ bool OpenCVDriver::Capture(hal::CameraMsg& images_msg) {
   // requires, so we might need to copy it
   cv::Mat cv_image;
   if(force_greyscale_) {
-    cvtColor(temp, cv_image, CV_RGB2GRAY);
+    cvtColor(temp, cv_image, cv::COLOR_RGB2GRAY);
   } else if (!temp.isContinuous()) {
     temp.copyTo(cv_image);
   } else {

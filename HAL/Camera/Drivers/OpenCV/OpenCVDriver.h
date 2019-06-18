@@ -7,7 +7,7 @@
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/highgui/highgui_c.h>//constants are defined here
-#elif CV_VERSION_MAJOR == 3
+#elif CV_VERSION_MAJOR == 3 || CV_VERSION_MAJOR == 4
 #include <opencv2/videoio/videoio.hpp>
 #endif
 
