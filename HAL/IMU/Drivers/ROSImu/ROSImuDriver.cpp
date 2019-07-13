@@ -13,11 +13,18 @@ namespace hal {
     spinner->start();
     nh = new ros::NodeHandle("~");
 
+    // append '/' prefix to topic name
+    std::string first_char = topic.substr(0,1);
+    if( first_char.compare("/")!=0 )
+    {
+      topic = "/" + topic;
+    }
+
     cout << "ROSImu: Subscribing to: " << topic << endl;
     subscriber = nh->subscribe(topic, 1000, &ROSImuDriver::imuCallback, this);
 
   }
-  
+
   ROSImuDriver::~ROSImuDriver()
   {
     std::cout << "ROSImu: Stopping ROS driver" << std::endl;
@@ -36,12 +43,12 @@ namespace hal {
       m_DeviceThread = std::thread( &ROSImuDriver::service, this );
     }
   }
-  
+
   void ROSImuDriver::service()
   {
     printf("ROSImu: Started service thread\n");
     while( m_bShouldRun ) {
-      
+
         //---------------------------------------------------------
         // get data and pack
 
@@ -68,19 +75,19 @@ namespace hal {
       pbGyro->add_data(lastMsg->angular_velocity.x);
       pbGyro->add_data(lastMsg->angular_velocity.y);
       pbGyro->add_data(lastMsg->angular_velocity.z);
-	
+
       double halStamp = lastMsg->header.stamp.sec + ((double)lastMsg->header.stamp.nsec)/1e9;
-      lk.unlock(); 
+      lk.unlock();
 
       if( m_IMUCallback )
 	{
 	  //Pass through the timestamp
-	  
+
 	  dataIMU.set_device_time(halStamp);
 	  dataIMU.set_system_time(halStamp);
 	  m_IMUCallback( dataIMU );
 	}
-      
+
     }
     m_bShouldRun = false;
   }
@@ -96,7 +103,7 @@ namespace hal {
     dataReady.notify_one();
   }
 
- 
-	   
-  
+
+
+
 } //namespace

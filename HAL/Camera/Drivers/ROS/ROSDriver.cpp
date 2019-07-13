@@ -19,7 +19,7 @@ namespace hal {
     parseSizes();
     Start(); //hardcoded for the ROS camera's vid/pid
   }
-  
+
   ROSDriver::~ROSDriver()
   {
     Stop();
@@ -30,7 +30,7 @@ namespace hal {
     delete it;
     delete nh;
   }
-  
+
   void ROSDriver::parseSizes()
   {
     vector<string> sizeList = split<string>(sizes, "+");
@@ -42,7 +42,7 @@ namespace hal {
 	heightList.push_back(strtoul(oneSize[1].c_str(), NULL, 10));
       }
   }
-  
+
   size_t ROSDriver::NumChannels() const
   {
     return topicCount; //one channel for RGB, one for depth
@@ -60,19 +60,32 @@ namespace hal {
 
   void ROSDriver::Start()
   {
-    
+
     //Split the topic list and instantiate a subscriber for each one
     topicList = split<string>(topics, "+");
     topicCount = topicList.size();
 
+    // append '/' prefix to topic name
+    for( uint i=0; i<topicCount; i++ )
+    {
+      std::string topic = topicList[i];
+      std::string first_char = topic.substr(0,1);
+      if( first_char.compare("/")!=0 )
+      {
+        topic = "/" + topic;
+      }
+      topicList[i] = topic;
+    }
+
+
     cout << "Creating " << topicCount << " subscribers" << endl;
-    
+
     topicLocks = new pthread_mutex_t[topicCount];
     freshImages = new sensor_msgs::ImageConstPtr[topicCount];
-   
+
     pthread_cond_init(&newTopic, NULL);
     initComplete = 0; //no images yet
-    
+
     subscribers = new image_transport::Subscriber[topicCount];
     for (int i=0; i< topicCount; i++)
       {
@@ -101,7 +114,7 @@ namespace hal {
     timeout.tv_sec +=1;
 
     int ret;
-    
+
     ret = pthread_cond_timedwait(&newTopic, &topicBell, &timeout);
     if (ret == ETIMEDOUT)
       {
@@ -134,11 +147,11 @@ namespace hal {
 		    imagesValid = 0;
 		  }
 	      }
-	   
+
 	  }
 	initComplete = 1;
       }
-    double timestamp = 0.0; 
+    double timestamp = 0.0;
     for (int i =0; i< topicCount; i++)
       {
 	pimg = vImages.add_image();
@@ -153,7 +166,7 @@ namespace hal {
         vImages.set_system_time(halStamp); // assumes stereo images are synced
 	pimg->set_timestamp(halStamp);
 	pimg->set_type(findPbType(freshImages[i]->encoding));
-	pimg->set_format(findPbFormat(freshImages[i]->encoding) );            
+	pimg->set_format(findPbFormat(freshImages[i]->encoding) );
 	pimg->set_width(freshImages[i]->width);
 	pimg->set_height(freshImages[i]->height);
 
@@ -168,7 +181,7 @@ namespace hal {
 		  freshImages[i]->encoding == sensor_msgs::image_encodings::TYPE_16UC1) &&
 		 grayScale)
 	  {
-	    
+
 	    //Dynamically adjust the scale of the uint16_t to occupy the full range
 	    //Certain cameras only publish 10 or 12-bit data, leading to very dark images
 	    //First, go through the image and find the real max value
@@ -177,7 +190,7 @@ namespace hal {
 	    makeScaledImage(scaledImage, freshImages[i]);
 	    pimg->set_type(hal::PB_UNSIGNED_BYTE);
 	    pimg->set_data(&scaledImage->data[0], scaledImage->step * scaledImage->height);
- 
+
 	  }
 	else
 	  {
@@ -185,7 +198,7 @@ namespace hal {
 	    pimg->set_data(&freshImages[i]->data[0], freshImages[i]->step * freshImages[i]->height);
 	  }
       }
-    
+
     pthread_mutex_unlock(&topicBell);
     return true;
   }
@@ -232,39 +245,39 @@ namespace hal {
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
     return (hal::Type) 0;
   }
-  
+
   hal::Format ROSDriver::findPbFormat(string format)
   {
     //Protobuf formats are typedefed ints, ROS formats are strings
     if (format == sensor_msgs::image_encodings::MONO8)
       return hal::PB_LUMINANCE;
-    
+
     if (format == sensor_msgs::image_encodings::TYPE_8UC1)
       return hal::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::MONO16)
       return hal::PB_LUMINANCE;
-    
+
     if (format == sensor_msgs::image_encodings::TYPE_8UC1)
       return hal::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::TYPE_16UC1)
       return hal::PB_LUMINANCE;
-    
+
     if (format == sensor_msgs::image_encodings::TYPE_32FC1)
       return hal::PB_LUMINANCE;
 
     if (format == sensor_msgs::image_encodings::BGR8)
       return hal::PB_BGR;
-  
+
     if (format == sensor_msgs::image_encodings::RGB8)
       return hal::PB_RGB;
-  
+
     ROS_FATAL("Unknown ROS image format: [%s]\n", format.c_str());
     return (hal::Format) 0;
   }
 
-  
+
   /*Split fcn from http://stackoverflow.com/questions/236129/split-a-string-in-c */
   template<typename T>
   vector<T> ROSDriver::split(const T & str, const T & delimiters)
@@ -285,7 +298,7 @@ namespace hal {
 
   void ROSDriver::imageCallback(const sensor_msgs::Image::ConstPtr& msg, int topicIndex)
   {
-    //Something arrived - put it in the right spot! 
+    //Something arrived - put it in the right spot!
     pthread_mutex_lock(&topicLocks[topicIndex]);
     freshImages[topicIndex] = msg;
 
@@ -293,7 +306,7 @@ namespace hal {
     // checks if all images have same timestamp within 5ms
     bool all_updated = true;
     if (topicList.size() > 1)
-    { 
+    {
       if (freshImages[0])
       {
         double first_stamp = freshImages[0]->header.stamp.toSec();
@@ -309,7 +322,7 @@ namespace hal {
             all_updated = false;
           }
         }
-      } 
+      }
       else
       {
         all_updated = false;
@@ -335,7 +348,7 @@ namespace hal {
 
     float *baseSrc = (float*)(&srcImage->data[0]);
     uint16_t *baseDest = (uint16_t*) (&destImage->data[0]); //since the data ptr is a uint8_t for both storage media
-    
+
     for (i = 0; i< srcImage->height*srcImage->width; i++)
       {
 	baseDest[i] = baseSrc[i] * radixMultiplier; //cut off at the uint16_t boundary
@@ -348,7 +361,7 @@ namespace hal {
   {
     //Dynamically scale a gray image to span the full uint16_t space
     //since some cameras only publish 10 or 12-bit data
-    
+
      sensor_msgs::Image* destImage = new sensor_msgs::Image;
     destImage->encoding = sensor_msgs::image_encodings::MONO8;
     destImage->height = srcImage->height;
@@ -365,7 +378,7 @@ namespace hal {
 
     uint16_t maxValue = 0;
     uint8_t newValue = 0;
-    
+
     for (i = 0; i< srcImage->height*srcImage->width; i++)
       {
 	if (baseSrc[i] > maxValue)
@@ -380,9 +393,9 @@ namespace hal {
 	baseDest[i] =  newValue;
       }
 
-    
+
     destImage_sp = boost::shared_ptr<sensor_msgs::Image>(destImage);
   }
-	   
-  
+
+
 } //namespace
