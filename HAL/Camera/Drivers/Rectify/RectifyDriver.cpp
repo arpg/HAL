@@ -51,7 +51,7 @@ bool RectifyDriver::Capture( hal::CameraMsg& vImages )
     vImages.set_device_time(vIn.device_time());
 
     for(int k=0; k < 2; ++k) {
-      uint num_channels = 1;
+      unsigned int num_channels = 1;
       if (inimg[k].Format() == hal::Format::PB_BGR ||
           inimg[k].Format() == hal::Format::PB_RGB) {
         num_channels = 3;

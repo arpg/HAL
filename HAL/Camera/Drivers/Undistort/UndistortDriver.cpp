@@ -64,7 +64,7 @@ bool UndistortDriver::Capture( hal::CameraMsg& vImages )
       //Transfer the timestamps from the source to the destination
       pimg->set_timestamp(inimg.Timestamp());
       
-      uint num_channels = 1;
+      unsigned int num_channels = 1;
       if (pimg->format() == hal::PB_LUMINANCE) {
         num_channels = 1;
       } else if (pimg->format() == hal::PB_BGRA ||

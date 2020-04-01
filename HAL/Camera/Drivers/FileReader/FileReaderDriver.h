@@ -58,6 +58,7 @@ class FileReaderDriver : public CameraDriverInterface {
   std::string                                     m_sBaseDir;
   unsigned int                                    m_nNumChannels;
   unsigned int                                    m_nCurrentImageIndex;
+  std::vector< int >                              m_vOffsets;    // Vector of index offsets to align the timestamps
   bool                                            m_bLoop;
   unsigned int                                    m_nNumImages;
   unsigned int                                    m_nBufferSize;

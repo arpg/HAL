@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cctype>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -8,6 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include <list>
+#include <functional>
 
 namespace hal
 {

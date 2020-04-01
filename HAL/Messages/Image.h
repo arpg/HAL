@@ -4,7 +4,7 @@
 #include <HAL/Messages.pb.h>
 
 #pragma GCC system_header
-#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 namespace hal {
 
@@ -36,7 +36,7 @@ void ReadFile(const std::string& sFileName, hal::ImageMsg* pbImage);
  * deep copy.
  *
  */
-class Image {
+class HAL_EXPORT Image {
  public:
   /// Construct with only an ImageMsg reference. Caller is responsible
   /// for ensuring the data outlasts this Image and its cv::Mat

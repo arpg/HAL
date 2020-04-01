@@ -17,26 +17,24 @@ include( install_package )
 
 string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-inconsistent-missing-override -Wextra")
+if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-inconsistent-missing-override -Wextra")
+endif()
 
 #############################################################################
 # Find required libraries
 find_package( Eigen3 REQUIRED )
-find_package( Protobuf REQUIRED )
-if(ANDROID)
-    # Override to use hosts protoc compiler
-    unset(PROTOBUF_PROTOC_EXECUTABLE CACHE)
-    find_host_package(Protobuf REQUIRED)
-endif()
+find_package( protobuf REQUIRED CONFIG)
 find_package( Sophus REQUIRED )
-find_package( GLog REQUIRED )
-find_package( TinyXML2 QUIET )
+find_package( gflags REQUIRED CONFIG)
+find_package( glog REQUIRED CONFIG)
+find_package( tinyxml2 QUIET CONFIG)
 
-if(TinyXML2_FOUND)
+if(tinyxml2_FOUND)
   add_definitions(-DHAVE_TINYXML2)
-  list(APPEND LINK_LIBS  ${TinyXML2_LIBRARIES})
-  list(APPEND USER_INC   ${TinyXML2_INCLUDE_DIRS})
+  list(APPEND LINK_LIBS  tinyxml2)
 endif()
+
 
 find_package(OpenCV QUIET COMPONENTS core)
 if(NOT OpenCV_FOUND)
@@ -49,14 +47,18 @@ elseif(OpenCV_VERSION_MAJOR EQUAL 3)
     find_package(OpenCV QUIET COMPONENTS core imgproc imgcodecs videoio)
 endif()
 
+if(WIN32)
+    find_path(DIRENT_INCLUDE_DIR NAMES dirent.h)
+    find_package(dlfcn-win32 REQUIRED CONFIG)
+    list( APPEND LINK_LIBS  dlfcn-win32::dl)
+    find_path(POSIX_shim_INCLUDE_DIR NAMES unistd.h)
+endif()
+
 list( APPEND USER_INC   ${EIGEN3_INCLUDE_DIR} )
 list( APPEND USER_INC   ${Sophus_INCLUDE_DIRS} )
-list( APPEND USER_INC   ${PROTOBUF_INCLUDE_DIR} )
-list( APPEND USER_INC   ${GLog_INCLUDE_DIRS} )
 
-include_directories( ${LIB_INC_DIR} ${USER_INC} )
 
-list( APPEND LINK_LIBS ${PROTOBUF_LIBRARIES} ${GLog_LIBRARIES})
+list( APPEND LINK_LIBS protobuf::libprotobuf glog::glog gflags_shared)
 
 #############################################################################
 # HAL macros for driver writers.
@@ -80,7 +82,16 @@ macro( add_to_hal_libraries )
             set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${lib}" )
           else()
             # For imported targets, we just want to depend on the library directly
-            get_target_property(libpath ${lib} LOCATION)
+            if(NOT WIN32)
+              set(prop LOCATION)
+            else()
+              set(prop IMPORTED_IMPLIB_DEBUG)
+              get_target_property(libpath ${lib} ${prop})
+              if(NOT libpath)
+                set(prop IMPORTED_IMPLIB_RELEASE)
+              endif()
+            endif()
+            get_target_property(libpath ${lib} ${prop})
             if (libpath)
                 set_property( GLOBAL APPEND PROPERTY P_LIBRARIES "${libpath}" )
               # This shouldn't really happen, but let's cover our bases.
@@ -140,6 +151,7 @@ endmacro()
 #############################################################################
 # Add Devices
 
+
 add_subdirectory( Devices )
 add_subdirectory( ThirdParty )
 add_subdirectory( IMU )
@@ -179,7 +191,9 @@ set( _PROTO_SRCS
     ${PROTO_DIR}/NodeCamMessage.proto
     ${PROTO_DIR}/Command.proto
 )
-
+IF(WIN32)
+    set(PROTOBUF_GENERATE_CPP_EXPORT dllexport_decl=HAL_EXPORT:)
+ENDIF()
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${_PROTO_SRCS})
 
 add_to_hal_sources( ${PROTO_SRCS} )
@@ -205,12 +219,17 @@ foreach(val RANGE ${len_c_o_s} )
   set_source_files_properties( ${source} PROPERTIES COMPILE_FLAGS ${flag} )
 endforeach()
 
-if(TinyXML2_FOUND)
-  include_directories( ${TinyXML2_INCLUDE_DIR} )
-endif()
-
 #############################################################################
 ## Protobuf
+
+find_package(OpenCV QUIET COMPONENTS core)
+
+set(OpenCV_FOUND FALSE)
+if(OpenCV_VERSION_MAJOR EQUAL 2)
+    find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+elseif(OpenCV_VERSION_MAJOR EQUAL 3)
+    find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio highgui)
+endif()
 
 list(APPEND HAL_SOURCES
     ${PROTO_DIR}/Logger.cpp
@@ -243,49 +262,131 @@ endif()
 ##########################################################################
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} )
-include_directories( ${LIB_INC_DIR} )
+if(TinyXML2_FOUND)
+  include_directories( ${TinyXML2_INCLUDE_DIR} )
+endif()
 include_directories( ${INTERNAL_INC} )
+include_directories( ${USER_INC} )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/Messages )
+include_directories( ${CMAKE_BINARY_DIR} )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 link_directories(/usr/local/lib)
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 set(HAL_LIBS
   ${INTERNAL_LIBS}
-  ${PROTOBUF_LIBRARIES}
   ${LINK_LIBS}
-  CACHE STRING "HAL required libraries"
+  ${OpenCV_LIBS}
   )
 
 list( REMOVE_ITEM HAL_LIBS "debug" )
 list( REMOVE_ITEM HAL_LIBS "optimized" )
 
 set(HAL_INCLUDES
-    ${LIB_INC_DIR}
-    ${USER_INC}
-    CACHE STRING "HAL required includes" )
-
+    ${USER_INC} )
 
 add_library( hal ${HAL_SOURCES} )
 target_link_libraries( hal ${HAL_LIBS} )
+
+SET_TARGET_PROPERTIES(hal PROPERTIES PREFIX lib)
+
+if (BUILD_SHARED_LIBS)
+
+  if (WIN32)
+    set (_EXPORT "__declspec(dllexport)")
+    set (_IMPORT "__declspec(dllimport)")
+  endif()
+
+  target_compile_definitions (hal PRIVATE
+    "HAL_EXPORT=${_EXPORT}")
+  target_compile_definitions (hal INTERFACE
+    "HAL_EXPORT=${_IMPORT}")
+
+else()
+   target_compile_definitions (hal PUBLIC HAL_EXPORT=)
+endif()
+
+if(WIN32)
+  target_include_directories(hal PUBLIC ${DIRENT_INCLUDE_DIR} )
+  target_include_directories(hal PUBLIC ${POSIX_shim_INCLUDE_DIR} )
+endif()
+
+if(ANDROID)
+    set_target_properties(hal PROPERTIES LINK_FLAGS " -Wl,--build-id ")
+endif()
+
 
 ########################################################
 ## Create configure file for inclusion in library
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h" )
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Devices/SharedLoad.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/Devices/SharedLoad.h" )
+
 set( GENERATED_HEADERS ${PROTO_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/config.h
-    ${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/ThirdPartyConfig.h )
+    ${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/ThirdPartyConfig.h ${CMAKE_CURRENT_BINARY_DIR}/Devices/SharedLoad.h)
 
-install_package(
-    PKG_NAME HAL
-    LIB_NAME hal
-    VERSION ${HAL_VERSION}
-    INSTALL_HEADERS ${HAL_HEADERS}
-    INSTALL_GENERATED_HEADERS ${GENERATED_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include
-    INCLUDE_DIRS ${HAL_INCLUDES}
-    LINK_LIBS ${HAL_LIBS}
-    )
+IF(USB1_LIBRARY)
+    set(HAL_LIBS ${HAL_LIBS} ${USB1_LIBRARY})
+ENDIF()
 
-include_directories( ${CMAKE_BINARY_DIR} )
+include (CMakePackageConfigHelpers)
 
+
+install (TARGETS hal
+  EXPORT hal-targets
+  RUNTIME DESTINATION bin
+  PUBLIC_HEADER DESTINATION include/HAL
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+
+set(LOAD_DEPENDENCY "find_package( protobuf CONFIG )
+find_dependency( gflags )
+find_dependency( glog )")
+
+if(tinyxml2_FOUND)
+  set(LOAD_DEPENDENCY "${LOAD_DEPENDENCY}
+find_dependency(tinyxml2)")
+endif()
+
+if(WIN32)
+  set(LOAD_DEPENDENCY "${LOAD_DEPENDENCY}
+find_dependency(dlfcn-win32)")
+endif()
+
+
+configure_package_config_file (hal-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/hal-config.cmake
+  INSTALL_DESTINATION lib/cmake/hal
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+write_basic_package_version_file (hal-config-version.cmake VERSION
+  ${HAL_VERSION} COMPATIBILITY SameMajorVersion)
+
+export (TARGETS hal NAMESPACE hal:: FILE hal-targets.cmake)
+export (PACKAGE HAL)
+
+install (FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/hal-config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/hal-config-version.cmake
+  DESTINATION lib/cmake/hal)
+
+install (EXPORT hal-targets NAMESPACE hal:: DESTINATION lib/cmake/hal)
+
+foreach(hdr IN LISTS HAL_HEADERS )
+    get_filename_component( _fp ${hdr} ABSOLUTE )
+    file( RELATIVE_PATH _rpath ${CMAKE_SOURCE_DIR} ${_fp} )
+    get_filename_component( _dir ${_rpath} DIRECTORY )
+    install( FILES ${_fp}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${_dir} )
+endforeach()
+
+foreach(hdr IN LISTS GENERATED_HEADERS )
+    get_filename_component( _fp ${hdr} ABSOLUTE )
+    file( RELATIVE_PATH _rpath ${CMAKE_BINARY_DIR} ${_fp} )
+    get_filename_component( _dir ${_rpath} DIRECTORY )
+    install( FILES ${_fp}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${_dir} )
+endforeach()
 
