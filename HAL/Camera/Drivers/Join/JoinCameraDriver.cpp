@@ -41,7 +41,7 @@ void JoinCameraDriver::WorkTeam::addWorker(
 {
   const size_t workerId = m_ImageData.size();
   {
-    std::unique_lock<std::mutex>(m_Mutex);
+    std::unique_lock<std::mutex> lock(m_Mutex);
     m_ImageData.push_back(hal::CameraMsg());
     m_bWorkerDone.push_back(true);
     m_bWorkerCaptureNotOver.push_back(true);
